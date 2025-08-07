@@ -4,13 +4,15 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
 import { useAuth } from '@/contexts/AuthContext'
+import { SecureRoute, usePermissions } from '@/components/SecureRoute'
 import { 
   BookOpen, 
   CheckCircle, 
   Clock, 
   Lock, 
   Play,
-  ArrowRight
+  ArrowRight,
+  Shield
 } from '@phosphor-icons/react'
 import { useKV } from '@github/spark/hooks'
 import { ModulePage } from './ModulePage'
@@ -165,6 +167,7 @@ interface CoursesPageProps {
 
 export function CoursesPage({ onAuthClick }: CoursesPageProps) {
   const { user } = useAuth()
+  const { canAccessCourse } = usePermissions()
   const [progress, setProgress] = useKV<Record<string, boolean>>('module-progress', {})
   const [selectedModule, setSelectedModule] = useState<{courseId: string, moduleId: string} | null>(null)
 
@@ -187,23 +190,14 @@ export function CoursesPage({ onAuthClick }: CoursesPageProps) {
     return (completedModules / course.modules.length) * 100
   }
 
-  const hasAccess = (course: Course) => {
-    if (!user) return course.tier === 'free'
-    
-    return course.tier === 'free' || 
-      (course.tier === 'advanced' && (user.tier === 'advanced' || user.tier === 'expert')) ||
-      (course.tier === 'expert' && user.tier === 'expert')
-  }
-
   const handleModuleClick = (courseId: string, moduleId: string, course: Course) => {
-    if (!user && course.tier !== 'free') {
-      onAuthClick()
-      return
-    }
-    
-    if (!hasAccess(course)) {
-      // Handle subscription upgrade
-      return
+    // Check access permissions
+    if (!canAccessCourse(course.tier)) {
+      if (!user) {
+        onAuthClick()
+        return
+      }
+      // Access will be handled by SecureRoute component
     }
     
     setSelectedModule({ courseId, moduleId })
@@ -221,11 +215,7 @@ export function CoursesPage({ onAuthClick }: CoursesPageProps) {
       <div className="space-y-8">
         {COURSES.map((course) => {
           const courseProgress = getCourseProgress(course)
-          const hasAccess = course.tier === 'free' || 
-            (user && (
-              (course.tier === 'advanced' && (user.tier === 'advanced' || user.tier === 'expert')) ||
-              (course.tier === 'expert' && user.tier === 'expert')
-            ))
+          const hasAccess = canAccessCourse(course.tier)
 
           return (
             <Card key={course.id} className="overflow-hidden">
@@ -270,50 +260,98 @@ export function CoursesPage({ onAuthClick }: CoursesPageProps) {
               </CardHeader>
 
               <CardContent>
-                <div className="grid gap-4">
-                  {course.modules.map((module, index) => {
-                    const isCompleted = getModuleProgress(module.id)
-                    const canAccess = hasAccess || course.tier === 'free'
-                    
-                    return (
-                      <div
-                        key={module.id}
-                        className={`border rounded-lg p-4 transition-colors ${
-                          canAccess 
-                            ? 'hover:bg-muted/50 cursor-pointer' 
-                            : 'opacity-60 cursor-not-allowed'
-                        }`}
-                        onClick={() => canAccess && handleModuleClick(course.id, module.id, course)}
-                      >
-                        <div className="flex items-start gap-4">
-                          <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-sm font-medium">
-                            {index + 1}
-                          </div>
-                          
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center gap-2 mb-1">
-                              <h3 className="font-medium text-lg">{module.title}</h3>
-                              {isCompleted && (
-                                <CheckCircle weight="fill" className="text-green-500 flex-shrink-0" />
-                              )}
-                              {!canAccess && (
+                <SecureRoute 
+                  requiredTier={course.tier}
+                  onAuthRequired={onAuthClick}
+                  fallback={
+                    <div className="space-y-4">
+                      {course.modules.map((module, index) => (
+                        <div
+                          key={module.id}
+                          className="border rounded-lg p-4 opacity-60"
+                        >
+                          <div className="flex items-start gap-4">
+                            <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-sm font-medium">
+                              {index + 1}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1">
+                                <h3 className="font-medium text-lg">{module.title}</h3>
                                 <Lock weight="regular" className="text-muted-foreground flex-shrink-0" />
-                              )}
-                            </div>
-                            <p className="text-muted-foreground mb-2">{module.description}</p>
-                            <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                              <div className="flex items-center gap-1">
-                                <Clock weight="regular" />
-                                {module.duration}
                               </div>
-                              <div className="flex items-center gap-1">
-                                <BookOpen weight="regular" />
-                                Module {index + 1}
+                              <p className="text-muted-foreground mb-2">{module.description}</p>
+                              <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                                <div className="flex items-center gap-1">
+                                  <Clock weight="regular" />
+                                  {module.duration}
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <BookOpen weight="regular" />
+                                  Module {index + 1}
+                                </div>
                               </div>
                             </div>
                           </div>
+                        </div>
+                      ))}
+                      <div className="mt-6 p-4 bg-muted/30 rounded-lg">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-medium mb-1">
+                              {course.tier === 'advanced' ? 'Advanced' : 'Expert'} Subscription Required
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              {course.price} to access all modules
+                            </p>
+                          </div>
+                          <Button 
+                            onClick={onAuthClick}
+                            className="flex items-center gap-2"
+                          >
+                            <Shield className="h-4 w-4" />
+                            Subscribe
+                            <ArrowRight weight="regular" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  }
+                >
+                  <div className="grid gap-4">
+                    {course.modules.map((module, index) => {
+                      const isCompleted = getModuleProgress(module.id)
+                      
+                      return (
+                        <div
+                          key={module.id}
+                          className="border rounded-lg p-4 transition-colors hover:bg-muted/50 cursor-pointer"
+                          onClick={() => handleModuleClick(course.id, module.id, course)}
+                        >
+                          <div className="flex items-start gap-4">
+                            <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-sm font-medium">
+                              {index + 1}
+                            </div>
+                            
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1">
+                                <h3 className="font-medium text-lg">{module.title}</h3>
+                                {isCompleted && (
+                                  <CheckCircle weight="fill" className="text-green-500 flex-shrink-0" />
+                                )}
+                              </div>
+                              <p className="text-muted-foreground mb-2">{module.description}</p>
+                              <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                                <div className="flex items-center gap-1">
+                                  <Clock weight="regular" />
+                                  {module.duration}
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <BookOpen weight="regular" />
+                                  Module {index + 1}
+                                </div>
+                              </div>
+                            </div>
 
-                          {canAccess && (
                             <div className="flex-shrink-0">
                               <Button
                                 variant={isCompleted ? "outline" : "default"}
@@ -333,34 +371,12 @@ export function CoursesPage({ onAuthClick }: CoursesPageProps) {
                                 )}
                               </Button>
                             </div>
-                          )}
+                          </div>
                         </div>
-                      </div>
-                    )
-                  })}
-                </div>
-
-                {!hasAccess && (
-                  <div className="mt-6 p-4 bg-muted/30 rounded-lg">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-medium mb-1">
-                          {course.tier === 'advanced' ? 'Advanced' : 'Expert'} Subscription Required
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {course.price} to access all modules
-                        </p>
-                      </div>
-                      <Button 
-                        onClick={onAuthClick}
-                        className="flex items-center gap-2"
-                      >
-                        Subscribe
-                        <ArrowRight weight="regular" />
-                      </Button>
-                    </div>
+                      )
+                    })}
                   </div>
-                )}
+                </SecureRoute>
               </CardContent>
             </Card>
           )
@@ -375,6 +391,7 @@ export function CoursesPage({ onAuthClick }: CoursesPageProps) {
               Create your free account to access the beginner course and track your progress
             </p>
             <Button onClick={onAuthClick} size="lg" className="px-8">
+              <Shield className="h-4 w-4 mr-2" />
               Get Started Free
             </Button>
           </CardContent>
