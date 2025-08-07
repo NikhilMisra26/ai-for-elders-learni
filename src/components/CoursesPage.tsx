@@ -1,10 +1,16 @@
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { Badge } from '@/components/ui/badge'
+import { Separator } from '@/components/ui/separator'
+import { Input } from '@/components/ui/input'
 import { useAuth } from '@/contexts/AuthContext'
-import { SecureRoute, usePermissions } from '@/components/SecureRoute'
+import { useProgress } from '@/lib/progressTracking'
+import { useSubscription } from '@/lib/subscription'
+import { courseData, getAvailableCourses, Course } from '@/lib/courseData'
+import { ModulePage } from './ModulePage'
+import { toast } from 'sonner'
 import { 
   BookOpen, 
   CheckCircle, 
@@ -12,154 +18,16 @@ import {
   Lock, 
   Play,
   ArrowRight,
-  Shield
+  Shield,
+  Star,
+  Users,
+  Award,
+  Search,
+  Filter,
+  BookmarkSimple,
+  ChartBar,
+  Trophy
 } from '@phosphor-icons/react'
-import { useKV } from '@github/spark/hooks'
-import { ModulePage } from './ModulePage'
-
-interface Module {
-  id: string
-  title: string
-  description: string
-  content: string
-  videoUrl?: string
-  duration: string
-  completed: boolean
-}
-
-interface Course {
-  id: string
-  title: string
-  description: string
-  tier: 'free' | 'advanced' | 'expert'
-  modules: Module[]
-  price?: string
-}
-
-const COURSES: Course[] = [
-  {
-    id: 'free-course',
-    title: 'AI Basics for Beginners',
-    description: 'Learn the fundamentals of AI and how to use it safely in your daily life.',
-    tier: 'free',
-    modules: [
-      {
-        id: 'free-1',
-        title: 'What is Artificial Intelligence?',
-        description: 'Understanding AI basics and common misconceptions',
-        content: 'Artificial Intelligence (AI) is a technology that helps computers think and learn like humans...',
-        duration: '15 min',
-        completed: false
-      },
-      {
-        id: 'free-2',
-        title: 'AI Safety and Privacy',
-        description: 'How to use AI tools safely and protect your personal information',
-        content: 'When using AI tools, always be cautious about sharing personal information...',
-        duration: '20 min',
-        completed: false
-      },
-      {
-        id: 'free-3',
-        title: 'Your First AI Conversation',
-        description: 'Learning how to communicate effectively with AI assistants',
-        content: 'Talking to AI is like having a conversation with a knowledgeable friend...',
-        duration: '25 min',
-        completed: false
-      },
-      {
-        id: 'free-4',
-        title: 'Practical AI Applications',
-        description: 'Real-world ways AI can help with daily tasks',
-        content: 'AI can help you in many practical ways: writing and editing emails...',
-        duration: '30 min',
-        completed: false
-      }
-    ]
-  },
-  {
-    id: 'advanced-course',
-    title: 'AI Tools Mastery',
-    description: 'Master prompt engineering and explore AI applications for health and finance.',
-    tier: 'advanced',
-    price: '$1.99/month',
-    modules: [
-      {
-        id: 'adv-1',
-        title: 'Prompt Engineering Basics',
-        description: 'Learn to write effective prompts for better AI responses',
-        content: 'Prompt engineering is the art of asking AI the right questions...',
-        duration: '35 min',
-        completed: false
-      },
-      {
-        id: 'adv-2',
-        title: 'AI for Health Management',
-        description: 'Using AI to track symptoms, medication reminders, and health questions',
-        content: 'AI can help you organize health information and ask better questions...',
-        duration: '40 min',
-        completed: false
-      },
-      {
-        id: 'adv-3',
-        title: 'Financial AI Applications',
-        description: 'Budgeting, expense tracking, and financial planning with AI',
-        content: 'AI can assist with budgeting by categorizing expenses...',
-        duration: '45 min',
-        completed: false
-      },
-      {
-        id: 'adv-4',
-        title: 'Monthly AI Updates',
-        description: 'Latest AI tools and features to enhance your daily life',
-        content: 'The AI world moves quickly, with new tools and features...',
-        duration: '30 min',
-        completed: false
-      }
-    ]
-  },
-  {
-    id: 'expert-course',
-    title: 'Advanced AI Mastery',
-    description: 'Explore autonomous AI, custom assistants, and cutting-edge applications.',
-    tier: 'expert',
-    price: '$4.99/month',
-    modules: [
-      {
-        id: 'exp-1',
-        title: 'Autonomous AI Systems',
-        description: 'Understanding and managing AI that works independently',
-        content: 'Autonomous AI systems can perform tasks without constant supervision...',
-        duration: '50 min',
-        completed: false
-      },
-      {
-        id: 'exp-2',
-        title: 'Model Context Protocol (MCP)',
-        description: 'Advanced AI communication and integration techniques',
-        content: 'Model Context Protocol (MCP) is a way for different AI systems...',
-        duration: '55 min',
-        completed: false
-      },
-      {
-        id: 'exp-3',
-        title: 'Custom AI Assistants',
-        description: 'Creating personalized AI helpers for specific needs',
-        content: 'Custom AI assistants are AI helpers trained for your specific needs...',
-        duration: '60 min',
-        completed: false
-      },
-      {
-        id: 'exp-4',
-        title: 'Cutting-Edge AI Trends',
-        description: 'Stay ahead with the latest AI developments and applications',
-        content: 'Explore the newest AI developments that could impact your daily life...',
-        duration: '45 min',
-        completed: false
-      }
-    ]
-  }
-]
 
 interface CoursesPageProps {
   onAuthClick: () => void
@@ -167,9 +35,23 @@ interface CoursesPageProps {
 
 export function CoursesPage({ onAuthClick }: CoursesPageProps) {
   const { user } = useAuth()
-  const { canAccessCourse } = usePermissions()
-  const [progress, setProgress] = useKV<Record<string, boolean>>('module-progress', {})
+  const { subscription, canAccessTier } = useSubscription()
+  const { getCourseProgress, startCourse, getDashboardSummary } = useProgress()
+  
   const [selectedModule, setSelectedModule] = useState<{courseId: string, moduleId: string} | null>(null)
+  const [searchQuery, setSearchQuery] = useState('')
+  const [filterTier, setFilterTier] = useState<'all' | 'free' | 'advanced' | 'expert'>('all')
+
+  const dashboardSummary = getDashboardSummary()
+  const availableCourses = getAvailableCourses(subscription.planId)
+
+  // Filter courses based on search and filter
+  const filteredCourses = Object.values(courseData).filter(course => {
+    const matchesSearch = course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         course.description.toLowerCase().includes(searchQuery.toLowerCase())
+    const matchesFilter = filterTier === 'all' || course.tier === filterTier
+    return matchesSearch && matchesFilter
+  })
 
   if (selectedModule) {
     return (
@@ -177,155 +59,389 @@ export function CoursesPage({ onAuthClick }: CoursesPageProps) {
         courseId={selectedModule.courseId}
         moduleId={selectedModule.moduleId}
         onBack={() => setSelectedModule(null)}
+        onNavigate={(courseId, moduleId) => setSelectedModule({ courseId, moduleId })}
       />
     )
   }
 
-  const getModuleProgress = (moduleId: string) => {
-    return progress[moduleId] || false
-  }
-
-  const getCourseProgress = (course: Course) => {
-    const completedModules = course.modules.filter(module => getModuleProgress(module.id)).length
-    return (completedModules / course.modules.length) * 100
-  }
-
   const handleModuleClick = (courseId: string, moduleId: string, course: Course) => {
+    // Check authentication
+    if (!user) {
+      onAuthClick()
+      return
+    }
+
     // Check access permissions
-    if (!canAccessCourse(course.tier)) {
-      if (!user) {
-        onAuthClick()
-        return
-      }
-      // Access will be handled by SecureRoute component
+    if (!canAccessTier(course.tier)) {
+      toast.error('Subscription required', {
+        description: `This content requires a ${course.tier} subscription.`
+      })
+      return
     }
     
     setSelectedModule({ courseId, moduleId })
   }
 
+  const handleStartCourse = (courseId: string, course: Course) => {
+    if (!user) {
+      onAuthClick()
+      return
+    }
+
+    if (!canAccessTier(course.tier)) {
+      toast.error('Subscription required', {
+        description: `This course requires a ${course.tier} subscription.`
+      })
+      return
+    }
+
+    startCourse(courseId)
+    const firstModule = course.modules[0]
+    if (firstModule) {
+      setSelectedModule({ courseId, moduleId: firstModule.id })
+    }
+  }
+
+  const getCourseCompletionData = (course: Course) => {
+    const progress = getCourseProgress(course.id)
+    const completedModules = progress?.completedModules.length || 0
+    const totalModules = course.totalModules
+    const percentage = Math.round((completedModules / totalModules) * 100)
+    
+    return {
+      completedModules,
+      totalModules,
+      percentage,
+      isStarted: progress !== null,
+      isCompleted: percentage >= 100
+    }
+  }
+
+  const getRecommendedCourse = () => {
+    // Find a course the user hasn't started yet
+    const unstarted = Object.values(courseData).find(course => {
+      const progress = getCourseProgress(course.id)
+      return !progress && canAccessTier(course.tier)
+    })
+    return unstarted
+  }
+
+  const getContinueCourse = () => {
+    // Find a course that's in progress
+    const inProgress = Object.values(courseData).find(course => {
+      const progress = getCourseProgress(course.id)
+      return progress && !progress.completed
+    })
+    return inProgress
+  }
+
   return (
-    <div className="p-6 max-w-6xl mx-auto">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-4">AI Learning Courses</h1>
-        <p className="text-lg text-muted-foreground">
-          Choose your learning path and start mastering AI at your own pace
-        </p>
-      </div>
+    <div className="min-h-screen bg-background">
+      <div className="max-w-7xl mx-auto p-6">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold mb-4">AI Learning Courses</h1>
+          <p className="text-xl text-muted-foreground">
+            Master AI technology at your own pace with courses designed specifically for adults 50+
+          </p>
+        </div>
 
-      <div className="space-y-8">
-        {COURSES.map((course) => {
-          const courseProgress = getCourseProgress(course)
-          const hasAccess = canAccessCourse(course.tier)
+        {/* Quick Stats for Logged In Users */}
+        {user && (
+          <div className="grid md:grid-cols-4 gap-4 mb-8">
+            <Card>
+              <CardContent className="p-4 text-center">
+                <Trophy className="w-8 h-8 mx-auto mb-2 text-yellow-500" />
+                <div className="text-2xl font-bold">{dashboardSummary.completedModules}</div>
+                <div className="text-sm text-muted-foreground">Modules Completed</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4 text-center">
+                <BookOpen className="w-8 h-8 mx-auto mb-2 text-primary" />
+                <div className="text-2xl font-bold">{dashboardSummary.startedCourses}</div>
+                <div className="text-sm text-muted-foreground">Courses Started</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4 text-center">
+                <ChartBar className="w-8 h-8 mx-auto mb-2 text-green-500" />
+                <div className="text-2xl font-bold">{dashboardSummary.currentStreak}</div>
+                <div className="text-sm text-muted-foreground">Day Streak</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4 text-center">
+                <Award className="w-8 h-8 mx-auto mb-2 text-purple-500" />
+                <div className="text-2xl font-bold">{Math.round(dashboardSummary.weeklyProgress / 60)}h</div>
+                <div className="text-sm text-muted-foreground">This Week</div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
-          return (
-            <Card key={course.id} className="overflow-hidden">
-              <CardHeader>
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
-                      <CardTitle className="text-2xl">{course.title}</CardTitle>
-                      <Badge 
-                        variant={course.tier === 'free' ? 'secondary' : 'default'}
-                        className="text-sm"
-                      >
-                        {course.tier.toUpperCase()}
-                      </Badge>
-                      {course.price && (
-                        <Badge variant="outline" className="text-sm">
-                          {course.price}
-                        </Badge>
-                      )}
-                    </div>
-                    <CardDescription className="text-base">
-                      {course.description}
-                    </CardDescription>
-                  </div>
-                  
-                  {!hasAccess && (
-                    <Lock weight="regular" className="text-muted-foreground flex-shrink-0 mt-1" />
-                  )}
-                </div>
-
-                {hasAccess && courseProgress > 0 && (
-                  <div className="mt-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-medium">Progress</span>
-                      <span className="text-sm text-muted-foreground">
-                        {Math.round(courseProgress)}% complete
-                      </span>
-                    </div>
-                    <Progress value={courseProgress} className="h-2" />
-                  </div>
-                )}
-              </CardHeader>
-
-              <CardContent>
-                <SecureRoute 
-                  requiredTier={course.tier}
-                  onAuthRequired={onAuthClick}
-                  fallback={
-                    <div className="space-y-4">
-                      {course.modules.map((module, index) => (
-                        <div
-                          key={module.id}
-                          className="border rounded-lg p-4 opacity-60"
+        {/* Quick Actions for Logged In Users */}
+        {user && (
+          <div className="grid md:grid-cols-2 gap-6 mb-8">
+            {/* Continue Learning */}
+            {getContinueCourse() && (
+              <Card className="border-primary/20 bg-primary/5">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Play className="w-5 h-5" />
+                    Continue Learning
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {(() => {
+                    const course = getContinueCourse()!
+                    const completion = getCourseCompletionData(course)
+                    return (
+                      <>
+                        <h3 className="font-semibold mb-2">{course.title}</h3>
+                        <div className="flex items-center justify-between mb-3">
+                          <span className="text-sm text-muted-foreground">
+                            {completion.completedModules} of {completion.totalModules} modules
+                          </span>
+                          <span className="text-sm font-medium">
+                            {completion.percentage}%
+                          </span>
+                        </div>
+                        <Progress value={completion.percentage} className="mb-4" />
+                        <Button 
+                          onClick={() => handleStartCourse(course.id, course)}
+                          className="w-full"
                         >
-                          <div className="flex items-start gap-4">
-                            <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-sm font-medium">
-                              {index + 1}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-1">
-                                <h3 className="font-medium text-lg">{module.title}</h3>
-                                <Lock weight="regular" className="text-muted-foreground flex-shrink-0" />
-                              </div>
-                              <p className="text-muted-foreground mb-2">{module.description}</p>
-                              <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                                <div className="flex items-center gap-1">
-                                  <Clock weight="regular" />
-                                  {module.duration}
-                                </div>
-                                <div className="flex items-center gap-1">
-                                  <BookOpen weight="regular" />
-                                  Module {index + 1}
-                                </div>
-                              </div>
-                            </div>
-                          </div>
+                          Continue Course
+                          <ArrowRight className="w-4 h-4 ml-2" />
+                        </Button>
+                      </>
+                    )
+                  })()}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Recommended Course */}
+            {getRecommendedCourse() && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <BookmarkSimple className="w-5 h-5" />
+                    Recommended for You
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {(() => {
+                    const course = getRecommendedCourse()!
+                    return (
+                      <>
+                        <h3 className="font-semibold mb-2">{course.title}</h3>
+                        <p className="text-sm text-muted-foreground mb-4">
+                          {course.description}
+                        </p>
+                        <div className="flex items-center justify-between mb-4">
+                          <Badge variant={course.tier === 'free' ? 'secondary' : 'default'}>
+                            {course.tier.toUpperCase()}
+                          </Badge>
+                          <span className="text-sm text-muted-foreground">
+                            {course.totalModules} modules
+                          </span>
                         </div>
-                      ))}
-                      <div className="mt-6 p-4 bg-muted/30 rounded-lg">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="font-medium mb-1">
-                              {course.tier === 'advanced' ? 'Advanced' : 'Expert'} Subscription Required
-                            </p>
-                            <p className="text-sm text-muted-foreground">
-                              {course.price} to access all modules
-                            </p>
-                          </div>
-                          <Button 
-                            onClick={onAuthClick}
-                            className="flex items-center gap-2"
-                          >
-                            <Shield className="h-4 w-4" />
-                            Subscribe
-                            <ArrowRight weight="regular" />
-                          </Button>
-                        </div>
+                        <Button 
+                          onClick={() => handleStartCourse(course.id, course)}
+                          variant="outline"
+                          className="w-full"
+                        >
+                          Start Course
+                          <Play className="w-4 h-4 ml-2" />
+                        </Button>
+                      </>
+                    )
+                  })()}
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        )}
+
+        {/* Search and Filter */}
+        <div className="flex gap-4 mb-6">
+          <div className="flex-1 relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Search courses and modules..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          <div className="flex gap-2">
+            {['all', 'free', 'advanced', 'expert'].map((tier) => (
+              <Button
+                key={tier}
+                variant={filterTier === tier ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setFilterTier(tier as any)}
+                className="capitalize"
+              >
+                {tier}
+              </Button>
+            ))}
+          </div>
+        </div>
+
+        {/* Course List */}
+        <div className="space-y-8">
+          {filteredCourses.map((course) => {
+            const completion = getCourseCompletionData(course)
+            const hasAccess = canAccessTier(course.tier)
+            const isRecommended = course.tier === 'free' || (course.tier === 'advanced' && subscription.planId === 'free')
+
+            return (
+              <Card key={course.id} className={`overflow-hidden ${isRecommended ? 'ring-2 ring-primary/20' : ''}`}>
+                <CardHeader>
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <CardTitle className="text-2xl">{course.title}</CardTitle>
+                        <Badge 
+                          variant={course.tier === 'free' ? 'secondary' : 'default'}
+                          className="text-sm"
+                        >
+                          {course.tier.toUpperCase()}
+                        </Badge>
+                        {course.price > 0 && (
+                          <Badge variant="outline" className="text-sm">
+                            ${course.price.toFixed(2)}/month
+                          </Badge>
+                        )}
+                        {isRecommended && (
+                          <Badge variant="outline" className="text-sm bg-yellow-50 border-yellow-200 text-yellow-800">
+                            <Star className="w-3 h-3 mr-1" />
+                            Recommended
+                          </Badge>
+                        )}
+                      </div>
+                      <CardDescription className="text-base mb-4">
+                        {course.description}
+                      </CardDescription>
+                      
+                      {/* Course Features */}
+                      <div className="flex flex-wrap gap-4 text-sm text-muted-foreground mb-4">
+                        <span className="flex items-center gap-1">
+                          <BookOpen className="w-4 h-4" />
+                          {course.totalModules} modules
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Clock className="w-4 h-4" />
+                          ~{course.estimatedTotalTime} minutes total
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Users className="w-4 h-4" />
+                          Senior-friendly design
+                        </span>
+                      </div>
+
+                      {/* Course Features List */}
+                      <div className="mb-4">
+                        <ul className="text-sm space-y-1">
+                          {course.features.slice(0, 3).map((feature, index) => (
+                            <li key={index} className="flex items-center gap-2">
+                              <CheckCircle className="w-4 h-4 text-green-500" />
+                              {feature}
+                            </li>
+                          ))}
+                        </ul>
                       </div>
                     </div>
-                  }
-                >
-                  <div className="grid gap-4">
+                    
+                    {!hasAccess && (
+                      <Lock className="text-muted-foreground flex-shrink-0 mt-1" />
+                    )}
+                  </div>
+
+                  {/* Progress Bar for Started Courses */}
+                  {hasAccess && completion.isStarted && (
+                    <div className="mt-4">
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-sm font-medium">Your Progress</span>
+                        <span className="text-sm text-muted-foreground">
+                          {completion.completedModules} of {completion.totalModules} modules ({completion.percentage}%)
+                        </span>
+                      </div>
+                      <Progress value={completion.percentage} className="h-2" />
+                      {completion.isCompleted && (
+                        <div className="flex items-center gap-2 mt-2 text-green-700">
+                          <CheckCircle className="w-4 h-4" weight="fill" />
+                          <span className="text-sm font-medium">Course completed! 🎉</span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </CardHeader>
+
+                <CardContent>
+                  {/* Course Actions */}
+                  {hasAccess ? (
+                    <div className="flex items-center gap-4 mb-6">
+                      {completion.isStarted ? (
+                        <Button 
+                          onClick={() => handleStartCourse(course.id, course)}
+                          className="flex items-center gap-2"
+                        >
+                          <Play className="w-4 h-4" />
+                          {completion.isCompleted ? 'Review Course' : 'Continue Learning'}
+                        </Button>
+                      ) : (
+                        <Button 
+                          onClick={() => handleStartCourse(course.id, course)}
+                          className="flex items-center gap-2"
+                        >
+                          <Play className="w-4 h-4" />
+                          Start Course
+                        </Button>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="mb-6 p-4 bg-muted/30 rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-medium mb-1">
+                            {course.tier === 'advanced' ? 'Advanced' : 'Expert'} Subscription Required
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            ${course.price.toFixed(2)}/month to access all modules
+                          </p>
+                        </div>
+                        <Button 
+                          onClick={onAuthClick}
+                          className="flex items-center gap-2"
+                        >
+                          <Shield className="h-4 w-4" />
+                          {user ? 'Upgrade' : 'Sign Up'}
+                          <ArrowRight />
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Module List */}
+                  <div className="space-y-3">
+                    <h4 className="font-medium text-lg mb-3">Course Modules</h4>
                     {course.modules.map((module, index) => {
-                      const isCompleted = getModuleProgress(module.id)
+                      const isModuleCompleted = completion.isStarted && 
+                        getCourseProgress(course.id)?.completedModules.includes(module.id)
                       
                       return (
                         <div
                           key={module.id}
-                          className="border rounded-lg p-4 transition-colors hover:bg-muted/50 cursor-pointer"
-                          onClick={() => handleModuleClick(course.id, module.id, course)}
+                          className={`border rounded-lg p-4 transition-colors ${
+                            hasAccess 
+                              ? 'hover:bg-muted/50 cursor-pointer' 
+                              : 'opacity-60'
+                          }`}
+                          onClick={() => hasAccess && handleModuleClick(course.id, module.id, course)}
                         >
                           <div className="flex items-start gap-4">
                             <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-sm font-medium">
@@ -334,69 +450,107 @@ export function CoursesPage({ onAuthClick }: CoursesPageProps) {
                             
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 mb-1">
-                                <h3 className="font-medium text-lg">{module.title}</h3>
-                                {isCompleted && (
-                                  <CheckCircle weight="fill" className="text-green-500 flex-shrink-0" />
+                                <h5 className="font-medium">{module.title}</h5>
+                                {isModuleCompleted && (
+                                  <CheckCircle className="text-green-500 flex-shrink-0" weight="fill" />
+                                )}
+                                {!hasAccess && (
+                                  <Lock className="text-muted-foreground flex-shrink-0" />
                                 )}
                               </div>
-                              <p className="text-muted-foreground mb-2">{module.description}</p>
-                              <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                                <div className="flex items-center gap-1">
-                                  <Clock weight="regular" />
-                                  {module.duration}
-                                </div>
-                                <div className="flex items-center gap-1">
-                                  <BookOpen weight="regular" />
-                                  Module {index + 1}
-                                </div>
+                              <p className="text-sm text-muted-foreground mb-2">{module.description}</p>
+                              <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                                <span className="flex items-center gap-1">
+                                  <Clock />
+                                  {module.estimatedTime} min
+                                </span>
+                                {module.tags.length > 0 && (
+                                  <span className="flex items-center gap-1">
+                                    #{module.tags[0]}
+                                  </span>
+                                )}
                               </div>
                             </div>
 
-                            <div className="flex-shrink-0">
+                            {hasAccess && (
                               <Button
-                                variant={isCompleted ? "outline" : "default"}
+                                variant={isModuleCompleted ? "outline" : "default"}
                                 size="sm"
                                 className="flex items-center gap-2"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handleModuleClick(course.id, module.id, course)
+                                }}
                               >
-                                {isCompleted ? (
+                                {isModuleCompleted ? (
                                   <>
-                                    <CheckCircle weight="regular" />
+                                    <CheckCircle />
                                     Review
                                   </>
                                 ) : (
                                   <>
-                                    <Play weight="regular" />
+                                    <Play />
                                     Start
                                   </>
                                 )}
                               </Button>
-                            </div>
+                            )}
                           </div>
                         </div>
                       )
                     })}
                   </div>
-                </SecureRoute>
-              </CardContent>
-            </Card>
-          )
-        })}
-      </div>
+                </CardContent>
+              </Card>
+            )
+          })}
+        </div>
 
-      {!user && (
-        <Card className="mt-8 bg-primary/5 border-primary/20">
-          <CardContent className="p-6 text-center">
-            <h3 className="text-xl font-semibold mb-2">Ready to Start Learning?</h3>
-            <p className="text-muted-foreground mb-4">
-              Create your free account to access the beginner course and track your progress
-            </p>
-            <Button onClick={onAuthClick} size="lg" className="px-8">
-              <Shield className="h-4 w-4 mr-2" />
-              Get Started Free
-            </Button>
-          </CardContent>
-        </Card>
-      )}
+        {/* Call to Action for Non-Users */}
+        {!user && (
+          <Card className="mt-12 bg-gradient-to-r from-primary/5 to-accent/5 border-primary/20">
+            <CardContent className="p-8 text-center">
+              <div className="max-w-2xl mx-auto">
+                <h3 className="text-2xl font-bold mb-4">Ready to Start Your AI Learning Journey?</h3>
+                <p className="text-lg text-muted-foreground mb-6">
+                  Join thousands of adults 50+ who are already mastering AI technology. 
+                  Start with our free course and upgrade anytime to access advanced content.
+                </p>
+                <div className="flex items-center justify-center gap-4 mb-6">
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="text-green-500" />
+                    <span>No credit card required</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="text-green-500" />
+                    <span>Senior-friendly design</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <CheckCircle className="text-green-500" />
+                    <span>Learn at your pace</span>
+                  </div>
+                </div>
+                <Button onClick={onAuthClick} size="lg" className="px-8">
+                  <Shield className="h-4 w-4 mr-2" />
+                  Get Started Free
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {filteredCourses.length === 0 && (
+          <Card className="text-center p-8">
+            <CardContent>
+              <Search className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+              <h3 className="text-xl font-semibold mb-2">No courses found</h3>
+              <p className="text-muted-foreground">
+                Try adjusting your search terms or filters to find what you're looking for.
+              </p>
+            </CardContent>
+          </Card>
+        )}
+      </div>
     </div>
   )
 }
