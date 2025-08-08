@@ -1,7 +1,13 @@
-import { useKV } from './kv';
 import { useEffect } from 'react';
+
+import { useKV } from './kv';
+import {
+  addInvoice as dbAddInvoice,
+  getUserSubscription,
+  upsertSubscription,
+} from './db';
+
 import { useAuth } from '@/contexts/AuthContext';
-import { addInvoice as dbAddInvoice, getUserSubscription, upsertSubscription } from './db';
 
 export interface SubscriptionPlan {
   id: 'free' | 'advanced' | 'expert';
@@ -125,11 +131,14 @@ export function useSubscription() {
             nextBillingDate: row.next_billing_date || undefined,
             trialEndDate: row.trial_end_date || undefined,
             gracePeriodEnd: row.grace_period_end || undefined,
-            paymentMethod: row.payment_last4 && row.payment_brand ? {
-              type: 'card',
-              last4: row.payment_last4,
-              brand: row.payment_brand,
-            } : undefined,
+            paymentMethod:
+              row.payment_last4 && row.payment_brand
+                ? {
+                    type: 'card',
+                    last4: row.payment_last4,
+                    brand: row.payment_brand,
+                  }
+                : undefined,
             cancelAtPeriodEnd: row.cancel_at_period_end,
             autoRenew: row.auto_renew,
           });

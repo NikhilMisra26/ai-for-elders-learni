@@ -177,7 +177,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       });
       if (error || !authRes.user) {
         setIsLoading(false);
-        return { success: false, error: error?.message || 'Registration failed' };
+        return {
+          success: false,
+          error: error?.message || 'Registration failed',
+        };
       }
 
       // If a session exists (email confirmations disabled), profile will be created by init()
@@ -249,7 +252,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsLoading(false);
       return {
         success: false,
-        error: e instanceof Error && e.message ? e.message : 'Failed to verify code',
+        error:
+          e instanceof Error && e.message ? e.message : 'Failed to verify code',
       };
     }
   };
@@ -269,7 +273,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     } catch (e) {
       return {
         success: false,
-        error: e instanceof Error && e.message ? e.message : 'Failed to resend code',
+        error:
+          e instanceof Error && e.message ? e.message : 'Failed to resend code',
       };
     }
   };
@@ -315,7 +320,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         updateSecurityState(sanitizedEmail);
         SecurityLogger.log(
           'login_failed',
-          { email: sanitizedEmail, reason: signInError?.message || 'auth_failed' },
+          {
+            email: sanitizedEmail,
+            reason: signInError?.message || 'auth_failed',
+          },
           'warning',
         );
         setIsLoading(false);
@@ -356,7 +364,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(mapped);
 
       SecurityLogger.log('user_login', {
-  userId: mapped.id,
+        userId: mapped.id,
         email: sanitizedEmail,
       });
 
@@ -424,8 +432,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user,
         login,
         register,
-  verifySignupOtp,
-  resendSignupOtp,
+        verifySignupOtp,
+        resendSignupOtp,
         logout,
         isLoading,
         updateTier,

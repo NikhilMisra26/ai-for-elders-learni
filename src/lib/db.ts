@@ -73,7 +73,9 @@ export async function getUserSubscription(userId: string) {
   return (data?.[0] as SubscriptionRow | undefined) || undefined;
 }
 
-export async function upsertSubscription(row: Omit<SubscriptionRow, 'id'> & { id?: string }) {
+export async function upsertSubscription(
+  row: Omit<SubscriptionRow, 'id'> & { id?: string },
+) {
   const { data, error } = await supabase
     .from('subscriptions')
     .upsert(row as any)
@@ -137,7 +139,9 @@ export async function getCourseProgressRows(userId: string) {
   return (data as CourseProgressRow[]) || [];
 }
 
-export async function upsertCourseProgress(row: Omit<CourseProgressRow, 'id'> & { id?: string }) {
+export async function upsertCourseProgress(
+  row: Omit<CourseProgressRow, 'id'> & { id?: string },
+) {
   const { data, error } = await supabase
     .from('course_progress')
     .upsert(row as any)
@@ -168,7 +172,9 @@ export async function getModuleProgressRows(userId: string) {
   return (data as ModuleProgressRow[]) || [];
 }
 
-export async function upsertModuleProgress(row: Omit<ModuleProgressRow, 'id'> & { id?: string }) {
+export async function upsertModuleProgress(
+  row: Omit<ModuleProgressRow, 'id'> & { id?: string },
+) {
   const { data, error } = await supabase
     .from('module_progress')
     .upsert(row as any)
