@@ -140,7 +140,7 @@ export async function getCourseProgressRows(userId: string) {
 export async function upsertCourseProgress(row: Omit<CourseProgressRow, 'id'> & { id?: string }) {
   const { data, error } = await supabase
     .from('course_progress')
-    .upsert(row as any)
+    .upsert(row)
     .select()
     .single();
   if (error) throw error;
