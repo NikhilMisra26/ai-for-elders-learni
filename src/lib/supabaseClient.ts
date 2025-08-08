@@ -1,8 +1,8 @@
 import { createClient } from '@supabase/supabase-js';
 
 // Env variables must be prefixed with VITE_ to be exposed to the client in Vite.
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const SUPABASE_URL: string | undefined = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY: string | undefined = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
 if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
 
