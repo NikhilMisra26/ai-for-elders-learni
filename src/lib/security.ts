@@ -217,7 +217,7 @@ export function sanitizeInput(input: string): string {
  */
 export function generateSessionToken(): string {
   const array = new Uint8Array(32);
-  const cryptoObj = (globalThis as unknown as { crypto?: Crypto }).crypto;
+  const cryptoObj = globalThis.crypto;
   if (cryptoObj && typeof cryptoObj.getRandomValues === 'function') {
     cryptoObj.getRandomValues(array);
   } else {
