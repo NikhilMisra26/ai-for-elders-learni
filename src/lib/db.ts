@@ -1,4 +1,5 @@
 import { supabase } from './supabaseClient';
+import { sanitizeInput, validateEmail } from './security';
 
 export type Tier = 'free' | 'advanced' | 'expert';
 
@@ -16,9 +17,18 @@ export interface Profile {
 }
 
 export async function upsertProfile(profile: Profile) {
+  const emailCheck = validateEmail(profile.email);
+  if (!emailCheck.isValid) throw new Error(emailCheck.errors.join(', '));
+
+  const sanitized: Profile = {
+    ...profile,
+    email: profile.email.trim().toLowerCase(),
+    name: profile.name ? sanitizeInput(profile.name) : undefined,
+  };
+
   const { data, error } = await supabase
     .from('profiles')
-    .upsert(profile, { onConflict: 'id' })
+    .upsert(sanitized, { onConflict: 'id' })
     .select()
     .single();
   if (error) throw error;
@@ -36,9 +46,19 @@ export async function getProfile(id: string) {
 }
 
 export async function updateProfile(id: string, updates: Partial<Profile>) {
+  const sanitized: Partial<Profile> = { ...updates };
+
+  if (updates.email) {
+    const emailCheck = validateEmail(updates.email);
+    if (!emailCheck.isValid) throw new Error(emailCheck.errors.join(', '));
+    sanitized.email = updates.email.trim().toLowerCase();
+  }
+
+  if (updates.name) sanitized.name = sanitizeInput(updates.name);
+
   const { data, error } = await supabase
     .from('profiles')
-    .update(updates)
+    .update(sanitized)
     .eq('id', id)
     .select()
     .single();
