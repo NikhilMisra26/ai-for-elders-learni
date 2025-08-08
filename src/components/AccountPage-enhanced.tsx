@@ -4,12 +4,12 @@ import {
   CreditCard,
   CheckCircle,
   User,
-  Mail,
+  EnvelopeSimple,
   Crown,
   Star,
-  Settings,
+  Gear,
   Download,
-  AlertTriangle,
+  Warning,
   Shield,
   X,
   ChartBar,
@@ -18,6 +18,7 @@ import {
   Gift,
   Clock,
   ArrowRight,
+  Phone,
 } from '@phosphor-icons/react';
 
 import { AuthForm } from './AuthForm';
@@ -279,7 +280,7 @@ export function AccountPage({ onNavigate, onAuthClick }: AccountPageProps) {
                   {subscription.cancelAtPeriodEnd && (
                     <div className='p-3 bg-yellow-50 border border-yellow-200 rounded-md mb-4'>
                       <div className='flex items-center gap-2 text-yellow-800'>
-                        <AlertTriangle className='w-4 h-4' />
+                        <Warning className='w-4 h-4' />
                         <span className='font-medium'>
                           Subscription Cancelled
                         </span>
@@ -489,7 +490,7 @@ export function AccountPage({ onNavigate, onAuthClick }: AccountPageProps) {
             <Card>
               <CardHeader>
                 <CardTitle className='flex items-center gap-2'>
-                  <Settings className='w-5 h-5' />
+                  <Gear className='w-5 h-5' />
                   Quick Actions
                 </CardTitle>
               </CardHeader>
@@ -537,7 +538,7 @@ export function AccountPage({ onNavigate, onAuthClick }: AccountPageProps) {
                 </p>
                 <div className='space-y-2'>
                   <Button variant='outline' size='sm' className='w-full'>
-                    <Mail className='w-4 h-4 mr-2' />
+                    <EnvelopeSimple className='w-4 h-4 mr-2' />
                     Email Support
                   </Button>
                   {subscription.planId === 'expert' && (

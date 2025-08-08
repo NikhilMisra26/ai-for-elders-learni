@@ -1,16 +1,10 @@
-import React from 'react'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Separator } from '@/components/ui/separator'
-import { useAuth } from '@/contexts/AuthContext'
-import { useSubscription, subscriptionPlans, formatPrice } from '@/lib/subscription'
-import { 
-  Brain, 
-  Shield, 
-  Heart, 
-  Users, 
-  Star, 
+import React from 'react';
+import {
+  Brain,
+  Shield,
+  Heart,
+  Users,
+  Star,
   CheckCircle,
   ArrowRight,
   Play,
@@ -23,144 +17,179 @@ import {
   Phone,
   CreditCard,
   Globe,
-  ChartBar
-} from '@phosphor-icons/react'
+  ChartBar,
+} from '@phosphor-icons/react';
+
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Separator } from '@/components/ui/separator';
+import { useAuth } from '@/contexts/AuthContext';
+import {
+  useSubscription,
+  subscriptionPlans,
+  formatPrice,
+} from '@/lib/subscription';
 
 interface HomePageProps {
-  onNavigate: (page: string) => void
-  onAuthClick: () => void
+  onNavigate: (page: string) => void;
+  onAuthClick: () => void;
 }
 
 export function HomePage({ onNavigate, onAuthClick }: HomePageProps) {
-  const { user } = useAuth()
-  const { subscription } = useSubscription()
+  const { user } = useAuth();
+  const { subscription } = useSubscription();
 
   const heroFeatures = [
     {
-      icon: <SpeakerHigh className="w-5 h-5" />,
-      text: "Audio narration for all content"
+      icon: <SpeakerHigh className='w-5 h-5' />,
+      text: 'Audio narration for all content',
     },
     {
-      icon: <Eye className="w-5 h-5" />,
-      text: "Large fonts & high contrast design"
+      icon: <Eye className='w-5 h-5' />,
+      text: 'Large fonts & high contrast design',
     },
     {
-      icon: <Shield className="w-5 h-5" />,
-      text: "Privacy-focused learning"
+      icon: <Shield className='w-5 h-5' />,
+      text: 'Privacy-focused learning',
     },
     {
-      icon: <Clock className="w-5 h-5" />,
-      text: "Learn at your own pace"
-    }
-  ]
+      icon: <Clock className='w-5 h-5' />,
+      text: 'Learn at your own pace',
+    },
+  ];
 
   const features = [
     {
-      icon: <Brain className="w-8 h-8 text-primary" />,
-      title: "Senior-Friendly Design",
-      description: "Large fonts, clear navigation, and audio narration make learning AI accessible and enjoyable for everyone."
+      icon: <Brain className='w-8 h-8 text-primary' />,
+      title: 'Senior-Friendly Design',
+      description:
+        'Large fonts, clear navigation, and audio narration make learning AI accessible and enjoyable for everyone.',
     },
     {
-      icon: <Shield className="w-8 h-8 text-primary" />,
-      title: "Safety-First Approach",
-      description: "Learn to use AI tools safely with comprehensive guidance on privacy, security, and avoiding common pitfalls."
+      icon: <Shield className='w-8 h-8 text-primary' />,
+      title: 'Safety-First Approach',
+      description:
+        'Learn to use AI tools safely with comprehensive guidance on privacy, security, and avoiding common pitfalls.',
     },
     {
-      icon: <Heart className="w-8 h-8 text-primary" />,
-      title: "Practical Applications",
-      description: "Focus on real-world uses like health management, family communication, financial planning, and daily organization."
+      icon: <Heart className='w-8 h-8 text-primary' />,
+      title: 'Practical Applications',
+      description:
+        'Focus on real-world uses like health management, family communication, financial planning, and daily organization.',
     },
     {
-      icon: <Users className="w-8 h-8 text-primary" />,
-      title: "Supportive Community",
-      description: "Join a community of learners sharing experiences, tips, and supporting each other's AI learning journey."
+      icon: <Users className='w-8 h-8 text-primary' />,
+      title: 'Supportive Community',
+      description:
+        "Join a community of learners sharing experiences, tips, and supporting each other's AI learning journey.",
     },
     {
-      icon: <Sparkle className="w-8 h-8 text-primary" />,
-      title: "Expert-Designed Content",
-      description: "Courses created by AI experts specifically for adults 50+, with clear explanations and practical examples."
+      icon: <Sparkle className='w-8 h-8 text-primary' />,
+      title: 'Expert-Designed Content',
+      description:
+        'Courses created by AI experts specifically for adults 50+, with clear explanations and practical examples.',
     },
     {
-      icon: <Trophy className="w-8 h-8 text-primary" />,
-      title: "Progress Tracking",
-      description: "Visual progress indicators, achievement badges, and personalized learning paths keep you motivated."
-    }
-  ]
+      icon: <Trophy className='w-8 h-8 text-primary' />,
+      title: 'Progress Tracking',
+      description:
+        'Visual progress indicators, achievement badges, and personalized learning paths keep you motivated.',
+    },
+  ];
 
   const testimonials = [
     {
-      name: "Margaret Thompson, 67",
-      location: "Phoenix, AZ",
-      content: "I never thought I could understand AI, but this course made it so simple and clear. Now I use AI to help write emails to my grandchildren and organize my medical appointments!",
+      name: 'Margaret Thompson, 67',
+      location: 'Phoenix, AZ',
+      content:
+        'I never thought I could understand AI, but this course made it so simple and clear. Now I use AI to help write emails to my grandchildren and organize my medical appointments!',
       rating: 5,
-      course: "Advanced Course"
+      course: 'Advanced Course',
     },
     {
-      name: "Robert Chen, 72", 
-      location: "Seattle, WA",
-      content: "The audio narration feature is wonderful. I can listen while I follow along. It's like having a patient, knowledgeable teacher right beside me every step of the way.",
+      name: 'Robert Chen, 72',
+      location: 'Seattle, WA',
+      content:
+        "The audio narration feature is wonderful. I can listen while I follow along. It's like having a patient, knowledgeable teacher right beside me every step of the way.",
       rating: 5,
-      course: "Free Course"
+      course: 'Free Course',
     },
     {
-      name: "Dorothy Williams, 61",
-      location: "Orlando, FL", 
-      content: "The health applications module helped me organize my medical questions before doctor visits. My physician was so impressed with how prepared I was!",
+      name: 'Dorothy Williams, 61',
+      location: 'Orlando, FL',
+      content:
+        'The health applications module helped me organize my medical questions before doctor visits. My physician was so impressed with how prepared I was!',
       rating: 5,
-      course: "Advanced Course"
-    }
-  ]
+      course: 'Advanced Course',
+    },
+  ];
 
   const stats = [
-    { number: "15,000+", label: "Happy Learners" },
-    { number: "4.9/5", label: "Average Rating" },
-    { number: "92%", label: "Course Completion" },
-    { number: "50+", label: "Countries Reached" }
-  ]
+    { number: '15,000+', label: 'Happy Learners' },
+    { number: '4.9/5', label: 'Average Rating' },
+    { number: '92%', label: 'Course Completion' },
+    { number: '50+', label: 'Countries Reached' },
+  ];
 
   const trustIndicators = [
     {
-      icon: <Shield className="w-5 h-5" />,
-      text: "No credit card required for free course"
+      icon: <Shield className='w-5 h-5' />,
+      text: 'No credit card required for free course',
     },
     {
-      icon: <CreditCard className="w-5 h-5" />,
-      text: "Cancel anytime, no hidden fees"
+      icon: <CreditCard className='w-5 h-5' />,
+      text: 'Cancel anytime, no hidden fees',
     },
     {
-      icon: <Phone className="w-5 h-5" />,
-      text: "Email & phone support available"
+      icon: <Phone className='w-5 h-5' />,
+      text: 'Email & phone support available',
     },
     {
-      icon: <Globe className="w-5 h-5" />,
-      text: "Trusted by learners worldwide"
-    }
-  ]
+      icon: <Globe className='w-5 h-5' />,
+      text: 'Trusted by learners worldwide',
+    },
+  ];
 
   return (
-    <div className="min-h-screen">
+    <div className='min-h-screen'>
       {/* Skip Navigation */}
-      <a href="#main-content" className="skip-nav">Skip to main content</a>
-      
+      <a href='#main-content' className='skip-nav'>
+        Skip to main content
+      </a>
+
       {/* Hero Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-primary/10 via-background to-accent/5">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center max-w-4xl mx-auto">
-            <h1 id="main-content" className="text-5xl sm:text-6xl font-bold text-foreground mb-6">
+      <section className='py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-primary/10 via-background to-accent/5'>
+        <div className='max-w-6xl mx-auto'>
+          <div className='text-center max-w-4xl mx-auto'>
+            <h1
+              id='main-content'
+              className='text-5xl sm:text-6xl font-bold text-foreground mb-6'
+            >
               Master AI Technology
             </h1>
-            <p className="text-2xl font-semibold text-primary mb-4">
+            <p className='text-2xl font-semibold text-primary mb-4'>
               Designed for Adults 50+
             </p>
-            <p className="text-xl text-muted-foreground mb-8 max-w-3xl mx-auto leading-relaxed">
-              Learn to use artificial intelligence safely and confidently with courses designed specifically 
-              for your needs. No technical experience required – just curiosity and a willingness to learn.
+            <p className='text-xl text-muted-foreground mb-8 max-w-3xl mx-auto leading-relaxed'>
+              Learn to use artificial intelligence safely and confidently with
+              courses designed specifically for your needs. No technical
+              experience required – just curiosity and a willingness to learn.
             </p>
 
             {/* Hero Features */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 max-w-3xl mx-auto">
+            <div className='grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 max-w-3xl mx-auto'>
               {heroFeatures.map((feature, index) => (
-                <div key={index} className="flex items-center gap-2 text-sm text-muted-foreground">
+                <div
+                  key={index}
+                  className='flex items-center gap-2 text-sm text-muted-foreground'
+                >
                   {feature.icon}
                   <span>{feature.text}</span>
                 </div>
@@ -168,43 +197,46 @@ export function HomePage({ onNavigate, onAuthClick }: HomePageProps) {
             </div>
 
             {/* Call to Action */}
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
+            <div className='flex flex-col sm:flex-row gap-4 justify-center mb-8'>
               {user ? (
-                <Button 
-                  size="lg" 
+                <Button
+                  size='lg'
                   onClick={() => onNavigate('dashboard')}
-                  className="text-lg px-8 py-6 h-auto"
+                  className='text-lg px-8 py-6 h-auto'
                 >
                   Continue Learning
-                  <ArrowRight className="ml-2" />
+                  <ArrowRight className='ml-2' />
                 </Button>
               ) : (
                 <>
-                  <Button 
-                    size="lg" 
+                  <Button
+                    size='lg'
                     onClick={onAuthClick}
-                    className="text-lg px-8 py-6 h-auto"
+                    className='text-lg px-8 py-6 h-auto'
                   >
                     Start Free Course
-                    <Play className="ml-2" />
+                    <Play className='ml-2' />
                   </Button>
-                  <Button 
-                    size="lg" 
-                    variant="outline"
+                  <Button
+                    size='lg'
+                    variant='outline'
                     onClick={() => onNavigate('courses')}
-                    className="text-lg px-8 py-6 h-auto"
+                    className='text-lg px-8 py-6 h-auto'
                   >
                     View All Courses
-                    <BookOpen className="ml-2" />
+                    <BookOpen className='ml-2' />
                   </Button>
                 </>
               )}
             </div>
 
             {/* Trust Indicators */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto">
+            <div className='grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto'>
               {trustIndicators.map((indicator, index) => (
-                <div key={index} className="flex items-center gap-2 text-sm text-muted-foreground justify-center">
+                <div
+                  key={index}
+                  className='flex items-center gap-2 text-sm text-muted-foreground justify-center'
+                >
                   {indicator.icon}
                   <span>{indicator.text}</span>
                 </div>
@@ -215,13 +247,15 @@ export function HomePage({ onNavigate, onAuthClick }: HomePageProps) {
       </section>
 
       {/* Stats Section */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-muted/30">
-        <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+      <section className='py-16 px-4 sm:px-6 lg:px-8 bg-muted/30'>
+        <div className='max-w-6xl mx-auto'>
+          <div className='grid grid-cols-2 md:grid-cols-4 gap-8 text-center'>
             {stats.map((stat, index) => (
               <div key={index}>
-                <div className="text-3xl font-bold text-primary mb-2">{stat.number}</div>
-                <div className="text-muted-foreground">{stat.label}</div>
+                <div className='text-3xl font-bold text-primary mb-2'>
+                  {stat.number}
+                </div>
+                <div className='text-muted-foreground'>{stat.label}</div>
               </div>
             ))}
           </div>
@@ -229,27 +263,32 @@ export function HomePage({ onNavigate, onAuthClick }: HomePageProps) {
       </section>
 
       {/* Features Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-4">Why Choose AI for Elders?</h2>
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              We understand the unique needs of adult learners and have designed every aspect 
-              of our platform with accessibility, safety, and practical application in mind.
+      <section className='py-20 px-4 sm:px-6 lg:px-8'>
+        <div className='max-w-6xl mx-auto'>
+          <div className='text-center mb-16'>
+            <h2 className='text-4xl font-bold mb-4'>
+              Why Choose AI for Elders?
+            </h2>
+            <p className='text-xl text-muted-foreground max-w-3xl mx-auto'>
+              We understand the unique needs of adult learners and have designed
+              every aspect of our platform with accessibility, safety, and
+              practical application in mind.
             </p>
           </div>
-          
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+
+          <div className='grid md:grid-cols-2 lg:grid-cols-3 gap-8'>
             {features.map((feature, index) => (
-              <Card key={index} className="text-center h-full">
+              <Card key={index} className='text-center h-full'>
                 <CardHeader>
-                  <div className="w-16 h-16 mx-auto mb-4 flex items-center justify-center bg-primary/10 rounded-full">
+                  <div className='w-16 h-16 mx-auto mb-4 flex items-center justify-center bg-primary/10 rounded-full'>
                     {feature.icon}
                   </div>
-                  <CardTitle className="text-xl">{feature.title}</CardTitle>
+                  <CardTitle className='text-xl'>{feature.title}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-muted-foreground leading-relaxed">{feature.description}</p>
+                  <p className='text-muted-foreground leading-relaxed'>
+                    {feature.description}
+                  </p>
                 </CardContent>
               </Card>
             ))}
@@ -258,43 +297,55 @@ export function HomePage({ onNavigate, onAuthClick }: HomePageProps) {
       </section>
 
       {/* Pricing Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-muted/20">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-4">Choose Your Learning Path</h2>
-            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              Start with our free course and upgrade anytime to access advanced content. 
-              All plans include our senior-friendly design and dedicated support.
+      <section className='py-20 px-4 sm:px-6 lg:px-8 bg-muted/20'>
+        <div className='max-w-6xl mx-auto'>
+          <div className='text-center mb-16'>
+            <h2 className='text-4xl font-bold mb-4'>
+              Choose Your Learning Path
+            </h2>
+            <p className='text-xl text-muted-foreground max-w-3xl mx-auto'>
+              Start with our free course and upgrade anytime to access advanced
+              content. All plans include our senior-friendly design and
+              dedicated support.
             </p>
           </div>
-          
-          <div className="grid md:grid-cols-3 gap-8">
+
+          <div className='grid md:grid-cols-3 gap-8'>
             {subscriptionPlans.map((plan) => (
-              <Card key={plan.id} className={`relative ${plan.popular ? 'ring-2 ring-primary' : ''}`}>
+              <Card
+                key={plan.id}
+                className={`relative ${plan.popular ? 'ring-2 ring-primary' : ''}`}
+              >
                 {plan.popular && (
-                  <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                  <Badge className='absolute -top-3 left-1/2 transform -translate-x-1/2'>
                     Most Popular
                   </Badge>
                 )}
-                <CardHeader className="text-center">
-                  <CardTitle className="text-2xl">{plan.name}</CardTitle>
-                  <div className="text-4xl font-bold text-primary">
+                <CardHeader className='text-center'>
+                  <CardTitle className='text-2xl'>{plan.name}</CardTitle>
+                  <div className='text-4xl font-bold text-primary'>
                     {formatPrice(plan.price)}
-                    {plan.price > 0 && <span className="text-lg text-muted-foreground">/month</span>}
+                    {plan.price > 0 && (
+                      <span className='text-lg text-muted-foreground'>
+                        /month
+                      </span>
+                    )}
                   </div>
-                  <CardDescription className="text-base">{plan.description}</CardDescription>
+                  <CardDescription className='text-base'>
+                    {plan.description}
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <ul className="space-y-3 mb-6">
+                  <ul className='space-y-3 mb-6'>
                     {plan.features.map((feature, index) => (
-                      <li key={index} className="flex items-start gap-3">
-                        <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
-                        <span className="text-sm">{feature}</span>
+                      <li key={index} className='flex items-start gap-3'>
+                        <CheckCircle className='w-5 h-5 text-green-500 flex-shrink-0 mt-0.5' />
+                        <span className='text-sm'>{feature}</span>
                       </li>
                     ))}
                   </ul>
-                  <Button 
-                    className="w-full" 
+                  <Button
+                    className='w-full'
                     variant={plan.popular ? 'default' : 'outline'}
                     onClick={user ? () => onNavigate('account') : onAuthClick}
                   >
@@ -308,32 +359,41 @@ export function HomePage({ onNavigate, onAuthClick }: HomePageProps) {
       </section>
 
       {/* Testimonials Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold mb-4">What Our Learners Say</h2>
-            <p className="text-xl text-muted-foreground">
-              Join thousands of adults who are successfully learning AI with our courses
+      <section className='py-20 px-4 sm:px-6 lg:px-8'>
+        <div className='max-w-6xl mx-auto'>
+          <div className='text-center mb-16'>
+            <h2 className='text-4xl font-bold mb-4'>What Our Learners Say</h2>
+            <p className='text-xl text-muted-foreground'>
+              Join thousands of adults who are successfully learning AI with our
+              courses
             </p>
           </div>
-          
-          <div className="grid md:grid-cols-3 gap-8">
+
+          <div className='grid md:grid-cols-3 gap-8'>
             {testimonials.map((testimonial, index) => (
-              <Card key={index} className="h-full">
+              <Card key={index} className='h-full'>
                 <CardHeader>
-                  <div className="flex items-center gap-1 mb-2">
+                  <div className='flex items-center gap-1 mb-2'>
                     {[...Array(testimonial.rating)].map((_, i) => (
-                      <Star key={i} className="w-5 h-5 text-yellow-500" weight="fill" />
+                      <Star
+                        key={i}
+                        className='w-5 h-5 text-yellow-500'
+                        weight='fill'
+                      />
                     ))}
                   </div>
                   <div>
-                    <CardTitle className="text-lg">{testimonial.name}</CardTitle>
+                    <CardTitle className='text-lg'>
+                      {testimonial.name}
+                    </CardTitle>
                     <CardDescription>{testimonial.location}</CardDescription>
-                    <Badge variant="secondary" className="mt-2">{testimonial.course}</Badge>
+                    <Badge variant='secondary' className='mt-2'>
+                      {testimonial.course}
+                    </Badge>
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-muted-foreground italic leading-relaxed">
+                  <p className='text-muted-foreground italic leading-relaxed'>
                     "{testimonial.content}"
                   </p>
                 </CardContent>
@@ -344,282 +404,79 @@ export function HomePage({ onNavigate, onAuthClick }: HomePageProps) {
       </section>
 
       {/* Final CTA Section */}
-      <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-primary/10 to-accent/10">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-4xl font-bold mb-4">Ready to Start Your AI Journey?</h2>
-          <p className="text-xl text-muted-foreground mb-8">
-            Join our community of lifelong learners and discover how AI can enhance your daily life.
-            Start with our free course today – no technical experience required.
+      <section className='py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-primary/10 to-accent/10'>
+        <div className='max-w-4xl mx-auto text-center'>
+          <h2 className='text-4xl font-bold mb-4'>
+            Ready to Start Your AI Journey?
+          </h2>
+          <p className='text-xl text-muted-foreground mb-8'>
+            Join our community of lifelong learners and discover how AI can
+            enhance your daily life. Start with our free course today – no
+            technical experience required.
           </p>
-          
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+
+          <div className='flex flex-col sm:flex-row gap-4 justify-center'>
             {user ? (
               <>
-                <Button 
-                  size="lg" 
+                <Button
+                  size='lg'
                   onClick={() => onNavigate('dashboard')}
-                  className="text-lg px-8 py-6 h-auto"
+                  className='text-lg px-8 py-6 h-auto'
                 >
                   Go to Dashboard
-                  <ChartBar className="ml-2" />
+                  <ChartBar className='ml-2' />
                 </Button>
-                <Button 
-                  size="lg" 
-                  variant="outline"
+                <Button
+                  size='lg'
+                  variant='outline'
                   onClick={() => onNavigate('courses')}
-                  className="text-lg px-8 py-6 h-auto"
+                  className='text-lg px-8 py-6 h-auto'
                 >
                   Browse Courses
-                  <BookOpen className="ml-2" />
+                  <BookOpen className='ml-2' />
                 </Button>
               </>
             ) : (
               <>
-                <Button 
-                  size="lg" 
+                <Button
+                  size='lg'
                   onClick={onAuthClick}
-                  className="text-lg px-8 py-6 h-auto"
+                  className='text-lg px-8 py-6 h-auto'
                 >
                   Start Learning Free
-                  <ArrowRight className="ml-2" />
+                  <ArrowRight className='ml-2' />
                 </Button>
-                <Button 
-                  size="lg" 
-                  variant="outline"
+                <Button
+                  size='lg'
+                  variant='outline'
                   onClick={() => onNavigate('courses')}
-                  className="text-lg px-8 py-6 h-auto"
+                  className='text-lg px-8 py-6 h-auto'
                 >
                   Explore Courses
-                  <BookOpen className="ml-2" />
+                  <BookOpen className='ml-2' />
                 </Button>
               </>
             )}
           </div>
 
-          <div className="mt-8 flex justify-center items-center gap-6 text-sm text-muted-foreground">
-            <div className="flex items-center gap-2">
-              <Shield className="w-4 h-4" />
+          <div className='mt-8 flex justify-center items-center gap-6 text-sm text-muted-foreground'>
+            <div className='flex items-center gap-2'>
+              <Shield className='w-4 h-4' />
               <span>Secure & Private</span>
             </div>
-            <Separator orientation="vertical" className="h-4" />
-            <div className="flex items-center gap-2">
-              <CheckCircle className="w-4 h-4" />
+            <Separator orientation='vertical' className='h-4' />
+            <div className='flex items-center gap-2'>
+              <CheckCircle className='w-4 h-4' />
               <span>No Credit Card Required</span>
             </div>
-            <Separator orientation="vertical" className="h-4" />
-            <div className="flex items-center gap-2">
-              <Clock className="w-4 h-4" />
+            <Separator orientation='vertical' className='h-4' />
+            <div className='flex items-center gap-2'>
+              <Clock className='w-4 h-4' />
               <span>Learn at Your Pace</span>
             </div>
           </div>
         </div>
       </section>
     </div>
-  )
-}
-      rating: 5
-    },
-    {
-      name: "Robert Chen, 72",
-      content: "The audio narration feature is wonderful. I can listen while I follow along. It's like having a patient teacher right beside me.",
-      rating: 5
-    },
-    {
-      name: "Dorothy Williams, 61",
-      content: "The health applications module helped me organize my medical questions before doctor visits. My physician was impressed!",
-      rating: 5
-    }
-  ]
-
-  const courses = [
-    {
-      title: "AI Basics for Beginners",
-      description: "Learn AI fundamentals and safety in 4 easy modules",
-      price: "Free",
-      features: ["AI basics & safety", "First conversations", "Practical applications", "Privacy protection"],
-      tier: "free" as const
-    },
-    {
-      title: "AI Tools Mastery",
-      description: "Master prompt engineering and specialized applications",
-      price: "$1.99/month",
-      features: ["Advanced prompting", "Health AI tools", "Financial applications", "Monthly updates"],
-      tier: "advanced" as const,
-      popular: true
-    },
-    {
-      title: "Advanced AI Mastery",
-      description: "Explore cutting-edge AI systems and custom assistants",
-      price: "$4.99/month",
-      features: ["Autonomous AI", "Custom assistants", "Latest developments", "Expert community"],
-      tier: "expert" as const
-    }
-  ]
-
-  return (
-    <div className="min-h-screen">
-      {/* Skip Navigation */}
-      <a href="#main-content" className="skip-nav">Skip to main content</a>
-      
-      {/* Hero Section */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-primary/5 to-background">
-        <div className="max-w-4xl mx-auto text-center">
-          <h1 id="main-content" className="text-4xl sm:text-5xl font-bold text-foreground mb-6">
-            Master AI at Your Own Pace
-          </h1>
-          <p className="text-xl text-muted-foreground mb-8 max-w-3xl mx-auto leading-relaxed">
-            Learn to use artificial intelligence safely and confidently with courses designed specifically for adults 50+. 
-            No technical experience required.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            {user ? (
-              <Button 
-                size="lg" 
-                onClick={() => onNavigate('dashboard')}
-                className="text-lg px-8 py-6 h-auto"
-              >
-                Continue Learning
-                <ArrowRight weight="regular" className="ml-2" />
-              </Button>
-            ) : (
-              <>
-                <Button 
-                  size="lg" 
-                  onClick={onAuthClick}
-                  className="text-lg px-8 py-6 h-auto"
-                >
-                  Start Free Course
-                  <Play weight="regular" className="ml-2" />
-                </Button>
-                <Button 
-                  size="lg" 
-                  variant="outline"
-                  onClick={() => onNavigate('courses')}
-                  className="text-lg px-8 py-6 h-auto"
-                >
-                  View All Courses
-                </Button>
-              </>
-            )}
-          </div>
-        </div>
-      </section>
-
-      {/* Features Section */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-12">Why Choose AI for Elders?</h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {features.map((feature, index) => (
-              <Card key={index} className="text-center">
-                <CardHeader>
-                  <div className="w-16 h-16 mx-auto mb-4 flex items-center justify-center bg-primary/10 rounded-full">
-                    {feature.icon}
-                  </div>
-                  <CardTitle className="text-lg">{feature.title}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <CardDescription className="text-base leading-relaxed">
-                    {feature.description}
-                  </CardDescription>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Pricing Section */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-muted/30">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-4">Choose Your Learning Path</h2>
-          <p className="text-xl text-muted-foreground text-center mb-12">
-            Start free and upgrade when you're ready for more advanced topics
-          </p>
-          <div className="grid md:grid-cols-3 gap-8">
-            {courses.map((course, index) => (
-              <Card key={index} className={`relative ${course.popular ? 'border-primary shadow-lg' : ''}`}>
-                {course.popular && (
-                  <Badge className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground">
-                    Most Popular
-                  </Badge>
-                )}
-                <CardHeader className="text-center">
-                  <CardTitle className="text-xl">{course.title}</CardTitle>
-                  <CardDescription className="text-base">
-                    {course.description}
-                  </CardDescription>
-                  <div className="mt-4">
-                    <span className="text-3xl font-bold text-primary">{course.price}</span>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <ul className="space-y-3 mb-6">
-                    {course.features.map((feature, featureIndex) => (
-                      <li key={featureIndex} className="flex items-center gap-2">
-                        <CheckCircle weight="fill" className="text-green-500 flex-shrink-0" />
-                        <span className="text-sm">{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <Button 
-                    className="w-full h-12"
-                    variant={course.popular ? 'default' : 'outline'}
-                    onClick={() => user ? onNavigate('courses') : onAuthClick}
-                  >
-                    {course.tier === 'free' ? 'Start Free' : 'Subscribe'}
-                  </Button>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Testimonials Section */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-6xl mx-auto">
-          <h2 className="text-3xl font-bold text-center mb-12">What Our Students Say</h2>
-          <div className="grid md:grid-cols-3 gap-8">
-            {testimonials.map((testimonial, index) => (
-              <Card key={index}>
-                <CardHeader>
-                  <div className="flex items-center gap-1 mb-2">
-                    {[...Array(testimonial.rating)].map((_, i) => (
-                      <Star key={i} weight="fill" className="text-yellow-500" />
-                    ))}
-                  </div>
-                  <CardDescription className="text-base leading-relaxed italic">
-                    "{testimonial.content}"
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="font-medium text-foreground">{testimonial.name}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-primary/5">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-3xl font-bold mb-6">Ready to Start Your AI Journey?</h2>
-          <p className="text-xl text-muted-foreground mb-8">
-            Join thousands of adults who are already using AI to enhance their daily lives. 
-            Start with our free course today.
-          </p>
-          <Button 
-            size="lg" 
-            onClick={user ? () => onNavigate('courses') : onAuthClick}
-            className="text-lg px-8 py-6 h-auto"
-          >
-            {user ? 'View Courses' : 'Get Started Free'}
-            <ArrowRight weight="regular" className="ml-2" />
-          </Button>
-        </div>
-      </section>
-    </div>
-  )
+  );
 }

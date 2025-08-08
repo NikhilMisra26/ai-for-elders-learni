@@ -28,7 +28,7 @@ export function useAudioNarration(
   const [state, setState] = useState<AudioNarrationState>({
     isPlaying: false,
     isPaused: false,
-    isSupported: 'speechSynthesis' in window,
+    isSupported: typeof window !== 'undefined' && 'speechSynthesis' in window,
     currentText: text,
     position: 0,
     rate: 1,
@@ -48,7 +48,7 @@ export function useAudioNarration(
     if (!state.isSupported) return;
 
     const loadVoices = () => {
-      const voices = speechSynthesis.getVoices();
+      const voices = window.speechSynthesis.getVoices();
       setAvailableVoices(voices);
 
       // Set default voice (prefer female voice for senior-friendly experience)
@@ -69,7 +69,7 @@ export function useAudioNarration(
     };
 
     loadVoices();
-    speechSynthesis.onvoiceschanged = loadVoices;
+    window.speechSynthesis.onvoiceschanged = loadVoices;
   }, [state.isSupported, state.voice]);
 
   // Clean up text for better narration
@@ -104,7 +104,7 @@ export function useAudioNarration(
     if (!state.isSupported) return;
 
     const cleanText = cleanTextForSpeech(text);
-    const newUtterance = new SpeechSynthesisUtterance(cleanText);
+    const newUtterance = new window.SpeechSynthesisUtterance(cleanText);
 
     newUtterance.rate = state.rate;
     newUtterance.volume = state.volume;
@@ -151,20 +151,20 @@ export function useAudioNarration(
     if (!state.isSupported || !utterance) return;
 
     // Stop any current speech
-    speechSynthesis.cancel();
+    window.speechSynthesis.cancel();
 
     // Start new speech
-    speechSynthesis.speak(utterance);
+    window.speechSynthesis.speak(utterance);
   }, [state.isSupported, utterance]);
 
   const pause = useCallback(() => {
     if (!state.isSupported) return;
-    speechSynthesis.pause();
+    window.speechSynthesis.pause();
   }, [state.isSupported]);
 
   const stop = useCallback(() => {
     if (!state.isSupported) return;
-    speechSynthesis.cancel();
+    window.speechSynthesis.cancel();
     setState((prev) => ({
       ...prev,
       isPlaying: false,
@@ -175,7 +175,7 @@ export function useAudioNarration(
 
   const resume = useCallback(() => {
     if (!state.isSupported) return;
-    speechSynthesis.resume();
+    window.speechSynthesis.resume();
   }, [state.isSupported]);
 
   const setRate = useCallback((rate: number) => {
@@ -212,7 +212,24 @@ export function useAudioNarration(
 }
 
 // Hook for managing narration preferences
-export function useNarrationPreferences() {
+export function useNarrationPreferences(): [
+  null | {
+    autoPlay: boolean;
+    defaultRate: number;
+    defaultVolume: number;
+    preferredVoice: string | null;
+    enabled: boolean;
+  },
+  (
+    updates: Partial<{
+      autoPlay: boolean;
+      defaultRate: number;
+      defaultVolume: number;
+      preferredVoice: string | null;
+      enabled: boolean;
+    }>,
+  ) => void,
+] {
   const [preferences, setPreferences] = useState(() => {
     if (typeof window === 'undefined') return null;
 
@@ -237,7 +254,15 @@ export function useNarrationPreferences() {
     }
   }, [preferences]);
 
-  const updatePreferences = (updates: Partial<typeof preferences>) => {
+  const updatePreferences = (
+    updates: Partial<{
+      autoPlay: boolean;
+      defaultRate: number;
+      defaultVolume: number;
+      preferredVoice: string | null;
+      enabled: boolean;
+    }>,
+  ): void => {
     setPreferences((prev: any) => ({ ...prev, ...updates }));
   };
 
@@ -300,7 +325,7 @@ export function announceToScreenReader(message: string): void {
 
   document.body.appendChild(announcement);
 
-  setTimeout(() => {
+  window.setTimeout(() => {
     document.body.removeChild(announcement);
   }, 1000);
 }

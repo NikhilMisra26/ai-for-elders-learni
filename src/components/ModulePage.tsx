@@ -8,7 +8,7 @@ import {
   BookOpen,
   Clock,
   Star,
-  MessageCircle,
+  ChatCircle,
   ArrowLeft,
   ArrowRight,
   SpeakerHigh,
@@ -546,7 +546,7 @@ export function ModulePage({
               <Card>
                 <CardHeader>
                   <CardTitle className='flex items-center gap-2'>
-                    <MessageCircle className='w-5 h-5' />
+                    <ChatCircle className='w-5 h-5' />
                     Feedback
                   </CardTitle>
                 </CardHeader>

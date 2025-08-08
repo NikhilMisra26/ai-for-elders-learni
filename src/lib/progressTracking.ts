@@ -1,5 +1,4 @@
-import { useKV } from '@github/spark/hooks';
-
+import { useKV } from './kv';
 import type { Course, Module } from './courseData';
 import { courseData } from './courseData';
 

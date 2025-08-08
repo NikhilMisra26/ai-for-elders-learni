@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Eye, EyeSlash, Shield, AlertTriangle } from '@phosphor-icons/react';
+import { Eye, EyeSlash, Shield, Warning } from '@phosphor-icons/react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -118,7 +118,7 @@ export function AuthForm({ onClose }: AuthFormProps) {
         {securityState.isLocked && (
           <div className='bg-red-50 border border-red-200 rounded-lg p-3 mt-3'>
             <div className='flex items-center gap-2 text-red-700'>
-              <AlertTriangle className='h-4 w-4' />
+              <Warning className='h-4 w-4' />
               <span className='text-sm font-medium'>
                 Account temporarily locked ({securityState.lockoutTime}m
                 remaining)
@@ -132,7 +132,7 @@ export function AuthForm({ onClose }: AuthFormProps) {
           !securityState.isLocked && (
             <div className='bg-yellow-50 border border-yellow-200 rounded-lg p-3 mt-3'>
               <div className='flex items-center gap-2 text-yellow-700'>
-                <AlertTriangle className='h-4 w-4' />
+                <Warning className='h-4 w-4' />
                 <span className='text-sm'>
                   {securityState.remainingAttempts} login attempts remaining
                 </span>
@@ -225,8 +225,10 @@ export function AuthForm({ onClose }: AuthFormProps) {
                   <span
                     className={`text-sm font-medium ${getPasswordStrengthColor()}`}
                   >
-                    {passwordValidation?.strength.charAt(0).toUpperCase() +
-                      passwordValidation?.strength.slice(1)}
+                    {passwordValidation?.strength
+                      ? passwordValidation.strength.charAt(0).toUpperCase() +
+                        passwordValidation.strength.slice(1)
+                      : ''}
                   </span>
                 </div>
 
@@ -255,12 +257,14 @@ export function AuthForm({ onClose }: AuthFormProps) {
           <Button
             type='submit'
             className='w-full h-12 text-base font-medium'
-            disabled={
+            disabled={Boolean(
               isLoading ||
-              securityState.isLocked ||
-              (!isLogin && passwordValidation && !passwordValidation.isValid) ||
-              (emailValidation && !emailValidation.isValid)
-            }
+                securityState.isLocked ||
+                (!isLogin &&
+                  passwordValidation &&
+                  !passwordValidation.isValid) ||
+                (emailValidation && !emailValidation.isValid),
+            )}
           >
             {isLoading
               ? 'Please wait...'

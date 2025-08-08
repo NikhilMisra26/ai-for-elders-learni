@@ -11,7 +11,7 @@ import {
   Target,
   Users,
   Gift,
-  Settings,
+  Gear,
   BookmarkSimple,
   Play,
   Sparkle,
@@ -297,7 +297,7 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
                       size='sm'
                       onClick={() => setShowGoalSetting(!showGoalSetting)}
                     >
-                      <Settings className='w-4 h-4' />
+                      <Gear className='w-4 h-4' />
                     </Button>
                   </div>
 
@@ -518,7 +518,7 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
                   onClick={() => onNavigate('account')}
                 >
                   Manage Account
-                  <Settings className='w-4 h-4 ml-2' />
+                  <Gear className='w-4 h-4 ml-2' />
                 </Button>
               </CardContent>
             </Card>
