@@ -107,7 +107,7 @@ export async function listInvoices(userId: string) {
 export async function addInvoice(row: Omit<InvoiceRow, 'id'>) {
   const { data, error } = await supabase
     .from('invoices')
-    .insert(row as any)
+    .insert([row])
     .select()
     .single();
   if (error) throw error;
