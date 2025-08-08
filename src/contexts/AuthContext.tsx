@@ -337,7 +337,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           is_locked: false,
           locked_until: null,
         } as any);
-      } catch {}
+      } catch (err) {
+        SecurityLogger.log(
+          'profile_update_failed',
+          { userId: signInData.user.id, error: err instanceof Error ? err.message : String(err) },
+          'error',
+        );
+      }
 
       const profile = await getProfile(signInData.user.id);
       const mapped: User = {
