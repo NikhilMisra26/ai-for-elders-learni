@@ -2,6 +2,8 @@ import type { ReactNode } from 'react';
 import { createContext, useContext, useState, useEffect } from 'react';
 
 import { useKV } from '@/lib/kv';
+import { supabase } from '@/lib/supabaseClient';
+import { upsertProfile, getProfile, updateProfile } from '@/lib/db';
 import {
   validateEmail,
   validatePassword,
@@ -53,11 +55,6 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useKV<User | null>('current-user', null);
-  const [users, setUsers] = useKV<User[]>('users', []);
-  const [passwords, setPasswords] = useKV<Record<string, string>>(
-    'user-passwords',
-    {},
-  );
   const [isLoading, setIsLoading] = useState(false);
   const [rateLimiter] = useState(() => new RateLimiter());
   const [securityState, setSecurityState] = useState<SecurityState>({
@@ -66,19 +63,65 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     isLocked: false,
   });
 
-  // Check session validity on load
+  // Initialize Supabase auth listener and hydrate user profile
   useEffect(() => {
-    const session = SessionManager.getSession();
-    if (session && user) {
-      // Session is valid, extend it
-      SessionManager.extendSession();
-      SecurityLogger.log('session_extended', { userId: user.id });
-    } else if (user && !session) {
-      // User data exists but no valid session, log out
-      logout();
-      SecurityLogger.log('session_expired', { userId: user.id }, 'warning');
-    }
-  }, [user]);
+    const init = async () => {
+      const { data } = await supabase.auth.getSession();
+      const authUser = data.session?.user;
+      if (authUser) {
+        try {
+          const profile = await getProfile(authUser.id);
+          const mapped: User = {
+            id: profile.id,
+            email: profile.email,
+            name: profile.name || authUser.email || 'User',
+            tier: (profile.tier as User['tier']) || 'free',
+            verified: profile.verified,
+            joinDate: profile.join_date,
+            lastLoginAt: profile.last_login_at || undefined,
+            loginAttempts: profile.login_attempts,
+            isLocked: profile.is_locked,
+            lockedUntil: profile.locked_until || undefined,
+          };
+          setUser(mapped);
+        } catch (e) {
+          // First-time user: create profile
+          const email = authUser.email || 'unknown@example.com';
+          const newProfile = await upsertProfile({
+            id: authUser.id,
+            email,
+            name: authUser.user_metadata?.name || '',
+            tier: 'free',
+            verified: !!authUser.email_confirmed_at,
+            join_date: new Date().toISOString(),
+            last_login_at: new Date().toISOString(),
+            login_attempts: 0,
+            is_locked: false,
+            locked_until: null,
+          });
+          setUser({
+            id: newProfile.id,
+            email: newProfile.email,
+            name: newProfile.name || email,
+            tier: 'free',
+            verified: newProfile.verified,
+            joinDate: newProfile.join_date,
+          });
+        }
+      } else {
+        setUser(null);
+      }
+    };
+
+    const { data: listener } = supabase.auth.onAuthStateChange(() => {
+      init();
+    });
+    init();
+
+    return () => {
+      listener.subscription.unsubscribe();
+    };
+  }, [setUser]);
 
   const register = async (
     email: string,
@@ -116,52 +159,35 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { success: false, error: passwordValidation.errors[0] };
       }
 
-      // Check if user already exists
-      const existingUser = users.find((u) => u.email === sanitizedEmail);
-      if (existingUser) {
-        SecurityLogger.log(
-          'registration_failed',
-          { email: sanitizedEmail, reason: 'email_exists' },
-          'warning',
-        );
+      // Register user with Supabase auth
+      const { data: authRes, error } = await supabase.auth.signUp({
+        email: sanitizedEmail,
+        password,
+        options: {
+          data: { name: sanitizedName },
+          emailRedirectTo: window.location.origin,
+        },
+      });
+      if (error || !authRes.user) {
         setIsLoading(false);
-        return {
-          success: false,
-          error: 'An account with this email already exists',
-        };
+        return { success: false, error: error?.message || 'Registration failed' };
       }
 
-      // Create new user
-      const newUser: User = {
-        id: `user-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        email: sanitizedEmail,
-        name: sanitizedName,
-        tier: 'free',
-        verified: true, // Simulated email verification
-        joinDate: new Date().toISOString(),
-        lastLoginAt: new Date().toISOString(),
-        loginAttempts: 0,
-        isLocked: false,
-      };
-
-      // Store password securely (in real app, this would be hashed)
-      const hashedPassword = await hashPassword(password);
-
-      setUsers((currentUsers) => [...currentUsers, newUser]);
-      setPasswords((currentPasswords) => ({
-        ...currentPasswords,
-        [newUser.id]: hashedPassword,
-      }));
-
-      setUser(newUser);
-
-      // Create session
-      SessionManager.createSession(newUser.id);
+      // If a session exists (email confirmations disabled), profile will be created by init()
+      // If no session (email confirmations enabled), skip profile creation now and let init() handle it after verification.
+      const hasSession = !!authRes.session;
+      if (hasSession) {
+        // Trigger init flow by setting user state via auth listener
+        const { data } = await supabase.auth.getSession();
+        if (data.session) {
+          // init() effect will map and upsert as needed; nothing else to do here
+        }
+      }
 
       SecurityLogger.log('user_registered', {
-        userId: newUser.id,
+        userId: authRes.user.id,
         email: sanitizedEmail,
-        tier: newUser.tier,
+        tier: 'free',
       });
 
       setIsLoading(false);
@@ -175,7 +201,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setIsLoading(false);
       return {
         success: false,
-        error: 'Registration failed. Please try again.',
+        error:
+          error instanceof Error && error.message
+            ? error.message
+            : 'Registration failed. Please try again.',
       };
     }
   };
@@ -209,88 +238,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         };
       }
 
-      // Find user
-      const foundUser = users.find((u) => u.email === sanitizedEmail);
-      if (!foundUser) {
+      // Attempt Supabase sign-in
+      const { data: signInData, error: signInError } =
+        await supabase.auth.signInWithPassword({
+          email: sanitizedEmail,
+          password,
+        });
+
+      if (signInError || !signInData.user) {
         rateLimiter.recordFailedAttempt(sanitizedEmail);
         updateSecurityState(sanitizedEmail);
         SecurityLogger.log(
           'login_failed',
-          { email: sanitizedEmail, reason: 'user_not_found' },
+          { email: sanitizedEmail, reason: signInError?.message || 'auth_failed' },
           'warning',
         );
         setIsLoading(false);
         return { success: false, error: 'Invalid email or password' };
       }
-
-      // Check if user account is locked
-      if (foundUser.isLocked && foundUser.lockedUntil) {
-        const lockUntil = new Date(foundUser.lockedUntil);
-        if (new Date() < lockUntil) {
-          SecurityLogger.log(
-            'login_blocked',
-            { userId: foundUser.id, reason: 'account_locked' },
-            'warning',
-          );
-          setIsLoading(false);
-          return {
-            success: false,
-            error: 'Account is temporarily locked. Please try again later.',
-          };
-        } else {
-          // Unlock account if lockout period expired
-          const updatedUser = {
-            ...foundUser,
-            isLocked: false,
-            lockedUntil: undefined,
-            loginAttempts: 0,
-          };
-          setUsers((currentUsers) =>
-            currentUsers.map((u) => (u.id === foundUser.id ? updatedUser : u)),
-          );
-        }
-      }
-
-      // Verify password
-      const storedPassword = passwords[foundUser.id];
-      if (
-        !storedPassword ||
-        !(await verifyPassword(password, storedPassword))
-      ) {
-        rateLimiter.recordFailedAttempt(sanitizedEmail);
-        updateSecurityState(sanitizedEmail);
-
-        // Update user login attempts
-        const attempts = (foundUser.loginAttempts || 0) + 1;
-        const shouldLock = attempts >= 5;
-        const updatedUser = {
-          ...foundUser,
-          loginAttempts: attempts,
-          isLocked: shouldLock,
-          lockedUntil: shouldLock
-            ? new Date(Date.now() + 15 * 60 * 1000).toISOString()
-            : undefined,
-        };
-
-        setUsers((currentUsers) =>
-          currentUsers.map((u) => (u.id === foundUser.id ? updatedUser : u)),
-        );
-
-        SecurityLogger.log(
-          'login_failed',
-          {
-            userId: foundUser.id,
-            attempts,
-            locked: shouldLock,
-            reason: 'invalid_password',
-          },
-          'warning',
-        );
-
-        setIsLoading(false);
-        return { success: false, error: 'Invalid email or password' };
-      }
-
       // Successful login
       rateLimiter.recordSuccessfulLogin(sanitizedEmail);
       setSecurityState((prev) => ({
@@ -299,27 +264,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         isLocked: false,
         lockoutTime: undefined,
       }));
+      // Update profile last login, reset attempts
+      try {
+        await updateProfile(signInData.user.id, {
+          last_login_at: new Date().toISOString(),
+          login_attempts: 0,
+          is_locked: false,
+          locked_until: null,
+        } as any);
+      } catch {}
 
-      // Update user last login and reset attempts
-      const updatedUser = {
-        ...foundUser,
-        lastLoginAt: new Date().toISOString(),
-        loginAttempts: 0,
-        isLocked: false,
-        lockedUntil: undefined,
+      const profile = await getProfile(signInData.user.id);
+      const mapped: User = {
+        id: profile.id,
+        email: profile.email,
+        name: profile.name || signInData.user.email || 'User',
+        tier: (profile.tier as User['tier']) || 'free',
+        verified: profile.verified,
+        joinDate: profile.join_date,
+        lastLoginAt: profile.last_login_at || undefined,
+        loginAttempts: profile.login_attempts,
+        isLocked: profile.is_locked,
+        lockedUntil: profile.locked_until || undefined,
       };
 
-      setUsers((currentUsers) =>
-        currentUsers.map((u) => (u.id === foundUser.id ? updatedUser : u)),
-      );
-
-      setUser(updatedUser);
-
-      // Create session
-      SessionManager.createSession(updatedUser.id);
+      setUser(mapped);
 
       SecurityLogger.log('user_login', {
-        userId: updatedUser.id,
+  userId: mapped.id,
         email: sanitizedEmail,
       });
 
@@ -336,11 +308,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const logout = () => {
+  const logout = async () => {
     if (user) {
       SecurityLogger.log('user_logout', { userId: user.id });
     }
-
+    await supabase.auth.signOut();
     SessionManager.clearSession();
     setUser(null);
     setSecurityState((prev) => ({
@@ -355,10 +327,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (user) {
       const updatedUser = { ...user, tier };
       setUser(updatedUser);
-      setUsers((currentUsers) =>
-        currentUsers.map((u) => (u.id === user.id ? updatedUser : u)),
-      );
-
+      // Persist to profile
+      updateProfile(user.id, { tier } as any).catch(() => {});
       SecurityLogger.log('tier_updated', {
         userId: user.id,
         oldTier: user.tier,

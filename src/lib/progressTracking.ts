@@ -1,4 +1,10 @@
 import { useKV } from './kv';
+import { useAuth } from '@/contexts/AuthContext';
+import {
+  upsertCourseProgress,
+  upsertModuleProgress,
+  addUserActivity as dbAddActivity,
+} from './db';
 import type { Course, Module } from './courseData';
 import { courseData } from './courseData';
 
@@ -59,6 +65,7 @@ export interface LearningStats {
 
 // Main progress tracking hook
 export function useProgress() {
+  const { user } = useAuth();
   const [moduleProgress, setModuleProgress] = useKV<ModuleProgress[]>(
     'user-module-progress',
     [],
@@ -158,8 +165,22 @@ export function useProgress() {
       }
     });
 
+    // Persist module progress
+    if (user) {
+      upsertModuleProgress({
+        user_id: user.id,
+        module_id: moduleId,
+        course_id: courseId,
+        completed_at: new Date().toISOString(),
+        time_spent: timeSpent,
+        rating: rating ?? null,
+        attempts: 1,
+        notes: null,
+      }).catch(() => {});
+    }
+
     // Update course progress
-    setCourseProgress((current) => {
+  setCourseProgress((current) => {
       const existing = current.find((cp) => cp.courseId === courseId);
       const completedModules = moduleProgress
         .filter((mp) => mp.courseId === courseId)
@@ -175,7 +196,7 @@ export function useProgress() {
       const isCompleted = completionPercentage >= 100;
 
       if (existing) {
-        return current.map((cp) =>
+        const nextState = current.map((cp) =>
           cp.courseId === courseId
             ? {
                 ...cp,
@@ -188,6 +209,23 @@ export function useProgress() {
               }
             : cp,
         );
+        // Persist
+        if (user) {
+          const row = nextState.find((c) => c.courseId === courseId)!;
+          upsertCourseProgress({
+            user_id: user.id,
+            course_id: row.courseId,
+            started_at: row.startedAt,
+            last_accessed_at: row.lastAccessedAt,
+            completed_modules: row.completedModules,
+            current_module_id: row.currentModuleId || null,
+            total_time_spent: row.totalTimeSpent,
+            completion_percentage: row.completionPercentage,
+            completed: row.completed,
+            completed_at: row.completedAt || null,
+          }).catch(() => {});
+        }
+        return nextState;
       } else {
         const newCourseProgress: CourseProgress = {
           courseId,
@@ -199,7 +237,22 @@ export function useProgress() {
           completed: isCompleted,
           completedAt: isCompleted ? new Date().toISOString() : undefined,
         };
-        return [...current, newCourseProgress];
+        const next = [...current, newCourseProgress];
+        if (user) {
+          upsertCourseProgress({
+            user_id: user.id,
+            course_id: newCourseProgress.courseId,
+            started_at: newCourseProgress.startedAt,
+            last_accessed_at: newCourseProgress.lastAccessedAt,
+            completed_modules: newCourseProgress.completedModules,
+            current_module_id: newCourseProgress.currentModuleId || null,
+            total_time_spent: newCourseProgress.totalTimeSpent,
+            completion_percentage: newCourseProgress.completionPercentage,
+            completed: newCourseProgress.completed,
+            completed_at: newCourseProgress.completedAt || null,
+          }).catch(() => {});
+        }
+        return next;
       }
     });
 
@@ -212,6 +265,18 @@ export function useProgress() {
       moduleId,
       metadata: { timeSpent, rating },
     });
+    if (user) {
+      dbAddActivity({
+        user_id: user.id,
+        type: 'module_completed',
+        title: `Completed "${module.title}"`,
+        description: `Finished module in ${Math.round(timeSpent)} minutes`,
+        timestamp: new Date().toISOString(),
+        course_id: courseId,
+        module_id: moduleId,
+        metadata: { timeSpent, rating },
+      }).catch(() => {});
+    }
 
     // Update learning stats
     updateLearningStats(timeSpent, module.tags, rating);
@@ -232,6 +297,18 @@ export function useProgress() {
         description: `Finished all ${course.totalModules} modules`,
         courseId,
       });
+      if (user) {
+        dbAddActivity({
+          user_id: user.id,
+          type: 'course_completed',
+          title: `Completed "${course.title}"`,
+          description: `Finished all ${course.totalModules} modules`,
+          timestamp: new Date().toISOString(),
+          course_id: courseId,
+          module_id: null,
+          metadata: null,
+        }).catch(() => {});
+      }
     }
   };
 

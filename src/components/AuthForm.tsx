@@ -87,7 +87,7 @@ export function AuthForm({ onClose }: AuthFormProps) {
         const result = await register(email, password, name);
         if (result.success) {
           toast.success(
-            'Account created successfully! Welcome to AI for Elders!',
+            'Account created! Please check your email to verify, then sign in.',
           );
           onClose();
         } else {

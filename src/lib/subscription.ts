@@ -1,4 +1,7 @@
 import { useKV } from './kv';
+import { useEffect } from 'react';
+import { useAuth } from '@/contexts/AuthContext';
+import { addInvoice as dbAddInvoice, getUserSubscription, upsertSubscription } from './db';
 
 export interface SubscriptionPlan {
   id: 'free' | 'advanced' | 'expert';
@@ -96,6 +99,7 @@ export const subscriptionPlans: SubscriptionPlan[] = [
 
 // Subscription management hooks and utilities
 export function useSubscription() {
+  const { user } = useAuth();
   const [subscription, setSubscription] = useKV<UserSubscription>(
     'user-subscription',
     {
@@ -106,11 +110,58 @@ export function useSubscription() {
     },
   );
 
+  // Hydrate from Supabase when logged in
+  useEffect(() => {
+    if (!user) return;
+    (async () => {
+      try {
+        const row = await getUserSubscription(user.id);
+        if (row) {
+          setSubscription({
+            planId: row.plan_id,
+            status: row.status,
+            startDate: row.start_date,
+            endDate: row.end_date || undefined,
+            nextBillingDate: row.next_billing_date || undefined,
+            trialEndDate: row.trial_end_date || undefined,
+            gracePeriodEnd: row.grace_period_end || undefined,
+            paymentMethod: row.payment_last4 && row.payment_brand ? {
+              type: 'card',
+              last4: row.payment_last4,
+              brand: row.payment_brand,
+            } : undefined,
+            cancelAtPeriodEnd: row.cancel_at_period_end,
+            autoRenew: row.auto_renew,
+          });
+        }
+      } catch {}
+    })();
+  }, [user, setSubscription]);
+
   const updateSubscription = (updates: Partial<UserSubscription>) => {
     setSubscription((current) => ({
       ...current,
       ...updates,
     }));
+
+    // Persist if logged in
+    if (user) {
+      const base = { ...subscription, ...updates } as UserSubscription;
+      upsertSubscription({
+        user_id: user.id,
+        plan_id: base.planId,
+        status: base.status,
+        start_date: base.startDate,
+        end_date: base.endDate || null,
+        next_billing_date: base.nextBillingDate || null,
+        trial_end_date: base.trialEndDate || null,
+        grace_period_end: base.gracePeriodEnd || null,
+        payment_brand: base.paymentMethod?.brand || null,
+        payment_last4: base.paymentMethod?.last4 || null,
+        cancel_at_period_end: base.cancelAtPeriodEnd ?? false,
+        auto_renew: base.autoRenew,
+      }).catch(() => {});
+    }
   };
 
   const getCurrentPlan = (): SubscriptionPlan => {
@@ -297,6 +348,11 @@ export interface Invoice {
 
 export function useInvoiceHistory() {
   const [invoices, setInvoices] = useKV<Invoice[]>('user-invoices', []);
+  const { user } = useAuth();
+
+  useEffect(() => {
+    // Could fetch invoices from Supabase here for logged-in user; keeping simple
+  }, [user]);
 
   const addInvoice = (planId: 'advanced' | 'expert', amount: number) => {
     const plan = subscriptionPlans.find((p) => p.id === planId);
@@ -309,6 +365,17 @@ export function useInvoiceHistory() {
     };
 
     setInvoices((current) => [newInvoice, ...current].slice(0, 12)); // Keep last 12 invoices
+
+    if (user) {
+      dbAddInvoice({
+        user_id: user.id,
+        date: new Date().toISOString(),
+        amount,
+        plan_name: plan?.name || 'Unknown Plan',
+        status: 'paid',
+        download_url: null,
+      }).catch(() => {});
+    }
   };
 
   return { invoices, addInvoice };

@@ -1,7 +1,7 @@
 import { useEffect, useCallback } from 'react';
 
 import { useAuth } from '@/contexts/AuthContext';
-import { SessionManager } from '@/lib/security';
+import { supabase } from '@/lib/supabaseClient';
 
 /**
  * Hook for automatic session management
@@ -15,16 +15,17 @@ export function useSessionManager(): {
 
   // Track user activity to extend session
   const handleUserActivity = useCallback((): void => {
-    if (user && SessionManager.isSessionValid()) {
-      extendSession();
-    }
+  if (user) extendSession();
   }, [user, extendSession]);
 
   // Check session validity periodically
   const checkSession = useCallback((): void => {
-    if (user && !SessionManager.isSessionValid()) {
-      logout();
-    }
+    if (!user) return;
+    // Check Supabase session validity
+    supabase.auth.getSession().then(({ data }) => {
+      const hasSession = !!data.session;
+      if (!hasSession) logout();
+    });
   }, [user, logout]);
 
   useEffect(() => {
@@ -79,7 +80,7 @@ export function useSessionManager(): {
   }, [user, handleUserActivity, checkSession]);
 
   return {
-    isSessionValid: user ? SessionManager.isSessionValid() : false,
+    isSessionValid: !!user,
     extendSession: handleUserActivity,
   };
 }
