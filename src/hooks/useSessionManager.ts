@@ -15,7 +15,7 @@ export function useSessionManager(): {
 
   // Track user activity to extend session
   const handleUserActivity = useCallback((): void => {
-  if (user) extendSession();
+    if (user) extendSession();
   }, [user, extendSession]);
 
   // Check session validity periodically

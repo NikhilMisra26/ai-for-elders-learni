@@ -13,7 +13,11 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
-import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
+import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSlot,
+} from '@/components/ui/input-otp';
 import { validatePassword, validateEmail } from '@/lib/security';
 
 interface AuthFormProps {
@@ -29,7 +33,14 @@ export function AuthForm({ onClose }: AuthFormProps) {
   const [showOtpStep, setShowOtpStep] = useState(false);
   const [otp, setOtp] = useState('');
   const [resendCooldown, setResendCooldown] = useState(0);
-  const { login, register, verifySignupOtp, resendSignupOtp, isLoading, securityState } = useAuth();
+  const {
+    login,
+    register,
+    verifySignupOtp,
+    resendSignupOtp,
+    isLoading,
+    securityState,
+  } = useAuth();
 
   // Real-time password validation for registration
   const passwordValidation = isLogin ? null : validatePassword(password);
@@ -78,7 +89,7 @@ export function AuthForm({ onClose }: AuthFormProps) {
       return;
     }
 
-  try {
+    try {
       if (isLogin) {
         const result = await login(email, password);
         if (result.success) {
@@ -93,7 +104,9 @@ export function AuthForm({ onClose }: AuthFormProps) {
           setShowOtpStep(true);
           setOtp('');
           setResendCooldown(30);
-          toast.success('We sent a 6‑digit code to your email. Enter it below to verify.');
+          toast.success(
+            'We sent a 6‑digit code to your email. Enter it below to verify.',
+          );
           // start cooldown timer
           const interval = setInterval(() => {
             setResendCooldown((s) => {
@@ -196,7 +209,12 @@ export function AuthForm({ onClose }: AuthFormProps) {
           <form onSubmit={handleVerifyOtp} className='space-y-4'>
             <div className='space-y-2'>
               <Label htmlFor='otp'>Verification Code</Label>
-              <InputOTP maxLength={6} value={otp} onChange={setOtp} containerClassName='justify-center'>
+              <InputOTP
+                maxLength={6}
+                value={otp}
+                onChange={setOtp}
+                containerClassName='justify-center'
+              >
                 <InputOTPGroup>
                   {Array.from({ length: 6 }).map((_, i) => (
                     <InputOTPSlot key={i} index={i} />
@@ -204,7 +222,8 @@ export function AuthForm({ onClose }: AuthFormProps) {
                 </InputOTPGroup>
               </InputOTP>
               <p className='text-sm text-muted-foreground'>
-                This code expires shortly. If you didn’t request it, you can safely ignore and delete this email.
+                This code expires shortly. If you didn’t request it, you can
+                safely ignore and delete this email.
               </p>
             </div>
             <Button
@@ -215,166 +234,180 @@ export function AuthForm({ onClose }: AuthFormProps) {
               Verify and Continue
             </Button>
             <div className='text-center'>
-              <Button type='button' variant='ghost' onClick={handleResend} disabled={isLoading || resendCooldown > 0}>
-                {resendCooldown > 0 ? `Resend code in ${resendCooldown}s` : 'Resend code'}
+              <Button
+                type='button'
+                variant='ghost'
+                onClick={handleResend}
+                disabled={isLoading || resendCooldown > 0}
+              >
+                {resendCooldown > 0
+                  ? `Resend code in ${resendCooldown}s`
+                  : 'Resend code'}
               </Button>
             </div>
             <div className='text-center'>
-              <Button type='button' variant='ghost' onClick={() => setShowOtpStep(false)} disabled={isLoading}>
+              <Button
+                type='button'
+                variant='ghost'
+                onClick={() => setShowOtpStep(false)}
+                disabled={isLoading}
+              >
                 Edit email
               </Button>
             </div>
           </form>
         ) : (
-        <form onSubmit={handleSubmit} className='space-y-4'>
-          {!isLogin && (
-            <div className='space-y-2'>
-              <Label htmlFor='name'>Full Name</Label>
-              <Input
-                id='name'
-                type='text'
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder='Enter your full name'
-                required={!isLogin}
-                className='h-12 text-base'
-                maxLength={100}
-              />
-            </div>
-          )}
-
-          <div className='space-y-2'>
-            <Label htmlFor='email'>Email Address</Label>
-            <Input
-              id='email'
-              type='email'
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder='Enter your email'
-              required
-              className={`h-12 text-base ${
-                emailValidation && !emailValidation.isValid
-                  ? 'border-red-300'
-                  : ''
-              }`}
-              maxLength={254}
-            />
-            {emailValidation && !emailValidation.isValid && (
-              <p className='text-sm text-red-600'>
-                {emailValidation.errors[0]}
-              </p>
-            )}
-          </div>
-
-          <div className='space-y-2'>
-            <Label htmlFor='password'>Password</Label>
-            <div className='relative'>
-              <Input
-                id='password'
-                type={showPassword ? 'text' : 'password'}
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder={
-                  isLogin ? 'Enter your password' : 'Create a strong password'
-                }
-                required
-                className={`h-12 text-base pr-12 ${
-                  !isLogin && passwordValidation && !passwordValidation.isValid
-                    ? 'border-red-300'
-                    : ''
-                }`}
-                maxLength={128}
-              />
-              <Button
-                type='button'
-                variant='ghost'
-                size='sm'
-                onClick={() => setShowPassword(!showPassword)}
-                className='absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 p-0'
-                aria-label={showPassword ? 'Hide password' : 'Show password'}
-              >
-                {showPassword ? (
-                  <EyeSlash weight='regular' />
-                ) : (
-                  <Eye weight='regular' />
-                )}
-              </Button>
-            </div>
-
-            {!isLogin && password && (
+          <form onSubmit={handleSubmit} className='space-y-4'>
+            {!isLogin && (
               <div className='space-y-2'>
-                <div className='flex items-center gap-2'>
-                  <span className='text-sm text-muted-foreground'>
-                    Password strength:
-                  </span>
-                  <span
-                    className={`text-sm font-medium ${getPasswordStrengthColor()}`}
-                  >
-                    {passwordValidation?.strength
-                      ? passwordValidation.strength.charAt(0).toUpperCase() +
-                        passwordValidation.strength.slice(1)
-                      : ''}
-                  </span>
-                </div>
-
-                {passwordValidation && !passwordValidation.isValid && (
-                  <div className='bg-red-50 border border-red-200 rounded-lg p-3'>
-                    <ul className='text-sm text-red-700 space-y-1'>
-                      {passwordValidation.errors.map((error, index) => (
-                        <li key={index} className='flex items-start gap-1'>
-                          <span>•</span>
-                          <span>{error}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
+                <Label htmlFor='name'>Full Name</Label>
+                <Input
+                  id='name'
+                  type='text'
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder='Enter your full name'
+                  required={!isLogin}
+                  className='h-12 text-base'
+                  maxLength={100}
+                />
               </div>
             )}
 
-            {isLogin && (
-              <p className='text-sm text-muted-foreground'>
-                Password must be at least 8 characters
-              </p>
-            )}
+            <div className='space-y-2'>
+              <Label htmlFor='email'>Email Address</Label>
+              <Input
+                id='email'
+                type='email'
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder='Enter your email'
+                required
+                className={`h-12 text-base ${
+                  emailValidation && !emailValidation.isValid
+                    ? 'border-red-300'
+                    : ''
+                }`}
+                maxLength={254}
+              />
+              {emailValidation && !emailValidation.isValid && (
+                <p className='text-sm text-red-600'>
+                  {emailValidation.errors[0]}
+                </p>
+              )}
+            </div>
+
+            <div className='space-y-2'>
+              <Label htmlFor='password'>Password</Label>
+              <div className='relative'>
+                <Input
+                  id='password'
+                  type={showPassword ? 'text' : 'password'}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder={
+                    isLogin ? 'Enter your password' : 'Create a strong password'
+                  }
+                  required
+                  className={`h-12 text-base pr-12 ${
+                    !isLogin &&
+                    passwordValidation &&
+                    !passwordValidation.isValid
+                      ? 'border-red-300'
+                      : ''
+                  }`}
+                  maxLength={128}
+                />
+                <Button
+                  type='button'
+                  variant='ghost'
+                  size='sm'
+                  onClick={() => setShowPassword(!showPassword)}
+                  className='absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 p-0'
+                  aria-label={showPassword ? 'Hide password' : 'Show password'}
+                >
+                  {showPassword ? (
+                    <EyeSlash weight='regular' />
+                  ) : (
+                    <Eye weight='regular' />
+                  )}
+                </Button>
+              </div>
+
+              {!isLogin && password && (
+                <div className='space-y-2'>
+                  <div className='flex items-center gap-2'>
+                    <span className='text-sm text-muted-foreground'>
+                      Password strength:
+                    </span>
+                    <span
+                      className={`text-sm font-medium ${getPasswordStrengthColor()}`}
+                    >
+                      {passwordValidation?.strength
+                        ? passwordValidation.strength.charAt(0).toUpperCase() +
+                          passwordValidation.strength.slice(1)
+                        : ''}
+                    </span>
+                  </div>
+
+                  {passwordValidation && !passwordValidation.isValid && (
+                    <div className='bg-red-50 border border-red-200 rounded-lg p-3'>
+                      <ul className='text-sm text-red-700 space-y-1'>
+                        {passwordValidation.errors.map((error, index) => (
+                          <li key={index} className='flex items-start gap-1'>
+                            <span>•</span>
+                            <span>{error}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {isLogin && (
+                <p className='text-sm text-muted-foreground'>
+                  Password must be at least 8 characters
+                </p>
+              )}
+            </div>
+
+            <Button
+              type='submit'
+              className='w-full h-12 text-base font-medium'
+              disabled={Boolean(
+                isLoading ||
+                  securityState.isLocked ||
+                  (!isLogin &&
+                    passwordValidation &&
+                    !passwordValidation.isValid) ||
+                  (emailValidation && !emailValidation.isValid),
+              )}
+            >
+              {isLoading
+                ? 'Please wait...'
+                : isLogin
+                  ? 'Sign In Securely'
+                  : 'Create Secure Account'}
+            </Button>
+          </form>
+        )}
+
+        {!showOtpStep && (
+          <div className='mt-6 text-center'>
+            <p className='text-sm text-muted-foreground mb-2'>
+              {isLogin ? "Don't have an account?" : 'Already have an account?'}
+            </p>
+            <Button
+              variant='ghost'
+              onClick={() => setIsLogin(!isLogin)}
+              className='text-primary hover:text-primary/80'
+              disabled={isLoading}
+            >
+              {isLogin ? 'Create Account' : 'Sign In'}
+            </Button>
           </div>
-
-          <Button
-            type='submit'
-            className='w-full h-12 text-base font-medium'
-            disabled={Boolean(
-              isLoading ||
-                securityState.isLocked ||
-                (!isLogin &&
-                  passwordValidation &&
-                  !passwordValidation.isValid) ||
-                (emailValidation && !emailValidation.isValid),
-            )}
-          >
-            {isLoading
-              ? 'Please wait...'
-              : isLogin
-                ? 'Sign In Securely'
-                : 'Create Secure Account'}
-          </Button>
-  </form>
-  )}
-
-  {!showOtpStep && (
-  <div className='mt-6 text-center'>
-          <p className='text-sm text-muted-foreground mb-2'>
-            {isLogin ? "Don't have an account?" : 'Already have an account?'}
-          </p>
-          <Button
-            variant='ghost'
-            onClick={() => setIsLogin(!isLogin)}
-            className='text-primary hover:text-primary/80'
-            disabled={isLoading}
-          >
-            {isLogin ? 'Create Account' : 'Sign In'}
-          </Button>
-  </div>
-  )}
+        )}
 
         {/* Security notice */}
         <div className='mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg'>

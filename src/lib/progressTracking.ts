@@ -1,5 +1,4 @@
 import { useKV } from './kv';
-import { useAuth } from '@/contexts/AuthContext';
 import {
   upsertCourseProgress,
   upsertModuleProgress,
@@ -7,6 +6,8 @@ import {
 } from './db';
 import type { Course, Module } from './courseData';
 import { courseData } from './courseData';
+
+import { useAuth } from '@/contexts/AuthContext';
 
 export interface ModuleProgress {
   moduleId: string;
@@ -180,7 +181,7 @@ export function useProgress() {
     }
 
     // Update course progress
-  setCourseProgress((current) => {
+    setCourseProgress((current) => {
       const existing = current.find((cp) => cp.courseId === courseId);
       const completedModules = moduleProgress
         .filter((mp) => mp.courseId === courseId)
