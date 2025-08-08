@@ -228,7 +228,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         email: sanitizedEmail,
         token,
         type: 'email',
-      } as any);
+      } as VerifyOtpParams);
 
       if (error) {
         setIsLoading(false);
