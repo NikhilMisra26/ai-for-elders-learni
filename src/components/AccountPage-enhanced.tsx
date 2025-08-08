@@ -117,7 +117,7 @@ export function AccountPage({ onNavigate }: AccountPageProps): ReactElement {
         );
       } else {
         // Simulate payment for existing users
-        const result = await simulatePaymentFlow();
+        const result = await simulatePaymentFlow(planId);
 
         if (result.success && result.paymentMethod) {
           upgradeToPaid(planId, result.paymentMethod);
