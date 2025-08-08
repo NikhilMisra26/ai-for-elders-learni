@@ -7,16 +7,22 @@ const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_ANON_KEY as
   | undefined;
 
 if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-  // Soft warn in dev; this allows builds to proceed while guiding setup
-  // eslint-disable-next-line no-console
-  console.warn(
-    '[supabase] Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY. Configure your .env.* files.',
-  );
+  // In production, throw an error to prevent unintended connections
+  if (import.meta.env.MODE === 'production') {
+    throw new Error(
+      '[supabase] Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY. Configure your .env.* files.'
+    );
+  } else {
+    // eslint-disable-next-line no-console
+    console.warn(
+      '[supabase] Missing VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY. Configure your .env.* files.',
+    );
+  }
 }
 
 export const supabase = createClient(
-  SUPABASE_URL || 'https://example.supabase.co',
-  SUPABASE_ANON_KEY || 'anon-key',
+  SUPABASE_URL as string,
+  SUPABASE_ANON_KEY as string,
   {
     auth: {
       persistSession: true,
