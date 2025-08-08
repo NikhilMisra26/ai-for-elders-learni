@@ -108,7 +108,7 @@ importers:
         specifier: ^4.1.11
         version: 4.1.11(vite@6.3.5(jiti@2.5.1)(lightningcss@1.30.1)(yaml@2.8.1))
       '@tanstack/react-query':
-        specifier: ^5.83.1
+        specifier: ^5.84.1
         version: 5.84.1(react@19.1.1)
       class-variance-authority:
         specifier: ^0.7.1
