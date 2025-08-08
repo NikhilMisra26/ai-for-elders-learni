@@ -13,6 +13,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
+import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { validatePassword, validateEmail } from '@/lib/security';
 
 interface AuthFormProps {
@@ -25,7 +26,10 @@ export function AuthForm({ onClose }: AuthFormProps) {
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const { login, register, isLoading, securityState } = useAuth();
+  const [showOtpStep, setShowOtpStep] = useState(false);
+  const [otp, setOtp] = useState('');
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const { login, register, verifySignupOtp, resendSignupOtp, isLoading, securityState } = useAuth();
 
   // Real-time password validation for registration
   const passwordValidation = isLogin ? null : validatePassword(password);
@@ -74,7 +78,7 @@ export function AuthForm({ onClose }: AuthFormProps) {
       return;
     }
 
-    try {
+  try {
       if (isLogin) {
         const result = await login(email, password);
         if (result.success) {
@@ -86,16 +90,61 @@ export function AuthForm({ onClose }: AuthFormProps) {
       } else {
         const result = await register(email, password, name);
         if (result.success) {
-          toast.success(
-            'Account created! Please check your email to verify, then sign in.',
-          );
-          onClose();
+          setShowOtpStep(true);
+          setOtp('');
+          setResendCooldown(30);
+          toast.success('We sent a 6‑digit code to your email. Enter it below to verify.');
+          // start cooldown timer
+          const interval = setInterval(() => {
+            setResendCooldown((s) => {
+              if (s <= 1) {
+                clearInterval(interval);
+                return 0;
+              }
+              return s - 1;
+            });
+          }, 1000);
         } else {
           toast.error(result.error || 'Registration failed');
         }
       }
     } catch (error) {
       toast.error('Something went wrong. Please try again.');
+    }
+  };
+
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || otp.length < 6) {
+      toast.error('Enter the 6-digit code');
+      return;
+    }
+    const res = await verifySignupOtp(email, otp);
+    if (res.success) {
+      toast.success('Email verified! You are now signed in.');
+      onClose();
+    } else {
+      toast.error(res.error || 'Invalid or expired code');
+    }
+  };
+
+  const handleResend = async () => {
+    if (!email || resendCooldown > 0) return;
+    const res = await resendSignupOtp(email);
+    if (res.success) {
+      toast.success('Code resent. Check your inbox.');
+      setResendCooldown(30);
+      const interval = setInterval(() => {
+        setResendCooldown((s) => {
+          if (s <= 1) {
+            clearInterval(interval);
+            return 0;
+          }
+          return s - 1;
+        });
+      }, 1000);
+    } else {
+      toast.error(res.error || 'Could not resend code');
     }
   };
 
@@ -109,9 +158,11 @@ export function AuthForm({ onClose }: AuthFormProps) {
           </CardTitle>
         </div>
         <CardDescription>
-          {isLogin
-            ? 'Sign in to continue your AI learning journey'
-            : 'Join thousands of adults learning AI safely'}
+          {showOtpStep
+            ? `Enter the code we emailed to ${email || 'your inbox'}`
+            : isLogin
+              ? 'Sign in to continue your AI learning journey'
+              : 'Join thousands of adults learning AI safely'}
         </CardDescription>
 
         {/* Security status indicator */}
@@ -141,6 +192,40 @@ export function AuthForm({ onClose }: AuthFormProps) {
           )}
       </CardHeader>
       <CardContent>
+        {showOtpStep ? (
+          <form onSubmit={handleVerifyOtp} className='space-y-4'>
+            <div className='space-y-2'>
+              <Label htmlFor='otp'>Verification Code</Label>
+              <InputOTP maxLength={6} value={otp} onChange={setOtp} containerClassName='justify-center'>
+                <InputOTPGroup>
+                  {Array.from({ length: 6 }).map((_, i) => (
+                    <InputOTPSlot key={i} index={i} />
+                  ))}
+                </InputOTPGroup>
+              </InputOTP>
+              <p className='text-sm text-muted-foreground'>
+                This code expires shortly. If you didn’t request it, you can safely ignore and delete this email.
+              </p>
+            </div>
+            <Button
+              type='submit'
+              className='w-full h-12 text-base font-medium'
+              disabled={isLoading || otp.length < 6}
+            >
+              Verify and Continue
+            </Button>
+            <div className='text-center'>
+              <Button type='button' variant='ghost' onClick={handleResend} disabled={isLoading || resendCooldown > 0}>
+                {resendCooldown > 0 ? `Resend code in ${resendCooldown}s` : 'Resend code'}
+              </Button>
+            </div>
+            <div className='text-center'>
+              <Button type='button' variant='ghost' onClick={() => setShowOtpStep(false)} disabled={isLoading}>
+                Edit email
+              </Button>
+            </div>
+          </form>
+        ) : (
         <form onSubmit={handleSubmit} className='space-y-4'>
           {!isLogin && (
             <div className='space-y-2'>
@@ -272,9 +357,11 @@ export function AuthForm({ onClose }: AuthFormProps) {
                 ? 'Sign In Securely'
                 : 'Create Secure Account'}
           </Button>
-        </form>
+  </form>
+  )}
 
-        <div className='mt-6 text-center'>
+  {!showOtpStep && (
+  <div className='mt-6 text-center'>
           <p className='text-sm text-muted-foreground mb-2'>
             {isLogin ? "Don't have an account?" : 'Already have an account?'}
           </p>
@@ -286,7 +373,8 @@ export function AuthForm({ onClose }: AuthFormProps) {
           >
             {isLogin ? 'Create Account' : 'Sign In'}
           </Button>
-        </div>
+  </div>
+  )}
 
         {/* Security notice */}
         <div className='mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg'>

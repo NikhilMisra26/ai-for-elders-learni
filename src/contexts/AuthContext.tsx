@@ -44,6 +44,13 @@ interface AuthContextType {
     password: string,
     name: string,
   ) => Promise<{ success: boolean; error?: string }>;
+  verifySignupOtp: (
+    email: string,
+    token: string,
+  ) => Promise<{ success: boolean; error?: string }>;
+  resendSignupOtp: (
+    email: string,
+  ) => Promise<{ success: boolean; error?: string }>;
   logout: () => void;
   isLoading: boolean;
   updateTier: (tier: 'free' | 'advanced' | 'expert') => void;
@@ -209,6 +216,64 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // Verify signup OTP that was emailed to the user (when Email OTP is enabled in Supabase)
+  const verifySignupOtp = async (
+    email: string,
+    token: string,
+  ): Promise<{ success: boolean; error?: string }> => {
+    setIsLoading(true);
+    try {
+      const sanitizedEmail = sanitizeInput(email.toLowerCase());
+      const { data, error } = await supabase.auth.verifyOtp({
+        email: sanitizedEmail,
+        token,
+        type: 'email',
+      } as any);
+
+      if (error) {
+        setIsLoading(false);
+        return { success: false, error: error.message };
+      }
+
+      // If a session is returned, the auth listener/init flow will load profile
+      if (data?.session?.user) {
+        SecurityLogger.log('email_verified_via_otp', {
+          userId: data.session.user.id,
+          email: sanitizedEmail,
+        });
+      }
+
+      setIsLoading(false);
+      return { success: true };
+    } catch (e) {
+      setIsLoading(false);
+      return {
+        success: false,
+        error: e instanceof Error && e.message ? e.message : 'Failed to verify code',
+      };
+    }
+  };
+
+  // Resend signup OTP email
+  const resendSignupOtp = async (
+    email: string,
+  ): Promise<{ success: boolean; error?: string }> => {
+    try {
+      const sanitizedEmail = sanitizeInput(email.toLowerCase());
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: sanitizedEmail,
+      } as any);
+      if (error) return { success: false, error: error.message };
+      return { success: true };
+    } catch (e) {
+      return {
+        success: false,
+        error: e instanceof Error && e.message ? e.message : 'Failed to resend code',
+      };
+    }
+  };
+
   const login = async (
     email: string,
     password: string,
@@ -359,6 +424,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         user,
         login,
         register,
+  verifySignupOtp,
+  resendSignupOtp,
         logout,
         isLoading,
         updateTier,
