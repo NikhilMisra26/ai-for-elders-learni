@@ -3,6 +3,7 @@ import type {
   ComponentType,
   CSSProperties,
   ReactNode,
+  ReactElement,
 } from 'react';
 import { createContext, useContext, useId, useMemo } from 'react';
 import * as RechartsPrimitive from 'recharts';
@@ -29,7 +30,7 @@ interface ChartContextProps {
 
 const ChartContext = createContext<ChartContextProps | null>(null);
 
-function useChart() {
+function useChart(): ChartContextProps {
   const context = useContext(ChartContext);
 
   if (!context) {
@@ -50,9 +51,9 @@ function ChartContainer({
   children: ComponentProps<
     typeof RechartsPrimitive.ResponsiveContainer
   >['children'];
-}) {
+}): ReactElement {
   const uniqueId = useId();
-  const chartId = `chart-${id || uniqueId.replace(/:/g, '')}`;
+  const chartId = `chart-${id ?? uniqueId.replace(/:/g, '')}`;
 
   return (
     <ChartContext.Provider value={{ config }}>
@@ -74,37 +75,37 @@ function ChartContainer({
   );
 }
 
-const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
+const ChartStyle = ({
+  id,
+  config,
+}: {
+  id: string;
+  config: ChartConfig;
+}): ReactElement | null => {
   const colorConfig = Object.entries(config).filter(
-    ([, config]) => config.theme || config.color,
+    ([, config]) => config.theme ?? config.color,
   );
 
   if (!colorConfig.length) {
     return null;
   }
 
-  return (
-    <style
-      dangerouslySetInnerHTML={{
-        __html: Object.entries(THEMES)
-          .map(
-            ([theme, prefix]) => `
-${prefix} [data-chart=${id}] {
-${colorConfig
-  .map(([key, itemConfig]) => {
-    const color =
-      itemConfig.theme?.[theme as keyof typeof itemConfig.theme] ||
-      itemConfig.color;
-    return color ? `  --color-${key}: ${color};` : null;
-  })
-  .join('\n')}
-}
-`,
-          )
-          .join('\n'),
-      }}
-    />
-  );
+  const cssText = Object.entries(THEMES)
+    .map(([theme, prefix]) => {
+      const lines = colorConfig
+        .map(([key, itemConfig]) => {
+          const color =
+            itemConfig.theme?.[theme as keyof typeof itemConfig.theme] ??
+            itemConfig.color;
+          return color ? `  --color-${key}: ${color};` : '';
+        })
+        .filter(Boolean)
+        .join('\n');
+      return `${prefix} [data-chart=${id}] {\n${lines}\n}`;
+    })
+    .join('\n');
+
+  return <style>{cssText}</style>;
 };
 
 const ChartTooltip = RechartsPrimitive.Tooltip;
@@ -130,7 +131,7 @@ function ChartTooltipContent({
     indicator?: 'line' | 'dot' | 'dashed';
     nameKey?: string;
     labelKey?: string;
-  }) {
+  }): ReactElement | null {
   const { config } = useChart();
 
   const tooltipLabel = useMemo(() => {
@@ -139,17 +140,17 @@ function ChartTooltipContent({
     }
 
     const [item] = payload;
-    const key = `${labelKey || item?.dataKey || item?.name || 'value'}`;
+    const key = `${labelKey ?? item?.dataKey ?? item?.name ?? 'value'}`;
     const itemConfig = getPayloadConfigFromPayload(config, item, key);
     const value =
       !labelKey && typeof label === 'string'
-        ? config[label]?.label || label
+        ? (config[label]?.label ?? label)
         : itemConfig?.label;
 
     if (labelFormatter) {
       return (
         <div className={cn('font-medium', labelClassName)}>
-          {labelFormatter(value, payload)}
+          {labelFormatter(value ?? '', payload)}
         </div>
       );
     }
@@ -185,9 +186,9 @@ function ChartTooltipContent({
       {!nestLabel ? tooltipLabel : null}
       <div className='grid gap-1.5'>
         {payload.map((item, index) => {
-          const key = `${nameKey || item.name || item.dataKey || 'value'}`;
+          const key = `${nameKey ?? item.name ?? item.dataKey ?? 'value'}`;
           const itemConfig = getPayloadConfigFromPayload(config, item, key);
-          const indicatorColor = color || item.payload.fill || item.color;
+          const indicatorColor = color ?? item.payload.fill ?? item.color;
 
           return (
             <div
@@ -265,7 +266,7 @@ function ChartLegendContent({
   Pick<RechartsPrimitive.LegendProps, 'payload' | 'verticalAlign'> & {
     hideIcon?: boolean;
     nameKey?: string;
-  }) {
+  }): ReactElement | null {
   const { config } = useChart();
 
   if (!payload?.length) {
@@ -314,7 +315,7 @@ function getPayloadConfigFromPayload(
   config: ChartConfig,
   payload: unknown,
   key: string,
-) {
+): { label?: ReactNode; icon?: ComponentType } | undefined {
   if (typeof payload !== 'object' || payload === null) {
     return undefined;
   }
@@ -343,7 +344,9 @@ function getPayloadConfigFromPayload(
     ] as string;
   }
 
-  return configLabelKey in config ? config[configLabelKey] : config[key];
+  return (configLabelKey in config ? config[configLabelKey] : config[key]) as
+    | { label?: ReactNode; icon?: ComponentType }
+    | undefined;
 }
 
 export {

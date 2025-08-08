@@ -1,34 +1,36 @@
-import type { ComponentProps } from 'react';
+import type { ComponentProps, ReactElement } from 'react';
 import { Drawer as DrawerPrimitive } from 'vaul';
 
 import { cn } from '@/lib/utils';
 
-function Drawer({ ...props }: ComponentProps<typeof DrawerPrimitive.Root>) {
+function Drawer({
+  ...props
+}: ComponentProps<typeof DrawerPrimitive.Root>): ReactElement {
   return <DrawerPrimitive.Root data-slot='drawer' {...props} />;
 }
 
 function DrawerTrigger({
   ...props
-}: ComponentProps<typeof DrawerPrimitive.Trigger>) {
+}: ComponentProps<typeof DrawerPrimitive.Trigger>): ReactElement {
   return <DrawerPrimitive.Trigger data-slot='drawer-trigger' {...props} />;
 }
 
 function DrawerPortal({
   ...props
-}: ComponentProps<typeof DrawerPrimitive.Portal>) {
+}: ComponentProps<typeof DrawerPrimitive.Portal>): ReactElement {
   return <DrawerPrimitive.Portal data-slot='drawer-portal' {...props} />;
 }
 
 function DrawerClose({
   ...props
-}: ComponentProps<typeof DrawerPrimitive.Close>) {
+}: ComponentProps<typeof DrawerPrimitive.Close>): ReactElement {
   return <DrawerPrimitive.Close data-slot='drawer-close' {...props} />;
 }
 
 function DrawerOverlay({
   className,
   ...props
-}: ComponentProps<typeof DrawerPrimitive.Overlay>) {
+}: ComponentProps<typeof DrawerPrimitive.Overlay>): ReactElement {
   return (
     <DrawerPrimitive.Overlay
       data-slot='drawer-overlay'
@@ -45,7 +47,7 @@ function DrawerContent({
   className,
   children,
   ...props
-}: ComponentProps<typeof DrawerPrimitive.Content>) {
+}: ComponentProps<typeof DrawerPrimitive.Content>): ReactElement {
   return (
     <DrawerPortal data-slot='drawer-portal'>
       <DrawerOverlay />
@@ -68,7 +70,10 @@ function DrawerContent({
   );
 }
 
-function DrawerHeader({ className, ...props }: ComponentProps<'div'>) {
+function DrawerHeader({
+  className,
+  ...props
+}: ComponentProps<'div'>): ReactElement {
   return (
     <div
       data-slot='drawer-header'
@@ -78,7 +83,10 @@ function DrawerHeader({ className, ...props }: ComponentProps<'div'>) {
   );
 }
 
-function DrawerFooter({ className, ...props }: ComponentProps<'div'>) {
+function DrawerFooter({
+  className,
+  ...props
+}: ComponentProps<'div'>): ReactElement {
   return (
     <div
       data-slot='drawer-footer'
@@ -91,7 +99,7 @@ function DrawerFooter({ className, ...props }: ComponentProps<'div'>) {
 function DrawerTitle({
   className,
   ...props
-}: ComponentProps<typeof DrawerPrimitive.Title>) {
+}: ComponentProps<typeof DrawerPrimitive.Title>): ReactElement {
   return (
     <DrawerPrimitive.Title
       data-slot='drawer-title'
@@ -104,7 +112,7 @@ function DrawerTitle({
 function DrawerDescription({
   className,
   ...props
-}: ComponentProps<typeof DrawerPrimitive.Description>) {
+}: ComponentProps<typeof DrawerPrimitive.Description>): ReactElement {
   return (
     <DrawerPrimitive.Description
       data-slot='drawer-description'

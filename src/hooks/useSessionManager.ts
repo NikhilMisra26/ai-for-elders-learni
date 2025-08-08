@@ -22,15 +22,16 @@ export function useSessionManager(): {
   const checkSession = useCallback((): void => {
     if (!user) return;
     // Check Supabase session validity
-    supabase.auth.getSession().then(({ data }) => {
+    void supabase.auth.getSession().then(({ data }) => {
       const hasSession = !!data.session;
-      if (!hasSession) logout();
+      if (!hasSession) void logout();
     });
   }, [user, logout]);
 
   useEffect(() => {
     if (!user) return;
-    if (typeof document === 'undefined') return;
+    if (typeof document === 'undefined' || typeof window === 'undefined')
+      return;
 
     // Events that indicate user activity
     const activityEvents = [
@@ -45,7 +46,7 @@ export function useSessionManager(): {
     // Throttle activity tracking to avoid excessive calls
     let activityTimeout: number | null = null;
 
-    const throttledActivity = () => {
+    const throttledActivity = (): void => {
       if (activityTimeout) return;
 
       activityTimeout = window.setTimeout(() => {
@@ -66,7 +67,7 @@ export function useSessionManager(): {
     );
 
     // Cleanup
-    return () => {
+    return (): void => {
       activityEvents.forEach((event) => {
         document.removeEventListener(event, throttledActivity);
       });

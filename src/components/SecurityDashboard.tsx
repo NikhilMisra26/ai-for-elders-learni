@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, type ReactElement } from 'react';
 import { Shield, Warning, Info, ArrowClockwise } from '@phosphor-icons/react';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,7 +10,9 @@ interface SecurityDashboardProps {
   onClose: () => void;
 }
 
-export function SecurityDashboard({ onClose }: SecurityDashboardProps) {
+export function SecurityDashboard({
+  onClose,
+}: SecurityDashboardProps): ReactElement {
   const [logs, setLogs] = useState<ReturnType<typeof SecurityLogger.getLogs>>(
     [],
   );
@@ -18,18 +20,21 @@ export function SecurityDashboard({ onClose }: SecurityDashboardProps) {
     'all',
   );
 
-  const loadLogs = () => {
-    const allLogs = SecurityLogger.getLogs(
-      filter === 'all' ? undefined : filter,
-    );
-    setLogs(allLogs.slice(-50).reverse()); // Show last 50 logs, newest first
-  };
+  const loadLogs = useMemo(
+    (): (() => void) => () => {
+      const allLogs = SecurityLogger.getLogs(
+        filter === 'all' ? undefined : filter,
+      );
+      setLogs(allLogs.slice(-50).reverse()); // Show last 50 logs, newest first
+    },
+    [filter],
+  );
 
   useEffect(() => {
     loadLogs();
-  }, [filter]);
+  }, [loadLogs]);
 
-  const getSeverityIcon = (severity: string) => {
+  const getSeverityIcon = (severity: string): ReactElement => {
     switch (severity) {
       case 'error':
         return <Warning className='h-4 w-4 text-red-500' />;
@@ -40,7 +45,7 @@ export function SecurityDashboard({ onClose }: SecurityDashboardProps) {
     }
   };
 
-  const getSeverityBadge = (severity: string) => {
+  const getSeverityBadge = (severity: string): ReactElement => {
     const variants = {
       error: 'destructive',
       warning: 'secondary',
@@ -54,30 +59,33 @@ export function SecurityDashboard({ onClose }: SecurityDashboardProps) {
     );
   };
 
-  const formatTimestamp = (timestamp: number) => {
+  const formatTimestamp = (timestamp: number): string => {
     return new Date(timestamp).toLocaleString();
   };
 
-  const getEventDescription = (event: string, details: any) => {
+  const getEventDescription = (
+    event: string,
+    details: Record<string, unknown>,
+  ): string => {
     switch (event) {
       case 'user_registered':
-        return `New user registration: ${details.email}`;
+        return `New user registration: ${String(details.email)}`;
       case 'user_login':
-        return `User login: ${details.email}`;
+        return `User login: ${String(details.email)}`;
       case 'user_logout':
-        return `User logout: ${details.userId}`;
+        return `User logout: ${String(details.userId)}`;
       case 'login_failed':
-        return `Failed login attempt: ${details.email} (${details.reason})`;
+        return `Failed login attempt: ${String(details.email)} (${String(details.reason)})`;
       case 'login_blocked':
-        return `Login blocked: ${details.email || details.userId} (${details.reason})`;
+        return `Login blocked: ${String(details.email ?? details.userId)} (${String(details.reason)})`;
       case 'registration_failed':
-        return `Registration failed: ${details.email} (${details.reason})`;
+        return `Registration failed: ${String(details.email)} (${String(details.reason)})`;
       case 'tier_updated':
-        return `Tier change: ${details.oldTier} → ${details.newTier}`;
+        return `Tier change: ${String(details.oldTier)} → ${String(details.newTier)}`;
       case 'session_extended':
-        return `Session extended for user: ${details.userId}`;
+        return `Session extended for user: ${String(details.userId)}`;
       case 'session_expired':
-        return `Session expired for user: ${details.userId}`;
+        return `Session expired for user: ${String(details.userId)}`;
       default:
         return event.replace(/_/g, ' ').toUpperCase();
     }
@@ -163,9 +171,9 @@ export function SecurityDashboard({ onClose }: SecurityDashboardProps) {
               </div>
             ) : (
               <div className='space-y-1'>
-                {logs.map((log, index) => (
+                {logs.map((log) => (
                   <div
-                    key={index}
+                    key={`${log.timestamp}-${log.event}`}
                     className='p-3 border-b hover:bg-muted/50 transition-colors'
                   >
                     <div className='flex items-start gap-3'>

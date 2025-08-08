@@ -39,7 +39,7 @@ export function useAudioNarration(
   const [utterance, setUtterance] = useState<SpeechSynthesisUtterance | null>(
     null,
   );
-  const [availableVoices, setAvailableVoices] = useState<
+  const [_availableVoices, setAvailableVoices] = useState<
     SpeechSynthesisVoice[]
   >([]);
 
@@ -47,7 +47,7 @@ export function useAudioNarration(
   useEffect(() => {
     if (!state.isSupported) return;
 
-    const loadVoices = () => {
+    const loadVoices = (): void => {
       const voices = window.speechSynthesis.getVoices();
       setAvailableVoices(voices);
 
@@ -60,8 +60,8 @@ export function useAudioNarration(
               (voice.name.toLowerCase().includes('female') ||
                 voice.name.toLowerCase().includes('zira') ||
                 voice.name.toLowerCase().includes('susan')),
-          ) ||
-          voices.find((voice) => voice.lang.startsWith('en')) ||
+          ) ??
+          voices.find((voice) => voice.lang.startsWith('en')) ??
           voices[0];
 
         setState((prev) => ({ ...prev, voice: preferredVoice }));
@@ -112,11 +112,11 @@ export function useAudioNarration(
       newUtterance.voice = state.voice;
     }
 
-    newUtterance.onstart = () => {
+    newUtterance.onstart = (): void => {
       setState((prev) => ({ ...prev, isPlaying: true, isPaused: false }));
     };
 
-    newUtterance.onend = () => {
+    newUtterance.onend = (): void => {
       setState((prev) => ({
         ...prev,
         isPlaying: false,
@@ -125,29 +125,31 @@ export function useAudioNarration(
       }));
     };
 
-    newUtterance.onpause = () => {
+    newUtterance.onpause = (): void => {
       setState((prev) => ({ ...prev, isPaused: true }));
     };
 
-    newUtterance.onresume = () => {
+    newUtterance.onresume = (): void => {
       setState((prev) => ({ ...prev, isPaused: false }));
     };
 
-    newUtterance.onerror = (event) => {
+    newUtterance.onerror = (event): void => {
       console.error('Speech synthesis error:', event.error);
       setState((prev) => ({ ...prev, isPlaying: false, isPaused: false }));
     };
 
     // Track position (approximate)
-    newUtterance.onboundary = (event) => {
-      setState((prev) => ({ ...prev, position: event.charIndex }));
+    newUtterance.onboundary = (event): void => {
+      // Some browsers may not provide charIndex reliably
+      const idx = (event as unknown as { charIndex?: number }).charIndex ?? 0;
+      setState((prev) => ({ ...prev, position: idx }));
     };
 
     setUtterance(newUtterance);
     setState((prev) => ({ ...prev, currentText: cleanText }));
   }, [text, state.rate, state.volume, state.voice, state.isSupported]);
 
-  const play = useCallback(() => {
+  const play = useCallback((): void => {
     if (!state.isSupported || !utterance) return;
 
     // Stop any current speech
@@ -157,12 +159,12 @@ export function useAudioNarration(
     window.speechSynthesis.speak(utterance);
   }, [state.isSupported, utterance]);
 
-  const pause = useCallback(() => {
+  const pause = useCallback((): void => {
     if (!state.isSupported) return;
     window.speechSynthesis.pause();
   }, [state.isSupported]);
 
-  const stop = useCallback(() => {
+  const stop = useCallback((): void => {
     if (!state.isSupported) return;
     window.speechSynthesis.cancel();
     setState((prev) => ({
@@ -173,26 +175,26 @@ export function useAudioNarration(
     }));
   }, [state.isSupported]);
 
-  const resume = useCallback(() => {
+  const resume = useCallback((): void => {
     if (!state.isSupported) return;
     window.speechSynthesis.resume();
   }, [state.isSupported]);
 
-  const setRate = useCallback((rate: number) => {
+  const setRate = useCallback((rate: number): void => {
     const clampedRate = Math.max(0.1, Math.min(2, rate));
     setState((prev) => ({ ...prev, rate: clampedRate }));
   }, []);
 
-  const setVolume = useCallback((volume: number) => {
+  const setVolume = useCallback((volume: number): void => {
     const clampedVolume = Math.max(0, Math.min(1, volume));
     setState((prev) => ({ ...prev, volume: clampedVolume }));
   }, []);
 
-  const setVoice = useCallback((voice: SpeechSynthesisVoice) => {
+  const setVoice = useCallback((voice: SpeechSynthesisVoice): void => {
     setState((prev) => ({ ...prev, voice }));
   }, []);
 
-  const getText = useCallback(() => {
+  const getText = useCallback((): string => {
     return state.currentText;
   }, [state.currentText]);
 
@@ -212,58 +214,56 @@ export function useAudioNarration(
 }
 
 // Hook for managing narration preferences
-export function useNarrationPreferences(): [
-  null | {
-    autoPlay: boolean;
-    defaultRate: number;
-    defaultVolume: number;
-    preferredVoice: string | null;
-    enabled: boolean;
-  },
-  (
-    updates: Partial<{
-      autoPlay: boolean;
-      defaultRate: number;
-      defaultVolume: number;
-      preferredVoice: string | null;
-      enabled: boolean;
-    }>,
-  ) => void,
-] {
-  const [preferences, setPreferences] = useState(() => {
-    if (typeof window === 'undefined') return null;
+export interface NarrationPreferences {
+  autoPlay: boolean;
+  defaultRate: number;
+  defaultVolume: number;
+  preferredVoice: string | null;
+  enabled: boolean;
+}
 
-    const saved = localStorage.getItem('audio-narration-preferences');
-    return saved
-      ? JSON.parse(saved)
-      : {
-          autoPlay: false,
-          defaultRate: 1,
-          defaultVolume: 1,
-          preferredVoice: null,
-          enabled: true,
-        };
-  });
+export function useNarrationPreferences(): [
+  NarrationPreferences | null,
+  (updates: Partial<NarrationPreferences>) => void,
+] {
+  const defaultPrefs: NarrationPreferences = {
+    autoPlay: false,
+    defaultRate: 1,
+    defaultVolume: 1,
+    preferredVoice: null,
+    enabled: true,
+  };
+  const [preferences, setPreferences] = useState<NarrationPreferences | null>(
+    () => {
+      if (typeof window === 'undefined') return null;
+      try {
+        const saved = window.localStorage.getItem(
+          'audio-narration-preferences',
+        );
+        return saved
+          ? (JSON.parse(saved) as NarrationPreferences)
+          : defaultPrefs;
+      } catch {
+        return defaultPrefs;
+      }
+    },
+  );
 
   useEffect(() => {
-    if (preferences) {
-      localStorage.setItem(
-        'audio-narration-preferences',
-        JSON.stringify(preferences),
-      );
+    if (preferences && typeof window !== 'undefined') {
+      try {
+        window.localStorage.setItem(
+          'audio-narration-preferences',
+          JSON.stringify(preferences),
+        );
+      } catch {
+        // ignore storage errors
+      }
     }
   }, [preferences]);
 
-  const updatePreferences = (
-    updates: Partial<{
-      autoPlay: boolean;
-      defaultRate: number;
-      defaultVolume: number;
-      preferredVoice: string | null;
-      enabled: boolean;
-    }>,
-  ): void => {
-    setPreferences((prev: any) => ({ ...prev, ...updates }));
+  const updatePreferences = (updates: Partial<NarrationPreferences>): void => {
+    setPreferences((prev) => ({ ...(prev ?? defaultPrefs), ...updates }));
   };
 
   return [preferences, updatePreferences] as const;
@@ -271,7 +271,7 @@ export function useNarrationPreferences(): [
 
 // Utility to extract readable text from HTML content
 export function extractTextFromHTML(html: string): string {
-  if (typeof window === 'undefined') return html;
+  if (typeof document === 'undefined') return html;
 
   const div = document.createElement('div');
   div.innerHTML = html;
@@ -280,7 +280,7 @@ export function extractTextFromHTML(html: string): string {
   const scripts = div.querySelectorAll('script, style');
   scripts.forEach((el) => el.remove());
 
-  return div.textContent || div.innerText || '';
+  return div.textContent ?? div.innerText ?? '';
 }
 
 // Utility to get estimated reading time
@@ -315,7 +315,7 @@ export function getRecommendedVoices(): string[] {
 
 // Accessibility helpers
 export function announceToScreenReader(message: string): void {
-  if (typeof window === 'undefined') return;
+  if (typeof document === 'undefined' || typeof window === 'undefined') return;
 
   const announcement = document.createElement('div');
   announcement.setAttribute('aria-live', 'polite');
@@ -325,7 +325,7 @@ export function announceToScreenReader(message: string): void {
 
   document.body.appendChild(announcement);
 
-  window.setTimeout(() => {
+  window.setTimeout((): void => {
     document.body.removeChild(announcement);
   }, 1000);
 }

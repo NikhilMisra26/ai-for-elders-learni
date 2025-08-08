@@ -73,7 +73,7 @@ export function AccessibilityProvider({
     }
   }, [isDarkMode]);
 
-  const increaseFontSize = () => {
+  const increaseFontSize = (): void => {
     setFontSize((current) => {
       if (current === 'small') return 'normal';
       if (current === 'normal') return 'large';
@@ -81,7 +81,7 @@ export function AccessibilityProvider({
     });
   };
 
-  const decreaseFontSize = () => {
+  const decreaseFontSize = (): void => {
     setFontSize((current) => {
       if (current === 'large') return 'normal';
       if (current === 'normal') return 'small';
@@ -103,9 +103,9 @@ export function AccessibilityProvider({
       utterance.pitch = 1;
       utterance.volume = 1;
 
-      utterance.onstart = () => setIsSpeaking(true);
-      utterance.onend = () => setIsSpeaking(false);
-      utterance.onerror = () => setIsSpeaking(false);
+      utterance.onstart = (): void => setIsSpeaking(true);
+      utterance.onend = (): void => setIsSpeaking(false);
+      utterance.onerror = (): void => setIsSpeaking(false);
 
       window.speechSynthesis.speak(utterance);
     }
@@ -136,7 +136,7 @@ export function AccessibilityProvider({
   );
 }
 
-export function useAccessibility() {
+export function useAccessibility(): AccessibilityContextType {
   const context = useContext(AccessibilityContext);
   if (context === undefined) {
     throw new Error(

@@ -1,4 +1,4 @@
-import type { ComponentProps } from 'react';
+import type { ComponentProps, ReactElement } from 'react';
 import ChevronLeft from 'lucide-react/dist/esm/icons/chevron-left';
 import ChevronRight from 'lucide-react/dist/esm/icons/chevron-right';
 import { DayPicker } from 'react-day-picker';
@@ -11,7 +11,7 @@ function Calendar({
   classNames,
   showOutsideDays = true,
   ...props
-}: ComponentProps<typeof DayPicker>) {
+}: ComponentProps<typeof DayPicker>): ReactElement {
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}

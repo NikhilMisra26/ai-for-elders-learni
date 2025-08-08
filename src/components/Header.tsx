@@ -1,5 +1,5 @@
 import { TextAa, Moon, Sun, User, SignOut, List } from '@phosphor-icons/react';
-import { useState } from 'react';
+import { useState, type ReactElement } from 'react';
 
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
@@ -11,7 +11,11 @@ interface HeaderProps {
   currentPage: string;
 }
 
-export function Header({ onAuthClick, onNavigate, currentPage }: HeaderProps) {
+export function Header({
+  onAuthClick,
+  onNavigate,
+  currentPage,
+}: HeaderProps): ReactElement {
   const { user, logout } = useAuth();
   const {
     fontSize,
@@ -29,8 +33,9 @@ export function Header({ onAuthClick, onNavigate, currentPage }: HeaderProps) {
     { id: 'account', label: 'Account' },
   ];
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = (): void => {
+    // If logout returns a Promise, explicitly ignore it to satisfy linting
+    void logout();
     onNavigate('home');
     setShowMobileMenu(false);
   };

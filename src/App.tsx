@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, type ReactElement } from 'react';
 
 import { AuthProvider } from './contexts/AuthContext';
 import { AccessibilityProvider } from './contexts/AccessibilityContext';
@@ -15,7 +15,7 @@ import { useSessionManager } from './hooks/useSessionManager';
 
 type Page = 'home' | 'courses' | 'dashboard' | 'account';
 
-function AppContent() {
+function AppContent(): ReactElement {
   const [currentPage, setCurrentPage] = useState<Page>('home');
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const [showSecurityDashboard, setShowSecurityDashboard] = useState(false);
@@ -23,32 +23,32 @@ function AppContent() {
   // Initialize session management
   useSessionManager();
 
-  const handleNavigate = (page: string) => {
+  const handleNavigate = (page: string): void => {
     setCurrentPage(page as Page);
   };
 
-  const handleAuthClick = () => {
+  const handleAuthClick = (): void => {
     setShowAuthDialog(true);
   };
 
-  const handleAuthClose = () => {
+  const handleAuthClose = (): void => {
     setShowAuthDialog(false);
   };
 
   // Security dashboard access (for demo purposes - in production, this would be admin-only)
-  const handleKeyPress = (e: KeyboardEvent) => {
+  const handleKeyPress = (e: KeyboardEvent): void => {
     if (e.ctrlKey && e.shiftKey && e.key === 'S') {
       setShowSecurityDashboard(true);
     }
   };
 
   // Add keyboard listener for security dashboard
-  React.useEffect(() => {
+  React.useEffect((): (() => void) => {
     window.addEventListener('keydown', handleKeyPress);
-    return () => window.removeEventListener('keydown', handleKeyPress);
+    return (): void => window.removeEventListener('keydown', handleKeyPress);
   }, []);
 
-  const renderPage = () => {
+  const renderPage = (): ReactElement => {
     switch (currentPage) {
       case 'home':
         return (
@@ -121,7 +121,7 @@ function AppContent() {
   );
 }
 
-function App() {
+function App(): ReactElement {
   return (
     <AuthProvider>
       <AccessibilityProvider>

@@ -163,7 +163,7 @@ export class RateLimiter {
    */
   recordFailedAttempt(identifier: string): void {
     const now = Date.now();
-    const record = this.attempts.get(identifier) || {
+    const record = this.attempts.get(identifier) ?? {
       count: 0,
       lastAttempt: 0,
     };
@@ -208,7 +208,7 @@ export class RateLimiter {
 export function sanitizeInput(input: string): string {
   return input
     .trim()
-    .replace(/[<>\"']/g, '') // Remove potentially dangerous characters
+    .replace(/[<>"']/g, '') // Remove potentially dangerous characters
     .slice(0, 1000); // Limit length
 }
 
@@ -217,7 +217,15 @@ export function sanitizeInput(input: string): string {
  */
 export function generateSessionToken(): string {
   const array = new Uint8Array(32);
-  crypto.getRandomValues(array);
+  const cryptoObj = (globalThis as unknown as { crypto?: Crypto }).crypto;
+  if (cryptoObj && typeof cryptoObj.getRandomValues === 'function') {
+    cryptoObj.getRandomValues(array);
+  } else {
+    // Fallback for non-browser/test environments (not cryptographically secure)
+    for (let i = 0; i < array.length; i += 1) {
+      array[i] = Math.floor(Math.random() * 256);
+    }
+  }
   return Array.from(array, (byte) => byte.toString(16).padStart(2, '0')).join(
     '',
   );
@@ -235,11 +243,15 @@ export class SessionManager {
     const timeout =
       Date.now() + defaultSecurityConfig.sessionTimeout * 60 * 1000;
 
-    localStorage.setItem(
-      this.SESSION_KEY,
-      JSON.stringify({ userId, token, createdAt: Date.now() }),
-    );
-    localStorage.setItem(this.TIMEOUT_KEY, timeout.toString());
+    const storage = (globalThis as unknown as { localStorage?: Storage })
+      .localStorage;
+    if (storage) {
+      storage.setItem(
+        this.SESSION_KEY,
+        JSON.stringify({ userId, token, createdAt: Date.now() }),
+      );
+      storage.setItem(this.TIMEOUT_KEY, timeout.toString());
+    }
 
     return token;
   }
@@ -250,8 +262,11 @@ export class SessionManager {
     createdAt: number;
   } | null {
     try {
-      const sessionData = localStorage.getItem(this.SESSION_KEY);
-      const timeout = localStorage.getItem(this.TIMEOUT_KEY);
+      const storage = (globalThis as unknown as { localStorage?: Storage })
+        .localStorage;
+      if (!storage) return null;
+      const sessionData = storage.getItem(this.SESSION_KEY);
+      const timeout = storage.getItem(this.TIMEOUT_KEY);
 
       if (!sessionData || !timeout) return null;
 
@@ -261,15 +276,22 @@ export class SessionManager {
         return null;
       }
 
-      return JSON.parse(sessionData);
+      return JSON.parse(sessionData) as {
+        userId: string;
+        token: string;
+        createdAt: number;
+      } | null;
     } catch {
       return null;
     }
   }
 
   static clearSession(): void {
-    localStorage.removeItem(this.SESSION_KEY);
-    localStorage.removeItem(this.TIMEOUT_KEY);
+    const storage = (globalThis as unknown as { localStorage?: Storage })
+      .localStorage;
+    if (!storage) return;
+    storage.removeItem(this.SESSION_KEY);
+    storage.removeItem(this.TIMEOUT_KEY);
   }
 
   static isSessionValid(): boolean {
@@ -277,10 +299,12 @@ export class SessionManager {
   }
 
   static extendSession(): void {
-    if (this.isSessionValid()) {
+    const storage = (globalThis as unknown as { localStorage?: Storage })
+      .localStorage;
+    if (this.isSessionValid() && storage) {
       const timeout =
         Date.now() + defaultSecurityConfig.sessionTimeout * 60 * 1000;
-      localStorage.setItem(this.TIMEOUT_KEY, timeout.toString());
+      storage.setItem(this.TIMEOUT_KEY, timeout.toString());
     }
   }
 }
@@ -317,13 +341,13 @@ export class SecurityLogger {
   private static logs: Array<{
     timestamp: number;
     event: string;
-    details: any;
+    details: Record<string, unknown>;
     severity: 'info' | 'warning' | 'error';
   }> = [];
 
   static log(
     event: string,
-    details: any = {},
+    details: Record<string, unknown> = {},
     severity: 'info' | 'warning' | 'error' = 'info',
   ): void {
     this.logs.push({
@@ -347,19 +371,23 @@ export class SecurityLogger {
     }
   }
 
-  private static sanitizeLogData(data: any): any {
-    if (typeof data === 'object' && data !== null) {
-      const sanitized = { ...data };
-      // Remove sensitive fields
-      delete sanitized.password;
-      delete sanitized.token;
-      delete sanitized.sessionId;
-      return sanitized;
-    }
-    return data;
+  private static sanitizeLogData(
+    data: Record<string, unknown>,
+  ): Record<string, unknown> {
+    const sanitized = { ...data };
+    // Remove sensitive fields
+    delete (sanitized as { password?: unknown }).password;
+    delete (sanitized as { token?: unknown }).token;
+    delete (sanitized as { sessionId?: unknown }).sessionId;
+    return sanitized;
   }
 
-  static getLogs(severity?: 'info' | 'warning' | 'error'): typeof this.logs {
+  static getLogs(severity?: 'info' | 'warning' | 'error'): Array<{
+    timestamp: number;
+    event: string;
+    details: Record<string, unknown>;
+    severity: 'info' | 'warning' | 'error';
+  }> {
     if (severity) {
       return this.logs.filter((log) => log.severity === severity);
     }

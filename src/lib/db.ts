@@ -15,7 +15,7 @@ export interface Profile {
   locked_until?: string | null;
 }
 
-export async function upsertProfile(profile: Profile) {
+export async function upsertProfile(profile: Profile): Promise<Profile> {
   const { data, error } = await supabase
     .from('profiles')
     .upsert(profile, { onConflict: 'id' })
@@ -25,7 +25,7 @@ export async function upsertProfile(profile: Profile) {
   return data as Profile;
 }
 
-export async function getProfile(id: string) {
+export async function getProfile(id: string): Promise<Profile> {
   const { data, error } = await supabase
     .from('profiles')
     .select('*')
@@ -35,7 +35,10 @@ export async function getProfile(id: string) {
   return data as Profile;
 }
 
-export async function updateProfile(id: string, updates: Partial<Profile>) {
+export async function updateProfile(
+  id: string,
+  updates: Partial<Profile>,
+): Promise<Profile> {
   const { data, error } = await supabase
     .from('profiles')
     .update(updates)
@@ -62,7 +65,9 @@ export interface SubscriptionRow {
   auto_renew: boolean;
 }
 
-export async function getUserSubscription(userId: string) {
+export async function getUserSubscription(
+  userId: string,
+): Promise<SubscriptionRow | undefined> {
   const { data, error } = await supabase
     .from('subscriptions')
     .select('*')
@@ -70,15 +75,15 @@ export async function getUserSubscription(userId: string) {
     .order('start_date', { ascending: false })
     .limit(1);
   if (error) throw error;
-  return (data?.[0] as SubscriptionRow | undefined) || undefined;
+  return (data?.[0] as SubscriptionRow | undefined) ?? undefined;
 }
 
 export async function upsertSubscription(
   row: Omit<SubscriptionRow, 'id'> & { id?: string },
-) {
+): Promise<SubscriptionRow> {
   const { data, error } = await supabase
     .from('subscriptions')
-    .upsert(row as Partial<SubscriptionRow>)
+    .upsert(row)
     .select()
     .single();
   if (error) throw error;
@@ -95,7 +100,7 @@ export interface InvoiceRow {
   download_url?: string | null;
 }
 
-export async function listInvoices(userId: string) {
+export async function listInvoices(userId: string): Promise<InvoiceRow[]> {
   const { data, error } = await supabase
     .from('invoices')
     .select('*')
@@ -103,10 +108,12 @@ export async function listInvoices(userId: string) {
     .order('date', { ascending: false })
     .limit(50);
   if (error) throw error;
-  return (data as InvoiceRow[]) || [];
+  return (data as InvoiceRow[]) ?? [];
 }
 
-export async function addInvoice(row: Omit<InvoiceRow, 'id'>) {
+export async function addInvoice(
+  row: Omit<InvoiceRow, 'id'>,
+): Promise<InvoiceRow> {
   const { data, error } = await supabase
     .from('invoices')
     .insert([row])
@@ -130,18 +137,20 @@ export interface CourseProgressRow {
   completed_at?: string | null;
 }
 
-export async function getCourseProgressRows(userId: string) {
+export async function getCourseProgressRows(
+  userId: string,
+): Promise<CourseProgressRow[]> {
   const { data, error } = await supabase
     .from('course_progress')
     .select('*')
     .eq('user_id', userId);
   if (error) throw error;
-  return (data as CourseProgressRow[]) || [];
+  return (data as CourseProgressRow[]) ?? [];
 }
 
 export async function upsertCourseProgress(
   row: Omit<CourseProgressRow, 'id'> & { id?: string },
-) {
+): Promise<CourseProgressRow> {
   const { data, error } = await supabase
     .from('course_progress')
     .upsert(row)
@@ -163,21 +172,23 @@ export interface ModuleProgressRow {
   notes?: string | null;
 }
 
-export async function getModuleProgressRows(userId: string) {
+export async function getModuleProgressRows(
+  userId: string,
+): Promise<ModuleProgressRow[]> {
   const { data, error } = await supabase
     .from('module_progress')
     .select('*')
     .eq('user_id', userId);
   if (error) throw error;
-  return (data as ModuleProgressRow[]) || [];
+  return (data as ModuleProgressRow[]) ?? [];
 }
 
 export async function upsertModuleProgress(
   row: Omit<ModuleProgressRow, 'id'> & { id?: string },
-) {
+): Promise<ModuleProgressRow> {
   const { data, error } = await supabase
     .from('module_progress')
-    .upsert(row as any)
+    .upsert(row)
     .select()
     .single();
   if (error) throw error;
@@ -193,20 +204,25 @@ export interface UserActivityRow {
   timestamp: string;
   course_id?: string | null;
   module_id?: string | null;
-  metadata?: Record<string, any> | null;
+  metadata?: Record<string, unknown> | null;
 }
 
-export async function addUserActivity(row: Omit<UserActivityRow, 'id'>) {
+export async function addUserActivity(
+  row: Omit<UserActivityRow, 'id'>,
+): Promise<UserActivityRow> {
   const { data, error } = await supabase
     .from('user_activity')
-    .insert(row as any)
+    .insert(row)
     .select()
     .single();
   if (error) throw error;
   return data as UserActivityRow;
 }
 
-export async function listUserActivity(userId: string, limit = 50) {
+export async function listUserActivity(
+  userId: string,
+  limit = 50,
+): Promise<UserActivityRow[]> {
   const { data, error } = await supabase
     .from('user_activity')
     .select('*')
@@ -214,5 +230,5 @@ export async function listUserActivity(userId: string, limit = 50) {
     .order('timestamp', { ascending: false })
     .limit(limit);
   if (error) throw error;
-  return (data as UserActivityRow[]) || [];
+  return (data as UserActivityRow[]) ?? [];
 }

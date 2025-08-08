@@ -1,5 +1,4 @@
 /* eslint-env node */
-/* global process */
 import js from '@eslint/js';
 import tseslint from '@typescript-eslint/eslint-plugin';
 import tsparser from '@typescript-eslint/parser';
@@ -10,6 +9,7 @@ import importPlugin from 'eslint-plugin-import';
 import unusedImports from 'eslint-plugin-unused-imports';
 import prettier from 'eslint-plugin-prettier';
 import prettierConfig from 'eslint-config-prettier';
+import globals from 'globals';
 
 export default [
   js.configs.recommended,
@@ -40,15 +40,9 @@ export default [
         tsconfigRootDir: import.meta.dirname,
       },
       globals: {
-        console: 'readonly',
-        process: 'readonly',
-        Buffer: 'readonly',
-        __dirname: 'readonly',
-        __filename: 'readonly',
-        global: 'readonly',
-        module: 'readonly',
-        require: 'readonly',
-        exports: 'readonly',
+  // Browser + Node globals for a Vite web app
+  ...globals.browser,
+  ...globals.node,
       },
     },
     plugins: {
@@ -237,6 +231,18 @@ export default [
 
       // Prettier integration
       'prettier/prettier': 'error',
+    },
+  },
+  // JS config (e.g., vite, tailwind, config files)
+  {
+    files: ['**/*.{js,cjs,mjs}'],
+    languageOptions: {
+      ecmaVersion: 2022,
+      sourceType: 'module',
+      globals: {
+        ...globals.node,
+        ...globals.browser,
+      },
     },
   },
   prettierConfig,

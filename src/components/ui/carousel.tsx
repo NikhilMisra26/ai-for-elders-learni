@@ -1,6 +1,6 @@
 'use client';
 
-import type { ComponentProps, KeyboardEvent } from 'react';
+import type { ComponentProps, KeyboardEvent, ReactElement } from 'react';
 import {
   createContext,
   useCallback,
@@ -40,7 +40,7 @@ type CarouselContextProps = {
 
 const CarouselContext = createContext<CarouselContextProps | null>(null);
 
-function useCarousel() {
+function useCarousel(): CarouselContextProps {
   const context = useContext(CarouselContext);
 
   if (!context) {
@@ -58,7 +58,7 @@ function Carousel({
   className,
   children,
   ...props
-}: ComponentProps<'div'> & CarouselProps) {
+}: ComponentProps<'div'> & CarouselProps): ReactElement {
   const [carouselRef, api] = useEmblaCarousel(
     {
       ...opts,
@@ -69,29 +69,31 @@ function Carousel({
   const [canScrollPrev, setCanScrollPrev] = useState(false);
   const [canScrollNext, setCanScrollNext] = useState(false);
 
-  const onSelect = useCallback((api: CarouselApi) => {
-    if (!api) return;
-    setCanScrollPrev(api.canScrollPrev());
-    setCanScrollNext(api.canScrollNext());
+  const onSelect = useCallback((embla: CarouselApi): void => {
+    if (!embla) return;
+    setCanScrollPrev(embla.canScrollPrev());
+    setCanScrollNext(embla.canScrollNext());
   }, []);
 
-  const scrollPrev = useCallback(() => {
+  const scrollPrev = useCallback((): void => {
     api?.scrollPrev();
   }, [api]);
 
-  const scrollNext = useCallback(() => {
+  const scrollNext = useCallback((): void => {
     api?.scrollNext();
   }, [api]);
 
   const handleKeyDown = useCallback(
-    (event: KeyboardEvent<HTMLDivElement>) => {
+    (event: KeyboardEvent<HTMLDivElement>): void => {
       if (event.key === 'ArrowLeft') {
         event.preventDefault();
         scrollPrev();
-      } else if (event.key === 'ArrowRight') {
+      }
+      if (event.key === 'ArrowRight') {
         event.preventDefault();
         scrollNext();
       }
+      // no-op for other keys
     },
     [scrollPrev, scrollNext],
   );
@@ -102,13 +104,17 @@ function Carousel({
   }, [api, setApi]);
 
   useEffect(() => {
-    if (!api) return;
+    if (!api) {
+      // Always return a cleanup to satisfy consistent-return
+      return (): void => {};
+    }
     onSelect(api);
     api.on('reInit', onSelect);
     api.on('select', onSelect);
 
-    return () => {
-      api?.off('select', onSelect);
+    return (): void => {
+      api.off('reInit', onSelect);
+      api.off('select', onSelect);
     };
   }, [api, onSelect]);
 
@@ -140,7 +146,10 @@ function Carousel({
   );
 }
 
-function CarouselContent({ className, ...props }: ComponentProps<'div'>) {
+function CarouselContent({
+  className,
+  ...props
+}: ComponentProps<'div'>): ReactElement {
   const { carouselRef, orientation } = useCarousel();
 
   return (
@@ -161,7 +170,10 @@ function CarouselContent({ className, ...props }: ComponentProps<'div'>) {
   );
 }
 
-function CarouselItem({ className, ...props }: ComponentProps<'div'>) {
+function CarouselItem({
+  className,
+  ...props
+}: ComponentProps<'div'>): ReactElement {
   const { orientation } = useCarousel();
 
   return (
@@ -184,7 +196,7 @@ function CarouselPrevious({
   variant = 'outline',
   size = 'icon',
   ...props
-}: ComponentProps<typeof Button>) {
+}: ComponentProps<typeof Button>): ReactElement {
   const { orientation, scrollPrev, canScrollPrev } = useCarousel();
 
   return (
@@ -214,7 +226,7 @@ function CarouselNext({
   variant = 'outline',
   size = 'icon',
   ...props
-}: ComponentProps<typeof Button>) {
+}: ComponentProps<typeof Button>): ReactElement {
   const { orientation, scrollNext, canScrollNext } = useCarousel();
 
   return (

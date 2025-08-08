@@ -1,35 +1,37 @@
-import type { ComponentProps } from 'react';
+import type { ComponentProps, ReactElement } from 'react';
 import * as DialogPrimitive from '@radix-ui/react-dialog';
 import XIcon from 'lucide-react/dist/esm/icons/x';
 
 import { cn } from '@/lib/utils';
 
-function Dialog({ ...props }: ComponentProps<typeof DialogPrimitive.Root>) {
+function Dialog({
+  ...props
+}: ComponentProps<typeof DialogPrimitive.Root>): ReactElement {
   return <DialogPrimitive.Root data-slot='dialog' {...props} />;
 }
 
 function DialogTrigger({
   ...props
-}: ComponentProps<typeof DialogPrimitive.Trigger>) {
+}: ComponentProps<typeof DialogPrimitive.Trigger>): ReactElement {
   return <DialogPrimitive.Trigger data-slot='dialog-trigger' {...props} />;
 }
 
 function DialogPortal({
   ...props
-}: ComponentProps<typeof DialogPrimitive.Portal>) {
+}: ComponentProps<typeof DialogPrimitive.Portal>): ReactElement {
   return <DialogPrimitive.Portal data-slot='dialog-portal' {...props} />;
 }
 
 function DialogClose({
   ...props
-}: ComponentProps<typeof DialogPrimitive.Close>) {
+}: ComponentProps<typeof DialogPrimitive.Close>): ReactElement {
   return <DialogPrimitive.Close data-slot='dialog-close' {...props} />;
 }
 
 function DialogOverlay({
   className,
   ...props
-}: ComponentProps<typeof DialogPrimitive.Overlay>) {
+}: ComponentProps<typeof DialogPrimitive.Overlay>): ReactElement {
   return (
     <DialogPrimitive.Overlay
       data-slot='dialog-overlay'
@@ -46,7 +48,7 @@ function DialogContent({
   className,
   children,
   ...props
-}: ComponentProps<typeof DialogPrimitive.Content>) {
+}: ComponentProps<typeof DialogPrimitive.Content>): ReactElement {
   return (
     <DialogPortal data-slot='dialog-portal'>
       <DialogOverlay />
@@ -68,7 +70,10 @@ function DialogContent({
   );
 }
 
-function DialogHeader({ className, ...props }: ComponentProps<'div'>) {
+function DialogHeader({
+  className,
+  ...props
+}: ComponentProps<'div'>): ReactElement {
   return (
     <div
       data-slot='dialog-header'
@@ -78,7 +83,10 @@ function DialogHeader({ className, ...props }: ComponentProps<'div'>) {
   );
 }
 
-function DialogFooter({ className, ...props }: ComponentProps<'div'>) {
+function DialogFooter({
+  className,
+  ...props
+}: ComponentProps<'div'>): ReactElement {
   return (
     <div
       data-slot='dialog-footer'
@@ -94,7 +102,7 @@ function DialogFooter({ className, ...props }: ComponentProps<'div'>) {
 function DialogTitle({
   className,
   ...props
-}: ComponentProps<typeof DialogPrimitive.Title>) {
+}: ComponentProps<typeof DialogPrimitive.Title>): ReactElement {
   return (
     <DialogPrimitive.Title
       data-slot='dialog-title'
@@ -107,7 +115,7 @@ function DialogTitle({
 function DialogDescription({
   className,
   ...props
-}: ComponentProps<typeof DialogPrimitive.Description>) {
+}: ComponentProps<typeof DialogPrimitive.Description>): ReactElement {
   return (
     <DialogPrimitive.Description
       data-slot='dialog-description'

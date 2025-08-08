@@ -43,7 +43,7 @@ export interface UserActivity {
   timestamp: string;
   courseId?: string;
   moduleId?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, unknown>;
 }
 
 export interface LearningStreak {
@@ -64,8 +64,54 @@ export interface LearningStats {
   weeklyProgress: number; // minutes this week
 }
 
+interface LearningRecommendations {
+  continueModule?: { courseId: string; module: Module };
+  startCourse?: Course;
+  reviewModule?: { courseId: string; module: Module };
+}
+
+interface DashboardSummary {
+  totalCourses: number;
+  startedCourses: number;
+  completedCourses: number;
+  totalModules: number;
+  completedModules: number;
+  recentActivity: UserActivity[];
+  recommendations: LearningRecommendations;
+  weeklyProgress: number;
+  weeklyGoal: number;
+  currentStreak: number;
+}
+
+export interface UseProgressReturn {
+  moduleProgress: ModuleProgress[];
+  courseProgress: CourseProgress[];
+  userActivity: UserActivity[];
+  learningStats: LearningStats;
+  getCourseProgress: (courseId: string) => CourseProgress | null;
+  getModuleProgress: (
+    courseId: string,
+    moduleId: string,
+  ) => ModuleProgress | null;
+  isModuleCompleted: (courseId: string, moduleId: string) => boolean;
+  completeModule: (
+    courseId: string,
+    moduleId: string,
+    timeSpent: number,
+    rating?: number,
+  ) => void;
+  startCourse: (courseId: string) => void;
+  setCurrentModule: (courseId: string, moduleId: string) => void;
+  addActivity: (activity: Omit<UserActivity, 'id' | 'timestamp'>) => void;
+  getNextModule: (courseId: string) => Module | null;
+  getLearningRecommendations: () => LearningRecommendations;
+  rateModule: (courseId: string, moduleId: string, rating: number) => void;
+  setWeeklyGoal: (minutes: number) => void;
+  getDashboardSummary: () => DashboardSummary;
+}
+
 // Main progress tracking hook
-export function useProgress() {
+export function useProgress(): UseProgressReturn {
   const { user } = useAuth();
   const [moduleProgress, setModuleProgress] = useKV<ModuleProgress[]>(
     'user-module-progress',
@@ -100,7 +146,7 @@ export function useProgress() {
 
   // Get progress for a specific course
   const getCourseProgress = (courseId: string): CourseProgress | null => {
-    return courseProgress.find((cp) => cp.courseId === courseId) || null;
+    return courseProgress.find((cp) => cp.courseId === courseId) ?? null;
   };
 
   // Get progress for a specific module
@@ -111,7 +157,7 @@ export function useProgress() {
     return (
       moduleProgress.find(
         (mp) => mp.courseId === courseId && mp.moduleId === moduleId,
-      ) || null
+      ) ?? null
     );
   };
 
@@ -128,7 +174,7 @@ export function useProgress() {
     moduleId: string,
     timeSpent: number,
     rating?: number,
-  ) => {
+  ): void => {
     const course = courseData[courseId];
     const module = course?.modules.find((m) => m.id === moduleId);
 
@@ -212,19 +258,21 @@ export function useProgress() {
         );
         // Persist
         if (user) {
-          const row = nextState.find((c) => c.courseId === courseId)!;
-          upsertCourseProgress({
-            user_id: user.id,
-            course_id: row.courseId,
-            started_at: row.startedAt,
-            last_accessed_at: row.lastAccessedAt,
-            completed_modules: row.completedModules,
-            current_module_id: row.currentModuleId || null,
-            total_time_spent: row.totalTimeSpent,
-            completion_percentage: row.completionPercentage,
-            completed: row.completed,
-            completed_at: row.completedAt || null,
-          }).catch(() => {});
+          const row = nextState.find((c) => c.courseId === courseId);
+          if (row) {
+            upsertCourseProgress({
+              user_id: user.id,
+              course_id: row.courseId,
+              started_at: row.startedAt,
+              last_accessed_at: row.lastAccessedAt,
+              completed_modules: row.completedModules,
+              current_module_id: row.currentModuleId ?? null,
+              total_time_spent: row.totalTimeSpent,
+              completion_percentage: row.completionPercentage,
+              completed: row.completed,
+              completed_at: row.completedAt ?? null,
+            }).catch(() => {});
+          }
         }
         return nextState;
       } else {
@@ -246,11 +294,11 @@ export function useProgress() {
             started_at: newCourseProgress.startedAt,
             last_accessed_at: newCourseProgress.lastAccessedAt,
             completed_modules: newCourseProgress.completedModules,
-            current_module_id: newCourseProgress.currentModuleId || null,
+            current_module_id: newCourseProgress.currentModuleId ?? null,
             total_time_spent: newCourseProgress.totalTimeSpent,
             completion_percentage: newCourseProgress.completionPercentage,
             completed: newCourseProgress.completed,
-            completed_at: newCourseProgress.completedAt || null,
+            completed_at: newCourseProgress.completedAt ?? null,
           }).catch(() => {});
         }
         return next;
@@ -316,7 +364,7 @@ export function useProgress() {
   };
 
   // Start or resume a course
-  const startCourse = (courseId: string) => {
+  const startCourse = (courseId: string): void => {
     const course = courseData[courseId];
     if (!course) return;
 
@@ -352,7 +400,7 @@ export function useProgress() {
   };
 
   // Update current module for a course
-  const setCurrentModule = (courseId: string, moduleId: string) => {
+  const setCurrentModule = (courseId: string, moduleId: string): void => {
     setCourseProgress((current) =>
       current.map((cp) =>
         cp.courseId === courseId
@@ -367,7 +415,9 @@ export function useProgress() {
   };
 
   // Add user activity
-  const addActivity = (activity: Omit<UserActivity, 'id' | 'timestamp'>) => {
+  const addActivity = (
+    activity: Omit<UserActivity, 'id' | 'timestamp'>,
+  ): void => {
     const newActivity: UserActivity = {
       ...activity,
       id: `activity_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -382,7 +432,7 @@ export function useProgress() {
     timeSpent: number,
     tags: string[],
     rating?: number,
-  ) => {
+  ): void => {
     setLearningStats((current) => {
       const today = new Date().toISOString().split('T')[0];
       const lastLearningDate = current.streak.lastLearningDate.split('T')[0];
@@ -459,21 +509,17 @@ export function useProgress() {
     if (!course) return null;
 
     const progress = getCourseProgress(courseId);
-    const completedModules = progress?.completedModules || [];
+    const completedModules = progress?.completedModules ?? [];
 
     // Find first incomplete module
     return (
-      course.modules.find((module) => !completedModules.includes(module.id)) ||
+      course.modules.find((module) => !completedModules.includes(module.id)) ??
       null
     );
   };
 
   // Get learning recommendations
-  const getLearningRecommendations = (): {
-    continueModule?: { courseId: string; module: Module };
-    startCourse?: Course;
-    reviewModule?: { courseId: string; module: Module };
-  } => {
+  const getLearningRecommendations = (): LearningRecommendations => {
     // Find course to continue
     const inProgressCourse = courseProgress.find(
       (cp) => !cp.completed && cp.completedModules.length > 0,
@@ -523,7 +569,11 @@ export function useProgress() {
   };
 
   // Rate a module
-  const rateModule = (courseId: string, moduleId: string, rating: number) => {
+  const rateModule = (
+    courseId: string,
+    moduleId: string,
+    rating: number,
+  ): void => {
     setModuleProgress((current) =>
       current.map((mp) =>
         mp.courseId === courseId && mp.moduleId === moduleId
@@ -548,7 +598,7 @@ export function useProgress() {
   };
 
   // Set weekly learning goal
-  const setWeeklyGoal = (minutes: number) => {
+  const setWeeklyGoal = (minutes: number): void => {
     setLearningStats((current) => ({
       ...current,
       weeklyGoal: minutes,
@@ -556,7 +606,7 @@ export function useProgress() {
   };
 
   // Get dashboard summary
-  const getDashboardSummary = () => {
+  const getDashboardSummary = (): DashboardSummary => {
     const totalCourses = Object.keys(courseData).length;
     const startedCourses = courseProgress.length;
     const completedCourses = courseProgress.filter((cp) => cp.completed).length;

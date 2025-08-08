@@ -1,6 +1,6 @@
 'use client';
 
-import type { ComponentProps } from 'react';
+import type { ComponentProps, ReactElement } from 'react';
 import { useContext } from 'react';
 import { OTPInput, OTPInputContext } from 'input-otp';
 import MinusIcon from 'lucide-react/dist/esm/icons/minus';
@@ -13,7 +13,7 @@ function InputOTP({
   ...props
 }: ComponentProps<typeof OTPInput> & {
   containerClassName?: string;
-}) {
+}): ReactElement {
   return (
     <OTPInput
       data-slot='input-otp'
@@ -27,7 +27,10 @@ function InputOTP({
   );
 }
 
-function InputOTPGroup({ className, ...props }: ComponentProps<'div'>) {
+function InputOTPGroup({
+  className,
+  ...props
+}: ComponentProps<'div'>): ReactElement {
   return (
     <div
       data-slot='input-otp-group'
@@ -43,7 +46,7 @@ function InputOTPSlot({
   ...props
 }: ComponentProps<'div'> & {
   index: number;
-}) {
+}): ReactElement {
   const inputOTPContext = useContext(OTPInputContext);
   const { char, hasFakeCaret, isActive } = inputOTPContext?.slots[index] ?? {};
 
@@ -67,7 +70,7 @@ function InputOTPSlot({
   );
 }
 
-function InputOTPSeparator({ ...props }: ComponentProps<'div'>) {
+function InputOTPSeparator({ ...props }: ComponentProps<'div'>): ReactElement {
   return (
     <div data-slot='input-otp-separator' role='separator' {...props}>
       <MinusIcon />

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, type ReactElement } from 'react';
 import { toast } from 'sonner';
 import {
   BookOpen,
@@ -34,13 +34,13 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useProgress } from '@/lib/progressTracking';
 import { useSubscription } from '@/lib/subscription';
 import type { Course } from '@/lib/courseData';
-import { courseData, getAvailableCourses } from '@/lib/courseData';
+import { courseData } from '@/lib/courseData';
 
 interface CoursesPageProps {
   onAuthClick: () => void;
 }
 
-export function CoursesPage({ onAuthClick }: CoursesPageProps) {
+export function CoursesPage({ onAuthClick }: CoursesPageProps): ReactElement {
   const { user } = useAuth();
   const { subscription, canAccessTier } = useSubscription();
   const { getCourseProgress, startCourse, getDashboardSummary } = useProgress();
@@ -55,7 +55,7 @@ export function CoursesPage({ onAuthClick }: CoursesPageProps) {
   >('all');
 
   const dashboardSummary = getDashboardSummary();
-  const availableCourses = getAvailableCourses(subscription.planId);
+  // const availableCourses = getAvailableCourses(subscription.planId);
 
   // Filter courses based on search and filter
   const filteredCourses = Object.values(courseData).filter((course) => {
@@ -83,7 +83,7 @@ export function CoursesPage({ onAuthClick }: CoursesPageProps) {
     courseId: string,
     moduleId: string,
     course: Course,
-  ) => {
+  ): void => {
     // Check authentication
     if (!user) {
       onAuthClick();
@@ -101,7 +101,7 @@ export function CoursesPage({ onAuthClick }: CoursesPageProps) {
     setSelectedModule({ courseId, moduleId });
   };
 
-  const handleStartCourse = (courseId: string, course: Course) => {
+  const handleStartCourse = (courseId: string, course: Course): void => {
     if (!user) {
       onAuthClick();
       return;
@@ -121,9 +121,17 @@ export function CoursesPage({ onAuthClick }: CoursesPageProps) {
     }
   };
 
-  const getCourseCompletionData = (course: Course) => {
+  const getCourseCompletionData = (
+    course: Course,
+  ): {
+    completedModules: number;
+    totalModules: number;
+    percentage: number;
+    isStarted: boolean;
+    isCompleted: boolean;
+  } => {
     const progress = getCourseProgress(course.id);
-    const completedModules = progress?.completedModules.length || 0;
+    const completedModules = progress?.completedModules.length ?? 0;
     const totalModules = course.totalModules;
     const percentage = Math.round((completedModules / totalModules) * 100);
 
@@ -136,7 +144,7 @@ export function CoursesPage({ onAuthClick }: CoursesPageProps) {
     };
   };
 
-  const getRecommendedCourse = () => {
+  const getRecommendedCourse = (): Course | undefined => {
     // Find a course the user hasn't started yet
     const unstarted = Object.values(courseData).find((course) => {
       const progress = getCourseProgress(course.id);
@@ -145,7 +153,7 @@ export function CoursesPage({ onAuthClick }: CoursesPageProps) {
     return unstarted;
   };
 
-  const getContinueCourse = () => {
+  const getContinueCourse = (): Course | undefined => {
     // Find a course that's in progress
     const inProgress = Object.values(courseData).find((course) => {
       const progress = getCourseProgress(course.id);
@@ -225,8 +233,9 @@ export function CoursesPage({ onAuthClick }: CoursesPageProps) {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {(() => {
-                    const course = getContinueCourse()!;
+                  {((): ReactElement | null => {
+                    const course = getContinueCourse();
+                    if (!course) return null;
                     const completion = getCourseCompletionData(course);
                     return (
                       <>
@@ -268,8 +277,9 @@ export function CoursesPage({ onAuthClick }: CoursesPageProps) {
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {(() => {
-                    const course = getRecommendedCourse()!;
+                  {((): ReactElement | null => {
+                    const course = getRecommendedCourse();
+                    if (!course) return null;
                     return (
                       <>
                         <h3 className='font-semibold mb-2'>{course.title}</h3>
@@ -317,12 +327,12 @@ export function CoursesPage({ onAuthClick }: CoursesPageProps) {
             />
           </div>
           <div className='flex gap-2'>
-            {['all', 'free', 'advanced', 'expert'].map((tier) => (
+            {(['all', 'free', 'advanced', 'expert'] as const).map((tier) => (
               <Button
                 key={tier}
                 variant={filterTier === tier ? 'default' : 'outline'}
                 size='sm'
-                onClick={() => setFilterTier(tier as any)}
+                onClick={() => setFilterTier(tier)}
                 className='capitalize'
               >
                 {tier}
@@ -398,8 +408,11 @@ export function CoursesPage({ onAuthClick }: CoursesPageProps) {
                       {/* Course Features List */}
                       <div className='mb-4'>
                         <ul className='text-sm space-y-1'>
-                          {course.features.slice(0, 3).map((feature, index) => (
-                            <li key={index} className='flex items-center gap-2'>
+                          {course.features.slice(0, 3).map((feature) => (
+                            <li
+                              key={feature}
+                              className='flex items-center gap-2'
+                            >
                               <CheckCircle className='w-4 h-4 text-green-500' />
                               {feature}
                             </li>
@@ -627,8 +640,8 @@ export function CoursesPage({ onAuthClick }: CoursesPageProps) {
               <MagnifyingGlass className='w-12 h-12 mx-auto mb-4 text-muted-foreground' />
               <h3 className='text-xl font-semibold mb-2'>No courses found</h3>
               <p className='text-muted-foreground'>
-                Try adjusting your search terms or filters to find what you're
-                looking for.
+                Try adjusting your search terms or filters to find what
+                you&apos;re looking for.
               </p>
             </CardContent>
           </Card>

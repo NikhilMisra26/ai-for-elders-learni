@@ -1,8 +1,11 @@
-import type { ComponentProps } from 'react';
+import type { ComponentProps, ReactElement } from 'react';
 
 import { cn } from '@/lib/utils';
 
-function Skeleton({ className, ...props }: ComponentProps<'div'>) {
+function Skeleton({
+  className,
+  ...props
+}: ComponentProps<'div'>): ReactElement {
   return (
     <div
       data-slot='skeleton'

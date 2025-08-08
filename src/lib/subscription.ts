@@ -104,7 +104,22 @@ export const subscriptionPlans: SubscriptionPlan[] = [
 ];
 
 // Subscription management hooks and utilities
-export function useSubscription() {
+export function useSubscription(): {
+  subscription: UserSubscription;
+  updateSubscription: (updates: Partial<UserSubscription>) => void;
+  getCurrentPlan: () => SubscriptionPlan;
+  canAccessTier: (tier: 'free' | 'advanced' | 'expert') => boolean;
+  isTrialActive: () => boolean;
+  isInGracePeriod: () => boolean;
+  getDaysUntilExpiry: () => number | null;
+  startTrial: (planId: 'advanced' | 'expert') => void;
+  upgradeToPaid: (
+    planId: 'advanced' | 'expert',
+    paymentMethod?: PaymentMethod,
+  ) => void;
+  cancelSubscription: (immediate?: boolean) => void;
+  reactivateSubscription: () => void;
+} {
   const { user } = useAuth();
   const [subscription, setSubscription] = useKV<UserSubscription>(
     'user-subscription',
@@ -119,7 +134,7 @@ export function useSubscription() {
   // Hydrate from Supabase when logged in
   useEffect(() => {
     if (!user) return;
-    (async () => {
+    void (async (): Promise<void> => {
       try {
         const row = await getUserSubscription(user.id);
         if (row) {
@@ -127,10 +142,10 @@ export function useSubscription() {
             planId: row.plan_id,
             status: row.status,
             startDate: row.start_date,
-            endDate: row.end_date || undefined,
-            nextBillingDate: row.next_billing_date || undefined,
-            trialEndDate: row.trial_end_date || undefined,
-            gracePeriodEnd: row.grace_period_end || undefined,
+            endDate: row.end_date ?? undefined,
+            nextBillingDate: row.next_billing_date ?? undefined,
+            trialEndDate: row.trial_end_date ?? undefined,
+            gracePeriodEnd: row.grace_period_end ?? undefined,
             paymentMethod:
               row.payment_last4 && row.payment_brand
                 ? {
@@ -143,11 +158,13 @@ export function useSubscription() {
             autoRenew: row.auto_renew,
           });
         }
-      } catch {}
+      } catch {
+        // ignore fetch errors
+      }
     })();
   }, [user, setSubscription]);
 
-  const updateSubscription = (updates: Partial<UserSubscription>) => {
+  const updateSubscription = (updates: Partial<UserSubscription>): void => {
     setSubscription((current) => ({
       ...current,
       ...updates,
@@ -155,27 +172,29 @@ export function useSubscription() {
 
     // Persist if logged in
     if (user) {
-      const base = { ...subscription, ...updates } as UserSubscription;
+      const base: UserSubscription = { ...subscription, ...updates };
       upsertSubscription({
         user_id: user.id,
         plan_id: base.planId,
         status: base.status,
         start_date: base.startDate,
-        end_date: base.endDate || null,
-        next_billing_date: base.nextBillingDate || null,
-        trial_end_date: base.trialEndDate || null,
-        grace_period_end: base.gracePeriodEnd || null,
-        payment_brand: base.paymentMethod?.brand || null,
-        payment_last4: base.paymentMethod?.last4 || null,
+        end_date: base.endDate ?? null,
+        next_billing_date: base.nextBillingDate ?? null,
+        trial_end_date: base.trialEndDate ?? null,
+        grace_period_end: base.gracePeriodEnd ?? null,
+        payment_brand: base.paymentMethod?.brand ?? null,
+        payment_last4: base.paymentMethod?.last4 ?? null,
         cancel_at_period_end: base.cancelAtPeriodEnd ?? false,
         auto_renew: base.autoRenew,
-      }).catch(() => {});
+      }).catch(() => {
+        // ignore persist errors
+      });
     }
   };
 
   const getCurrentPlan = (): SubscriptionPlan => {
     return (
-      subscriptionPlans.find((plan) => plan.id === subscription.planId) ||
+      subscriptionPlans.find((plan) => plan.id === subscription.planId) ??
       subscriptionPlans[0]
     );
   };
@@ -208,7 +227,7 @@ export function useSubscription() {
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   };
 
-  const startTrial = (planId: 'advanced' | 'expert') => {
+  const startTrial = (planId: 'advanced' | 'expert'): void => {
     const trialDays = planId === 'advanced' ? 7 : 14;
     const trialEndDate = new Date();
     trialEndDate.setDate(trialEndDate.getDate() + trialDays);
@@ -224,7 +243,7 @@ export function useSubscription() {
   const upgradeToPaid = (
     planId: 'advanced' | 'expert',
     paymentMethod?: PaymentMethod,
-  ) => {
+  ): void => {
     const nextBillingDate = new Date();
     nextBillingDate.setMonth(nextBillingDate.getMonth() + 1);
 
@@ -244,7 +263,7 @@ export function useSubscription() {
     });
   };
 
-  const cancelSubscription = (immediate = false) => {
+  const cancelSubscription = (immediate = false): void => {
     if (immediate) {
       updateSubscription({
         planId: 'free',
@@ -262,7 +281,7 @@ export function useSubscription() {
     }
   };
 
-  const reactivateSubscription = () => {
+  const reactivateSubscription = (): void => {
     updateSubscription({
       cancelAtPeriodEnd: false,
       autoRenew: true,
@@ -286,16 +305,14 @@ export function useSubscription() {
 }
 
 // Payment simulation utilities
-export async function simulatePaymentFlow(
-  planId: 'advanced' | 'expert',
-): Promise<{
+export async function simulatePaymentFlow(): Promise<{
   success: boolean;
   paymentMethod?: PaymentMethod;
   error?: string;
 }> {
   return new Promise((resolve) => {
     // Simulate payment processing delay
-    setTimeout(() => {
+    setTimeout((): void => {
       // Simulate 95% success rate
       const success = Math.random() > 0.05;
 
@@ -332,16 +349,16 @@ export function getPlanFeatures(
   planId: 'free' | 'advanced' | 'expert',
 ): string[] {
   const plan = subscriptionPlans.find((p) => p.id === planId);
-  return plan?.features || [];
+  return plan?.features ?? [];
 }
 
 export function getUpgradeRecommendation(
   currentPlan: 'free' | 'advanced' | 'expert',
 ): SubscriptionPlan | null {
   if (currentPlan === 'free')
-    return subscriptionPlans.find((p) => p.id === 'advanced') || null;
+    return subscriptionPlans.find((p) => p.id === 'advanced') ?? null;
   if (currentPlan === 'advanced')
-    return subscriptionPlans.find((p) => p.id === 'expert') || null;
+    return subscriptionPlans.find((p) => p.id === 'expert') ?? null;
   return null;
 }
 
@@ -355,7 +372,10 @@ export interface Invoice {
   downloadUrl?: string;
 }
 
-export function useInvoiceHistory() {
+export function useInvoiceHistory(): {
+  invoices: Invoice[];
+  addInvoice: (planId: 'advanced' | 'expert', amount: number) => void;
+} {
   const [invoices, setInvoices] = useKV<Invoice[]>('user-invoices', []);
   const { user } = useAuth();
 
@@ -363,13 +383,13 @@ export function useInvoiceHistory() {
     // Could fetch invoices from Supabase here for logged-in user; keeping simple
   }, [user]);
 
-  const addInvoice = (planId: 'advanced' | 'expert', amount: number) => {
+  const addInvoice = (planId: 'advanced' | 'expert', amount: number): void => {
     const plan = subscriptionPlans.find((p) => p.id === planId);
     const newInvoice: Invoice = {
       id: `inv_${Date.now()}`,
       date: new Date().toISOString(),
       amount,
-      planName: plan?.name || 'Unknown Plan',
+      planName: plan?.name ?? 'Unknown Plan',
       status: 'paid',
     };
 
@@ -380,10 +400,12 @@ export function useInvoiceHistory() {
         user_id: user.id,
         date: new Date().toISOString(),
         amount,
-        plan_name: plan?.name || 'Unknown Plan',
+        plan_name: plan?.name ?? 'Unknown Plan',
         status: 'paid',
         download_url: null,
-      }).catch(() => {});
+      }).catch(() => {
+        // ignore persist errors
+      });
     }
   };
 

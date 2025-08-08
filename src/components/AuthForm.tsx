@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type ReactElement, type FormEvent } from 'react';
 import { Eye, EyeSlash, Shield, Warning } from '@phosphor-icons/react';
 import { toast } from 'sonner';
 
@@ -24,7 +24,7 @@ interface AuthFormProps {
   onClose: () => void;
 }
 
-export function AuthForm({ onClose }: AuthFormProps) {
+export function AuthForm({ onClose }: AuthFormProps): ReactElement {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -46,7 +46,7 @@ export function AuthForm({ onClose }: AuthFormProps) {
   const passwordValidation = isLogin ? null : validatePassword(password);
   const emailValidation = email ? validateEmail(email) : null;
 
-  const getPasswordStrengthColor = () => {
+  const getPasswordStrengthColor = (): string => {
     if (!passwordValidation) return '';
     switch (passwordValidation.strength) {
       case 'strong':
@@ -60,7 +60,7 @@ export function AuthForm({ onClose }: AuthFormProps) {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent): Promise<void> => {
     e.preventDefault();
 
     // Basic validation
@@ -96,7 +96,7 @@ export function AuthForm({ onClose }: AuthFormProps) {
           toast.success('Welcome back!');
           onClose();
         } else {
-          toast.error(result.error || 'Login failed');
+          toast.error(result.error ?? 'Login failed');
         }
       } else {
         const result = await register(email, password, name);
@@ -118,15 +118,15 @@ export function AuthForm({ onClose }: AuthFormProps) {
             });
           }, 1000);
         } else {
-          toast.error(result.error || 'Registration failed');
+          toast.error(result.error ?? 'Registration failed');
         }
       }
-    } catch (error) {
+    } catch {
       toast.error('Something went wrong. Please try again.');
     }
   };
 
-  const handleVerifyOtp = async (e: React.FormEvent) => {
+  const handleVerifyOtp = async (e: FormEvent): Promise<void> => {
     e.preventDefault();
     if (!email || otp.length < 6) {
       toast.error('Enter the 6-digit code');
@@ -137,27 +137,27 @@ export function AuthForm({ onClose }: AuthFormProps) {
       toast.success('Email verified! You are now signed in.');
       onClose();
     } else {
-      toast.error(res.error || 'Invalid or expired code');
+      toast.error(res.error ?? 'Invalid or expired code');
     }
   };
 
-  const handleResend = async () => {
+  const handleResend = async (): Promise<void> => {
     if (!email || resendCooldown > 0) return;
     const res = await resendSignupOtp(email);
     if (res.success) {
       toast.success('Code resent. Check your inbox.');
       setResendCooldown(30);
-      const interval = setInterval(() => {
+      const interval = window.setInterval(() => {
         setResendCooldown((s) => {
           if (s <= 1) {
-            clearInterval(interval);
+            window.clearInterval(interval);
             return 0;
           }
           return s - 1;
         });
       }, 1000);
     } else {
-      toast.error(res.error || 'Could not resend code');
+      toast.error(res.error ?? 'Could not resend code');
     }
   };
 
@@ -172,7 +172,7 @@ export function AuthForm({ onClose }: AuthFormProps) {
         </div>
         <CardDescription>
           {showOtpStep
-            ? `Enter the code we emailed to ${email || 'your inbox'}`
+            ? `Enter the code we emailed to ${email ?? 'your inbox'}`
             : isLogin
               ? 'Sign in to continue your AI learning journey'
               : 'Join thousands of adults learning AI safely'}
@@ -206,7 +206,7 @@ export function AuthForm({ onClose }: AuthFormProps) {
       </CardHeader>
       <CardContent>
         {showOtpStep ? (
-          <form onSubmit={handleVerifyOtp} className='space-y-4'>
+          <form onSubmit={(e) => void handleVerifyOtp(e)} className='space-y-4'>
             <div className='space-y-2'>
               <Label htmlFor='otp'>Verification Code</Label>
               <InputOTP
@@ -217,7 +217,7 @@ export function AuthForm({ onClose }: AuthFormProps) {
               >
                 <InputOTPGroup>
                   {Array.from({ length: 6 }).map((_, i) => (
-                    <InputOTPSlot key={i} index={i} />
+                    <InputOTPSlot key={`otp-${String(i)}`} index={i} />
                   ))}
                 </InputOTPGroup>
               </InputOTP>
@@ -237,7 +237,7 @@ export function AuthForm({ onClose }: AuthFormProps) {
               <Button
                 type='button'
                 variant='ghost'
-                onClick={handleResend}
+                onClick={() => void handleResend()}
                 disabled={isLoading || resendCooldown > 0}
               >
                 {resendCooldown > 0
@@ -257,7 +257,7 @@ export function AuthForm({ onClose }: AuthFormProps) {
             </div>
           </form>
         ) : (
-          <form onSubmit={handleSubmit} className='space-y-4'>
+          <form onSubmit={(e) => void handleSubmit(e)} className='space-y-4'>
             {!isLogin && (
               <div className='space-y-2'>
                 <Label htmlFor='name'>Full Name</Label>
@@ -353,8 +353,8 @@ export function AuthForm({ onClose }: AuthFormProps) {
                   {passwordValidation && !passwordValidation.isValid && (
                     <div className='bg-red-50 border border-red-200 rounded-lg p-3'>
                       <ul className='text-sm text-red-700 space-y-1'>
-                        {passwordValidation.errors.map((error, index) => (
-                          <li key={index} className='flex items-start gap-1'>
+                        {passwordValidation.errors.map((error) => (
+                          <li key={error} className='flex items-start gap-1'>
                             <span>•</span>
                             <span>{error}</span>
                           </li>
@@ -381,7 +381,7 @@ export function AuthForm({ onClose }: AuthFormProps) {
                   (!isLogin &&
                     passwordValidation &&
                     !passwordValidation.isValid) ||
-                  (emailValidation && !emailValidation.isValid),
+                  emailValidation?.isValid === false,
               )}
             >
               {isLoading

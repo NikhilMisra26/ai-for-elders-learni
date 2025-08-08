@@ -1,15 +1,18 @@
-import type { ComponentProps } from 'react';
+import type { ComponentProps, ReactElement } from 'react';
 import { Slot } from '@radix-ui/react-slot';
 import ChevronRight from 'lucide-react/dist/esm/icons/chevron-right';
 import MoreHorizontal from 'lucide-react/dist/esm/icons/more-horizontal';
 
 import { cn } from '@/lib/utils';
 
-function Breadcrumb({ ...props }: ComponentProps<'nav'>) {
+function Breadcrumb({ ...props }: ComponentProps<'nav'>): ReactElement {
   return <nav aria-label='breadcrumb' data-slot='breadcrumb' {...props} />;
 }
 
-function BreadcrumbList({ className, ...props }: ComponentProps<'ol'>) {
+function BreadcrumbList({
+  className,
+  ...props
+}: ComponentProps<'ol'>): ReactElement {
   return (
     <ol
       data-slot='breadcrumb-list'
@@ -22,7 +25,10 @@ function BreadcrumbList({ className, ...props }: ComponentProps<'ol'>) {
   );
 }
 
-function BreadcrumbItem({ className, ...props }: ComponentProps<'li'>) {
+function BreadcrumbItem({
+  className,
+  ...props
+}: ComponentProps<'li'>): ReactElement {
   return (
     <li
       data-slot='breadcrumb-item'
@@ -38,7 +44,7 @@ function BreadcrumbLink({
   ...props
 }: ComponentProps<'a'> & {
   asChild?: boolean;
-}) {
+}): ReactElement {
   const Comp = asChild ? Slot : 'a';
 
   return (
@@ -50,7 +56,10 @@ function BreadcrumbLink({
   );
 }
 
-function BreadcrumbPage({ className, ...props }: ComponentProps<'span'>) {
+function BreadcrumbPage({
+  className,
+  ...props
+}: ComponentProps<'span'>): ReactElement {
   return (
     <span
       data-slot='breadcrumb-page'
@@ -67,7 +76,7 @@ function BreadcrumbSeparator({
   children,
   className,
   ...props
-}: ComponentProps<'li'>) {
+}: ComponentProps<'li'>): ReactElement {
   return (
     <li
       data-slot='breadcrumb-separator'
@@ -81,7 +90,10 @@ function BreadcrumbSeparator({
   );
 }
 
-function BreadcrumbEllipsis({ className, ...props }: ComponentProps<'span'>) {
+function BreadcrumbEllipsis({
+  className,
+  ...props
+}: ComponentProps<'span'>): ReactElement {
   return (
     <span
       data-slot='breadcrumb-ellipsis'
