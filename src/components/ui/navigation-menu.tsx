@@ -1,4 +1,4 @@
-import type { ComponentProps } from 'react';
+import type { ComponentProps, ReactElement } from 'react';
 import * as NavigationMenuPrimitive from '@radix-ui/react-navigation-menu';
 import { cva } from 'class-variance-authority';
 import ChevronDownIcon from 'lucide-react/dist/esm/icons/chevron-down';
@@ -12,7 +12,7 @@ function NavigationMenu({
   ...props
 }: ComponentProps<typeof NavigationMenuPrimitive.Root> & {
   viewport?: boolean;
-}) {
+}): ReactElement {
   return (
     <NavigationMenuPrimitive.Root
       data-slot='navigation-menu'
@@ -32,7 +32,7 @@ function NavigationMenu({
 function NavigationMenuList({
   className,
   ...props
-}: ComponentProps<typeof NavigationMenuPrimitive.List>) {
+}: ComponentProps<typeof NavigationMenuPrimitive.List>): ReactElement {
   return (
     <NavigationMenuPrimitive.List
       data-slot='navigation-menu-list'
@@ -48,7 +48,7 @@ function NavigationMenuList({
 function NavigationMenuItem({
   className,
   ...props
-}: ComponentProps<typeof NavigationMenuPrimitive.Item>) {
+}: ComponentProps<typeof NavigationMenuPrimitive.Item>): ReactElement {
   return (
     <NavigationMenuPrimitive.Item
       data-slot='navigation-menu-item'
@@ -66,7 +66,7 @@ function NavigationMenuTrigger({
   className,
   children,
   ...props
-}: ComponentProps<typeof NavigationMenuPrimitive.Trigger>) {
+}: ComponentProps<typeof NavigationMenuPrimitive.Trigger>): ReactElement {
   return (
     <NavigationMenuPrimitive.Trigger
       data-slot='navigation-menu-trigger'
@@ -85,7 +85,7 @@ function NavigationMenuTrigger({
 function NavigationMenuContent({
   className,
   ...props
-}: ComponentProps<typeof NavigationMenuPrimitive.Content>) {
+}: ComponentProps<typeof NavigationMenuPrimitive.Content>): ReactElement {
   return (
     <NavigationMenuPrimitive.Content
       data-slot='navigation-menu-content'
@@ -102,7 +102,7 @@ function NavigationMenuContent({
 function NavigationMenuViewport({
   className,
   ...props
-}: ComponentProps<typeof NavigationMenuPrimitive.Viewport>) {
+}: ComponentProps<typeof NavigationMenuPrimitive.Viewport>): ReactElement {
   return (
     <div
       className={cn(
@@ -124,7 +124,7 @@ function NavigationMenuViewport({
 function NavigationMenuLink({
   className,
   ...props
-}: ComponentProps<typeof NavigationMenuPrimitive.Link>) {
+}: ComponentProps<typeof NavigationMenuPrimitive.Link>): ReactElement {
   return (
     <NavigationMenuPrimitive.Link
       data-slot='navigation-menu-link'
@@ -140,7 +140,7 @@ function NavigationMenuLink({
 function NavigationMenuIndicator({
   className,
   ...props
-}: ComponentProps<typeof NavigationMenuPrimitive.Indicator>) {
+}: ComponentProps<typeof NavigationMenuPrimitive.Indicator>): ReactElement {
   return (
     <NavigationMenuPrimitive.Indicator
       data-slot='navigation-menu-indicator'

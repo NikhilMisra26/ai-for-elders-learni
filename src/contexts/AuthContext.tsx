@@ -1,5 +1,6 @@
-import type { ReactNode } from 'react';
+import type { ReactNode, ReactElement } from 'react';
 import { createContext, useContext, useState, useEffect } from 'react';
+import type { VerifyOtpParams } from '@supabase/supabase-js';
 
 import { useKV } from '@/lib/kv';
 import { supabase } from '@/lib/supabaseClient';
@@ -51,7 +52,7 @@ interface AuthContextType {
   resendSignupOtp: (
     email: string,
   ) => Promise<{ success: boolean; error?: string }>;
-  logout: () => void;
+  logout: () => Promise<void>;
   isLoading: boolean;
   updateTier: (tier: 'free' | 'advanced' | 'expert') => void;
   securityState: SecurityState;
@@ -60,7 +61,11 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ children }: { children: ReactNode }) {
+export function AuthProvider({
+  children,
+}: {
+  children: ReactNode;
+}): ReactElement {
   const [user, setUser] = useKV<User | null>('current-user', null);
   const [isLoading, setIsLoading] = useState(false);
   const [rateLimiter] = useState(() => new RateLimiter());
@@ -72,7 +77,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Initialize Supabase auth listener and hydrate user profile
   useEffect(() => {
-    const init = async () => {
+    const init = async (): Promise<void> => {
       const { data } = await supabase.auth.getSession();
       const authUser = data.session?.user;
       if (authUser) {
@@ -81,23 +86,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const mapped: User = {
             id: profile.id,
             email: profile.email,
-            name: profile.name || authUser.email || 'User',
-            tier: (profile.tier as User['tier']) || 'free',
+            name: profile.name ?? authUser.email ?? 'User',
+            tier: (profile.tier as User['tier']) ?? 'free',
             verified: profile.verified,
             joinDate: profile.join_date,
-            lastLoginAt: profile.last_login_at || undefined,
+            lastLoginAt: profile.last_login_at ?? undefined,
             loginAttempts: profile.login_attempts,
             isLocked: profile.is_locked,
-            lockedUntil: profile.locked_until || undefined,
+            lockedUntil: profile.locked_until ?? undefined,
           };
           setUser(mapped);
-        } catch (e) {
+        } catch {
           // First-time user: create profile
-          const email = authUser.email || 'unknown@example.com';
+          const email = authUser.email ?? 'unknown@example.com';
           const newProfile = await upsertProfile({
             id: authUser.id,
             email,
-            name: authUser.user_metadata?.name || '',
+            name: authUser.user_metadata?.name ?? '',
             tier: 'free',
             verified: !!authUser.email_confirmed_at,
             join_date: new Date().toISOString(),
@@ -109,7 +114,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setUser({
             id: newProfile.id,
             email: newProfile.email,
-            name: newProfile.name || email,
+            name: newProfile.name ?? email,
             tier: 'free',
             verified: newProfile.verified,
             joinDate: newProfile.join_date,
@@ -121,11 +126,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     const { data: listener } = supabase.auth.onAuthStateChange(() => {
-      init();
+      void init();
     });
-    init();
+    void init();
 
-    return () => {
+    return (): void => {
       listener.subscription.unsubscribe();
     };
   }, [setUser]);
@@ -172,14 +177,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         password,
         options: {
           data: { name: sanitizedName },
-          emailRedirectTo: window.location.origin,
+          emailRedirectTo:
+            typeof window !== 'undefined' ? window.location.origin : undefined,
         },
       });
       if (error || !authRes.user) {
         setIsLoading(false);
         return {
           success: false,
-          error: error?.message || 'Registration failed',
+          error: error?.message ?? 'Registration failed',
         };
       }
 
@@ -267,7 +273,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { error } = await supabase.auth.resend({
         type: 'signup',
         email: sanitizedEmail,
-      } as any);
+      });
       if (error) return { success: false, error: error.message };
       return { success: true };
     } catch (e) {
@@ -322,7 +328,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           'login_failed',
           {
             email: sanitizedEmail,
-            reason: signInError?.message || 'auth_failed',
+            reason: signInError?.message ?? 'auth_failed',
           },
           'warning',
         );
@@ -344,11 +350,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           login_attempts: 0,
           is_locked: false,
           locked_until: null,
-        } as any);
+        });
       } catch (err) {
         SecurityLogger.log(
           'profile_update_failed',
-          { userId: signInData.user.id, error: err instanceof Error ? err.message : String(err) },
+          {
+            userId: signInData.user.id,
+            error: err instanceof Error ? err.message : String(err),
+          },
           'error',
         );
       }
@@ -357,14 +366,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const mapped: User = {
         id: profile.id,
         email: profile.email,
-        name: profile.name || signInData.user.email || 'User',
-        tier: (profile.tier as User['tier']) || 'free',
+        name: profile.name ?? signInData.user.email ?? 'User',
+        tier: (profile.tier as User['tier']) ?? 'free',
         verified: profile.verified,
         joinDate: profile.join_date,
-        lastLoginAt: profile.last_login_at || undefined,
+        lastLoginAt: profile.last_login_at ?? undefined,
         loginAttempts: profile.login_attempts,
         isLocked: profile.is_locked,
-        lockedUntil: profile.locked_until || undefined,
+        lockedUntil: profile.locked_until ?? undefined,
       };
 
       setUser(mapped);
@@ -387,7 +396,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const logout = async () => {
+  const logout = async (): Promise<void> => {
     if (user) {
       SecurityLogger.log('user_logout', { userId: user.id });
     }
@@ -402,7 +411,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }));
   };
 
-  const updateTier = (tier: 'free' | 'advanced' | 'expert') => {
+  const updateTier = (tier: 'free' | 'advanced' | 'expert'): void => {
     if (user) {
       const updatedUser = { ...user, tier };
       setUser(updatedUser);
@@ -426,14 +435,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const extendSession = () => {
+  const extendSession = (): void => {
     SessionManager.extendSession();
     if (user) {
       SecurityLogger.log('session_extended', { userId: user.id });
     }
   };
 
-  const updateSecurityState = (email: string) => {
+  const updateSecurityState = (email: string): void => {
     const remaining = rateLimiter.getRemainingAttempts(email);
     setSecurityState((prev) => ({
       ...prev,
@@ -462,24 +471,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   );
 }
 
-// Simple password hashing for demo (in production, use bcrypt or similar)
-async function hashPassword(password: string): Promise<string> {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(password + 'salt-for-demo');
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
-}
-
-async function verifyPassword(
-  password: string,
-  hash: string,
-): Promise<boolean> {
-  const hashedInput = await hashPassword(password);
-  return hashedInput === hash;
-}
-
-export function useAuth() {
+export function useAuth(): AuthContextType {
   const context = useContext(AuthContext);
   if (context === undefined) {
     throw new Error('useAuth must be used within an AuthProvider');

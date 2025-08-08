@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, type ReactElement } from 'react';
 import {
   BookOpen,
   CheckCircle,
@@ -39,7 +39,9 @@ interface DashboardPageProps {
   onNavigate: (page: string) => void;
 }
 
-export function DashboardPage({ onNavigate }: DashboardPageProps) {
+export function DashboardPage({
+  onNavigate,
+}: DashboardPageProps): ReactElement {
   const { user } = useAuth();
   const { subscription, getCurrentPlan, getDaysUntilExpiry } =
     useSubscription();
@@ -74,10 +76,10 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
   const dashboardSummary = getDashboardSummary();
   const recommendations = getLearningRecommendations();
   const currentPlan = getCurrentPlan();
-  const daysUntilExpiry = getDaysUntilExpiry();
+  const _daysUntilExpiry = getDaysUntilExpiry();
 
   // Get greeting based on time
-  const getGreeting = () => {
+  const getGreeting = (): string => {
     const hour = new Date().getHours();
     if (hour < 12) return 'Good morning';
     if (hour < 17) return 'Good afternoon';
@@ -94,16 +96,18 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
       : 0;
 
   // Get recent courses
-  const getRecentCourses = () => {
+  const _getRecentCourses = (): Array<
+    (typeof courseData)[keyof typeof courseData]
+  > => {
     return Object.values(courseData)
-      .filter((course) => {
+      .filter((_course) => {
         const progress = dashboardSummary.startedCourses > 0;
         return progress;
       })
       .slice(0, 3);
   };
 
-  const handleStartLearning = () => {
+  const handleStartLearning = (): void => {
     if (recommendations.continueModule) {
       // Navigate to specific module - in a real app, you'd implement this routing
       onNavigate('courses');
@@ -348,7 +352,7 @@ export function DashboardPage({ onNavigate }: DashboardPageProps) {
                     })
                     .map((course) => {
                       const completedModules = course.modules.filter(
-                        (module) =>
+                        (_module) =>
                           // Check if module is completed - in real app, use progress tracking
                           false, // Placeholder
                       ).length;

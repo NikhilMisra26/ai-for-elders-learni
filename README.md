@@ -29,12 +29,14 @@ The Spark Template files and resources from GitHub are licensed under the terms 
 This app can persist user data (auth, profiles, subscriptions, progress) to Supabase.
 
 Steps:
+
 - Create a Supabase project at https://supabase.com
 - In the SQL Editor, run the SQL in `supabase.schema.sql`
 - Copy `.env.example` to `.env.local` and fill in:
-	- `VITE_SUPABASE_URL`
-	- `VITE_SUPABASE_ANON_KEY`
+  - `VITE_SUPABASE_URL`
+  - `VITE_SUPABASE_ANON_KEY`
 
 Dev notes:
+
 - AuthContext now uses Supabase Auth + a `profiles` row per user.
 - Local storage is still used for a smooth offline-first UX; when logged in, writes are mirrored to Supabase.

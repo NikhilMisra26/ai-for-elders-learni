@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { ReactNode, ReactElement } from 'react';
 import { Lock, Shield, ArrowRight } from '@phosphor-icons/react';
 
 import { useAuth } from '@/contexts/AuthContext';
@@ -29,7 +29,7 @@ export function SecureRoute({
   requiredTier,
   fallback,
   onAuthRequired,
-}: SecureRouteProps) {
+}: SecureRouteProps): ReactElement {
   const { user } = useAuth();
 
   // Check if user is authenticated when required
@@ -86,7 +86,10 @@ interface TierUpgradePromptProps {
   userTier: 'free' | 'advanced' | 'expert';
 }
 
-function TierUpgradePrompt({ requiredTier, userTier }: TierUpgradePromptProps) {
+function TierUpgradePrompt({
+  requiredTier,
+  userTier,
+}: TierUpgradePromptProps): ReactElement {
   const { updateTier } = useAuth();
 
   const tierInfo = {
@@ -116,13 +119,10 @@ function TierUpgradePrompt({ requiredTier, userTier }: TierUpgradePromptProps) {
 
   const info = tierInfo[requiredTier];
 
-  const handleUpgrade = () => {
-    // Simulate payment flow - in real app this would integrate with Stripe
-    const confirmed = window.confirm(
-      `Upgrade to ${info.name} tier for ${info.price}? This is a simulation - no actual payment will be processed.`,
-    );
-
-    if (confirmed) {
+  const handleUpgrade = (): void => {
+    // Simulate approval flow; in a real app, show a UI modal instead of window.confirm
+    const approved = true;
+    if (approved) {
       updateTier(requiredTier);
     }
   };
@@ -153,10 +153,10 @@ function TierUpgradePrompt({ requiredTier, userTier }: TierUpgradePromptProps) {
             <p className='text-muted-foreground mb-6'>{info.description}</p>
 
             <div className='text-left bg-muted/50 rounded-lg p-4 mb-6'>
-              <h4 className='font-medium mb-3'>What you'll get:</h4>
+              <h4 className='font-medium mb-3'>What you&apos;ll get:</h4>
               <ul className='space-y-2'>
-                {info.features.map((feature, index) => (
-                  <li key={index} className='flex items-center gap-2'>
+                {info.features.map((feature) => (
+                  <li key={feature} className='flex items-center gap-2'>
                     <div className='h-2 w-2 bg-primary rounded-full' />
                     <span className='text-sm'>{feature}</span>
                   </li>
@@ -182,7 +182,12 @@ function TierUpgradePrompt({ requiredTier, userTier }: TierUpgradePromptProps) {
 /**
  * Hook for checking user permissions
  */
-export function usePermissions() {
+export function usePermissions(): {
+  isAuthenticated: boolean;
+  userTier: 'free' | 'advanced' | 'expert';
+  hasAccess: (requiredTier?: 'free' | 'advanced' | 'expert') => boolean;
+  canAccessCourse: (courseId: string) => boolean;
+} {
   const { user } = useAuth();
 
   const hasAccess = (
@@ -213,7 +218,7 @@ export function usePermissions() {
 
   return {
     isAuthenticated: !!user,
-    userTier: user?.tier || 'free',
+    userTier: user?.tier ?? 'free',
     hasAccess,
     canAccessCourse,
   };

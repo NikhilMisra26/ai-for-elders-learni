@@ -434,7 +434,7 @@ export function getAvailableCourses(
 
 export function isModuleAccessible(
   course: Course,
-  module: Module,
+  _module: Module,
   userTier: 'free' | 'advanced' | 'expert',
 ): boolean {
   if (course.tier === 'free') return true;

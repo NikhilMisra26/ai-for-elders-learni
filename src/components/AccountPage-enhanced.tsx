@@ -20,6 +20,7 @@ import {
   ArrowRight,
   Phone,
 } from '@phosphor-icons/react';
+import type { ReactElement } from 'react';
 
 import { AuthForm } from './AuthForm';
 
@@ -56,12 +57,12 @@ interface AccountPageProps {
   onAuthClick: () => void;
 }
 
-export function AccountPage({ onNavigate, onAuthClick }: AccountPageProps) {
+export function AccountPage({ onNavigate }: AccountPageProps): ReactElement {
   const { user } = useAuth();
   const {
     subscription,
     getCurrentPlan,
-    canAccessTier,
+    // canAccessTier,
     startTrial,
     upgradeToPaid,
     cancelSubscription,
@@ -97,9 +98,11 @@ export function AccountPage({ onNavigate, onAuthClick }: AccountPageProps) {
   }
 
   const currentPlan = getCurrentPlan();
-  const daysUntilExpiry = getDaysUntilExpiry();
+  const _daysUntilExpiry = getDaysUntilExpiry();
 
-  const handleUpgrade = async (planId: 'advanced' | 'expert') => {
+  const handleUpgrade = async (
+    planId: 'advanced' | 'expert',
+  ): Promise<void> => {
     setIsProcessingPayment(true);
 
     try {
@@ -114,7 +117,7 @@ export function AccountPage({ onNavigate, onAuthClick }: AccountPageProps) {
         );
       } else {
         // Simulate payment for existing users
-        const result = await simulatePaymentFlow(planId);
+        const result = await simulatePaymentFlow();
 
         if (result.success && result.paymentMethod) {
           upgradeToPaid(planId, result.paymentMethod);
@@ -123,11 +126,11 @@ export function AccountPage({ onNavigate, onAuthClick }: AccountPageProps) {
           });
         } else {
           toast.error('Payment failed', {
-            description: result.error || 'Please try again',
+            description: result.error ?? 'Please try again',
           });
         }
       }
-    } catch (error) {
+    } catch {
       toast.error('Upgrade failed', {
         description: 'Please try again or contact support',
       });
@@ -137,7 +140,7 @@ export function AccountPage({ onNavigate, onAuthClick }: AccountPageProps) {
     }
   };
 
-  const handleCancelSubscription = () => {
+  const handleCancelSubscription = (): void => {
     if (subscription.planId === 'free') return;
 
     cancelSubscription();
@@ -148,7 +151,7 @@ export function AccountPage({ onNavigate, onAuthClick }: AccountPageProps) {
     setShowCancelDialog(false);
   };
 
-  const handleReactivate = () => {
+  const handleReactivate = (): void => {
     reactivateSubscription();
     toast.success('Subscription reactivated!', {
       description: 'Your subscription will continue as normal',
@@ -303,19 +306,17 @@ export function AccountPage({ onNavigate, onAuthClick }: AccountPageProps) {
 
                   {/* Plan Features */}
                   <div>
-                    <h4 className='font-medium mb-3'>What's included:</h4>
+                    <h4 className='font-medium mb-3'>What&apos;s included:</h4>
                     <ul className='space-y-2'>
-                      {currentPlan.features
-                        .slice(0, 4)
-                        .map((feature, index) => (
-                          <li
-                            key={index}
-                            className='flex items-center gap-2 text-sm'
-                          >
-                            <CheckCircle className='w-4 h-4 text-green-500' />
-                            {feature}
-                          </li>
-                        ))}
+                      {currentPlan.features.slice(0, 4).map((feature) => (
+                        <li
+                          key={feature}
+                          className='flex items-center gap-2 text-sm'
+                        >
+                          <CheckCircle className='w-4 h-4 text-green-500' />
+                          {feature}
+                        </li>
+                      ))}
                     </ul>
                   </div>
 
@@ -621,9 +622,9 @@ export function AccountPage({ onNavigate, onAuthClick }: AccountPageProps) {
                     </CardHeader>
                     <CardContent>
                       <ul className='space-y-2'>
-                        {plan.features.slice(0, 4).map((feature, index) => (
+                        {plan.features.slice(0, 4).map((feature) => (
                           <li
-                            key={index}
+                            key={feature}
                             className='flex items-center gap-2 text-sm'
                           >
                             <CheckCircle className='w-4 h-4 text-green-500' />
@@ -644,7 +645,7 @@ export function AccountPage({ onNavigate, onAuthClick }: AccountPageProps) {
                 Cancel
               </Button>
               <Button
-                onClick={async () => handleUpgrade(selectedPlan)}
+                onClick={() => void handleUpgrade(selectedPlan)}
                 disabled={isProcessingPayment}
               >
                 {isProcessingPayment ? 'Processing...' : 'Start Free Trial'}
@@ -660,8 +661,9 @@ export function AccountPage({ onNavigate, onAuthClick }: AccountPageProps) {
             <DialogHeader>
               <DialogTitle>Cancel Subscription</DialogTitle>
               <DialogDescription>
-                Are you sure you want to cancel your subscription? You'll lose
-                access to premium content at the end of your billing period.
+                Are you sure you want to cancel your subscription? You&apos;ll
+                lose access to premium content at the end of your billing
+                period.
               </DialogDescription>
             </DialogHeader>
 

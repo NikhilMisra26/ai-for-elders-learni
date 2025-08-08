@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, type ReactElement } from 'react';
 import { toast } from 'sonner';
 import {
   Play,
@@ -52,9 +52,9 @@ export function ModulePage({
   moduleId,
   onBack,
   onNavigate,
-}: ModulePageProps) {
-  const { user } = useAuth();
-  const { subscription, canAccessTier } = useSubscription();
+}: ModulePageProps): ReactElement {
+  const { user: _user } = useAuth();
+  const { subscription: _subscription, canAccessTier } = useSubscription();
   const {
     completeModule,
     isModuleCompleted,
@@ -73,13 +73,13 @@ export function ModulePage({
   const moduleProgress = getModuleProgress(courseId, moduleId);
 
   // Audio narration state
-  const [audioState, audioControls] = useAudioNarration(module?.content || '');
+  const [audioState, audioControls] = useAudioNarration(module?.content ?? '');
   const [showAudioControls, setShowAudioControls] = useState(false);
 
   // Module interaction state
   const [timeSpent, setTimeSpent] = useState(0);
   const [currentRating, setCurrentRating] = useState(
-    moduleProgress?.rating || 0,
+    moduleProgress?.rating ?? 0,
   );
   const [comment, setComment] = useState('');
   const [startTime] = useState(Date.now());
@@ -93,16 +93,16 @@ export function ModulePage({
 
   // Track time spent
   useEffect(() => {
-    const interval = setInterval(() => {
+    const interval = window.setInterval((): void => {
       setTimeSpent(Math.floor((Date.now() - startTime) / 1000 / 60));
     }, 60000); // Update every minute
 
-    return () => clearInterval(interval);
+    return (): void => window.clearInterval(interval);
   }, [startTime]);
 
   // Handle component unmount to save progress
   useEffect(() => {
-    return () => {
+    return (): void => {
       if (timeSpent > 0) {
         // Auto-save time spent when leaving module
       }
@@ -130,7 +130,7 @@ export function ModulePage({
   const isCompleted = isModuleCompleted(courseId, moduleId);
   const estimatedSpeechTime = getEstimatedSpeechTime(module.content);
 
-  const handleMarkComplete = () => {
+  const handleMarkComplete = (): void => {
     const finalTimeSpent = Math.max(timeSpent, 1); // At least 1 minute
     completeModule(
       courseId,
@@ -144,14 +144,14 @@ export function ModulePage({
     announceToScreenReader('Module marked as complete. Great job!');
   };
 
-  const handleRating = (rating: number) => {
+  const handleRating = (rating: number): void => {
     setCurrentRating(rating);
     rateModule(courseId, moduleId, rating);
     toast.success(`Rated ${rating} star${rating !== 1 ? 's' : ''}`);
     announceToScreenReader(`Module rated ${rating} out of 5 stars`);
   };
 
-  const handleAudioPlay = () => {
+  const handleAudioPlay = (): void => {
     if (audioState.isPlaying) {
       audioControls.pause();
     } else if (audioState.isPaused) {
@@ -162,12 +162,12 @@ export function ModulePage({
     }
   };
 
-  const handleAudioStop = () => {
+  const handleAudioStop = (): void => {
     audioControls.stop();
     setShowAudioControls(false);
   };
 
-  const handlePrint = () => {
+  const handlePrint = (): void => {
     const printWindow = window.open('', '_blank');
     if (printWindow) {
       printWindow.document.write(`
@@ -350,7 +350,7 @@ export function ModulePage({
                 <div className='flex items-center justify-between mb-2'>
                   <span className='text-sm font-medium'>Course Progress</span>
                   <span className='text-sm text-muted-foreground'>
-                    {courseProgress?.completedModules.length || 0} of{' '}
+                    {courseProgress?.completedModules.length ?? 0} of{' '}
                     {course.totalModules} modules
                   </span>
                 </div>

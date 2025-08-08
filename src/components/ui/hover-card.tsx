@@ -1,17 +1,17 @@
-import type { ComponentProps } from 'react';
+import type { ComponentProps, ReactElement } from 'react';
 import * as HoverCardPrimitive from '@radix-ui/react-hover-card';
 
 import { cn } from '@/lib/utils';
 
 function HoverCard({
   ...props
-}: ComponentProps<typeof HoverCardPrimitive.Root>) {
+}: ComponentProps<typeof HoverCardPrimitive.Root>): ReactElement {
   return <HoverCardPrimitive.Root data-slot='hover-card' {...props} />;
 }
 
 function HoverCardTrigger({
   ...props
-}: ComponentProps<typeof HoverCardPrimitive.Trigger>) {
+}: ComponentProps<typeof HoverCardPrimitive.Trigger>): ReactElement {
   return (
     <HoverCardPrimitive.Trigger data-slot='hover-card-trigger' {...props} />
   );
@@ -22,7 +22,7 @@ function HoverCardContent({
   align = 'center',
   sideOffset = 4,
   ...props
-}: ComponentProps<typeof HoverCardPrimitive.Content>) {
+}: ComponentProps<typeof HoverCardPrimitive.Content>): ReactElement {
   return (
     <HoverCardPrimitive.Portal data-slot='hover-card-portal'>
       <HoverCardPrimitive.Content

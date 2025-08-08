@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { type ReactElement } from 'react';
 import {
   Brain,
   Shield,
@@ -42,9 +42,12 @@ interface HomePageProps {
   onAuthClick: () => void;
 }
 
-export function HomePage({ onNavigate, onAuthClick }: HomePageProps) {
+export function HomePage({
+  onNavigate,
+  onAuthClick,
+}: HomePageProps): ReactElement {
   const { user } = useAuth();
-  const { subscription } = useSubscription();
+  const { subscription: _subscription } = useSubscription();
 
   const heroFeatures = [
     {
@@ -185,9 +188,9 @@ export function HomePage({ onNavigate, onAuthClick }: HomePageProps) {
 
             {/* Hero Features */}
             <div className='grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 max-w-3xl mx-auto'>
-              {heroFeatures.map((feature, index) => (
+              {heroFeatures.map((feature) => (
                 <div
-                  key={index}
+                  key={feature.text}
                   className='flex items-center gap-2 text-sm text-muted-foreground'
                 >
                   {feature.icon}
@@ -232,9 +235,9 @@ export function HomePage({ onNavigate, onAuthClick }: HomePageProps) {
 
             {/* Trust Indicators */}
             <div className='grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto'>
-              {trustIndicators.map((indicator, index) => (
+              {trustIndicators.map((indicator) => (
                 <div
-                  key={index}
+                  key={indicator.text}
                   className='flex items-center gap-2 text-sm text-muted-foreground justify-center'
                 >
                   {indicator.icon}
@@ -250,8 +253,8 @@ export function HomePage({ onNavigate, onAuthClick }: HomePageProps) {
       <section className='py-16 px-4 sm:px-6 lg:px-8 bg-muted/30'>
         <div className='max-w-6xl mx-auto'>
           <div className='grid grid-cols-2 md:grid-cols-4 gap-8 text-center'>
-            {stats.map((stat, index) => (
-              <div key={index}>
+            {stats.map((stat) => (
+              <div key={stat.label}>
                 <div className='text-3xl font-bold text-primary mb-2'>
                   {stat.number}
                 </div>
@@ -277,8 +280,8 @@ export function HomePage({ onNavigate, onAuthClick }: HomePageProps) {
           </div>
 
           <div className='grid md:grid-cols-2 lg:grid-cols-3 gap-8'>
-            {features.map((feature, index) => (
-              <Card key={index} className='text-center h-full'>
+            {features.map((feature) => (
+              <Card key={feature.title} className='text-center h-full'>
                 <CardHeader>
                   <div className='w-16 h-16 mx-auto mb-4 flex items-center justify-center bg-primary/10 rounded-full'>
                     {feature.icon}
@@ -337,8 +340,8 @@ export function HomePage({ onNavigate, onAuthClick }: HomePageProps) {
                 </CardHeader>
                 <CardContent>
                   <ul className='space-y-3 mb-6'>
-                    {plan.features.map((feature, index) => (
-                      <li key={index} className='flex items-start gap-3'>
+                    {plan.features.map((feature) => (
+                      <li key={feature} className='flex items-start gap-3'>
                         <CheckCircle className='w-5 h-5 text-green-500 flex-shrink-0 mt-0.5' />
                         <span className='text-sm'>{feature}</span>
                       </li>
@@ -347,7 +350,9 @@ export function HomePage({ onNavigate, onAuthClick }: HomePageProps) {
                   <Button
                     className='w-full'
                     variant={plan.popular ? 'default' : 'outline'}
-                    onClick={user ? () => onNavigate('account') : onAuthClick}
+                    onClick={
+                      user ? (): void => onNavigate('account') : onAuthClick
+                    }
                   >
                     {plan.ctaText}
                   </Button>
@@ -370,17 +375,22 @@ export function HomePage({ onNavigate, onAuthClick }: HomePageProps) {
           </div>
 
           <div className='grid md:grid-cols-3 gap-8'>
-            {testimonials.map((testimonial, index) => (
-              <Card key={index} className='h-full'>
+            {testimonials.map((testimonial) => (
+              <Card
+                key={`${testimonial.name}-${testimonial.location}`}
+                className='h-full'
+              >
                 <CardHeader>
                   <div className='flex items-center gap-1 mb-2'>
-                    {[...Array(testimonial.rating)].map((_, i) => (
-                      <Star
-                        key={i}
-                        className='w-5 h-5 text-yellow-500'
-                        weight='fill'
-                      />
-                    ))}
+                    {[...(Array(testimonial.rating) as unknown[])].map(
+                      (_, i) => (
+                        <Star
+                          key={`star-${testimonial.name}-${i}`}
+                          className='w-5 h-5 text-yellow-500'
+                          weight='fill'
+                        />
+                      ),
+                    )}
                   </div>
                   <div>
                     <CardTitle className='text-lg'>
@@ -394,7 +404,7 @@ export function HomePage({ onNavigate, onAuthClick }: HomePageProps) {
                 </CardHeader>
                 <CardContent>
                   <p className='text-muted-foreground italic leading-relaxed'>
-                    "{testimonial.content}"
+                    &quot;{testimonial.content}&quot;
                   </p>
                 </CardContent>
               </Card>
