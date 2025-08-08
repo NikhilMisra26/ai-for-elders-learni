@@ -6,6 +6,7 @@ import {
   getUserSubscription,
   upsertSubscription,
 } from './db';
+import { SecurityLogger } from './security';
 
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -186,9 +187,10 @@ export function useSubscription(): {
         payment_last4: base.paymentMethod?.last4 ?? null,
         cancel_at_period_end: base.cancelAtPeriodEnd ?? false,
         auto_renew: base.autoRenew,
-      }).catch(() => {
-        // ignore persist errors
-      });
+
+      }).catch((error) =>
+        SecurityLogger.log('upsertSubscription failed', { error }, 'error'),
+      );
     }
   };
 
