@@ -399,7 +399,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const updatedUser = { ...user, tier };
       setUser(updatedUser);
       // Persist to profile
-      updateProfile(user.id, { tier } as any).catch(() => {});
+      updateProfile(user.id, { tier }).catch((error) => {
+        SecurityLogger.log(
+          'update_profile_error',
+          {
+            userId: user.id,
+            attemptedTier: tier,
+            error: error instanceof Error ? error.message : String(error),
+          },
+          'error',
+        );
+      });
       SecurityLogger.log('tier_updated', {
         userId: user.id,
         oldTier: user.tier,
