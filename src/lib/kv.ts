@@ -4,8 +4,7 @@ type Setter<T> = (value: T | ((prev: T) => T)) => void;
 
 // Simple key-value hook backed by localStorage with JSON serialization.
 export function useKV<T>(key: string, initial: T): [T, Setter<T>] {
-  const storage = (globalThis as unknown as { localStorage?: Storage })
-    .localStorage;
+  const storage = globalThis.localStorage;
   const isBrowser = !!storage;
 
   const read = (): T => {
