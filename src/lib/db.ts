@@ -46,7 +46,7 @@ export async function getProfile(id: string) {
 }
 
 export async function updateProfile(id: string, updates: Partial<Profile>) {
-  const sanitized: Record<string, unknown> = { ...updates };
+  const sanitized: Partial<Profile> = { ...updates };
 
   if (updates.email) {
     const emailCheck = validateEmail(updates.email);
