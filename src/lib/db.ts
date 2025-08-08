@@ -18,7 +18,7 @@ export interface Profile {
 export async function upsertProfile(profile: Profile) {
   const { data, error } = await supabase
     .from('profiles')
-    .upsert(profile as any, { onConflict: 'id' })
+    .upsert(profile, { onConflict: 'id' })
     .select()
     .single();
   if (error) throw error;
