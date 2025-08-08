@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { createContext, useContext, useState, useEffect } from 'react';
-import { useKV } from '@github/spark/hooks';
 
+import { useKV } from '@/lib/kv';
 import {
   validateEmail,
   validatePassword,

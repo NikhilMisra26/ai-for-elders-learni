@@ -10,8 +10,8 @@ import {
   Shield,
   Star,
   Users,
-  Award,
-  Search,
+  Medal,
+  MagnifyingGlass,
   BookmarkSimple,
   ChartBar,
   Trophy,
@@ -202,7 +202,7 @@ export function CoursesPage({ onAuthClick }: CoursesPageProps) {
             </Card>
             <Card>
               <CardContent className='p-4 text-center'>
-                <Award className='w-8 h-8 mx-auto mb-2 text-purple-500' />
+                <Medal className='w-8 h-8 mx-auto mb-2 text-purple-500' />
                 <div className='text-2xl font-bold'>
                   {Math.round(dashboardSummary.weeklyProgress / 60)}h
                 </div>
@@ -308,7 +308,7 @@ export function CoursesPage({ onAuthClick }: CoursesPageProps) {
         {/* Search and Filter */}
         <div className='flex gap-4 mb-6'>
           <div className='flex-1 relative'>
-            <Search className='absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground' />
+            <MagnifyingGlass className='absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground' />
             <Input
               placeholder='Search courses and modules...'
               value={searchQuery}
@@ -624,7 +624,7 @@ export function CoursesPage({ onAuthClick }: CoursesPageProps) {
         {filteredCourses.length === 0 && (
           <Card className='text-center p-8'>
             <CardContent>
-              <Search className='w-12 h-12 mx-auto mb-4 text-muted-foreground' />
+              <MagnifyingGlass className='w-12 h-12 mx-auto mb-4 text-muted-foreground' />
               <h3 className='text-xl font-semibold mb-2'>No courses found</h3>
               <p className='text-muted-foreground'>
                 Try adjusting your search terms or filters to find what you're

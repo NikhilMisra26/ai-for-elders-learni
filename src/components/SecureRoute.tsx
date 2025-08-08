@@ -68,9 +68,13 @@ export function SecureRoute({
     if (userLevel < requiredLevel) {
       if (fallback) return <>{fallback}</>;
 
-      return (
-        <TierUpgradePrompt requiredTier={requiredTier} userTier={user.tier} />
-      );
+      // Only show upgrade prompt for paid tiers
+      const paidTier = requiredTier === 'free' ? undefined : requiredTier;
+      if (paidTier) {
+        return (
+          <TierUpgradePrompt requiredTier={paidTier} userTier={user.tier} />
+        );
+      }
     }
   }
 

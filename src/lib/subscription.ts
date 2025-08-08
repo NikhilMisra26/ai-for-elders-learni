@@ -1,4 +1,4 @@
-import { useKV } from '@github/spark/hooks';
+import { useKV } from './kv';
 
 export interface SubscriptionPlan {
   id: 'free' | 'advanced' | 'expert';

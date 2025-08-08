@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Shield, AlertTriangle, Info, RefreshCw } from '@phosphor-icons/react';
+import { Shield, Warning, Info, ArrowClockwise } from '@phosphor-icons/react';
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -32,9 +32,9 @@ export function SecurityDashboard({ onClose }: SecurityDashboardProps) {
   const getSeverityIcon = (severity: string) => {
     switch (severity) {
       case 'error':
-        return <AlertTriangle className='h-4 w-4 text-red-500' />;
+        return <Warning className='h-4 w-4 text-red-500' />;
       case 'warning':
-        return <AlertTriangle className='h-4 w-4 text-yellow-500' />;
+        return <Warning className='h-4 w-4 text-yellow-500' />;
       default:
         return <Info className='h-4 w-4 text-blue-500' />;
     }
@@ -149,7 +149,7 @@ export function SecurityDashboard({ onClose }: SecurityDashboardProps) {
                 onClick={loadLogs}
                 className='ml-auto'
               >
-                <RefreshCw className='h-4 w-4 mr-1' />
+                <ArrowClockwise className='h-4 w-4 mr-1' />
                 Refresh
               </Button>
             </div>

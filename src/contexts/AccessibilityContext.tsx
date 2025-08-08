@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react';
+import type { ReactNode, JSX } from 'react';
 import { createContext, useContext, useState, useEffect } from 'react';
 
 interface AccessibilityContextType {
@@ -16,7 +16,11 @@ const AccessibilityContext = createContext<
   AccessibilityContextType | undefined
 >(undefined);
 
-export function AccessibilityProvider({ children }: { children: ReactNode }) {
+export function AccessibilityProvider({
+  children,
+}: {
+  children: ReactNode;
+}): JSX.Element {
   const [fontSize, setFontSize] = useState<'small' | 'normal' | 'large'>(
     'normal',
   );
@@ -25,11 +29,15 @@ export function AccessibilityProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     // Load saved preferences
-    const savedFontSize = localStorage.getItem('fontSize') as
-      | 'small'
-      | 'normal'
-      | 'large';
-    const savedDarkMode = localStorage.getItem('darkMode') === 'true';
+    const savedFontSize = (
+      typeof window !== 'undefined'
+        ? window.localStorage.getItem('fontSize')
+        : null
+    ) as 'small' | 'normal' | 'large';
+    const savedDarkMode =
+      (typeof window !== 'undefined'
+        ? window.localStorage.getItem('darkMode')
+        : null) === 'true';
 
     if (savedFontSize) setFontSize(savedFontSize);
     if (savedDarkMode) setIsDarkMode(savedDarkMode);
@@ -37,24 +45,32 @@ export function AccessibilityProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     // Apply font size class to body
-    document.body.className = document.body.className.replace(
-      /font-size-\w+/g,
-      '',
-    );
-    if (fontSize !== 'normal') {
-      document.body.classList.add(`font-size-${fontSize}`);
+    if (typeof document !== 'undefined') {
+      document.body.className = document.body.className.replace(
+        /font-size-\w+/g,
+        '',
+      );
+      if (fontSize !== 'normal') {
+        document.body.classList.add(`font-size-${fontSize}`);
+      }
     }
-    localStorage.setItem('fontSize', fontSize);
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('fontSize', fontSize);
+    }
   }, [fontSize]);
 
   useEffect(() => {
     // Apply dark mode class to body
-    if (isDarkMode) {
-      document.body.classList.add('dark');
-    } else {
-      document.body.classList.remove('dark');
+    if (typeof document !== 'undefined') {
+      if (isDarkMode) {
+        document.body.classList.add('dark');
+      } else {
+        document.body.classList.remove('dark');
+      }
     }
-    localStorage.setItem('darkMode', isDarkMode.toString());
+    if (typeof window !== 'undefined') {
+      window.localStorage.setItem('darkMode', isDarkMode.toString());
+    }
   }, [isDarkMode]);
 
   const increaseFontSize = () => {
@@ -73,12 +89,12 @@ export function AccessibilityProvider({ children }: { children: ReactNode }) {
     });
   };
 
-  const toggleDarkMode = () => {
+  const toggleDarkMode = (): void => {
     setIsDarkMode(!isDarkMode);
   };
 
-  const speakText = (text: string) => {
-    if ('speechSynthesis' in window) {
+  const speakText = (text: string): void => {
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       // Stop any current speech
       window.speechSynthesis.cancel();
 
@@ -95,8 +111,8 @@ export function AccessibilityProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const stopSpeaking = () => {
-    if ('speechSynthesis' in window) {
+  const stopSpeaking = (): void => {
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
       window.speechSynthesis.cancel();
       setIsSpeaking(false);
     }

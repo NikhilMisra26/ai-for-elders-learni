@@ -7,18 +7,21 @@ import { SessionManager } from '@/lib/security';
  * Hook for automatic session management
  * Handles session extension on user activity and logout on expiration
  */
-export function useSessionManager() {
+export function useSessionManager(): {
+  isSessionValid: boolean;
+  extendSession: () => void;
+} {
   const { user, logout, extendSession } = useAuth();
 
   // Track user activity to extend session
-  const handleUserActivity = useCallback(() => {
+  const handleUserActivity = useCallback((): void => {
     if (user && SessionManager.isSessionValid()) {
       extendSession();
     }
   }, [user, extendSession]);
 
   // Check session validity periodically
-  const checkSession = useCallback(() => {
+  const checkSession = useCallback((): void => {
     if (user && !SessionManager.isSessionValid()) {
       logout();
     }
@@ -26,6 +29,7 @@ export function useSessionManager() {
 
   useEffect(() => {
     if (!user) return;
+    if (typeof document === 'undefined') return;
 
     // Events that indicate user activity
     const activityEvents = [
@@ -38,12 +42,12 @@ export function useSessionManager() {
     ];
 
     // Throttle activity tracking to avoid excessive calls
-    let activityTimeout: NodeJS.Timeout | null = null;
+    let activityTimeout: number | null = null;
 
     const throttledActivity = () => {
       if (activityTimeout) return;
 
-      activityTimeout = setTimeout(() => {
+      activityTimeout = window.setTimeout(() => {
         handleUserActivity();
         activityTimeout = null;
       }, 30000); // Extend session at most once per 30 seconds
@@ -55,7 +59,10 @@ export function useSessionManager() {
     });
 
     // Check session validity every 5 minutes
-    const sessionCheckInterval = setInterval(checkSession, 5 * 60 * 1000);
+    const sessionCheckInterval = window.setInterval(
+      checkSession,
+      5 * 60 * 1000,
+    );
 
     // Cleanup
     return () => {
@@ -63,10 +70,10 @@ export function useSessionManager() {
         document.removeEventListener(event, throttledActivity);
       });
 
-      clearInterval(sessionCheckInterval);
+      window.clearInterval(sessionCheckInterval);
 
       if (activityTimeout) {
-        clearTimeout(activityTimeout);
+        window.clearTimeout(activityTimeout);
       }
     };
   }, [user, handleUserActivity, checkSession]);
