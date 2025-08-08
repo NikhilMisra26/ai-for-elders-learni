@@ -18,7 +18,7 @@ export interface Profile {
 export async function upsertProfile(profile: Profile) {
   const { data, error } = await supabase
     .from('profiles')
-    .upsert(profile as any, { onConflict: 'id' })
+    .upsert(profile, { onConflict: 'id' })
     .select()
     .single();
   if (error) throw error;
@@ -38,7 +38,7 @@ export async function getProfile(id: string) {
 export async function updateProfile(id: string, updates: Partial<Profile>) {
   const { data, error } = await supabase
     .from('profiles')
-    .update(updates as any)
+    .update(updates)
     .eq('id', id)
     .select()
     .single();
@@ -78,7 +78,7 @@ export async function upsertSubscription(
 ) {
   const { data, error } = await supabase
     .from('subscriptions')
-    .upsert(row as any)
+    .upsert(row as Partial<SubscriptionRow>)
     .select()
     .single();
   if (error) throw error;
@@ -109,7 +109,7 @@ export async function listInvoices(userId: string) {
 export async function addInvoice(row: Omit<InvoiceRow, 'id'>) {
   const { data, error } = await supabase
     .from('invoices')
-    .insert(row as any)
+    .insert([row])
     .select()
     .single();
   if (error) throw error;
@@ -144,7 +144,7 @@ export async function upsertCourseProgress(
 ) {
   const { data, error } = await supabase
     .from('course_progress')
-    .upsert(row as any)
+    .upsert(row)
     .select()
     .single();
   if (error) throw error;

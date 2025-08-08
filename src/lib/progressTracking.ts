@@ -308,7 +308,9 @@ export function useProgress() {
           course_id: courseId,
           module_id: null,
           metadata: null,
-        }).catch(() => {});
+        }).catch((err) => {
+          console.error('Failed to add course_completed activity to DB:', err);
+        });
       }
     }
   };

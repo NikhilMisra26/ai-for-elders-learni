@@ -231,7 +231,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         email: sanitizedEmail,
         token,
         type: 'email',
-      } as any);
+      } as VerifyOtpParams);
 
       if (error) {
         setIsLoading(false);
@@ -345,7 +345,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           is_locked: false,
           locked_until: null,
         } as any);
-      } catch {}
+      } catch (err) {
+        SecurityLogger.log(
+          'profile_update_failed',
+          { userId: signInData.user.id, error: err instanceof Error ? err.message : String(err) },
+          'error',
+        );
+      }
 
       const profile = await getProfile(signInData.user.id);
       const mapped: User = {
@@ -401,7 +407,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const updatedUser = { ...user, tier };
       setUser(updatedUser);
       // Persist to profile
-      updateProfile(user.id, { tier } as any).catch(() => {});
+      updateProfile(user.id, { tier }).catch((error) => {
+        SecurityLogger.log(
+          'update_profile_error',
+          {
+            userId: user.id,
+            attemptedTier: tier,
+            error: error instanceof Error ? error.message : String(error),
+          },
+          'error',
+        );
+      });
       SecurityLogger.log('tier_updated', {
         userId: user.id,
         oldTier: user.tier,
