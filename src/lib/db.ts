@@ -76,7 +76,7 @@ export async function getUserSubscription(userId: string) {
 export async function upsertSubscription(row: Omit<SubscriptionRow, 'id'> & { id?: string }) {
   const { data, error } = await supabase
     .from('subscriptions')
-    .upsert(row as any)
+    .upsert(row as Partial<SubscriptionRow>)
     .select()
     .single();
   if (error) throw error;
