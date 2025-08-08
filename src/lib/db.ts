@@ -38,7 +38,7 @@ export async function getProfile(id: string) {
 export async function updateProfile(id: string, updates: Partial<Profile>) {
   const { data, error } = await supabase
     .from('profiles')
-    .update(updates as any)
+    .update(updates)
     .eq('id', id)
     .select()
     .single();
