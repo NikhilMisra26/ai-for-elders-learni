@@ -1,22 +1,10 @@
-import React, { useState } from 'react'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Separator } from '@/components/ui/separator'
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
-import { useAuth } from '@/contexts/AuthContext'
-import { useSubscription, subscriptionPlans, formatPrice, simulatePaymentFlow, useInvoiceHistory } from '@/lib/subscription'
-import { useProgress } from '@/lib/progressTracking'
-import { AuthForm } from './AuthForm'
-import { toast } from 'sonner'
-import { 
-  CreditCard, 
-  CheckCircle, 
-  User, 
-  Mail, 
-  Calendar,
+import React, { useState } from 'react';
+import { toast } from 'sonner';
+import {
+  CreditCard,
+  CheckCircle,
+  User,
+  Mail,
   Crown,
   Star,
   Settings,
@@ -29,38 +17,70 @@ import {
   Fire,
   Gift,
   Clock,
-  ArrowRight
-} from '@phosphor-icons/react'
+  ArrowRight,
+} from '@phosphor-icons/react';
+
+import { AuthForm } from './AuthForm';
+
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Label } from '@/components/ui/label';
+import { Separator } from '@/components/ui/separator';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { useAuth } from '@/contexts/AuthContext';
+import {
+  useSubscription,
+  subscriptionPlans,
+  formatPrice,
+  simulatePaymentFlow,
+  useInvoiceHistory,
+} from '@/lib/subscription';
+import { useProgress } from '@/lib/progressTracking';
 
 interface AccountPageProps {
-  onNavigate: (page: string) => void
-  onAuthClick: () => void
+  onNavigate: (page: string) => void;
+  onAuthClick: () => void;
 }
 
 export function AccountPage({ onNavigate, onAuthClick }: AccountPageProps) {
-  const { user } = useAuth()
-  const { 
-    subscription, 
-    getCurrentPlan, 
+  const { user } = useAuth();
+  const {
+    subscription,
+    getCurrentPlan,
     canAccessTier,
     startTrial,
     upgradeToPaid,
     cancelSubscription,
     reactivateSubscription,
-    getDaysUntilExpiry 
-  } = useSubscription()
-  const { learningStats } = useProgress()
-  const { invoices } = useInvoiceHistory()
-  
-  const [showUpgradeDialog, setShowUpgradeDialog] = useState(false)
-  const [selectedPlan, setSelectedPlan] = useState<'advanced' | 'expert'>('advanced')
-  const [isProcessingPayment, setIsProcessingPayment] = useState(false)
-  const [showCancelDialog, setShowCancelDialog] = useState(false)
+    getDaysUntilExpiry,
+  } = useSubscription();
+  const { learningStats } = useProgress();
+  const { invoices } = useInvoiceHistory();
+
+  const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<'advanced' | 'expert'>(
+    'advanced',
+  );
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
 
   if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <Card className="max-w-md">
+      <div className='min-h-screen flex items-center justify-center bg-background'>
+        <Card className='max-w-md'>
           <CardHeader>
             <CardTitle>Sign In Required</CardTitle>
             <CardDescription>
@@ -72,112 +92,123 @@ export function AccountPage({ onNavigate, onAuthClick }: AccountPageProps) {
           </CardContent>
         </Card>
       </div>
-    )
+    );
   }
 
-  const currentPlan = getCurrentPlan()
-  const daysUntilExpiry = getDaysUntilExpiry()
+  const currentPlan = getCurrentPlan();
+  const daysUntilExpiry = getDaysUntilExpiry();
 
   const handleUpgrade = async (planId: 'advanced' | 'expert') => {
-    setIsProcessingPayment(true)
-    
+    setIsProcessingPayment(true);
+
     try {
       if (subscription.status === 'trial' || subscription.planId === 'free') {
         // Start trial for new users
-        startTrial(planId)
-        toast.success(`🎉 ${planId === 'advanced' ? '7' : '14'}-day free trial started!`, {
-          description: 'You now have access to all premium content'
-        })
+        startTrial(planId);
+        toast.success(
+          `🎉 ${planId === 'advanced' ? '7' : '14'}-day free trial started!`,
+          {
+            description: 'You now have access to all premium content',
+          },
+        );
       } else {
         // Simulate payment for existing users
-        const result = await simulatePaymentFlow(planId)
-        
+        const result = await simulatePaymentFlow(planId);
+
         if (result.success && result.paymentMethod) {
-          upgradeToPaid(planId, result.paymentMethod)
+          upgradeToPaid(planId, result.paymentMethod);
           toast.success('Subscription upgraded successfully!', {
-            description: 'You now have access to all premium content'
-          })
+            description: 'You now have access to all premium content',
+          });
         } else {
           toast.error('Payment failed', {
-            description: result.error || 'Please try again'
-          })
+            description: result.error || 'Please try again',
+          });
         }
       }
     } catch (error) {
       toast.error('Upgrade failed', {
-        description: 'Please try again or contact support'
-      })
+        description: 'Please try again or contact support',
+      });
     } finally {
-      setIsProcessingPayment(false)
-      setShowUpgradeDialog(false)
+      setIsProcessingPayment(false);
+      setShowUpgradeDialog(false);
     }
-  }
+  };
 
   const handleCancelSubscription = () => {
-    if (subscription.planId === 'free') return
-    
-    cancelSubscription()
+    if (subscription.planId === 'free') return;
+
+    cancelSubscription();
     toast.success('Subscription cancelled', {
-      description: 'You will retain access until your current billing period ends'
-    })
-    setShowCancelDialog(false)
-  }
+      description:
+        'You will retain access until your current billing period ends',
+    });
+    setShowCancelDialog(false);
+  };
 
   const handleReactivate = () => {
-    reactivateSubscription()
+    reactivateSubscription();
     toast.success('Subscription reactivated!', {
-      description: 'Your subscription will continue as normal'
-    })
-  }
+      description: 'Your subscription will continue as normal',
+    });
+  };
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="max-w-6xl mx-auto p-6">
+    <div className='min-h-screen bg-background'>
+      <div className='max-w-6xl mx-auto p-6'>
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2">Account Settings</h1>
-          <p className="text-xl text-muted-foreground">
+        <div className='mb-8'>
+          <h1 className='text-4xl font-bold mb-2'>Account Settings</h1>
+          <p className='text-xl text-muted-foreground'>
             Manage your profile, subscription, and learning preferences
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-8">
+        <div className='grid lg:grid-cols-3 gap-8'>
           {/* Main Content */}
-          <div className="lg:col-span-2 space-y-6">
-            
+          <div className='lg:col-span-2 space-y-6'>
             {/* Profile Information */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <User className="w-5 h-5" />
+                <CardTitle className='flex items-center gap-2'>
+                  <User className='w-5 h-5' />
                   Profile Information
                 </CardTitle>
-                <CardDescription>
-                  Your basic account details
-                </CardDescription>
+                <CardDescription>Your basic account details</CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+              <CardContent className='space-y-4'>
+                <div className='grid grid-cols-2 gap-4'>
                   <div>
-                    <Label className="text-sm font-medium text-muted-foreground">Name</Label>
-                    <p className="text-lg">{user.name}</p>
+                    <Label className='text-sm font-medium text-muted-foreground'>
+                      Name
+                    </Label>
+                    <p className='text-lg'>{user.name}</p>
                   </div>
                   <div>
-                    <Label className="text-sm font-medium text-muted-foreground">Email</Label>
-                    <p className="text-lg">{user.email}</p>
+                    <Label className='text-sm font-medium text-muted-foreground'>
+                      Email
+                    </Label>
+                    <p className='text-lg'>{user.email}</p>
                   </div>
                 </div>
-                
+
                 <Separator />
-                
-                <div className="grid grid-cols-2 gap-4">
+
+                <div className='grid grid-cols-2 gap-4'>
                   <div>
-                    <Label className="text-sm font-medium text-muted-foreground">Member Since</Label>
-                    <p className="text-lg">{new Date(user.joinDate).toLocaleDateString()}</p>
+                    <Label className='text-sm font-medium text-muted-foreground'>
+                      Member Since
+                    </Label>
+                    <p className='text-lg'>
+                      {new Date(user.joinDate).toLocaleDateString()}
+                    </p>
                   </div>
                   <div>
-                    <Label className="text-sm font-medium text-muted-foreground">Account Status</Label>
-                    <Badge variant="secondary">Active</Badge>
+                    <Label className='text-sm font-medium text-muted-foreground'>
+                      Account Status
+                    </Label>
+                    <Badge variant='secondary'>Active</Badge>
                   </div>
                 </div>
               </CardContent>
@@ -186,61 +217,82 @@ export function AccountPage({ onNavigate, onAuthClick }: AccountPageProps) {
             {/* Subscription Management */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <CreditCard className="w-5 h-5" />
+                <CardTitle className='flex items-center gap-2'>
+                  <CreditCard className='w-5 h-5' />
                   Subscription
                 </CardTitle>
                 <CardDescription>
                   Manage your learning plan and billing
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6">
-                
+              <CardContent className='space-y-6'>
                 {/* Current Plan */}
-                <div className="p-4 bg-muted/30 rounded-lg">
-                  <div className="flex items-center justify-between mb-4">
+                <div className='p-4 bg-muted/30 rounded-lg'>
+                  <div className='flex items-center justify-between mb-4'>
                     <div>
-                      <h3 className="text-lg font-semibold">{currentPlan.name}</h3>
-                      <p className="text-muted-foreground">{currentPlan.description}</p>
+                      <h3 className='text-lg font-semibold'>
+                        {currentPlan.name}
+                      </h3>
+                      <p className='text-muted-foreground'>
+                        {currentPlan.description}
+                      </p>
                     </div>
-                    <div className="text-right">
-                      <div className="text-2xl font-bold text-primary">
+                    <div className='text-right'>
+                      <div className='text-2xl font-bold text-primary'>
                         {formatPrice(currentPlan.price)}
-                        {currentPlan.price > 0 && <span className="text-sm text-muted-foreground">/month</span>}
+                        {currentPlan.price > 0 && (
+                          <span className='text-sm text-muted-foreground'>
+                            /month
+                          </span>
+                        )}
                       </div>
-                      <Badge variant={subscription.planId === 'free' ? 'secondary' : 'default'}>
+                      <Badge
+                        variant={
+                          subscription.planId === 'free'
+                            ? 'secondary'
+                            : 'default'
+                        }
+                      >
                         {subscription.status.toUpperCase()}
                       </Badge>
                     </div>
                   </div>
 
                   {/* Trial Information */}
-                  {subscription.status === 'trial' && subscription.trialEndDate && (
-                    <div className="p-3 bg-blue-50 border border-blue-200 rounded-md mb-4">
-                      <div className="flex items-center gap-2 text-blue-800">
-                        <Gift className="w-4 h-4" />
-                        <span className="font-medium">Free Trial Active</span>
+                  {subscription.status === 'trial' &&
+                    subscription.trialEndDate && (
+                      <div className='p-3 bg-blue-50 border border-blue-200 rounded-md mb-4'>
+                        <div className='flex items-center gap-2 text-blue-800'>
+                          <Gift className='w-4 h-4' />
+                          <span className='font-medium'>Free Trial Active</span>
+                        </div>
+                        <p className='text-sm text-blue-600 mt-1'>
+                          Your trial ends on{' '}
+                          {new Date(
+                            subscription.trialEndDate,
+                          ).toLocaleDateString()}
+                        </p>
                       </div>
-                      <p className="text-sm text-blue-600 mt-1">
-                        Your trial ends on {new Date(subscription.trialEndDate).toLocaleDateString()}
-                      </p>
-                    </div>
-                  )}
+                    )}
 
                   {/* Cancellation Notice */}
                   {subscription.cancelAtPeriodEnd && (
-                    <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md mb-4">
-                      <div className="flex items-center gap-2 text-yellow-800">
-                        <AlertTriangle className="w-4 h-4" />
-                        <span className="font-medium">Subscription Cancelled</span>
+                    <div className='p-3 bg-yellow-50 border border-yellow-200 rounded-md mb-4'>
+                      <div className='flex items-center gap-2 text-yellow-800'>
+                        <AlertTriangle className='w-4 h-4' />
+                        <span className='font-medium'>
+                          Subscription Cancelled
+                        </span>
                       </div>
-                      <p className="text-sm text-yellow-600 mt-1">
-                        Your subscription will end on {subscription.endDate && new Date(subscription.endDate).toLocaleDateString()}
+                      <p className='text-sm text-yellow-600 mt-1'>
+                        Your subscription will end on{' '}
+                        {subscription.endDate &&
+                          new Date(subscription.endDate).toLocaleDateString()}
                       </p>
-                      <Button 
-                        size="sm" 
-                        variant="outline" 
-                        className="mt-2"
+                      <Button
+                        size='sm'
+                        variant='outline'
+                        className='mt-2'
                         onClick={handleReactivate}
                       >
                         Reactivate Subscription
@@ -250,40 +302,45 @@ export function AccountPage({ onNavigate, onAuthClick }: AccountPageProps) {
 
                   {/* Plan Features */}
                   <div>
-                    <h4 className="font-medium mb-3">What's included:</h4>
-                    <ul className="space-y-2">
-                      {currentPlan.features.slice(0, 4).map((feature, index) => (
-                        <li key={index} className="flex items-center gap-2 text-sm">
-                          <CheckCircle className="w-4 h-4 text-green-500" />
-                          {feature}
-                        </li>
-                      ))}
+                    <h4 className='font-medium mb-3'>What's included:</h4>
+                    <ul className='space-y-2'>
+                      {currentPlan.features
+                        .slice(0, 4)
+                        .map((feature, index) => (
+                          <li
+                            key={index}
+                            className='flex items-center gap-2 text-sm'
+                          >
+                            <CheckCircle className='w-4 h-4 text-green-500' />
+                            {feature}
+                          </li>
+                        ))}
                     </ul>
                   </div>
 
                   {/* Action Buttons */}
-                  <div className="flex gap-3 mt-6">
+                  <div className='flex gap-3 mt-6'>
                     {subscription.planId === 'free' ? (
                       <Button onClick={() => setShowUpgradeDialog(true)}>
                         Upgrade Plan
-                        <Crown className="w-4 h-4 ml-2" />
+                        <Crown className='w-4 h-4 ml-2' />
                       </Button>
                     ) : (
                       <>
                         {subscription.planId === 'advanced' && (
-                          <Button 
+                          <Button
                             onClick={() => {
-                              setSelectedPlan('expert')
-                              setShowUpgradeDialog(true)
+                              setSelectedPlan('expert');
+                              setShowUpgradeDialog(true);
                             }}
                           >
                             Upgrade to Expert
-                            <ArrowRight className="w-4 h-4 ml-2" />
+                            <ArrowRight className='w-4 h-4 ml-2' />
                           </Button>
                         )}
                         {!subscription.cancelAtPeriodEnd && (
-                          <Button 
-                            variant="outline" 
+                          <Button
+                            variant='outline'
                             onClick={() => setShowCancelDialog(true)}
                           >
                             Cancel Subscription
@@ -295,34 +352,39 @@ export function AccountPage({ onNavigate, onAuthClick }: AccountPageProps) {
                 </div>
 
                 {/* Next Billing */}
-                {subscription.nextBillingDate && subscription.status === 'active' && (
-                  <div className="p-3 border rounded-md">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="font-medium">Next Billing Date</p>
-                        <p className="text-sm text-muted-foreground">
-                          {new Date(subscription.nextBillingDate).toLocaleDateString()}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-medium">{formatPrice(currentPlan.price)}</p>
-                        {subscription.paymentMethod && (
-                          <p className="text-sm text-muted-foreground">
-                            •••• {subscription.paymentMethod.last4}
+                {subscription.nextBillingDate &&
+                  subscription.status === 'active' && (
+                    <div className='p-3 border rounded-md'>
+                      <div className='flex items-center justify-between'>
+                        <div>
+                          <p className='font-medium'>Next Billing Date</p>
+                          <p className='text-sm text-muted-foreground'>
+                            {new Date(
+                              subscription.nextBillingDate,
+                            ).toLocaleDateString()}
                           </p>
-                        )}
+                        </div>
+                        <div className='text-right'>
+                          <p className='font-medium'>
+                            {formatPrice(currentPlan.price)}
+                          </p>
+                          {subscription.paymentMethod && (
+                            <p className='text-sm text-muted-foreground'>
+                              •••• {subscription.paymentMethod.last4}
+                            </p>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )}
+                  )}
               </CardContent>
             </Card>
 
             {/* Learning Statistics */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <ChartBar className="w-5 h-5" />
+                <CardTitle className='flex items-center gap-2'>
+                  <ChartBar className='w-5 h-5' />
                   Learning Statistics
                 </CardTitle>
                 <CardDescription>
@@ -330,26 +392,42 @@ export function AccountPage({ onNavigate, onAuthClick }: AccountPageProps) {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-                  <div className="text-center">
-                    <Trophy className="w-8 h-8 mx-auto mb-2 text-yellow-500" />
-                    <div className="text-2xl font-bold">{learningStats.modulesCompleted}</div>
-                    <div className="text-sm text-muted-foreground">Modules Completed</div>
+                <div className='grid grid-cols-2 md:grid-cols-4 gap-6'>
+                  <div className='text-center'>
+                    <Trophy className='w-8 h-8 mx-auto mb-2 text-yellow-500' />
+                    <div className='text-2xl font-bold'>
+                      {learningStats.modulesCompleted}
+                    </div>
+                    <div className='text-sm text-muted-foreground'>
+                      Modules Completed
+                    </div>
                   </div>
-                  <div className="text-center">
-                    <Clock className="w-8 h-8 mx-auto mb-2 text-blue-500" />
-                    <div className="text-2xl font-bold">{Math.round(learningStats.totalTimeSpent / 60)}h</div>
-                    <div className="text-sm text-muted-foreground">Hours Learned</div>
+                  <div className='text-center'>
+                    <Clock className='w-8 h-8 mx-auto mb-2 text-blue-500' />
+                    <div className='text-2xl font-bold'>
+                      {Math.round(learningStats.totalTimeSpent / 60)}h
+                    </div>
+                    <div className='text-sm text-muted-foreground'>
+                      Hours Learned
+                    </div>
                   </div>
-                  <div className="text-center">
-                    <Fire className="w-8 h-8 mx-auto mb-2 text-orange-500" />
-                    <div className="text-2xl font-bold">{learningStats.streak.currentStreak}</div>
-                    <div className="text-sm text-muted-foreground">Day Streak</div>
+                  <div className='text-center'>
+                    <Fire className='w-8 h-8 mx-auto mb-2 text-orange-500' />
+                    <div className='text-2xl font-bold'>
+                      {learningStats.streak.currentStreak}
+                    </div>
+                    <div className='text-sm text-muted-foreground'>
+                      Day Streak
+                    </div>
                   </div>
-                  <div className="text-center">
-                    <Star className="w-8 h-8 mx-auto mb-2 text-purple-500" />
-                    <div className="text-2xl font-bold">{learningStats.averageRating.toFixed(1)}</div>
-                    <div className="text-sm text-muted-foreground">Avg Rating</div>
+                  <div className='text-center'>
+                    <Star className='w-8 h-8 mx-auto mb-2 text-purple-500' />
+                    <div className='text-2xl font-bold'>
+                      {learningStats.averageRating.toFixed(1)}
+                    </div>
+                    <div className='text-sm text-muted-foreground'>
+                      Avg Rating
+                    </div>
                   </div>
                 </div>
               </CardContent>
@@ -359,8 +437,8 @@ export function AccountPage({ onNavigate, onAuthClick }: AccountPageProps) {
             {invoices.length > 0 && (
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Download className="w-5 h-5" />
+                  <CardTitle className='flex items-center gap-2'>
+                    <Download className='w-5 h-5' />
                     Billing History
                   </CardTitle>
                   <CardDescription>
@@ -368,22 +446,33 @@ export function AccountPage({ onNavigate, onAuthClick }: AccountPageProps) {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-3">
+                  <div className='space-y-3'>
                     {invoices.slice(0, 5).map((invoice) => (
-                      <div key={invoice.id} className="flex items-center justify-between p-3 border rounded-md">
+                      <div
+                        key={invoice.id}
+                        className='flex items-center justify-between p-3 border rounded-md'
+                      >
                         <div>
-                          <p className="font-medium">{invoice.planName}</p>
-                          <p className="text-sm text-muted-foreground">
+                          <p className='font-medium'>{invoice.planName}</p>
+                          <p className='text-sm text-muted-foreground'>
                             {new Date(invoice.date).toLocaleDateString()}
                           </p>
                         </div>
-                        <div className="flex items-center gap-3">
-                          <Badge variant={invoice.status === 'paid' ? 'secondary' : 'destructive'}>
+                        <div className='flex items-center gap-3'>
+                          <Badge
+                            variant={
+                              invoice.status === 'paid'
+                                ? 'secondary'
+                                : 'destructive'
+                            }
+                          >
                             {invoice.status}
                           </Badge>
-                          <span className="font-medium">{formatPrice(invoice.amount)}</span>
-                          <Button size="sm" variant="outline">
-                            <Download className="w-4 h-4" />
+                          <span className='font-medium'>
+                            {formatPrice(invoice.amount)}
+                          </span>
+                          <Button size='sm' variant='outline'>
+                            <Download className='w-4 h-4' />
                           </Button>
                         </div>
                       </div>
@@ -395,39 +484,38 @@ export function AccountPage({ onNavigate, onAuthClick }: AccountPageProps) {
           </div>
 
           {/* Sidebar */}
-          <div className="space-y-6">
-            
+          <div className='space-y-6'>
             {/* Quick Actions */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Settings className="w-5 h-5" />
+                <CardTitle className='flex items-center gap-2'>
+                  <Settings className='w-5 h-5' />
                   Quick Actions
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
-                <Button 
-                  variant="outline" 
-                  className="w-full justify-start"
+              <CardContent className='space-y-3'>
+                <Button
+                  variant='outline'
+                  className='w-full justify-start'
                   onClick={() => onNavigate('dashboard')}
                 >
-                  <ChartBar className="w-4 h-4 mr-2" />
+                  <ChartBar className='w-4 h-4 mr-2' />
                   View Dashboard
                 </Button>
-                <Button 
-                  variant="outline" 
-                  className="w-full justify-start"
+                <Button
+                  variant='outline'
+                  className='w-full justify-start'
                   onClick={() => onNavigate('courses')}
                 >
-                  <Trophy className="w-4 h-4 mr-2" />
+                  <Trophy className='w-4 h-4 mr-2' />
                   Browse Courses
                 </Button>
                 {subscription.planId === 'free' && (
-                  <Button 
-                    className="w-full justify-start"
+                  <Button
+                    className='w-full justify-start'
                     onClick={() => setShowUpgradeDialog(true)}
                   >
-                    <Crown className="w-4 h-4 mr-2" />
+                    <Crown className='w-4 h-4 mr-2' />
                     Upgrade Plan
                   </Button>
                 )}
@@ -437,23 +525,24 @@ export function AccountPage({ onNavigate, onAuthClick }: AccountPageProps) {
             {/* Support */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Shield className="w-5 h-5" />
+                <CardTitle className='flex items-center gap-2'>
+                  <Shield className='w-5 h-5' />
                   Support & Help
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                <p className="text-sm text-muted-foreground">
-                  Need help with your account or have questions about our courses?
+              <CardContent className='space-y-4'>
+                <p className='text-sm text-muted-foreground'>
+                  Need help with your account or have questions about our
+                  courses?
                 </p>
-                <div className="space-y-2">
-                  <Button variant="outline" size="sm" className="w-full">
-                    <Mail className="w-4 h-4 mr-2" />
+                <div className='space-y-2'>
+                  <Button variant='outline' size='sm' className='w-full'>
+                    <Mail className='w-4 h-4 mr-2' />
                     Email Support
                   </Button>
                   {subscription.planId === 'expert' && (
-                    <Button variant="outline" size="sm" className="w-full">
-                      <Phone className="w-4 h-4 mr-2" />
+                    <Button variant='outline' size='sm' className='w-full'>
+                      <Phone className='w-4 h-4 mr-2' />
                       Phone Support
                     </Button>
                   )}
@@ -464,26 +553,26 @@ export function AccountPage({ onNavigate, onAuthClick }: AccountPageProps) {
             {/* Account Security */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Shield className="w-5 h-5" />
+                <CardTitle className='flex items-center gap-2'>
+                  <Shield className='w-5 h-5' />
                   Account Security
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">Password</span>
-                  <Button variant="outline" size="sm">
+              <CardContent className='space-y-3'>
+                <div className='flex items-center justify-between'>
+                  <span className='text-sm'>Password</span>
+                  <Button variant='outline' size='sm'>
                     Change
                   </Button>
                 </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-sm">Email</span>
-                  <Button variant="outline" size="sm">
+                <div className='flex items-center justify-between'>
+                  <span className='text-sm'>Email</span>
+                  <Button variant='outline' size='sm'>
                     Update
                   </Button>
                 </div>
                 <Separator />
-                <div className="text-sm text-muted-foreground">
+                <div className='text-sm text-muted-foreground'>
                   Last login: {new Date().toLocaleDateString()}
                 </div>
               </CardContent>
@@ -493,58 +582,72 @@ export function AccountPage({ onNavigate, onAuthClick }: AccountPageProps) {
 
         {/* Upgrade Dialog */}
         <Dialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog}>
-          <DialogContent className="max-w-2xl">
+          <DialogContent className='max-w-2xl'>
             <DialogHeader>
               <DialogTitle>Upgrade Your Learning Experience</DialogTitle>
               <DialogDescription>
-                Choose a plan that fits your learning goals and unlock premium content
+                Choose a plan that fits your learning goals and unlock premium
+                content
               </DialogDescription>
             </DialogHeader>
-            
-            <div className="grid md:grid-cols-2 gap-4">
-              {subscriptionPlans.filter(plan => plan.id !== 'free').map((plan) => (
-                <Card 
-                  key={plan.id} 
-                  className={`cursor-pointer transition-colors ${
-                    selectedPlan === plan.id ? 'ring-2 ring-primary' : ''
-                  } ${plan.popular ? 'border-primary' : ''}`}
-                  onClick={() => setSelectedPlan(plan.id as 'advanced' | 'expert')}
-                >
-                  {plan.popular && (
-                    <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                      Most Popular
-                    </Badge>
-                  )}
-                  <CardHeader className="text-center">
-                    <CardTitle>{plan.name}</CardTitle>
-                    <div className="text-3xl font-bold text-primary">
-                      {formatPrice(plan.price)}<span className="text-lg text-muted-foreground">/month</span>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <ul className="space-y-2">
-                      {plan.features.slice(0, 4).map((feature, index) => (
-                        <li key={index} className="flex items-center gap-2 text-sm">
-                          <CheckCircle className="w-4 h-4 text-green-500" />
-                          {feature}
-                        </li>
-                      ))}
-                    </ul>
-                  </CardContent>
-                </Card>
-              ))}
+
+            <div className='grid md:grid-cols-2 gap-4'>
+              {subscriptionPlans
+                .filter((plan) => plan.id !== 'free')
+                .map((plan) => (
+                  <Card
+                    key={plan.id}
+                    className={`cursor-pointer transition-colors ${
+                      selectedPlan === plan.id ? 'ring-2 ring-primary' : ''
+                    } ${plan.popular ? 'border-primary' : ''}`}
+                    onClick={() =>
+                      setSelectedPlan(plan.id as 'advanced' | 'expert')
+                    }
+                  >
+                    {plan.popular && (
+                      <Badge className='absolute -top-3 left-1/2 transform -translate-x-1/2'>
+                        Most Popular
+                      </Badge>
+                    )}
+                    <CardHeader className='text-center'>
+                      <CardTitle>{plan.name}</CardTitle>
+                      <div className='text-3xl font-bold text-primary'>
+                        {formatPrice(plan.price)}
+                        <span className='text-lg text-muted-foreground'>
+                          /month
+                        </span>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <ul className='space-y-2'>
+                        {plan.features.slice(0, 4).map((feature, index) => (
+                          <li
+                            key={index}
+                            className='flex items-center gap-2 text-sm'
+                          >
+                            <CheckCircle className='w-4 h-4 text-green-500' />
+                            {feature}
+                          </li>
+                        ))}
+                      </ul>
+                    </CardContent>
+                  </Card>
+                ))}
             </div>
-            
-            <div className="flex justify-end gap-3">
-              <Button variant="outline" onClick={() => setShowUpgradeDialog(false)}>
+
+            <div className='flex justify-end gap-3'>
+              <Button
+                variant='outline'
+                onClick={() => setShowUpgradeDialog(false)}
+              >
                 Cancel
               </Button>
-              <Button 
-                onClick={() => handleUpgrade(selectedPlan)}
+              <Button
+                onClick={async () => handleUpgrade(selectedPlan)}
                 disabled={isProcessingPayment}
               >
                 {isProcessingPayment ? 'Processing...' : 'Start Free Trial'}
-                <Crown className="w-4 h-4 ml-2" />
+                <Crown className='w-4 h-4 ml-2' />
               </Button>
             </div>
           </DialogContent>
@@ -556,16 +659,20 @@ export function AccountPage({ onNavigate, onAuthClick }: AccountPageProps) {
             <DialogHeader>
               <DialogTitle>Cancel Subscription</DialogTitle>
               <DialogDescription>
-                Are you sure you want to cancel your subscription? You'll lose access to premium content at the end of your billing period.
+                Are you sure you want to cancel your subscription? You'll lose
+                access to premium content at the end of your billing period.
               </DialogDescription>
             </DialogHeader>
-            
-            <div className="flex justify-end gap-3">
-              <Button variant="outline" onClick={() => setShowCancelDialog(false)}>
+
+            <div className='flex justify-end gap-3'>
+              <Button
+                variant='outline'
+                onClick={() => setShowCancelDialog(false)}
+              >
                 Keep Subscription
               </Button>
-              <Button variant="destructive" onClick={handleCancelSubscription}>
-                <X className="w-4 h-4 mr-2" />
+              <Button variant='destructive' onClick={handleCancelSubscription}>
+                <X className='w-4 h-4 mr-2' />
                 Cancel Subscription
               </Button>
             </div>
@@ -573,5 +680,5 @@ export function AccountPage({ onNavigate, onAuthClick }: AccountPageProps) {
         </Dialog>
       </div>
     </div>
-  )
+  );
 }

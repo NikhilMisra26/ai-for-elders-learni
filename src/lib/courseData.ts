@@ -1,48 +1,48 @@
 export interface Module {
-  id: string
-  title: string
-  description: string
-  content: string
-  estimatedTime: number // in minutes
-  order: number
-  isCompleted?: boolean
-  rating?: number
-  videoUrl?: string
-  audioUrl?: string
-  tags: string[]
+  id: string;
+  title: string;
+  description: string;
+  content: string;
+  estimatedTime: number; // in minutes
+  order: number;
+  isCompleted?: boolean;
+  rating?: number;
+  videoUrl?: string;
+  audioUrl?: string;
+  tags: string[];
 }
 
 export interface Course {
-  id: string
-  title: string
-  description: string
-  tier: 'free' | 'advanced' | 'expert'
-  price: number
-  modules: Module[]
-  totalModules: number
-  completedModules: number
-  progressPercentage: number
-  estimatedTotalTime: number
-  features: string[]
-  isLocked: boolean
+  id: string;
+  title: string;
+  description: string;
+  tier: 'free' | 'advanced' | 'expert';
+  price: number;
+  modules: Module[];
+  totalModules: number;
+  completedModules: number;
+  progressPercentage: number;
+  estimatedTotalTime: number;
+  features: string[];
+  isLocked: boolean;
 }
 
 export interface UserProgress {
-  courseId: string
-  moduleId: string
-  completedAt: string
-  rating?: number
-  timeSpent: number
+  courseId: string;
+  moduleId: string;
+  completedAt: string;
+  rating?: number;
+  timeSpent: number;
 }
 
 export interface UserSubscription {
-  tier: 'free' | 'advanced' | 'expert'
-  startDate: string
-  endDate?: string
-  status: 'active' | 'cancelled' | 'expired' | 'trial'
-  paymentMethod?: string
-  nextBillingDate?: string
-  gracePeriodEnd?: string
+  tier: 'free' | 'advanced' | 'expert';
+  startDate: string;
+  endDate?: string;
+  status: 'active' | 'cancelled' | 'expired' | 'trial';
+  paymentMethod?: string;
+  nextBillingDate?: string;
+  gracePeriodEnd?: string;
 }
 
 // Course content data - placeholders for now as requested
@@ -50,7 +50,8 @@ export const courseData: Record<string, Course> = {
   'ai-basics': {
     id: 'ai-basics',
     title: 'AI Basics for Everyday Life',
-    description: 'Learn the fundamentals of AI technology with practical, real-world examples designed specifically for adults 50+.',
+    description:
+      'Learn the fundamentals of AI technology with practical, real-world examples designed specifically for adults 50+.',
     tier: 'free',
     price: 0,
     totalModules: 4,
@@ -62,13 +63,14 @@ export const courseData: Record<string, Course> = {
       'Introduction to AI concepts',
       'Practical daily applications',
       'Safety and privacy guidance',
-      'No technical background required'
+      'No technical background required',
     ],
     modules: [
       {
         id: 'what-is-ai',
         title: 'What is AI, Really?',
-        description: 'Understand AI as your smart assistant with everyday examples like Netflix, GPS, and voice assistants.',
+        description:
+          'Understand AI as your smart assistant with everyday examples like Netflix, GPS, and voice assistants.',
         content: `# What is AI, Really?
 
 ## Introduction
@@ -99,12 +101,13 @@ Margaret, a 68-year-old from Phoenix, was initially intimidated by the term "Art
 ✅ **Remember**: AI is a tool to help you, but always use your good judgment. Never share personal information like passwords or Social Security numbers with AI chatbots.`,
         estimatedTime: 20,
         order: 1,
-        tags: ['beginner', 'introduction', 'safety']
+        tags: ['beginner', 'introduction', 'safety'],
       },
       {
         id: 'first-conversation',
         title: 'Your First AI Conversation',
-        description: 'Learn natural conversation techniques with AI instead of using keyword searches.',
+        description:
+          'Learn natural conversation techniques with AI instead of using keyword searches.',
         content: `# Your First AI Conversation
 
 ## Introduction
@@ -138,12 +141,13 @@ Try having this conversation with an AI:
 ⚠️ **Important**: Never share personal details like your full address, phone number, or financial information in AI conversations.`,
         estimatedTime: 20,
         order: 2,
-        tags: ['conversation', 'practice', 'tips']
+        tags: ['conversation', 'practice', 'tips'],
       },
       {
         id: 'daily-tasks',
         title: 'AI for Daily Tasks',
-        description: 'Discover how AI can help with health management, family communication, hobbies, and daily organization.',
+        description:
+          'Discover how AI can help with health management, family communication, hobbies, and daily organization.',
         content: `# AI for Daily Tasks
 
 ## Introduction
@@ -190,12 +194,13 @@ Linda, 65, uses AI every Sunday to plan her week. She asks: "I have a doctor's a
 🔒 **Remember**: Use AI for planning and organizing, but never share sensitive information like bank account numbers, passwords, or Social Security numbers.`,
         estimatedTime: 20,
         order: 3,
-        tags: ['practical', 'daily-life', 'organization']
+        tags: ['practical', 'daily-life', 'organization'],
       },
       {
         id: 'staying-safe',
         title: 'Staying Safe with AI',
-        description: 'Essential privacy rules, how to spot AI mistakes, and avoiding scams.',
+        description:
+          'Essential privacy rules, how to spot AI mistakes, and avoiding scams.',
         content: `# Staying Safe with AI
 
 ## Introduction
@@ -266,14 +271,15 @@ AI is like any tool - incredibly useful when used properly and safely. By follow
 Remember: You're in control. AI is there to help you, not to make decisions for you.`,
         estimatedTime: 20,
         order: 4,
-        tags: ['safety', 'privacy', 'scams', 'security']
-      }
-    ]
+        tags: ['safety', 'privacy', 'scams', 'security'],
+      },
+    ],
   },
   'ai-assistant': {
     id: 'ai-assistant',
     title: 'AI as Your Personal Assistant',
-    description: 'Learn advanced techniques to make AI work better for you with better prompting, useful tools, and practical applications.',
+    description:
+      'Learn advanced techniques to make AI work better for you with better prompting, useful tools, and practical applications.',
     tier: 'advanced',
     price: 1.99,
     totalModules: 4,
@@ -285,51 +291,60 @@ Remember: You're in control. AI is there to help you, not to make decisions for 
       'Advanced prompting techniques',
       'Practical AI tools and apps',
       'Health and finance applications',
-      'Monthly updates and new tools'
+      'Monthly updates and new tools',
     ],
     modules: [
       {
         id: 'better-prompting',
         title: 'Better Prompting Techniques',
-        description: 'Master the art of asking AI better questions through specificity, role-playing, and follow-up techniques.',
-        content: '# Better Prompting Techniques\n\n[Placeholder content for Advanced Course Module 1]\n\nThis module will cover:\n- How to be more specific in your requests\n- Role-playing techniques with AI\n- Asking effective follow-up questions\n- Getting better results from AI conversations',
+        description:
+          'Master the art of asking AI better questions through specificity, role-playing, and follow-up techniques.',
+        content:
+          '# Better Prompting Techniques\n\n[Placeholder content for Advanced Course Module 1]\n\nThis module will cover:\n- How to be more specific in your requests\n- Role-playing techniques with AI\n- Asking effective follow-up questions\n- Getting better results from AI conversations',
         estimatedTime: 25,
         order: 1,
-        tags: ['advanced', 'prompting', 'techniques']
+        tags: ['advanced', 'prompting', 'techniques'],
       },
       {
         id: 'ai-tools-apps',
         title: 'AI Tools and Apps',
-        description: 'Explore voice assistants, health apps, financial helpers, and memory aids that can improve your daily life.',
-        content: '# AI Tools and Apps\n\n[Placeholder content for Advanced Course Module 2]\n\nThis module will cover:\n- Voice assistants (Siri, Alexa, Google)\n- Health and wellness apps\n- Financial management tools\n- Memory and organization aids',
+        description:
+          'Explore voice assistants, health apps, financial helpers, and memory aids that can improve your daily life.',
+        content:
+          '# AI Tools and Apps\n\n[Placeholder content for Advanced Course Module 2]\n\nThis module will cover:\n- Voice assistants (Siri, Alexa, Google)\n- Health and wellness apps\n- Financial management tools\n- Memory and organization aids',
         estimatedTime: 25,
         order: 2,
-        tags: ['tools', 'apps', 'voice-assistants']
+        tags: ['tools', 'apps', 'voice-assistants'],
       },
       {
         id: 'health-finance',
         title: 'Health & Finance Applications',
-        description: 'Learn how AI can help prepare for doctor visits, manage budgets, and compare insurance options.',
-        content: '# Health & Finance Applications\n\n[Placeholder content for Advanced Course Module 3]\n\nThis module will cover:\n- Preparing for medical appointments\n- Budget planning and expense tracking\n- Insurance comparison and selection\n- Managing prescriptions and health records',
+        description:
+          'Learn how AI can help prepare for doctor visits, manage budgets, and compare insurance options.',
+        content:
+          '# Health & Finance Applications\n\n[Placeholder content for Advanced Course Module 3]\n\nThis module will cover:\n- Preparing for medical appointments\n- Budget planning and expense tracking\n- Insurance comparison and selection\n- Managing prescriptions and health records',
         estimatedTime: 25,
         order: 3,
-        tags: ['health', 'finance', 'insurance']
+        tags: ['health', 'finance', 'insurance'],
       },
       {
         id: 'monthly-updates',
         title: 'Monthly AI Updates',
-        description: 'Stay current with the latest AI tools, safety updates, and new features that can benefit you.',
-        content: '# Monthly AI Updates\n\n[Placeholder content for Advanced Course Module 4]\n\nThis module will cover:\n- Latest AI tool releases\n- Safety and security updates\n- New features in popular AI platforms\n- Trending applications for seniors',
+        description:
+          'Stay current with the latest AI tools, safety updates, and new features that can benefit you.',
+        content:
+          '# Monthly AI Updates\n\n[Placeholder content for Advanced Course Module 4]\n\nThis module will cover:\n- Latest AI tool releases\n- Safety and security updates\n- New features in popular AI platforms\n- Trending applications for seniors',
         estimatedTime: 25,
         order: 4,
-        tags: ['updates', 'news', 'safety']
-      }
-    ]
+        tags: ['updates', 'news', 'safety'],
+      },
+    ],
   },
   'advanced-ai': {
     id: 'advanced-ai',
     title: 'Advanced AI for Active Seniors',
-    description: 'Master cutting-edge AI technologies including autonomous agents, custom assistants, and the latest developments.',
+    description:
+      'Master cutting-edge AI technologies including autonomous agents, custom assistants, and the latest developments.',
     tier: 'expert',
     price: 4.99,
     totalModules: 4,
@@ -341,103 +356,134 @@ Remember: You're in control. AI is there to help you, not to make decisions for 
       'Autonomous AI agents',
       'Model Context Protocol (MCP)',
       'Custom AI assistant creation',
-      'Cutting-edge updates and ethics'
+      'Cutting-edge updates and ethics',
     ],
     modules: [
       {
         id: 'autonomous-agents',
         title: 'Autonomous AI Agents',
-        description: 'Understand AI that can complete multi-step tasks independently and how to use them safely.',
-        content: '# Autonomous AI Agents\n\n[Placeholder content for Expert Course Module 1]\n\nThis module will cover:\n- What are autonomous AI agents\n- Multi-step task automation\n- Safety considerations and limitations\n- Practical applications for seniors',
+        description:
+          'Understand AI that can complete multi-step tasks independently and how to use them safely.',
+        content:
+          '# Autonomous AI Agents\n\n[Placeholder content for Expert Course Module 1]\n\nThis module will cover:\n- What are autonomous AI agents\n- Multi-step task automation\n- Safety considerations and limitations\n- Practical applications for seniors',
         estimatedTime: 30,
         order: 1,
-        tags: ['expert', 'autonomous', 'agents']
+        tags: ['expert', 'autonomous', 'agents'],
       },
       {
         id: 'mcp-protocol',
         title: 'Model Context Protocol (MCP)',
-        description: 'Learn how to safely connect AI to your personal data and applications.',
-        content: '# Model Context Protocol (MCP)\n\n[Placeholder content for Expert Course Module 2]\n\nThis module will cover:\n- Understanding MCP technology\n- Safe data connections\n- Privacy and security considerations\n- Practical implementation examples',
+        description:
+          'Learn how to safely connect AI to your personal data and applications.',
+        content:
+          '# Model Context Protocol (MCP)\n\n[Placeholder content for Expert Course Module 2]\n\nThis module will cover:\n- Understanding MCP technology\n- Safe data connections\n- Privacy and security considerations\n- Practical implementation examples',
         estimatedTime: 30,
         order: 2,
-        tags: ['mcp', 'data', 'privacy']
+        tags: ['mcp', 'data', 'privacy'],
       },
       {
         id: 'custom-assistants',
         title: 'Custom AI Assistants',
-        description: 'Create personalized AI assistants tailored to your specific needs and workflows.',
-        content: '# Custom AI Assistants\n\n[Placeholder content for Expert Course Module 3]\n\nThis module will cover:\n- Personalizing AI responses\n- Creating custom workflows\n- Fine-tuning for your needs\n- Automation and efficiency',
+        description:
+          'Create personalized AI assistants tailored to your specific needs and workflows.',
+        content:
+          '# Custom AI Assistants\n\n[Placeholder content for Expert Course Module 3]\n\nThis module will cover:\n- Personalizing AI responses\n- Creating custom workflows\n- Fine-tuning for your needs\n- Automation and efficiency',
         estimatedTime: 30,
         order: 3,
-        tags: ['custom', 'personalization', 'workflows']
+        tags: ['custom', 'personalization', 'workflows'],
       },
       {
         id: 'cutting-edge',
         title: 'Cutting-Edge Updates',
-        description: 'Stay ahead with the latest AI developments, ethics discussions, and community involvement.',
-        content: '# Cutting-Edge Updates\n\n[Placeholder content for Expert Course Module 4]\n\nThis module will cover:\n- Latest AI breakthroughs\n- Ethical considerations\n- Community involvement opportunities\n- Future of AI technology',
+        description:
+          'Stay ahead with the latest AI developments, ethics discussions, and community involvement.',
+        content:
+          '# Cutting-Edge Updates\n\n[Placeholder content for Expert Course Module 4]\n\nThis module will cover:\n- Latest AI breakthroughs\n- Ethical considerations\n- Community involvement opportunities\n- Future of AI technology',
         estimatedTime: 30,
         order: 4,
-        tags: ['updates', 'ethics', 'future']
-      }
-    ]
-  }
-}
+        tags: ['updates', 'ethics', 'future'],
+      },
+    ],
+  },
+};
 
 // Helper functions for course management
 export function getCourseById(courseId: string): Course | undefined {
-  return courseData[courseId]
+  return courseData[courseId];
 }
 
-export function getModuleById(courseId: string, moduleId: string): Module | undefined {
-  const course = getCourseById(courseId)
-  return course?.modules.find(module => module.id === moduleId)
+export function getModuleById(
+  courseId: string,
+  moduleId: string,
+): Module | undefined {
+  const course = getCourseById(courseId);
+  return course?.modules.find((module) => module.id === moduleId);
 }
 
-export function getAvailableCourses(userTier: 'free' | 'advanced' | 'expert'): Course[] {
-  const tierOrder = { free: 1, advanced: 2, expert: 3 }
-  const userLevel = tierOrder[userTier]
-  
-  return Object.values(courseData).filter(course => {
-    const courseLevel = tierOrder[course.tier]
-    return courseLevel <= userLevel
-  })
+export function getAvailableCourses(
+  userTier: 'free' | 'advanced' | 'expert',
+): Course[] {
+  const tierOrder = { free: 1, advanced: 2, expert: 3 };
+  const userLevel = tierOrder[userTier];
+
+  return Object.values(courseData).filter((course) => {
+    const courseLevel = tierOrder[course.tier];
+    return courseLevel <= userLevel;
+  });
 }
 
-export function isModuleAccessible(course: Course, module: Module, userTier: 'free' | 'advanced' | 'expert'): boolean {
-  if (course.tier === 'free') return true
-  
-  const tierOrder = { free: 1, advanced: 2, expert: 3 }
-  return tierOrder[userTier] >= tierOrder[course.tier]
+export function isModuleAccessible(
+  course: Course,
+  module: Module,
+  userTier: 'free' | 'advanced' | 'expert',
+): boolean {
+  if (course.tier === 'free') return true;
+
+  const tierOrder = { free: 1, advanced: 2, expert: 3 };
+  return tierOrder[userTier] >= tierOrder[course.tier];
 }
 
-export function calculateCourseProgress(courseId: string, completedModules: string[]): number {
-  const course = getCourseById(courseId)
-  if (!course) return 0
-  
-  const completed = completedModules.filter(moduleId => 
-    course.modules.some(module => module.id === moduleId)
-  ).length
-  
-  return Math.round((completed / course.totalModules) * 100)
+export function calculateCourseProgress(
+  courseId: string,
+  completedModules: string[],
+): number {
+  const course = getCourseById(courseId);
+  if (!course) return 0;
+
+  const completed = completedModules.filter((moduleId) =>
+    course.modules.some((module) => module.id === moduleId),
+  ).length;
+
+  return Math.round((completed / course.totalModules) * 100);
 }
 
-export function getNextModule(courseId: string, currentModuleId: string): Module | null {
-  const course = getCourseById(courseId)
-  if (!course) return null
-  
-  const currentIndex = course.modules.findIndex(module => module.id === currentModuleId)
-  if (currentIndex === -1 || currentIndex === course.modules.length - 1) return null
-  
-  return course.modules[currentIndex + 1]
+export function getNextModule(
+  courseId: string,
+  currentModuleId: string,
+): Module | null {
+  const course = getCourseById(courseId);
+  if (!course) return null;
+
+  const currentIndex = course.modules.findIndex(
+    (module) => module.id === currentModuleId,
+  );
+  if (currentIndex === -1 || currentIndex === course.modules.length - 1)
+    return null;
+
+  return course.modules[currentIndex + 1];
 }
 
-export function getPreviousModule(courseId: string, currentModuleId: string): Module | null {
-  const course = getCourseById(courseId)
-  if (!course) return null
-  
-  const currentIndex = course.modules.findIndex(module => module.id === currentModuleId)
-  if (currentIndex <= 0) return null
-  
-  return course.modules[currentIndex - 1]
+export function getPreviousModule(
+  courseId: string,
+  currentModuleId: string,
+): Module | null {
+  const course = getCourseById(courseId);
+  if (!course) return null;
+
+  const currentIndex = course.modules.findIndex(
+    (module) => module.id === currentModuleId,
+  );
+  if (currentIndex <= 0) return null;
+
+  return course.modules[currentIndex - 1];
 }
