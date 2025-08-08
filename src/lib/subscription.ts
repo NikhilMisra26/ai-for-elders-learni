@@ -307,7 +307,7 @@ export function useSubscription(): {
 }
 
 // Payment simulation utilities
-export async function simulatePaymentFlow(): Promise<{
+export async function simulatePaymentFlow(planId: string): Promise<{
   success: boolean;
   paymentMethod?: PaymentMethod;
   error?: string;
