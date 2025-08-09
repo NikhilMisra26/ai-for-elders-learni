@@ -9,20 +9,19 @@ This is **AI for Elders**, a React-based educational platform designed to teach 
 ## Development Commands
 
 ### Core Development
-- `npm run dev` - Start the Vite development server on port 5173
-- `npm run build` - Type check with `tsc -b --noCheck` and build production bundle with Vite
-- `npm run preview` - Preview production build locally
+- `pnpm run dev` - Start the Vite development server on port 5173
+- `pnpm run build` - Type check with `tsc -b --noCheck` and build production bundle with Vite
+- `pnpm run preview` - Preview production build locally
 
 ### Code Quality
-- `npm run typecheck` - Run TypeScript type checking without emitting files
-- `npm run lint` - Run ESLint on all TypeScript/TSX files
-- `npm run lint:fix` - Auto-fix ESLint issues where possible
-- `npm run format` - Format all code with Prettier
-- `npm run format:check` - Check if code formatting is correct
+- `pnpm run typecheck` - Run TypeScript type checking without emitting files
+- `pnpm run lint:fix` - Auto-fix ESLint issues where possible and check remaining ones
+- `pnpm run format` - Format all code with Prettier
+- `pnpm run format:check` - Check if code formatting is correct
 
 ### Utilities
-- `npm run kill` - Kill process on port 5000 (useful when port is stuck)
-- `npm run optimize` - Run Vite optimization
+- `pnpm run kill` - Kill process on port 5000 (useful when port is stuck)
+- `pnpm run optimize` - Run Vite optimization
 
 ## Architecture
 

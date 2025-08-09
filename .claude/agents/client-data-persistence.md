@@ -1,6 +1,6 @@
 ---
 name: client-data-persistence
-description: Use this agent when implementing user progress tracking, preference storage, or any client-side data management requirements. Examples include: storing course completion status locally, managing user accessibility preferences, implementing offline-first data patterns, handling browser storage quotas, synchronizing local data with Supabase, managing session state persistence, implementing data integrity checks, or creating fallback mechanisms for network failures. This agent should be used proactively when working on features that need to store user data locally or sync between client and server.
+description: AUTOMATICALLT AND PROACTIVELY Use this agent when implementing user progress tracking, preference storage, or any client-side data management requirements. Examples include: storing course completion status locally, managing user accessibility preferences, implementing offline-first data patterns, handling browser storage quotas, synchronizing local data with Supabase, managing session state persistence, implementing data integrity checks, or creating fallback mechanisms for network failures. This agent should be used proactively when working on features that need to store user data locally or sync between client and server.
 tools: Bash, Glob, Grep, LS, Read, Edit, MultiEdit, Write, NotebookEdit, WebFetch, TodoWrite, WebSearch, BashOutput, KillBash
 model: inherit
 color: green
