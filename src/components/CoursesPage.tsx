@@ -225,7 +225,11 @@ export function CoursesPage({ onAuthClick }: CoursesPageProps): ReactElement {
           <div className='grid md:grid-cols-2 gap-6 mb-8'>
             {/* Continue Learning */}
             {getContinueCourse() && (
-              <Card className='border-primary/20 bg-primary/5'>
+              <Card
+                className='border-primary/20 bg-primary/5'
+                role='article'
+                aria-label='Continue your current course'
+              >
                 <CardHeader>
                   <CardTitle className='flex items-center gap-2'>
                     <Play className='w-5 h-5' />
@@ -252,6 +256,7 @@ export function CoursesPage({ onAuthClick }: CoursesPageProps): ReactElement {
                         <Progress
                           value={completion.percentage}
                           className='mb-4'
+                          aria-label={`Course progress: ${completion.percentage}% complete`}
                         />
                         <Button
                           onClick={() => handleStartCourse(course.id, course)}
@@ -269,7 +274,7 @@ export function CoursesPage({ onAuthClick }: CoursesPageProps): ReactElement {
 
             {/* Recommended Course */}
             {getRecommendedCourse() && (
-              <Card>
+              <Card role='article' aria-label='Recommended course for you'>
                 <CardHeader>
                   <CardTitle className='flex items-center gap-2'>
                     <BookmarkSimple className='w-5 h-5' />
@@ -354,6 +359,8 @@ export function CoursesPage({ onAuthClick }: CoursesPageProps): ReactElement {
               <Card
                 key={course.id}
                 className={`overflow-hidden ${isRecommended ? 'ring-2 ring-primary/20' : ''}`}
+                role='article'
+                aria-label={`Course: ${course.title}`}
               >
                 <CardHeader>
                   <div className='flex items-start justify-between'>
@@ -439,7 +446,11 @@ export function CoursesPage({ onAuthClick }: CoursesPageProps): ReactElement {
                           {completion.percentage}%)
                         </span>
                       </div>
-                      <Progress value={completion.percentage} className='h-2' />
+                      <Progress
+                        value={completion.percentage}
+                        className='h-2'
+                        aria-label={`Course progress: ${completion.percentage}% complete`}
+                      />
                       {completion.isCompleted && (
                         <div className='flex items-center gap-2 mt-2 text-green-700'>
                           <CheckCircle className='w-4 h-4' weight='fill' />

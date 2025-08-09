@@ -187,7 +187,6 @@ export function useSubscription(): {
         payment_last4: base.paymentMethod?.last4 ?? null,
         cancel_at_period_end: base.cancelAtPeriodEnd ?? false,
         auto_renew: base.autoRenew,
-
       }).catch((error) =>
         SecurityLogger.log('upsertSubscription failed', { error }, 'error'),
       );
