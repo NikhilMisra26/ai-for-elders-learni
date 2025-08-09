@@ -7,6 +7,7 @@ import {
   upsertSubscription,
 } from './db';
 import { SecurityLogger } from './security';
+import { errorHandler } from './errorHandler';
 
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -159,8 +160,15 @@ export function useSubscription(): {
             autoRenew: row.auto_renew,
           });
         }
-      } catch {
-        // ignore fetch errors
+      } catch (error) {
+        errorHandler.handleDatabaseError(
+          'fetch user subscription',
+          error instanceof Error ? error : new Error(String(error)),
+          {
+            userId: user.id,
+            component: 'subscription',
+          },
+        );
       }
     })();
   }, [user, setSubscription]);
@@ -187,9 +195,22 @@ export function useSubscription(): {
         payment_last4: base.paymentMethod?.last4 ?? null,
         cancel_at_period_end: base.cancelAtPeriodEnd ?? false,
         auto_renew: base.autoRenew,
-      }).catch((error) =>
-        SecurityLogger.log('upsertSubscription failed', { error }, 'error'),
-      );
+      }).catch((error) => {
+        // Log both to security logger and error handler for comprehensive tracking
+        SecurityLogger.log('upsertSubscription failed', { error }, 'error');
+        errorHandler.handlePaymentError(
+          'update subscription',
+          error instanceof Error ? error : new Error(String(error)),
+          {
+            userId: user.id,
+            metadata: {
+              planId: base.planId,
+              status: base.status,
+              operation: 'upsert_subscription',
+            },
+          },
+        );
+      });
     }
   };
 
@@ -306,7 +327,7 @@ export function useSubscription(): {
 }
 
 // Payment simulation utilities
-export async function simulatePaymentFlow(planId: string): Promise<{
+export async function simulatePaymentFlow(_planId: string): Promise<{
   success: boolean;
   paymentMethod?: PaymentMethod;
   error?: string;
@@ -404,8 +425,19 @@ export function useInvoiceHistory(): {
         plan_name: plan?.name ?? 'Unknown Plan',
         status: 'paid',
         download_url: null,
-      }).catch(() => {
-        // ignore persist errors
+      }).catch((error) => {
+        errorHandler.handleDatabaseError(
+          'add invoice to database',
+          error instanceof Error ? error : new Error(String(error)),
+          {
+            userId: user.id,
+            component: 'invoice',
+            metadata: {
+              amount,
+              planName: plan?.name ?? 'Unknown Plan',
+            },
+          },
+        );
       });
     }
   };

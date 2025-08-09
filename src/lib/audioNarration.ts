@@ -1,5 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 
+import { errorHandler } from './errorHandler';
+
 export interface AudioNarrationState {
   isPlaying: boolean;
   isPaused: boolean;
@@ -134,7 +136,18 @@ export function useAudioNarration(
     };
 
     newUtterance.onerror = (event): void => {
-      console.error('Speech synthesis error:', event.error);
+      const errorMessage = `Speech synthesis failed: ${event.error}`;
+      errorHandler.logError(errorMessage, new Error(event.error), {
+        component: 'audio_narration',
+        action: 'speech_synthesis',
+        metadata: {
+          errorType: event.error,
+          textLength: cleanText.length,
+          rate: state.rate,
+          volume: state.volume,
+          voiceName: state.voice?.name ?? 'default',
+        },
+      });
       setState((prev) => ({ ...prev, isPlaying: false, isPaused: false }));
     };
 
@@ -150,34 +163,114 @@ export function useAudioNarration(
   }, [text, state.rate, state.volume, state.voice, state.isSupported]);
 
   const play = useCallback((): void => {
-    if (!state.isSupported || !utterance) return;
+    if (!state.isSupported || !utterance) {
+      if (!state.isSupported) {
+        errorHandler.logWarning(
+          'Speech synthesis not supported in this browser',
+          {
+            component: 'audio_narration',
+            action: 'play_attempt',
+            metadata: {
+              userAgent:
+                typeof navigator !== 'undefined'
+                  ? navigator.userAgent
+                  : 'unknown',
+              platform:
+                typeof navigator !== 'undefined'
+                  ? navigator.platform
+                  : 'unknown',
+            },
+          },
+        );
+      }
+      return;
+    }
 
-    // Stop any current speech
-    window.speechSynthesis.cancel();
+    try {
+      // Stop any current speech
+      window.speechSynthesis.cancel();
 
-    // Start new speech
-    window.speechSynthesis.speak(utterance);
-  }, [state.isSupported, utterance]);
+      // Start new speech
+      window.speechSynthesis.speak(utterance);
+    } catch (error) {
+      errorHandler.logError(
+        'Failed to start speech synthesis',
+        error instanceof Error ? error : new Error(String(error)),
+        {
+          component: 'audio_narration',
+          action: 'play',
+          metadata: {
+            textLength: state.currentText.length,
+            hasVoice: !!state.voice,
+            voiceName: state.voice?.name,
+          },
+        },
+      );
+    }
+  }, [state.isSupported, utterance, state.currentText.length, state.voice]);
 
   const pause = useCallback((): void => {
     if (!state.isSupported) return;
-    window.speechSynthesis.pause();
+
+    try {
+      window.speechSynthesis.pause();
+    } catch (error) {
+      errorHandler.logError(
+        'Failed to pause speech synthesis',
+        error instanceof Error ? error : new Error(String(error)),
+        {
+          component: 'audio_narration',
+          action: 'pause',
+        },
+      );
+    }
   }, [state.isSupported]);
 
   const stop = useCallback((): void => {
     if (!state.isSupported) return;
-    window.speechSynthesis.cancel();
-    setState((prev) => ({
-      ...prev,
-      isPlaying: false,
-      isPaused: false,
-      position: 0,
-    }));
+
+    try {
+      window.speechSynthesis.cancel();
+      setState((prev) => ({
+        ...prev,
+        isPlaying: false,
+        isPaused: false,
+        position: 0,
+      }));
+    } catch (error) {
+      errorHandler.logError(
+        'Failed to stop speech synthesis',
+        error instanceof Error ? error : new Error(String(error)),
+        {
+          component: 'audio_narration',
+          action: 'stop',
+        },
+      );
+      // Still update state even if stop failed
+      setState((prev) => ({
+        ...prev,
+        isPlaying: false,
+        isPaused: false,
+        position: 0,
+      }));
+    }
   }, [state.isSupported]);
 
   const resume = useCallback((): void => {
     if (!state.isSupported) return;
-    window.speechSynthesis.resume();
+
+    try {
+      window.speechSynthesis.resume();
+    } catch (error) {
+      errorHandler.logError(
+        'Failed to resume speech synthesis',
+        error instanceof Error ? error : new Error(String(error)),
+        {
+          component: 'audio_narration',
+          action: 'resume',
+        },
+      );
+    }
   }, [state.isSupported]);
 
   const setRate = useCallback((rate: number): void => {
@@ -243,7 +336,14 @@ export function useNarrationPreferences(): [
         return saved
           ? (JSON.parse(saved) as NarrationPreferences)
           : defaultPrefs;
-      } catch {
+      } catch (error) {
+        errorHandler.handleStorageError(
+          'read narration preferences from localStorage',
+          error instanceof Error ? error : new Error(String(error)),
+          {
+            metadata: { key: 'audio-narration-preferences' },
+          },
+        );
         return defaultPrefs;
       }
     },
@@ -256,8 +356,17 @@ export function useNarrationPreferences(): [
           'audio-narration-preferences',
           JSON.stringify(preferences),
         );
-      } catch {
-        // ignore storage errors
+      } catch (error) {
+        errorHandler.handleStorageError(
+          'save narration preferences to localStorage',
+          error instanceof Error ? error : new Error(String(error)),
+          {
+            metadata: {
+              key: 'audio-narration-preferences',
+              preferences,
+            },
+          },
+        );
       }
     }
   }, [preferences]);
@@ -317,17 +426,43 @@ export function getRecommendedVoices(): string[] {
 export function announceToScreenReader(message: string): void {
   if (typeof document === 'undefined' || typeof window === 'undefined') return;
 
-  const announcement = document.createElement('div');
-  announcement.setAttribute('aria-live', 'polite');
-  announcement.setAttribute('aria-atomic', 'true');
-  announcement.className = 'sr-only';
-  announcement.textContent = message;
+  try {
+    const announcement = document.createElement('div');
+    announcement.setAttribute('aria-live', 'polite');
+    announcement.setAttribute('aria-atomic', 'true');
+    announcement.className = 'sr-only';
+    announcement.textContent = message;
 
-  document.body.appendChild(announcement);
+    document.body.appendChild(announcement);
 
-  window.setTimeout((): void => {
-    document.body.removeChild(announcement);
-  }, 1000);
+    window.setTimeout((): void => {
+      try {
+        if (document.body.contains(announcement)) {
+          document.body.removeChild(announcement);
+        }
+      } catch (error) {
+        errorHandler.logError(
+          'Failed to remove screen reader announcement',
+          error instanceof Error ? error : new Error(String(error)),
+          {
+            component: 'audio_narration',
+            action: 'cleanup_announcement',
+            metadata: { message },
+          },
+        );
+      }
+    }, 1000);
+  } catch (error) {
+    errorHandler.logError(
+      'Failed to create screen reader announcement',
+      error instanceof Error ? error : new Error(String(error)),
+      {
+        component: 'audio_narration',
+        action: 'create_announcement',
+        metadata: { message },
+      },
+    );
+  }
 }
 
 // Format time for display

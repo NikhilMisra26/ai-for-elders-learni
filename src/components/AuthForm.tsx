@@ -19,6 +19,7 @@ import {
   InputOTPSlot,
 } from '@/components/ui/input-otp';
 import { validatePassword, validateEmail } from '@/lib/security';
+import { errorHandler } from '@/lib/errorHandler';
 
 interface AuthFormProps {
   onClose: () => void;
@@ -121,8 +122,28 @@ export function AuthForm({ onClose }: AuthFormProps): ReactElement {
           toast.error(result.error ?? 'Registration failed');
         }
       }
-    } catch {
-      toast.error('Something went wrong. Please try again.');
+    } catch (error) {
+      // Log the actual error for debugging while showing user-friendly message
+      const errorId = errorHandler.handleAuthError(
+        isLogin ? 'login' : 'register',
+        error instanceof Error ? error : new Error(String(error)),
+        {
+          metadata: {
+            email,
+            hasName: !!name,
+            emailValid: emailValidation?.isValid ?? false,
+            passwordValid: !isLogin
+              ? (passwordValidation?.isValid ?? false)
+              : true,
+          },
+        },
+      );
+
+      const userMessage = errorHandler.getUserFriendlyMessage(
+        errorId,
+        'Something went wrong. Please try again in a moment.',
+      );
+      toast.error(userMessage);
     }
   };
 
@@ -406,7 +427,7 @@ export function AuthForm({ onClose }: AuthFormProps): ReactElement {
                   (!isLogin &&
                     passwordValidation &&
                     !passwordValidation.isValid) ||
-                  emailValidation?.isValid === false,
+                  (emailValidation?.isValid ?? true) === false,
               )}
             >
               {isLoading

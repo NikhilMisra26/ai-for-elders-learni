@@ -6,6 +6,7 @@ import {
 } from './db';
 import type { Course, Module } from './courseData';
 import { courseData } from './courseData';
+import { errorHandler } from './errorHandler';
 
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -223,7 +224,16 @@ export function useProgress(): UseProgressReturn {
         rating: rating ?? null,
         attempts: 1,
         notes: null,
-      }).catch(() => {});
+      }).catch((error) => {
+        errorHandler.handleDatabaseError(
+          'upsert module progress',
+          error instanceof Error ? error : new Error(String(error)),
+          {
+            userId: user.id,
+            metadata: { moduleId, courseId, timeSpent, rating },
+          },
+        );
+      });
     }
 
     // Update course progress
@@ -271,7 +281,20 @@ export function useProgress(): UseProgressReturn {
               completion_percentage: row.completionPercentage,
               completed: row.completed,
               completed_at: row.completedAt ?? null,
-            }).catch(() => {});
+            }).catch((error) => {
+              errorHandler.handleDatabaseError(
+                'upsert course progress',
+                error instanceof Error ? error : new Error(String(error)),
+                {
+                  userId: user.id,
+                  metadata: {
+                    courseId: row.courseId,
+                    completionPercentage: row.completionPercentage,
+                    completed: row.completed,
+                  },
+                },
+              );
+            });
           }
         }
         return nextState;
@@ -299,7 +322,19 @@ export function useProgress(): UseProgressReturn {
             completion_percentage: newCourseProgress.completionPercentage,
             completed: newCourseProgress.completed,
             completed_at: newCourseProgress.completedAt ?? null,
-          }).catch(() => {});
+          }).catch((error) => {
+            errorHandler.handleDatabaseError(
+              'upsert new course progress',
+              error instanceof Error ? error : new Error(String(error)),
+              {
+                userId: user.id,
+                metadata: {
+                  courseId: newCourseProgress.courseId,
+                  completionPercentage: newCourseProgress.completionPercentage,
+                },
+              },
+            );
+          });
         }
         return next;
       }
@@ -324,7 +359,21 @@ export function useProgress(): UseProgressReturn {
         course_id: courseId,
         module_id: moduleId,
         metadata: { timeSpent, rating },
-      }).catch(() => {});
+      }).catch((error) => {
+        errorHandler.handleDatabaseError(
+          'add module completion activity',
+          error instanceof Error ? error : new Error(String(error)),
+          {
+            userId: user.id,
+            metadata: {
+              moduleId,
+              courseId,
+              moduleTitle: module.title,
+              timeSpent,
+            },
+          },
+        );
+      });
     }
 
     // Update learning stats
@@ -356,8 +405,19 @@ export function useProgress(): UseProgressReturn {
           course_id: courseId,
           module_id: null,
           metadata: null,
-        }).catch((err) => {
-          console.error('Failed to add course_completed activity to DB:', err);
+        }).catch((error) => {
+          errorHandler.handleDatabaseError(
+            'add course completion activity',
+            error instanceof Error ? error : new Error(String(error)),
+            {
+              userId: user.id,
+              metadata: {
+                courseId,
+                courseTitle: course.title,
+                totalModules: course.totalModules,
+              },
+            },
+          );
         });
       }
     }
