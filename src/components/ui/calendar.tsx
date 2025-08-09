@@ -1,6 +1,5 @@
 import type { ComponentProps, ReactElement } from 'react';
-import { ChevronLeft } from 'lucide-react';
-import { ChevronRight } from 'lucide-react';
+import { CaretLeft, CaretRight } from '@phosphor-icons/react';
 import { DayPicker } from 'react-day-picker';
 
 import { cn } from '@/lib/utils';
@@ -59,11 +58,11 @@ function Calendar({
         ...classNames,
       }}
       components={{
-        PreviousMonthButton: ({ className, ...props }) => (
-          <ChevronLeft className={cn('size-4', className)} {...props} />
+        PreviousMonthButton: ({ className }) => (
+          <CaretLeft className={cn('size-4', className)} />
         ),
         NextMonthButton: ({ className, ...props }) => (
-          <ChevronRight className={cn('size-4', className)} {...props} />
+          <CaretRight className={cn('size-4', className)} {...props} />
         ),
       }}
       {...props}

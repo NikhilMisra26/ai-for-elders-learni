@@ -2,9 +2,7 @@
 
 import type { ComponentProps, ReactElement } from 'react';
 import * as DropdownMenuPrimitive from '@radix-ui/react-dropdown-menu';
-import { Check } from 'lucide-react';
-import { ChevronRight } from 'lucide-react';
-import { Circle } from 'lucide-react';
+import { Check, CaretRight, Circle } from '@phosphor-icons/react';
 
 import { cn } from '@/lib/utils';
 
@@ -219,7 +217,7 @@ function DropdownMenuSubTrigger({
       {...props}
     >
       {children}
-      <ChevronRight className='ml-auto size-4' />
+      <CaretRight className='ml-auto size-4' />
     </DropdownMenuPrimitive.SubTrigger>
   );
 }

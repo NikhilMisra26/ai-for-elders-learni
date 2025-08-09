@@ -12,7 +12,7 @@ import {
 import { Slot } from '@radix-ui/react-slot';
 import type { VariantProps } from 'class-variance-authority';
 import { cva } from 'class-variance-authority';
-import { PanelLeft } from 'lucide-react';
+import { Sidebar as SidebarIcon } from '@phosphor-icons/react';
 
 import { useIsMobile } from '@/hooks/use-mobile';
 import { cn } from '@/lib/utils';
@@ -282,7 +282,7 @@ function SidebarTrigger({
       }}
       {...props}
     >
-      <PanelLeft />
+      <SidebarIcon />
       <span className='sr-only'>Toggle Sidebar</span>
     </Button>
   );

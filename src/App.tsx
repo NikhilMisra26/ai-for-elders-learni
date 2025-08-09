@@ -1,19 +1,33 @@
-import React, { useState, type ReactElement } from 'react';
+import React, { useState, lazy, Suspense, type ReactElement } from 'react';
 
 import { AuthProvider } from './contexts/AuthContext';
 import { AccessibilityProvider } from './contexts/AccessibilityContext';
 import { Header } from './components/Header';
-import { HomePage } from './components/HomePage';
-import { CoursesPage } from './components/CoursesPage';
-import { DashboardPage } from './components/DashboardPage';
-import { AccountPage } from './components/AccountPage';
-import { AuthForm } from './components/AuthForm';
-import { SecurityDashboard } from './components/SecurityDashboard';
 import { Dialog, DialogContent } from './components/ui/dialog';
 import { Toaster } from './components/ui/sonner';
 import { useSessionManager } from './hooks/useSessionManager';
 
+// Lazy load page components for code splitting
+const HomePage = lazy(() => import('./components/HomePage').then(module => ({ default: module.HomePage })));
+const CoursesPage = lazy(() => import('./components/CoursesPage').then(module => ({ default: module.CoursesPage })));
+const DashboardPage = lazy(() => import('./components/DashboardPage').then(module => ({ default: module.DashboardPage })));
+const AccountPage = lazy(() => import('./components/AccountPage').then(module => ({ default: module.AccountPage })));
+const AuthForm = lazy(() => import('./components/AuthForm').then(module => ({ default: module.AuthForm })));
+const SecurityDashboard = lazy(() => import('./components/SecurityDashboard').then(module => ({ default: module.SecurityDashboard })));
+
 type Page = 'home' | 'courses' | 'dashboard' | 'account';
+
+// Loading fallback component for lazy-loaded pages
+function PageLoader(): ReactElement {
+  return (
+    <div className='flex items-center justify-center min-h-[60vh]'>
+      <div className='text-center'>
+        <div className='w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4'></div>
+        <p className='text-lg text-muted-foreground'>Loading...</p>
+      </div>
+    </div>
+  );
+}
 
 function AppContent(): ReactElement {
   const [currentPage, setCurrentPage] = useState<Page>('home');
@@ -90,19 +104,25 @@ function AppContent(): ReactElement {
       />
 
       <main id='main-content' role='main'>
-        {renderPage()}
+        <Suspense fallback={<PageLoader />}>
+          {renderPage()}
+        </Suspense>
       </main>
 
       {/* Authentication Dialog */}
       <Dialog open={showAuthDialog} onOpenChange={setShowAuthDialog}>
         <DialogContent className='sm:max-w-md'>
-          <AuthForm onClose={handleAuthClose} />
+          <Suspense fallback={<PageLoader />}>
+            <AuthForm onClose={handleAuthClose} />
+          </Suspense>
         </DialogContent>
       </Dialog>
 
       {/* Security Dashboard (Admin) */}
       {showSecurityDashboard && (
-        <SecurityDashboard onClose={() => setShowSecurityDashboard(false)} />
+        <Suspense fallback={<PageLoader />}>
+          <SecurityDashboard onClose={() => setShowSecurityDashboard(false)} />
+        </Suspense>
       )}
 
       {/* Toast notifications with senior-friendly styling */}

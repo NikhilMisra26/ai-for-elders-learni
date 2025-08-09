@@ -3,7 +3,7 @@
 import type { ComponentProps, ReactElement } from 'react';
 import { useContext } from 'react';
 import { OTPInput, OTPInputContext } from 'input-otp';
-import { Minus } from 'lucide-react';
+import { Minus } from '@phosphor-icons/react';
 
 import { cn } from '@/lib/utils';
 

@@ -1,4 +1,4 @@
-import { AlertTriangleIcon, RefreshCwIcon } from 'lucide-react';
+import { Warning, ArrowsClockwise } from '@phosphor-icons/react';
 import type { FallbackProps } from 'react-error-boundary';
 import type { ReactElement } from 'react';
 
@@ -17,7 +17,7 @@ export const ErrorFallback = ({
     <div className='min-h-screen bg-background flex items-center justify-center p-4'>
       <div className='w-full max-w-md'>
         <Alert variant='destructive' className='mb-6'>
-          <AlertTriangleIcon />
+          <Warning className='h-4 w-4' />
           <AlertTitle>This spark has encountered a runtime error</AlertTitle>
           <AlertDescription>
             Something unexpected happened while running the application. The
@@ -40,7 +40,7 @@ export const ErrorFallback = ({
           className='w-full'
           variant='outline'
         >
-          <RefreshCwIcon />
+          <ArrowsClockwise className='h-4 w-4 mr-2' />
           Try Again
         </Button>
       </div>
