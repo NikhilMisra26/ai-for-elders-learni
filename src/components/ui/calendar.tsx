@@ -61,8 +61,8 @@ function Calendar({
         PreviousMonthButton: ({ className }) => (
           <CaretLeft className={cn('size-4', className)} />
         ),
-        NextMonthButton: ({ className }) => (
-          <CaretRight className={cn('size-4', className)} />
+        NextMonthButton: ({ className, ...props }) => (
+          <CaretRight className={cn('size-4', className)} {...props} />
         ),
       }}
       {...props}
