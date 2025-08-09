@@ -1,6 +1,6 @@
 import type { ComponentProps, ReactElement } from 'react';
 import * as AccordionPrimitive from '@radix-ui/react-accordion';
-import ChevronDownIcon from 'lucide-react/dist/esm/icons/chevron-down';
+import { CaretDown as ChevronDownIcon } from '@phosphor-icons/react';
 
 import { cn } from '@/lib/utils';
 

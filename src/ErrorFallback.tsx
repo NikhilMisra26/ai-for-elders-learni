@@ -1,4 +1,4 @@
-import { AlertTriangleIcon, RefreshCwIcon } from 'lucide-react';
+import { Warning as AlertTriangleIcon, ArrowClockwise as RefreshCwIcon } from '@phosphor-icons/react';
 import type { FallbackProps } from 'react-error-boundary';
 import type { ReactElement } from 'react';
 

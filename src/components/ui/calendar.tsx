@@ -1,6 +1,5 @@
 import type { ComponentProps, ReactElement } from 'react';
-import ChevronLeft from 'lucide-react/dist/esm/icons/chevron-left';
-import ChevronRight from 'lucide-react/dist/esm/icons/chevron-right';
+import { CaretLeft as ChevronLeft, CaretRight as ChevronRight } from '@phosphor-icons/react';
 import { DayPicker } from 'react-day-picker';
 
 import { cn } from '@/lib/utils';
