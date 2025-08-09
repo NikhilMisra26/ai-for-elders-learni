@@ -289,9 +289,17 @@ export function AuthForm({ onClose }: AuthFormProps): ReactElement {
                     : ''
                 }`}
                 maxLength={254}
+                aria-describedby={
+                  emailValidation && !emailValidation.isValid
+                    ? 'email-error'
+                    : undefined
+                }
+                aria-invalid={
+                  emailValidation && !emailValidation.isValid ? true : undefined
+                }
               />
               {emailValidation && !emailValidation.isValid && (
-                <p className='text-sm text-red-600'>
+                <p id='email-error' className='text-sm text-red-600'>
                   {emailValidation.errors[0]}
                 </p>
               )}
@@ -317,6 +325,20 @@ export function AuthForm({ onClose }: AuthFormProps): ReactElement {
                       : ''
                   }`}
                   maxLength={128}
+                  aria-describedby={
+                    !isLogin &&
+                    passwordValidation &&
+                    !passwordValidation.isValid
+                      ? 'password-error'
+                      : undefined
+                  }
+                  aria-invalid={
+                    !isLogin &&
+                    passwordValidation &&
+                    !passwordValidation.isValid
+                      ? true
+                      : undefined
+                  }
                 />
                 <Button
                   type='button'
@@ -351,7 +373,10 @@ export function AuthForm({ onClose }: AuthFormProps): ReactElement {
                   </div>
 
                   {passwordValidation && !passwordValidation.isValid && (
-                    <div className='bg-red-50 border border-red-200 rounded-lg p-3'>
+                    <div
+                      id='password-error'
+                      className='bg-red-50 border border-red-200 rounded-lg p-3'
+                    >
                       <ul className='text-sm text-red-700 space-y-1'>
                         {passwordValidation.errors.map((error) => (
                           <li key={error} className='flex items-start gap-1'>

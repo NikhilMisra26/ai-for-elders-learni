@@ -8,12 +8,36 @@ import { Toaster } from './components/ui/sonner';
 import { useSessionManager } from './hooks/useSessionManager';
 
 // Lazy load page components for code splitting
-const HomePage = lazy(() => import('./components/HomePage').then(module => ({ default: module.HomePage })));
-const CoursesPage = lazy(() => import('./components/CoursesPage').then(module => ({ default: module.CoursesPage })));
-const DashboardPage = lazy(() => import('./components/DashboardPage').then(module => ({ default: module.DashboardPage })));
-const AccountPage = lazy(() => import('./components/AccountPage').then(module => ({ default: module.AccountPage })));
-const AuthForm = lazy(() => import('./components/AuthForm').then(module => ({ default: module.AuthForm })));
-const SecurityDashboard = lazy(() => import('./components/SecurityDashboard').then(module => ({ default: module.SecurityDashboard })));
+const HomePage = lazy(async () =>
+  import('./components/HomePage').then((module) => ({
+    default: module.HomePage,
+  })),
+);
+const CoursesPage = lazy(async () =>
+  import('./components/CoursesPage').then((module) => ({
+    default: module.CoursesPage,
+  })),
+);
+const DashboardPage = lazy(async () =>
+  import('./components/DashboardPage').then((module) => ({
+    default: module.DashboardPage,
+  })),
+);
+const AccountPage = lazy(async () =>
+  import('./components/AccountPage').then((module) => ({
+    default: module.AccountPage,
+  })),
+);
+const AuthForm = lazy(async () =>
+  import('./components/AuthForm').then((module) => ({
+    default: module.AuthForm,
+  })),
+);
+const SecurityDashboard = lazy(async () =>
+  import('./components/SecurityDashboard').then((module) => ({
+    default: module.SecurityDashboard,
+  })),
+);
 
 type Page = 'home' | 'courses' | 'dashboard' | 'account';
 
@@ -22,7 +46,7 @@ function PageLoader(): ReactElement {
   return (
     <div className='flex items-center justify-center min-h-[60vh]'>
       <div className='text-center'>
-        <div className='w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4'></div>
+        <div className='w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4' />
         <p className='text-lg text-muted-foreground'>Loading...</p>
       </div>
     </div>
@@ -104,9 +128,7 @@ function AppContent(): ReactElement {
       />
 
       <main id='main-content' role='main'>
-        <Suspense fallback={<PageLoader />}>
-          {renderPage()}
-        </Suspense>
+        <Suspense fallback={<PageLoader />}>{renderPage()}</Suspense>
       </main>
 
       {/* Authentication Dialog */}

@@ -90,7 +90,7 @@ export function Header({
                 onClick={decreaseFontSize}
                 aria-label='Decrease font size'
                 disabled={fontSize === 'small'}
-                className='h-8 w-8 p-0'
+                className='h-11 w-11'
               >
                 <TextAa weight='regular' className='text-sm' />
                 <span className='sr-only'>A-</span>
@@ -101,7 +101,7 @@ export function Header({
                 onClick={increaseFontSize}
                 aria-label='Increase font size'
                 disabled={fontSize === 'large'}
-                className='h-8 w-8 p-0'
+                className='h-11 w-11'
               >
                 <TextAa weight='bold' className='text-lg' />
                 <span className='sr-only'>A+</span>
@@ -137,15 +137,13 @@ export function Header({
                   size='sm'
                   onClick={handleLogout}
                   aria-label='Sign out'
-                  className='h-8 w-8 p-0'
+                  className='h-11 w-11'
                 >
                   <SignOut weight='regular' />
                 </Button>
               </div>
             ) : (
-              <Button onClick={onAuthClick} className='h-10'>
-                Sign In
-              </Button>
+              <Button onClick={onAuthClick}>Sign In</Button>
             )}
           </div>
 
