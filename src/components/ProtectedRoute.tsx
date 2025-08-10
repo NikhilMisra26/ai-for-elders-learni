@@ -125,8 +125,8 @@ export function ProtectedRoute({
     onUpgradeRequired,
   ]);
 
-  const isPending = validationState.isValidating || !validationState.canAccess;
-  if (fallback && isPending) return <>{fallback}</>;
+  const shouldShowFallback = validationState.isValidating || !validationState.canAccess;
+  if (fallback && shouldShowFallback) return <>{fallback}</>;
 
   if (validationState.isValidating) return <LoadingState />;
 
