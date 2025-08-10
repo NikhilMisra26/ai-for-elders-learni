@@ -1,11 +1,23 @@
 import React, { useState, lazy, Suspense, type ReactElement } from 'react';
 
-import { AuthProvider } from './contexts/AuthContext';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { AccessibilityProvider } from './contexts/AccessibilityContext';
+import { AccessControlProvider } from './contexts/AccessControlContext';
 import { Header } from './components/Header';
 import { Dialog, DialogContent } from './components/ui/dialog';
 import { Toaster } from './components/ui/sonner';
 import { useSessionManager } from './hooks/useSessionManager';
+import { ProtectedRoute } from './components/ProtectedRoute';
+import { Breadcrumbs } from './components/Breadcrumbs';
+import {
+  type PageType,
+  type RouteParams,
+  generateBreadcrumbs,
+  navigationHistory,
+  handleKeyboardNavigation,
+} from './lib/routingConfig';
+import { getCourseById, getModuleById } from './lib/courseData';
+import { accessManager } from './lib/accessControl';
 
 // Lazy load page components for code splitting
 const HomePage = lazy(async () => {
@@ -36,6 +48,20 @@ const AccountPage = lazy(async () => {
     return { default: module.AccountPage };
   });
 });
+const ModulePage = lazy(async () => {
+  console.log('[APP] Loading ModulePage component...');
+  return import('./components/ModulePage').then((module) => {
+    console.log('[APP] ✓ ModulePage component loaded successfully');
+    return { default: module.ModulePage };
+  });
+});
+const UpgradePage = lazy(async () => {
+  console.log('[APP] Loading UpgradePage component...');
+  return import('./components/UpgradePage').then((module) => {
+    console.log('[APP] ✓ UpgradePage component loaded successfully');
+    return { default: module.UpgradePage };
+  });
+});
 const AuthForm = lazy(async () => {
   console.log('[APP] Loading AuthForm component...');
   return import('./components/AuthForm').then((module) => {
@@ -51,7 +77,12 @@ const SecurityDashboard = lazy(async () => {
   });
 });
 
-type Page = 'home' | 'courses' | 'dashboard' | 'account';
+// Navigation state
+interface NavigationState {
+  currentPage: PageType;
+  params: RouteParams;
+  intendedDestination?: { page: PageType; params: RouteParams };
+}
 
 // Loading fallback component for lazy-loaded pages
 function PageLoader(): ReactElement {
@@ -68,13 +99,18 @@ function PageLoader(): ReactElement {
 
 function AppContent(): ReactElement {
   console.log('[APP] AppContent component mounting...');
-  
-  const [currentPage, setCurrentPage] = useState<Page>('home');
+
+  const { user } = useAuth();
+  const [navigationState, setNavigationState] = useState<NavigationState>({
+    currentPage: 'home',
+    params: {},
+  });
   const [showAuthDialog, setShowAuthDialog] = useState(false);
   const [showSecurityDashboard, setShowSecurityDashboard] = useState(false);
 
   console.log('[APP] AppContent state initialized:', {
-    currentPage,
+    currentPage: navigationState.currentPage,
+    params: navigationState.params,
     showAuthDialog,
     showSecurityDashboard,
   });
@@ -83,10 +119,46 @@ function AppContent(): ReactElement {
   console.log('[APP] Initializing session manager...');
   useSessionManager();
 
-  const handleNavigate = (page: string): void => {
-    console.log('[APP] Navigation requested:', { from: currentPage, to: page });
-    setCurrentPage(page as Page);
-    console.log('[APP] ✓ Page changed to:', page);
+  const handleNavigate = React.useCallback(
+    (page: string, params?: Record<string, string>): void => {
+      console.log('[APP] Navigation requested:', {
+        from: navigationState.currentPage,
+        to: page,
+        params,
+      });
+
+      // Add to navigation history
+      navigationHistory.push(page as PageType, params ?? {});
+
+      // Clear AccessManager cache when user navigates
+      if (user) {
+        accessManager.clearUserCache(user.id);
+      }
+
+      setNavigationState({
+        currentPage: page as PageType,
+        params: params ?? {},
+      });
+
+      console.log('[APP] ✓ Page changed to:', page);
+    },
+    [user, navigationState.currentPage],
+  );
+
+  const handleProtectedNavigation = (
+    page: PageType,
+    params: RouteParams = {},
+  ): void => {
+    // Store intended destination for after auth
+    if (!user) {
+      setNavigationState((prev) => ({
+        ...prev,
+        intendedDestination: { page, params },
+      }));
+      setShowAuthDialog(true);
+    } else {
+      handleNavigate(page, params as Record<string, string>);
+    }
   };
 
   const handleAuthClick = (): void => {
@@ -97,87 +169,250 @@ function AppContent(): ReactElement {
   const handleAuthClose = (): void => {
     console.log('[APP] Auth dialog close requested');
     setShowAuthDialog(false);
-  };
 
-  // Security dashboard access (for demo purposes - in production, this would be admin-only)
-  const handleKeyPress = (e: KeyboardEvent): void => {
-    console.log('[APP] Keyboard event detected:', {
-      key: e.key,
-      ctrlKey: e.ctrlKey,
-      shiftKey: e.shiftKey,
-      altKey: e.altKey,
-    });
-    
-    if (e.ctrlKey && e.shiftKey && e.key === 'S') {
-      console.log('[APP] Security dashboard keyboard shortcut triggered (Ctrl+Shift+S)');
-      setShowSecurityDashboard(true);
+    // Navigate to intended destination after successful auth
+    if (user && navigationState.intendedDestination) {
+      const { page, params } = navigationState.intendedDestination;
+      setNavigationState((prev) => ({
+        ...prev,
+        intendedDestination: undefined,
+      }));
+      setTimeout(() => {
+        handleNavigate(page, params as Record<string, string>);
+      }, 100);
     }
   };
 
+  // Keyboard navigation and security dashboard
+  const handleKeyPress = React.useCallback(
+    (e: KeyboardEvent): void => {
+      console.log('[APP] Keyboard event detected:', {
+        key: e.key,
+        ctrlKey: e.ctrlKey,
+        shiftKey: e.shiftKey,
+        altKey: e.altKey,
+      });
+
+      // Security dashboard shortcut
+      if (e.ctrlKey && e.shiftKey && e.key === 'S') {
+        console.log(
+          '[APP] Security dashboard keyboard shortcut triggered (Ctrl+Shift+S)',
+        );
+        setShowSecurityDashboard(true);
+        return;
+      }
+
+      // Navigation shortcuts
+      const targetPage = handleKeyboardNavigation(e);
+      if (targetPage) {
+        handleNavigate(targetPage, {});
+      }
+    },
+    [handleNavigate],
+  );
+
   // Add keyboard listener for security dashboard
   React.useEffect((): (() => void) => {
-    console.log('[APP] Setting up keyboard event listener for security dashboard');
+    console.log(
+      '[APP] Setting up keyboard event listener for security dashboard',
+    );
     window.addEventListener('keydown', handleKeyPress);
-    
+
     return (): void => {
       console.log('[APP] Cleaning up keyboard event listener');
       window.removeEventListener('keydown', handleKeyPress);
     };
-  }, []);
-  
+  }, [handleKeyPress]);
+
   // Log component mount
-  React.useEffect(() => {
+  React.useEffect((): (() => void) => {
     console.log('[APP] ✓ AppContent component mounted successfully');
     console.log('[APP] Initial render state:', {
-      currentPage,
+      currentPage: navigationState.currentPage,
+      params: navigationState.params,
       showAuthDialog,
       showSecurityDashboard,
     });
-    
-    return () => {
+
+    return (): void => {
       console.log('[APP] AppContent component unmounting...');
     };
-  }, []);
-  
+  }, [
+    navigationState.currentPage,
+    navigationState.params,
+    showAuthDialog,
+    showSecurityDashboard,
+  ]);
+
   // Log page changes
-  React.useEffect(() => {
-    console.log('[APP] Page change effect triggered:', { currentPage });
-  }, [currentPage]);
-  
+  React.useEffect((): void => {
+    console.log('[APP] Page change effect triggered:', {
+      currentPage: navigationState.currentPage,
+      params: navigationState.params,
+    });
+  }, [navigationState]);
+
   // Log dialog state changes
-  React.useEffect(() => {
+  React.useEffect((): void => {
     console.log('[APP] Auth dialog state changed:', { showAuthDialog });
   }, [showAuthDialog]);
-  
-  React.useEffect(() => {
-    console.log('[APP] Security dashboard state changed:', { showSecurityDashboard });
+
+  React.useEffect((): void => {
+    console.log('[APP] Security dashboard state changed:', {
+      showSecurityDashboard,
+    });
   }, [showSecurityDashboard]);
 
+  // Generate breadcrumbs
+  const getBreadcrumbs = (): ReturnType<typeof generateBreadcrumbs> => {
+    let courseTitle: string | undefined;
+    let moduleTitle: string | undefined;
+
+    if (navigationState.params.courseId) {
+      const course = getCourseById(navigationState.params.courseId);
+      courseTitle = course?.title;
+
+      if (navigationState.params.moduleId && course) {
+        const module = getModuleById(
+          navigationState.params.courseId,
+          navigationState.params.moduleId,
+        );
+        moduleTitle = module?.title;
+      }
+    }
+
+    return generateBreadcrumbs(
+      navigationState.currentPage,
+      navigationState.params,
+      courseTitle,
+      moduleTitle,
+    );
+  };
+
   const renderPage = (): ReactElement => {
-    console.log('[APP] Rendering page:', currentPage);
-    
+    console.log('[APP] Rendering page:', navigationState.currentPage);
+
+    const { currentPage, params } = navigationState;
+
+    // Module page requires special handling
+    if (currentPage === 'module' && params.courseId && params.moduleId) {
+      console.log('[APP] ✓ Rendering ModulePage with protection');
+      return (
+        <ProtectedRoute
+          page='module'
+          params={params}
+          onAuthRequired={handleAuthClick}
+          onUpgradeRequired={(tier) => {
+            console.log('[APP] Upgrade required to tier:', tier);
+            handleNavigate('upgrade', {
+              requiredTier: tier,
+              returnPath: window.location.pathname,
+            });
+          }}
+          onNavigate={handleNavigate}
+        >
+          <ModulePage
+            courseId={params.courseId}
+            moduleId={params.moduleId}
+            onBack={() => handleNavigate('courses')}
+            onNavigate={(courseId, moduleId) =>
+              handleNavigate('module', { courseId, moduleId })
+            }
+          />
+        </ProtectedRoute>
+      );
+    }
+
     switch (currentPage) {
+      case 'module':
+        // Handled above
+        throw new Error('Module page should have been handled earlier');
       case 'home':
         console.log('[APP] ✓ Rendering HomePage');
         return (
           <HomePage onNavigate={handleNavigate} onAuthClick={handleAuthClick} />
         );
+
       case 'courses':
         console.log('[APP] ✓ Rendering CoursesPage');
-        return <CoursesPage onAuthClick={handleAuthClick} />;
-      case 'dashboard':
-        console.log('[APP] ✓ Rendering DashboardPage');
-        return <DashboardPage onNavigate={handleNavigate} />;
-      case 'account':
-        console.log('[APP] ✓ Rendering AccountPage');
         return (
-          <AccountPage
-            onNavigate={handleNavigate}
+          <CoursesPage
             onAuthClick={handleAuthClick}
+            onNavigateToModule={(courseId, moduleId) =>
+              handleProtectedNavigation('module', { courseId, moduleId })
+            }
           />
         );
+
+      case 'dashboard':
+        console.log('[APP] ✓ Rendering DashboardPage with protection');
+        return (
+          <ProtectedRoute
+            page='dashboard'
+            params={params}
+            onAuthRequired={handleAuthClick}
+            onNavigate={handleNavigate}
+          >
+            <DashboardPage
+              onNavigate={handleNavigate}
+              onNavigateToModule={(courseId, moduleId) =>
+                handleProtectedNavigation('module', { courseId, moduleId })
+              }
+            />
+          </ProtectedRoute>
+        );
+
+      case 'account':
+        console.log('[APP] ✓ Rendering AccountPage with protection');
+        return (
+          <ProtectedRoute
+            page='account'
+            params={params}
+            onAuthRequired={handleAuthClick}
+            onNavigate={handleNavigate}
+          >
+            <AccountPage
+              onNavigate={handleNavigate}
+              onAuthClick={handleAuthClick}
+            />
+          </ProtectedRoute>
+        );
+
+      case 'upgrade':
+        console.log('[APP] ✓ Rendering UpgradePage');
+        return (
+          <UpgradePage
+            requiredTier={
+              params.requiredTier as 'advanced' | 'expert' | undefined
+            }
+            onBack={() => handleNavigate(params.returnPath ?? 'courses')}
+            onUpgradeSuccess={() => {
+              // Navigate to intended destination after upgrade
+              if (params.returnPath) {
+                const returnRoute = params.returnPath.split('/');
+                if (
+                  returnRoute[1] === 'courses' &&
+                  returnRoute[3] === 'modules'
+                ) {
+                  handleNavigate('module', {
+                    courseId: returnRoute[2],
+                    moduleId: returnRoute[4],
+                  });
+                } else {
+                  handleNavigate('courses');
+                }
+              } else {
+                handleNavigate('courses');
+              }
+            }}
+          />
+        );
+
       default:
-        console.warn('[APP] ⚠️ Unknown page requested, falling back to HomePage:', currentPage);
+        console.warn(
+          '[APP] ⚠️ Unknown page requested, falling back to HomePage:',
+          currentPage,
+        );
         return (
           <HomePage onNavigate={handleNavigate} onAuthClick={handleAuthClick} />
         );
@@ -198,10 +433,17 @@ function AppContent(): ReactElement {
       <Header
         onAuthClick={handleAuthClick}
         onNavigate={handleNavigate}
-        currentPage={currentPage}
+        currentPage={navigationState.currentPage}
       />
 
       <main id='main-content' role='main'>
+        {/* Breadcrumbs for better navigation */}
+        {navigationState.currentPage !== 'home' && (
+          <div className='max-w-7xl mx-auto px-6'>
+            <Breadcrumbs items={getBreadcrumbs()} onNavigate={handleNavigate} />
+          </div>
+        )}
+
         <Suspense fallback={<PageLoader />}>{renderPage()}</Suspense>
       </main>
 
@@ -239,20 +481,22 @@ function AppContent(): ReactElement {
 
 function App(): ReactElement {
   console.log('[APP] App component mounting...');
-  
-  React.useEffect(() => {
+
+  React.useEffect((): (() => void) => {
     console.log('[APP] ✓ App component mounted - providers initialized');
-    
-    return () => {
+
+    return (): void => {
       console.log('[APP] App component unmounting...');
     };
   }, []);
-  
+
   return (
     <AuthProvider>
-      <AccessibilityProvider>
-        <AppContent />
-      </AccessibilityProvider>
+      <AccessControlProvider>
+        <AccessibilityProvider>
+          <AppContent />
+        </AccessibilityProvider>
+      </AccessControlProvider>
     </AuthProvider>
   );
 }

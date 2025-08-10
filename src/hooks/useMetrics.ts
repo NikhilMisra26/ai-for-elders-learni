@@ -23,36 +23,43 @@ export interface MetricsData {
 // Thresholds for displaying metrics, configurable via environment variables
 function getEnvNumber(varName: string, defaultValue: number): number {
   console.log(`🔍 useMetrics: Getting environment variable ${varName}`);
-  
+
   // Use import.meta.env for Vite instead of process.env
   const value = import.meta.env[varName];
-  
+
   console.log(`📋 useMetrics: Raw value for ${varName}:`, value);
   console.log(`📋 useMetrics: Value type:`, typeof value);
   console.log(`📋 useMetrics: Value === undefined:`, value === undefined);
   console.log(`📋 useMetrics: Value === null:`, value === null);
   console.log(`📋 useMetrics: Value === '':`, value === '');
-  
+
   if (value === undefined || value === null || value === '') {
-    console.warn(`⚠️ useMetrics: Environment variable ${varName} is missing or empty, using default: ${defaultValue}`);
+    console.warn(
+      `⚠️ useMetrics: Environment variable ${varName} is missing or empty, using default: ${defaultValue}`,
+    );
     return defaultValue;
   }
-  
+
   const parsed = Number(value);
   console.log(`🔢 useMetrics: Parsed number for ${varName}:`, parsed);
   console.log(`🔢 useMetrics: isNaN(parsed):`, isNaN(parsed));
-  
+
   if (isNaN(parsed)) {
-    console.error(`❌ useMetrics: Environment variable ${varName} contains invalid number "${value}", using default: ${defaultValue}`);
+    console.error(
+      `❌ useMetrics: Environment variable ${varName} contains invalid number "${value}", using default: ${defaultValue}`,
+    );
     return defaultValue;
   }
-  
+
   console.log(`✅ useMetrics: Successfully parsed ${varName} = ${parsed}`);
   return parsed;
 }
 
 console.log('🚀 useMetrics: Initializing thresholds...');
-console.log('🔍 useMetrics: Available import.meta.env keys:', Object.keys(import.meta.env));
+console.log(
+  '🔍 useMetrics: Available import.meta.env keys:',
+  Object.keys(import.meta.env),
+);
 
 const THRESHOLDS = {
   MIN_USERS: getEnvNumber('VITE_MIN_USERS', 1000),
@@ -65,7 +72,7 @@ console.log('📊 useMetrics: Final THRESHOLDS configuration:', THRESHOLDS);
 
 export function useMetrics(): MetricsData {
   console.log('🎯 useMetrics: Hook initialized');
-  
+
   const [data, setData] = useState<MetricsData>({
     stats: [],
     testimonials: [],
@@ -80,10 +87,12 @@ export function useMetrics(): MetricsData {
     async function fetchMetrics(): Promise<void> {
       console.log('📡 useMetrics: Starting to fetch metrics...');
       console.log('📊 useMetrics: Using thresholds:', THRESHOLDS);
-      
+
       try {
-        console.log('⏳ useMetrics: Fetching stats and testimonials in parallel...');
-        
+        console.log(
+          '⏳ useMetrics: Fetching stats and testimonials in parallel...',
+        );
+
         // Fetch both stats and testimonials in parallel
         const [statsData, testimonialsData] = await Promise.all([
           getPlatformStats(),
@@ -94,7 +103,9 @@ export function useMetrics(): MetricsData {
         console.log('💬 useMetrics: Raw testimonials data:', testimonialsData);
 
         if (!mounted) {
-          console.log('🚫 useMetrics: Component unmounted, skipping data update');
+          console.log(
+            '🚫 useMetrics: Component unmounted, skipping data update',
+          );
           return;
         }
 
@@ -102,10 +113,12 @@ export function useMetrics(): MetricsData {
 
         if (statsData) {
           console.log('🔍 useMetrics: Processing stats data...');
-          
+
           // Only show user count if above threshold
-          console.log(`👥 useMetrics: Checking users - ${statsData.totalUsers} >= ${THRESHOLDS.MIN_USERS}?`, 
-            statsData.totalUsers >= THRESHOLDS.MIN_USERS);
+          console.log(
+            `👥 useMetrics: Checking users - ${statsData.totalUsers} >= ${THRESHOLDS.MIN_USERS}?`,
+            statsData.totalUsers >= THRESHOLDS.MIN_USERS,
+          );
           if (statsData.totalUsers >= THRESHOLDS.MIN_USERS) {
             const userStat = {
               number: formatMetricNumber(statsData.totalUsers),
@@ -117,21 +130,29 @@ export function useMetrics(): MetricsData {
           }
 
           // Only show completion rate if above threshold
-          console.log(`📚 useMetrics: Checking completion - ${statsData.avgCompletion} >= ${THRESHOLDS.MIN_COMPLETION_RATE}?`, 
-            statsData.avgCompletion >= THRESHOLDS.MIN_COMPLETION_RATE);
+          console.log(
+            `📚 useMetrics: Checking completion - ${statsData.avgCompletion} >= ${THRESHOLDS.MIN_COMPLETION_RATE}?`,
+            statsData.avgCompletion >= THRESHOLDS.MIN_COMPLETION_RATE,
+          );
           if (statsData.avgCompletion >= THRESHOLDS.MIN_COMPLETION_RATE) {
             const completionStat = {
               number: `${statsData.avgCompletion}%`,
               label: 'Course Completion',
               raw: statsData.avgCompletion,
             };
-            console.log('✅ useMetrics: Adding completion stat:', completionStat);
+            console.log(
+              '✅ useMetrics: Adding completion stat:',
+              completionStat,
+            );
             visibleStats.push(completionStat);
           }
 
           // Only show rating if above threshold and we have testimonials
-          console.log(`⭐ useMetrics: Checking rating - ${statsData.avgRating} >= ${THRESHOLDS.MIN_RATING} AND testimonials.length = ${testimonialsData.length} > 0?`, 
-            statsData.avgRating >= THRESHOLDS.MIN_RATING && testimonialsData.length > 0);
+          console.log(
+            `⭐ useMetrics: Checking rating - ${statsData.avgRating} >= ${THRESHOLDS.MIN_RATING} AND testimonials.length = ${testimonialsData.length} > 0?`,
+            statsData.avgRating >= THRESHOLDS.MIN_RATING &&
+              testimonialsData.length > 0,
+          );
           if (
             statsData.avgRating >= THRESHOLDS.MIN_RATING &&
             testimonialsData.length > 0
@@ -146,8 +167,10 @@ export function useMetrics(): MetricsData {
           }
 
           // Only show countries if above threshold
-          console.log(`🌍 useMetrics: Checking countries - ${statsData.countriesCount} >= ${THRESHOLDS.MIN_COUNTRIES}?`, 
-            statsData.countriesCount >= THRESHOLDS.MIN_COUNTRIES);
+          console.log(
+            `🌍 useMetrics: Checking countries - ${statsData.countriesCount} >= ${THRESHOLDS.MIN_COUNTRIES}?`,
+            statsData.countriesCount >= THRESHOLDS.MIN_COUNTRIES,
+          );
           if (statsData.countriesCount >= THRESHOLDS.MIN_COUNTRIES) {
             const countriesStat = {
               number: `${statsData.countriesCount}+`,
@@ -162,7 +185,10 @@ export function useMetrics(): MetricsData {
         }
 
         console.log('📊 useMetrics: Final visible stats:', visibleStats);
-        console.log('💬 useMetrics: Final testimonials count:', testimonialsData.length);
+        console.log(
+          '💬 useMetrics: Final testimonials count:',
+          testimonialsData.length,
+        );
 
         const newData = {
           stats: visibleStats,
@@ -170,15 +196,16 @@ export function useMetrics(): MetricsData {
           isLoading: false,
           error: null,
         };
-        
+
         console.log('✅ useMetrics: Setting final data:', newData);
         setData(newData);
-        
       } catch (error) {
         console.error('❌ useMetrics: Error fetching metrics:', error);
-        
+
         if (!mounted) {
-          console.log('🚫 useMetrics: Component unmounted, skipping error update');
+          console.log(
+            '🚫 useMetrics: Component unmounted, skipping error update',
+          );
           return;
         }
 
@@ -188,7 +215,7 @@ export function useMetrics(): MetricsData {
           isLoading: false,
           error: 'Failed to load metrics',
         };
-        
+
         console.log('🔴 useMetrics: Setting error data:', errorData);
         setData(errorData);
       }
@@ -211,7 +238,9 @@ export function useShouldShowStats(): boolean {
   console.log('📊 useShouldShowStats: Hook called');
   const { stats, isLoading } = useMetrics();
   const shouldShow = !isLoading && stats.length > 0;
-  console.log(`📊 useShouldShowStats: isLoading=${isLoading}, stats.length=${stats.length}, shouldShow=${shouldShow}`);
+  console.log(
+    `📊 useShouldShowStats: isLoading=${isLoading}, stats.length=${stats.length}, shouldShow=${shouldShow}`,
+  );
   return shouldShow;
 }
 
@@ -220,6 +249,8 @@ export function useShouldShowTestimonials(): boolean {
   console.log('💬 useShouldShowTestimonials: Hook called');
   const { testimonials, isLoading } = useMetrics();
   const shouldShow = !isLoading && testimonials.length > 0;
-  console.log(`💬 useShouldShowTestimonials: isLoading=${isLoading}, testimonials.length=${testimonials.length}, shouldShow=${shouldShow}`);
+  console.log(
+    `💬 useShouldShowTestimonials: isLoading=${isLoading}, testimonials.length=${testimonials.length}, shouldShow=${shouldShow}`,
+  );
   return shouldShow;
 }

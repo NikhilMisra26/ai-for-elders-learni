@@ -28,8 +28,10 @@
 - Large fonts and high contrast design
 - Audio narration for all content
 - Touch-friendly interface with proper target sizes
-- Clear navigation with breadcrumbs
+- Clear navigation with automatic breadcrumbs
 - WCAG 2.1 AA accessibility compliance
+- Keyboard navigation shortcuts (Alt+H/C/D/A)
+- Smart URL correction for common mistakes
 
 ### 🔐 **Security & Privacy**
 
@@ -38,12 +40,17 @@
 - **Database Security**: Row Level Security (RLS) on all database tables
 - **Session Management**: Automatic timeout and suspicious activity detection
 - **Defensive Initialization**: Robust Supabase client with graceful degradation when configuration is invalid
+- **Protected Routes**: Multi-tier access control with server-side validation
+- **AccessManager Service**: Centralized content access validation with caching
+- **Secure Navigation**: Automatic access checks before routing to paid content
 
 ### 💳 **Subscription System**
 
 - **Free**: Basic AI course with community access
 - **Advanced ($1.99/month)**: Personal assistant course + advanced features
 - **Expert ($4.99/month)**: Cutting-edge AI technologies + custom assistants
+- **Protected Content**: Automatic tier validation for premium courses
+- **Graceful Upgrades**: Clear upgrade prompts with pricing when accessing locked content
 - **Stripe Payment Integration**: Real payment processing (no free trials)
   - Automatic tier updates via webhooks with idempotency protection
   - Customer portal for subscription management
@@ -55,12 +62,13 @@
 
 - **Frontend**: React 19 + TypeScript + Vite
 - **Backend**: Node.js + Express with security middleware
+- **Routing**: Custom page-based routing with protected routes
 - **Styling**: Tailwind CSS v4 + shadcn/ui components
 - **Database**: Supabase (PostgreSQL) with defensive client initialization
 - **State**: React Context API
 - **Authentication**: Supabase Auth
 - **Payment**: Stripe with webhook integration
-- **Security**: Helmet, rate limiting, input validation
+- **Security**: Helmet, rate limiting, input validation, AccessManager
 - **Icons**: Phosphor Icons
 
 ## 🚀 Quick Start
@@ -118,6 +126,37 @@ Execute these SQL files in your Supabase SQL Editor in order:
    -- Prevents duplicate processing of Stripe webhook events
    -- Includes helper functions for transaction safety
    ```
+
+## 🦭 Routing Architecture
+
+### **Page-Based Routing**
+
+The application uses a custom routing system optimized for senior users:
+
+- **Protected Routes**: Automatic access validation before rendering
+- **Breadcrumb Navigation**: Auto-generated breadcrumbs for clear location awareness
+- **Smart URL Handling**: Corrects common URL mistakes (e.g., /course → /courses)
+- **Deep Linking Protection**: Direct links to paid content trigger upgrade flows
+- **Navigation History**: Track and restore user navigation paths
+- **Keyboard Shortcuts**: 
+  - Alt+H → Home
+  - Alt+C → Courses
+  - Alt+D → Dashboard
+  - Alt+A → Account
+
+### **Access Control Flow**
+
+1. User navigates to protected content
+2. ProtectedRoute component checks authentication
+3. AccessManager validates subscription tier
+4. If access denied:
+   - Unauthenticated → Show sign-in prompt
+   - Wrong tier → Show upgrade options with pricing
+   - Expired → Show renewal prompt
+5. If access granted:
+   - Content loads with ProtectedContent wrapper
+   - Server-side validation for premium content
+   - Graceful fallbacks for network issues
 
 ### 3. Environment Configuration
 

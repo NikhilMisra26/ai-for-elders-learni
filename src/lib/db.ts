@@ -28,7 +28,7 @@ export async function upsertProfile(profile: Profile): Promise<Profile> {
   };
 
   const { data, error } = await supabase
-    .from<Profile>('profiles')
+    .from('profiles')
     .upsert(sanitized, { onConflict: 'id' })
     .select()
     .single();
@@ -38,7 +38,7 @@ export async function upsertProfile(profile: Profile): Promise<Profile> {
 
 export async function getProfile(id: string): Promise<Profile> {
   const { data, error } = await supabase
-    .from<Profile>('profiles')
+    .from('profiles')
     .select('*')
     .eq('id', id)
     .single();
@@ -60,7 +60,7 @@ export async function updateProfile(
 
   if (updates.name) sanitized.name = sanitizeInput(updates.name);
   const { data, error } = await supabase
-    .from<Profile>('profiles')
+    .from('profiles')
     .update(sanitized)
     .eq('id', id)
     .select()
@@ -89,7 +89,7 @@ export async function getUserSubscription(
   userId: string,
 ): Promise<SubscriptionRow | undefined> {
   const { data, error } = await supabase
-    .from<SubscriptionRow>('subscriptions')
+    .from('subscriptions')
     .select('*')
     .eq('user_id', userId)
     .order('start_date', { ascending: false })
@@ -102,7 +102,7 @@ export async function upsertSubscription(
   row: Omit<SubscriptionRow, 'id'> & { id?: string },
 ): Promise<SubscriptionRow> {
   const { data, error } = await supabase
-    .from<SubscriptionRow>('subscriptions')
+    .from('subscriptions')
     .upsert(row)
     .select()
     .single();
@@ -122,7 +122,7 @@ export interface InvoiceRow {
 
 export async function listInvoices(userId: string): Promise<InvoiceRow[]> {
   const { data, error } = await supabase
-    .from<InvoiceRow>('invoices')
+    .from('invoices')
     .select('*')
     .eq('user_id', userId)
     .order('date', { ascending: false })
@@ -135,7 +135,7 @@ export async function addInvoice(
   row: Omit<InvoiceRow, 'id'>,
 ): Promise<InvoiceRow> {
   const { data, error } = await supabase
-    .from<InvoiceRow>('invoices')
+    .from('invoices')
     .insert([row])
     .select()
     .single();
@@ -161,7 +161,7 @@ export async function getCourseProgressRows(
   userId: string,
 ): Promise<CourseProgressRow[]> {
   const { data, error } = await supabase
-    .from<CourseProgressRow>('course_progress')
+    .from('course_progress')
     .select('*')
     .eq('user_id', userId);
   if (error) throw error;
@@ -172,7 +172,7 @@ export async function upsertCourseProgress(
   row: Omit<CourseProgressRow, 'id'> & { id?: string },
 ): Promise<CourseProgressRow> {
   const { data, error } = await supabase
-    .from<CourseProgressRow>('course_progress')
+    .from('course_progress')
     .upsert(row)
     .select()
     .single();
@@ -196,7 +196,7 @@ export async function getModuleProgressRows(
   userId: string,
 ): Promise<ModuleProgressRow[]> {
   const { data, error } = await supabase
-    .from<ModuleProgressRow>('module_progress')
+    .from('module_progress')
     .select('*')
     .eq('user_id', userId);
   if (error) throw error;
@@ -207,7 +207,7 @@ export async function upsertModuleProgress(
   row: Omit<ModuleProgressRow, 'id'> & { id?: string },
 ): Promise<ModuleProgressRow> {
   const { data, error } = await supabase
-    .from<ModuleProgressRow>('module_progress')
+    .from('module_progress')
     .upsert(row)
     .select()
     .single();
@@ -231,7 +231,7 @@ export async function addUserActivity(
   row: Omit<UserActivityRow, 'id'>,
 ): Promise<UserActivityRow> {
   const { data, error } = await supabase
-    .from<UserActivityRow>('user_activity')
+    .from('user_activity')
     .insert(row)
     .select()
     .single();
@@ -244,7 +244,7 @@ export async function listUserActivity(
   limit = 50,
 ): Promise<UserActivityRow[]> {
   const { data, error } = await supabase
-    .from<UserActivityRow>('user_activity')
+    .from('user_activity')
     .select('*')
     .eq('user_id', userId)
     .order('timestamp', { ascending: false })

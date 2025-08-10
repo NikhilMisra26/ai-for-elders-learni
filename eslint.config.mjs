@@ -24,6 +24,7 @@ export default [
       '*.bundle.js',
       '*.bundle.js.map',
       'src/screens/onboarding/', // legacy unused screens excluded from project
+      'supabase/', // Supabase functions have their own config
     ],
   },
   {

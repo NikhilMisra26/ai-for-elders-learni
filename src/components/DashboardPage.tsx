@@ -37,10 +37,12 @@ import { courseData } from '@/lib/courseData';
 
 interface DashboardPageProps {
   onNavigate: (page: string) => void;
+  onNavigateToModule?: (courseId: string, moduleId: string) => void;
 }
 
 export function DashboardPage({
   onNavigate,
+  onNavigateToModule,
 }: DashboardPageProps): ReactElement {
   const { user } = useAuth();
   const { subscription, getCurrentPlan } = useSubscription();
@@ -94,9 +96,12 @@ export function DashboardPage({
       : 0;
 
   const handleStartLearning = (): void => {
-    if (recommendations.continueModule) {
-      // Navigate to specific module - in a real app, you'd implement this routing
-      onNavigate('courses');
+    if (recommendations.continueModule && onNavigateToModule) {
+      // Navigate directly to the module
+      onNavigateToModule(
+        recommendations.continueModule.courseId,
+        recommendations.continueModule.module.id,
+      );
     } else if (recommendations.startCourse) {
       onNavigate('courses');
     }
