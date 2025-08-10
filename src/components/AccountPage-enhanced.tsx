@@ -108,7 +108,7 @@ export function AccountPage({ onNavigate }: AccountPageProps): ReactElement {
 
     try {
       // NO FREE TRIALS - Direct to Stripe checkout
-      const result = await processStripePayment(planId, user.id, user.email);
+      const result = await processStripePayment(planId);
 
       if (!result.success) {
         toast.error('Failed to start checkout', {
@@ -133,7 +133,7 @@ export function AccountPage({ onNavigate }: AccountPageProps): ReactElement {
     }
 
     try {
-      const result = await openStripePortal(user.id);
+      const result = await openStripePortal();
       if (!result.success) {
         toast.error('Failed to open billing portal', {
           description: result.error ?? 'Please try again',
