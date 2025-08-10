@@ -120,7 +120,7 @@ Execute these SQL files in your Supabase SQL Editor in order:
 
 ### 3. Environment Configuration
 
-Copy `.env.example` to `.env.local` and add:
+Copy `.env.example` to `.env.local` and add required variables. See [`ENVIRONMENT_VARIABLES.md`](./ENVIRONMENT_VARIABLES.md) for complete documentation of all configurable options.
 
 ```env
 VITE_SUPABASE_URL=your_supabase_project_url
@@ -153,6 +153,27 @@ Current settings ensure only impressive metrics are shown:
 - **Completion Rate**: 85%+ (configurable in `THRESHOLDS.MIN_COMPLETION_RATE`)
 - **Rating**: 4.0+ stars (configurable in `THRESHOLDS.MIN_RATING`)
 - **Countries**: 5+ (configurable in `THRESHOLDS.MIN_COUNTRIES`)
+
+## 🧪 Testing & Development
+
+### Stripe Payment Testing
+
+The `StripeTestDashboard` component provides comprehensive testing capabilities for the payment system:
+
+- **Payment Flow Testing**: Simulate successful and failed payment scenarios using official Stripe test cards
+- **Subscription Management**: Test tier changes, billing cycles, and subscription status updates
+- **Webhook Event Monitoring**: View and track webhook events for payment processing
+- **Database State Verification**: Inspect user profiles and subscription data in real-time
+- **Test User Profiles**: Switch between different user contexts for comprehensive testing
+
+**Access**: Available only in development mode - automatically disabled in production.
+
+**Test Cards Included**:
+- Success: `4242424242424242`
+- Card Declined: `4000000000000002`
+- Insufficient Funds: `4000000000009995`
+- Fraud Prevention: `4000000000000069`
+- 3D Secure Required: `4000002500003155`
 
 ## 🏗️ Architecture Notes
 

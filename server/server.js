@@ -28,17 +28,48 @@ for (const envVar of requiredEnvVars) {
   }
 }
 
+// Configuration from environment variables with defaults
+const config = {
+  port: process.env.PORT || 3001,
+  stripeApiVersion: process.env.STRIPE_API_VERSION || '2023-10-16',
+  rateLimiting: {
+    general: {
+      windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000', 10), // 15 minutes default
+      max: parseInt(process.env.RATE_LIMIT_GENERAL_MAX || '100', 10),
+    },
+    api: {
+      windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000', 10), // 15 minutes default
+      max: parseInt(process.env.RATE_LIMIT_API_MAX || '10', 10),
+    },
+    webhook: {
+      windowMs: parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000', 10), // 15 minutes default
+      max: parseInt(process.env.RATE_LIMIT_WEBHOOK_MAX || '1000', 10),
+    },
+  },
+  bodyLimits: {
+    webhook: process.env.WEBHOOK_BODY_LIMIT || '1mb',
+    api: process.env.API_BODY_LIMIT || '10kb',
+    urlencoded: process.env.URLENCODED_BODY_LIMIT || '10kb',
+  },
+  gracePeriodDays: parseInt(process.env.GRACE_PERIOD_DAYS || '7', 10),
+  corsOrigins: {
+    development: [
+      process.env.DEV_CORS_ORIGIN_1 || 'http://localhost:5173',
+      process.env.DEV_CORS_ORIGIN_2 || 'https://localhost:5173',
+    ],
+  },
+};
+
 console.log('✅ All required environment variables are present');
 
 const app = express();
-const PORT = process.env.PORT || 3001;
 
 // Trust proxy for rate limiting behind reverse proxies
 app.set('trust proxy', 1);
 
 // Initialize Stripe
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: '2023-10-16',
+  apiVersion: config.stripeApiVersion,
 });
 
 // Initialize Supabase Admin Client
@@ -106,8 +137,8 @@ app.use(helmet({
 
 // Rate limiting
 const generalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Limit each IP to 100 requests per windowMs
+  windowMs: config.rateLimiting.general.windowMs,
+  max: config.rateLimiting.general.max,
   message: {
     error: 'Too many requests from this IP, please try again later.',
   },
@@ -116,8 +147,8 @@ const generalLimiter = rateLimit({
 });
 
 const apiLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 10, // Limit each IP to 10 API requests per windowMs
+  windowMs: config.rateLimiting.api.windowMs,
+  max: config.rateLimiting.api.max,
   message: {
     error: 'Too many API requests from this IP, please try again later.',
   },
@@ -126,8 +157,8 @@ const apiLimiter = rateLimit({
 });
 
 const webhookLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 1000, // Higher limit for Stripe webhooks
+  windowMs: config.rateLimiting.webhook.windowMs,
+  max: config.rateLimiting.webhook.max,
   message: {
     error: 'Too many webhook requests from this IP.',
   },
@@ -143,8 +174,7 @@ app.use('/webhook', webhookLimiter);
 // CORS configuration
 const allowedOrigins = [
   process.env.FRONTEND_URL,
-  'http://localhost:5173',
-  'https://localhost:5173'
+  ...config.corsOrigins.development,
 ].filter(Boolean);
 
 app.use(cors({
@@ -166,19 +196,19 @@ app.use(cors({
 // Use raw body for webhook endpoint with size limit
 app.use('/webhook', express.raw({ 
   type: 'application/json',
-  limit: '1mb' // Stripe webhooks are typically small
+  limit: config.bodyLimits.webhook,
 }));
 
 // JSON parser for other routes with size limits
 app.use(express.json({ 
-  limit: '10kb', // Small limit for API endpoints
+  limit: config.bodyLimits.api,
   strict: true
 }));
 
 // URL encoded parser with size limits
 app.use(express.urlencoded({ 
   extended: false, 
-  limit: '10kb' 
+  limit: config.bodyLimits.urlencoded,
 }));
 
 // Health check
@@ -544,7 +574,7 @@ app.post('/webhook', async (req, res) => {
               .from('subscriptions')
               .update({
                 status: 'grace_period',
-                grace_period_end: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days
+                grace_period_end: new Date(Date.now() + config.gracePeriodDays * 24 * 60 * 60 * 1000).toISOString(),
               })
               .eq('user_id', profile.id),
             
@@ -653,14 +683,14 @@ process.on('SIGINT', () => {
 });
 
 // Start server
-const server = app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
-  console.log(`📝 Webhook endpoint: http://localhost:${PORT}/webhook`);
+const server = app.listen(config.port, () => {
+  console.log(`🚀 Server running on http://localhost:${config.port}`);
+  console.log(`📝 Webhook endpoint: http://localhost:${config.port}/webhook`);
   console.log(`🔒 Security measures active:`);
   console.log(`   ✓ Helmet security headers`);
-  console.log(`   ✓ Rate limiting (100/15min general, 10/15min API)`);
+  console.log(`   ✓ Rate limiting (${config.rateLimiting.general.max}/${config.rateLimiting.general.windowMs/60000}min general, ${config.rateLimiting.api.max}/${config.rateLimiting.api.windowMs/60000}min API)`);
   console.log(`   ✓ CORS protection`);
-  console.log(`   ✓ Request body size limits`);
+  console.log(`   ✓ Request body size limits (webhook: ${config.bodyLimits.webhook}, API: ${config.bodyLimits.api})`);
   console.log(`   ✓ Input validation`);
   console.log(`   ✓ Environment validation`);
   console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);

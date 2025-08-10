@@ -1,189 +1,186 @@
-# Stripe Payment Integration Setup Guide
+# Stripe Payment Integration Setup Guide for AI for Elders
 
 ## Overview
-This application uses Stripe for payment processing with **NO FREE TRIALS**. Users must pay immediately to access premium content. The integration handles subscriptions automatically and updates user access levels based on payment status.
 
-## Required Setup Steps
+This guide helps you set up Stripe payment processing for the AI for Elders platform. Key points to remember:
 
-### 1. Create Stripe Account
-1. Go to [https://stripe.com](https://stripe.com) and create an account
-2. Complete your business profile and activate your account
+⚠️ **Important Safety Notes**:
+- **NO FREE TRIALS**: Users are charged immediately upon checkout
+- **Security Critical**: Keep all secret keys confidential
+- **Test Before Going Live**: Always thoroughly test in Stripe's test mode
 
-### 2. Create Products and Prices in Stripe Dashboard
+## Prerequisites
 
-Navigate to **Products** in your Stripe Dashboard and create:
+- Stripe Account
+- Node.js and npm installed
+- Supabase project set up
+- Basic understanding of payment integration
+
+## Step-by-Step Setup
+
+### 1. Create Stripe Account 🌐
+
+1. Visit [https://stripe.com](https://stripe.com) and create an account
+2. Complete your business profile
+3. **Activate your account**
+
+### 2. Test Environment Setup 🧪
+
+⚠️ Safety Warning: Always start in TEST MODE to prevent real charges!
+
+#### How to Enable Test Mode:
+1. Log into Stripe Dashboard
+2. Look for the "Test mode" toggle (usually top right)
+3. When enabled, all keys will start with `test_`
+
+#### Test Payment Cards 💳
+- **Successful Payment**: `4242 4242 4242 4242`
+  - Expiry: Any future date
+  - CVV: Any 3 digits
+- **Simulate Different Scenarios**:
+  - Declined card: `4000 0000 0000 0002`
+  - Insufficient funds: `4000 0000 0000 9995`
+
+### 3. Create Stripe Products and Prices
+
+In Stripe Dashboard, navigate to **Products** and create:
 
 #### Advanced Learning Plan
 - **Name**: Advanced Learning
-- **Description**: AI as Your Personal Assistant course with advanced techniques
+- **Description**: AI as Your Personal Assistant course
 - **Price**: $1.99/month
 - **Recurring**: Monthly
-- **Price ID**: Note this ID (will look like `price_1234567890abcdef`)
 
 #### Expert Mastery Plan
 - **Name**: Expert Mastery
-- **Description**: Advanced AI for Active Seniors with cutting-edge content
+- **Description**: Advanced AI for Active Seniors
 - **Price**: $4.99/month
 - **Recurring**: Monthly
-- **Price ID**: Note this ID (will look like `price_1234567890ghijkl`)
 
-### 3. Update Price IDs in Code
+### 4. Configure Environment Variables
 
-Edit `src/lib/stripe.ts` and update the price IDs:
+#### Frontend `.env.local`:
+```bash
+# Stripe Test Publishable Key
+VITE_STRIPE_PUBLISHABLE_KEY=pk_test_YOUR_TEST_PUBLISHABLE_KEY
+```
+
+#### Backend `server/.env`:
+```bash
+# Server Configuration
+PORT=3001
+FRONTEND_URL=http://localhost:5173
+
+# Stripe Test Configuration
+STRIPE_SECRET_KEY=sk_test_YOUR_TEST_SECRET_KEY
+STRIPE_WEBHOOK_SECRET=whsec_YOUR_TEST_WEBHOOK_SECRET
+
+# Stripe Price IDs (from Step 3)
+STRIPE_PRICE_ADVANCED=price_test_ADVANCED_PRICE
+STRIPE_PRICE_EXPERT=price_test_EXPERT_PRICE
+
+# Supabase Details
+SUPABASE_URL=your_test_supabase_url
+SUPABASE_SERVICE_ROLE_KEY=your_test_service_role_key
+```
+
+### 5. Update Price IDs in Code
+
+Edit `src/lib/stripe.ts`:
 
 ```typescript
 export const STRIPE_PRICES = {
   advanced: {
-    monthly: 'price_YOUR_ADVANCED_PRICE_ID', // Replace with actual
-    priceId: 'price_YOUR_ADVANCED_PRICE_ID',
-    amount: 199, // in cents
+    monthly: 'price_test_ADVANCED_PRICE', // Test price ID
+    priceId: 'price_test_ADVANCED_PRICE',
+    amount: 199, // $1.99 in cents
   },
   expert: {
-    monthly: 'price_YOUR_EXPERT_PRICE_ID', // Replace with actual
-    priceId: 'price_YOUR_EXPERT_PRICE_ID',
-    amount: 499, // in cents
+    monthly: 'price_test_EXPERT_PRICE', // Test price ID
+    priceId: 'price_test_EXPERT_PRICE',
+    amount: 499, // $4.99 in cents
   },
 };
 ```
 
-### 4. Configure Environment Variables
+### 6. Webhook Configuration 🔗
 
-Add to your `.env.local`:
+⚠️ Security Warning: Use ngrok for local webhook testing!
 
-```bash
-# Stripe Configuration
-VITE_STRIPE_PUBLISHABLE_KEY=pk_live_YOUR_PUBLISHABLE_KEY
-```
-
-### 5. Set Up Backend Server
-
-#### Navigate to server directory
-```bash
-cd server
-```
-
-#### Install dependencies
-```bash
-npm install
-```
-
-#### Configure environment
-Copy `server/.env.example` to `server/.env` and add:
-```bash
-PORT=3001
-STRIPE_SECRET_KEY=sk_live_YOUR_SECRET_KEY
-STRIPE_WEBHOOK_SECRET=whsec_YOUR_WEBHOOK_SECRET
-SUPABASE_URL=your_supabase_url
-SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
-FRONTEND_URL=http://localhost:5173
-
-# Add your actual Stripe price IDs
-STRIPE_PRICE_ADVANCED=price_YOUR_ADVANCED_PRICE_ID
-STRIPE_PRICE_EXPERT=price_YOUR_EXPERT_PRICE_ID
-```
-
-#### Start the backend server
-```bash
-npm run dev  # For development with auto-reload
-# or
-npm start    # For production
-```
-
-### 6. Configure Stripe Webhook
-
-1. Go to **Developers → Webhooks** in Stripe Dashboard
-2. Click **Add endpoint**
-3. Set endpoint URL: 
-   - For local testing: Use [ngrok](https://ngrok.com) to expose your local server: `https://YOUR_NGROK_URL/webhook`
-   - For production: `https://YOUR_DOMAIN.com/webhook`
-4. Select events to listen for:
-   - `checkout.session.completed`
-   - `customer.subscription.updated`
-   - `customer.subscription.deleted`
-   - `invoice.payment_succeeded`
-   - `invoice.payment_failed`
-5. Copy the webhook signing secret (starts with `whsec_`)
-6. Add it to your `server/.env` file as `STRIPE_WEBHOOK_SECRET`
-
-### 7. Run Database Migrations
-
-In Supabase SQL Editor, run:
-```sql
--- Run the migrations from:
--- 1. supabase.schema.sql (base schema)
--- 2. supabase/migrations/002_add_stripe_fields.sql (Stripe fields)
-```
-
-### 8. Configure Customer Portal
-
-1. Go to **Settings → Billing → Customer portal** in Stripe
-2. Enable the customer portal
-3. Configure what customers can do:
-   - ✅ Cancel subscriptions
-   - ✅ Update payment methods
-   - ✅ View invoices
-   - ✅ Download invoices
-4. Save settings
-
-## Testing the Integration
-
-### Test Mode
-1. Use Stripe test mode first (toggle in Dashboard)
-2. Test API keys start with `pk_test_` and `sk_test_`
-3. Use test card: `4242 4242 4242 4242` with any future expiry
-
-### Test Flow
-1. Create a new user account
-2. Click "Upgrade Plan" 
-3. You'll be redirected to Stripe Checkout
-4. Complete payment (immediate charge, no trial)
-5. On success, redirected back to account page
-6. User tier automatically updated via webhook
-7. Premium content immediately accessible
-
-### Verify Webhook
-Check webhook logs in Stripe Dashboard under **Developers → Webhooks → [Your endpoint] → Webhook attempts**
-
-## Important Notes
-
-- **NO FREE TRIALS**: Users are charged immediately upon checkout
-- **Automatic Tier Updates**: Webhooks update user access automatically
-- **Subscription Management**: Users can manage subscriptions via Stripe Customer Portal
-- **Security**: Never expose secret keys in client code
-- **RLS Policies**: Database enforces subscription checks at row level
-
-## Troubleshooting
-
-### Payment not updating user tier
-1. Check webhook logs in Stripe Dashboard
-2. Verify webhook secret is correct in `server/.env`
-3. Check server console for webhook processing logs
-4. Ensure server is running and accessible
-
-### Checkout session fails
-1. Verify price IDs are correct in both `src/lib/stripe.ts` and `server/.env`
-2. Check server console for errors
-3. Ensure backend server is running on port 3001
-4. Verify CORS settings if frontend/backend on different ports
-
-### Customer portal not opening
-1. Ensure portal is activated in Stripe settings
-2. Verify user has stripe_customer_id in database
-3. Check server console for portal session creation errors
-
-### Local Testing with Webhooks
+#### Local Webhook Steps:
 1. Install ngrok: `npm install -g ngrok`
-2. Start ngrok: `ngrok http 3001`
-3. Use the HTTPS URL from ngrok as your webhook endpoint in Stripe
-4. Update `STRIPE_WEBHOOK_SECRET` with the test webhook secret
+2. Start backend server: `npm run dev`
+3. In another terminal, run: `ngrok http 3001`
+4. Copy the HTTPS URL from ngrok
+5. In Stripe Dashboard:
+   - Go to **Developers → Webhooks**
+   - Click **Add endpoint**
+   - Paste ngrok HTTPS URL
+   - Select events:
+     - `checkout.session.completed`
+     - `customer.subscription.updated`
+     - `customer.subscription.deleted`
+     - `invoice.payment_succeeded`
+     - `invoice.payment_failed`
 
-## Production Checklist
+### 7. Testing Workflow 🧪
 
+1. Start backend: `npm run dev`
+2. Start frontend: `pnpm run dev`
+3. Create test user account
+4. Attempt plan upgrade
+5. Use test payment card
+6. Verify:
+   - Successful redirection
+   - User tier update
+   - Access to premium content
+
+## Troubleshooting Checklist 🛠️
+
+### Common Issues
+- **Webhook not working**:
+  1. Check ngrok URL is current
+  2. Verify webhook secret
+  3. Check server logs
+  4. Ensure server is running
+
+- **Payment not processing**:
+  1. Confirm you're in TEST mode
+  2. Verify price IDs match
+  3. Check console for errors
+  4. Validate CORS settings
+
+### Local Webhook Debugging
+- Use `ngrok http 3001` to expose local server
+- Monitor webhook attempts in Stripe Dashboard
+- Check server console for detailed logs
+
+## Production Migration Checklist ✅
+
+Before going live:
 - [ ] Switch to live Stripe keys
-- [ ] Update all price IDs to live versions
-- [ ] Test full payment flow with real card
+- [ ] Update all price IDs to production versions
+- [ ] Conduct thorough payment flow testing
 - [ ] Verify webhook signature validation
-- [ ] Monitor first few real transactions
-- [ ] Set up Stripe email receipts
-- [ ] Configure tax settings if needed
-- [ ] Enable Stripe Radar for fraud protection
+- [ ] Set up monitoring for transactions
+- [ ] Configure Stripe email receipts
+- [ ] Enable fraud protection (Stripe Radar)
+
+## Security Reminders 🔒
+
+- NEVER commit secret keys to version control
+- Rotate webhook secrets periodically
+- Use environment-specific configurations
+- Implement rate limiting on payment endpoints
+
+## Additional Resources
+
+- [Stripe Documentation](https://stripe.com/docs)
+- [Stripe Test Mode Guide](https://stripe.com/docs/test-mode)
+- [Webhook Best Practices](https://stripe.com/docs/webhooks/best-practices)
+
+## Support
+
+For integration issues, contact:
+- Stripe Support
+- Your development team's payment integration specialist

@@ -23,11 +23,27 @@ interface CachedData<T> {
   timestamp: number;
 }
 
-// Cache configuration
-const CACHE_DURATION =
-  typeof process !== 'undefined' && process.env?.ANALYTICS_CACHE_DURATION_MS
-    ? parseInt(process.env.ANALYTICS_CACHE_DURATION_MS, 10)
-    : 5 * 60 * 1000; // 5 minutes
+// Cache configuration - use environment variable or default to 5 minutes
+const getAnalyticsCacheDuration = (): number => {
+  // Check for client-side Vite environment variable first
+  const viteEnvValue = import.meta.env?.VITE_ANALYTICS_CACHE_DURATION_MS as
+    | string
+    | undefined;
+  if (typeof window !== 'undefined' && viteEnvValue) {
+    return parseInt(viteEnvValue, 10);
+  }
+  // Fallback to server-side environment variable
+  if (
+    typeof process !== 'undefined' &&
+    process.env?.ANALYTICS_CACHE_DURATION_MS
+  ) {
+    return parseInt(process.env.ANALYTICS_CACHE_DURATION_MS, 10);
+  }
+  // Default to 5 minutes
+  return 5 * 60 * 1000;
+};
+
+const CACHE_DURATION = getAnalyticsCacheDuration();
 const statsCache: { current: CachedData<PlatformStats> | null } = {
   current: null,
 };

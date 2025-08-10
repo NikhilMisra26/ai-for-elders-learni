@@ -12,13 +12,39 @@ export interface SecurityConfig {
   sessionTimeout: number; // in minutes
 }
 
+// Get environment variable or default
+const getEnvNumber = (key: string, defaultValue: number): number => {
+  const viteEnvValue = import.meta.env?.[key] as string | undefined;
+  if (typeof window !== 'undefined' && viteEnvValue) {
+    return parseInt(viteEnvValue, 10) || defaultValue;
+  }
+  if (typeof process !== 'undefined' && process.env?.[key]) {
+    return parseInt(process.env[key], 10) || defaultValue;
+  }
+  return defaultValue;
+};
+
+const getEnvBoolean = (key: string, defaultValue: boolean): boolean => {
+  const viteEnvValue = import.meta.env?.[key] as string | undefined;
+  if (typeof window !== 'undefined' && viteEnvValue) {
+    return viteEnvValue === 'true';
+  }
+  if (typeof process !== 'undefined' && process.env?.[key]) {
+    return process.env[key] === 'true';
+  }
+  return defaultValue;
+};
+
 export const defaultSecurityConfig: SecurityConfig = {
-  maxLoginAttempts: 5,
-  lockoutDuration: 15,
-  passwordMinLength: 8,
-  passwordRequireSpecialChar: true,
-  passwordRequireNumber: true,
-  sessionTimeout: 60, // 1 hour for seniors
+  maxLoginAttempts: getEnvNumber('VITE_MAX_LOGIN_ATTEMPTS', 5),
+  lockoutDuration: getEnvNumber('VITE_LOCKOUT_DURATION_MINUTES', 15),
+  passwordMinLength: getEnvNumber('VITE_PASSWORD_MIN_LENGTH', 8),
+  passwordRequireSpecialChar: getEnvBoolean(
+    'VITE_PASSWORD_REQUIRE_SPECIAL_CHAR',
+    true,
+  ),
+  passwordRequireNumber: getEnvBoolean('VITE_PASSWORD_REQUIRE_NUMBER', true),
+  sessionTimeout: getEnvNumber('VITE_SESSION_TIMEOUT_MINUTES', 60), // 1 hour for seniors
 };
 
 /**
