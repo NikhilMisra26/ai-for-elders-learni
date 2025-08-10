@@ -460,9 +460,9 @@ export function CoursesPage({
                         label: 'Upgrade',
                         onClick: () =>
                           user
-                            ? onUpgradeClick(
-                                course.tier as 'advanced' | 'expert',
-                              )
+                            ? (course.tier === 'advanced' || course.tier === 'expert'
+                                ? onUpgradeClick(course.tier)
+                                : onUpgradeClick('advanced'))
                             : onAuthClick(),
                       },
                     });
