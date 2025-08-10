@@ -16,7 +16,9 @@ const requiredEnvVars = [
   'STRIPE_WEBHOOK_SECRET',
   'SUPABASE_URL',
   'SUPABASE_SERVICE_ROLE_KEY',
-  'FRONTEND_URL'
+  'FRONTEND_URL',
+  'STRIPE_PRICE_ADVANCED',
+  'STRIPE_PRICE_EXPERT',
 ];
 
 for (const envVar of requiredEnvVars) {
@@ -186,7 +188,6 @@ app.get('/health', (req, res) => {
 
 // Input validation middleware
 const validateCheckoutSession = [
-  body('priceId').isString().trim().notEmpty().withMessage('Price ID is required'),
   body('userId').isUUID().withMessage('Valid user ID is required'),
   body('userEmail').isEmail().normalizeEmail().withMessage('Valid email is required'),
   body('planId').isIn(['advanced', 'expert']).withMessage('Valid plan ID is required'),
@@ -211,10 +212,20 @@ const handleValidationErrors = (req, res, next) => {
 // Create Checkout Session
 app.post('/api/create-checkout-session', validateCheckoutSession, handleValidationErrors, async (req, res) => {
   try {
-    const { priceId, userId, userEmail, planId } = req.body;
+    const { userId, userEmail, planId } = req.body;
 
-    if (!priceId || !userId || !userEmail) {
+    if (!userId || !userEmail || !planId) {
       return res.status(400).json({ error: 'Missing required fields' });
+    }
+
+    const priceMap = {
+      advanced: process.env.STRIPE_PRICE_ADVANCED,
+      expert: process.env.STRIPE_PRICE_EXPERT,
+    };
+
+    const priceId = priceMap[planId];
+    if (!priceId) {
+      return res.status(400).json({ error: 'Invalid plan selected' });
     }
 
     // Check if user already has a Stripe customer ID
@@ -340,7 +351,6 @@ app.post('/webhook', async (req, res) => {
 
   // Handle different event types with transaction safety
   let processingResult = 'success';
-  let processingError = null;
   
   try {
     switch (event.type) {
@@ -561,7 +571,6 @@ app.post('/webhook', async (req, res) => {
   } catch (error) {
     console.error('Error processing webhook:', error);
     processingResult = 'failed';
-    processingError = error.message;
     
     // Still record the failed attempt for tracking
     try {
@@ -599,7 +608,8 @@ app.post('/webhook', async (req, res) => {
 });
 
 // Global error handler
-app.use((err, req, res, next) => {
+// eslint-disable-next-line no-unused-vars
+app.use((err, req, res, _next) => {
   console.error('Global error handler:', err);
   
   // CORS errors

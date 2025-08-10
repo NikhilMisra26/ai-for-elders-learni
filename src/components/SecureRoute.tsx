@@ -120,7 +120,7 @@ function TierUpgradePrompt({
   const info = tierInfo[requiredTier];
 
   const { user } = useAuth();
-  
+
   const handleUpgrade = async (): Promise<void> => {
     // Import the Stripe payment function
     const { processStripePayment } = await import('@/lib/subscription');
@@ -168,7 +168,11 @@ function TierUpgradePrompt({
               </ul>
             </div>
 
-            <Button onClick={handleUpgrade} size='lg' className='w-full'>
+            <Button
+              onClick={() => void handleUpgrade()}
+              size='lg'
+              className='w-full'
+            >
               <Shield className='h-4 w-4 mr-2' />
               Upgrade to {info.name} - {info.price}
             </Button>
