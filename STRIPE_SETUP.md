@@ -55,41 +55,47 @@ Add to your `.env.local`:
 VITE_STRIPE_PUBLISHABLE_KEY=pk_live_YOUR_PUBLISHABLE_KEY
 ```
 
-### 5. Deploy Supabase Edge Functions
+### 5. Set Up Backend Server
 
-#### Install Supabase CLI
+#### Navigate to server directory
 ```bash
-npm install -g supabase
+cd server
 ```
 
-#### Login to Supabase
+#### Install dependencies
 ```bash
-supabase login
+npm install
 ```
 
-#### Link your project
+#### Configure environment
+Copy `server/.env.example` to `server/.env` and add:
 ```bash
-supabase link --project-ref YOUR_PROJECT_REF
+PORT=3001
+STRIPE_SECRET_KEY=sk_live_YOUR_SECRET_KEY
+STRIPE_WEBHOOK_SECRET=whsec_YOUR_WEBHOOK_SECRET
+SUPABASE_URL=your_supabase_url
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+FRONTEND_URL=http://localhost:5173
+
+# Add your actual Stripe price IDs
+STRIPE_PRICE_ADVANCED=price_YOUR_ADVANCED_PRICE_ID
+STRIPE_PRICE_EXPERT=price_YOUR_EXPERT_PRICE_ID
 ```
 
-#### Set Edge Function Secrets
+#### Start the backend server
 ```bash
-supabase secrets set STRIPE_SECRET_KEY=sk_live_YOUR_SECRET_KEY
-supabase secrets set STRIPE_WEBHOOK_SECRET=whsec_YOUR_WEBHOOK_SECRET
-```
-
-#### Deploy Functions
-```bash
-supabase functions deploy create-checkout-session
-supabase functions deploy create-portal-session
-supabase functions deploy handle-stripe-webhook
+npm run dev  # For development with auto-reload
+# or
+npm start    # For production
 ```
 
 ### 6. Configure Stripe Webhook
 
 1. Go to **Developers → Webhooks** in Stripe Dashboard
 2. Click **Add endpoint**
-3. Set endpoint URL: `https://YOUR_PROJECT_REF.supabase.co/functions/v1/handle-stripe-webhook`
+3. Set endpoint URL: 
+   - For local testing: Use [ngrok](https://ngrok.com) to expose your local server: `https://YOUR_NGROK_URL/webhook`
+   - For production: `https://YOUR_DOMAIN.com/webhook`
 4. Select events to listen for:
    - `checkout.session.completed`
    - `customer.subscription.updated`
@@ -97,7 +103,7 @@ supabase functions deploy handle-stripe-webhook
    - `invoice.payment_succeeded`
    - `invoice.payment_failed`
 5. Copy the webhook signing secret (starts with `whsec_`)
-6. Update the secret in Supabase (see step 5)
+6. Add it to your `server/.env` file as `STRIPE_WEBHOOK_SECRET`
 
 ### 7. Run Database Migrations
 
@@ -150,18 +156,26 @@ Check webhook logs in Stripe Dashboard under **Developers → Webhooks → [Your
 
 ### Payment not updating user tier
 1. Check webhook logs in Stripe Dashboard
-2. Verify webhook secret is correct
-3. Check Supabase function logs: `supabase functions logs handle-stripe-webhook`
+2. Verify webhook secret is correct in `server/.env`
+3. Check server console for webhook processing logs
+4. Ensure server is running and accessible
 
 ### Checkout session fails
-1. Verify price IDs are correct
-2. Check Supabase function logs: `supabase functions logs create-checkout-session`
-3. Ensure CORS is properly configured
+1. Verify price IDs are correct in both `src/lib/stripe.ts` and `server/.env`
+2. Check server console for errors
+3. Ensure backend server is running on port 3001
+4. Verify CORS settings if frontend/backend on different ports
 
 ### Customer portal not opening
 1. Ensure portal is activated in Stripe settings
 2. Verify user has stripe_customer_id in database
-3. Check function logs: `supabase functions logs create-portal-session`
+3. Check server console for portal session creation errors
+
+### Local Testing with Webhooks
+1. Install ngrok: `npm install -g ngrok`
+2. Start ngrok: `ngrok http 3001`
+3. Use the HTTPS URL from ngrok as your webhook endpoint in Stripe
+4. Update `STRIPE_WEBHOOK_SECRET` with the test webhook secret
 
 ## Production Checklist
 

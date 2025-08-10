@@ -65,38 +65,35 @@ export async function createCheckoutSession(
   try {
     const priceId = STRIPE_PRICES[planId].priceId;
 
-    // Call Supabase Edge Function to create checkout session
-    const { data, error } = await supabase.functions.invoke(
-      'create-checkout-session',
-      {
-        body: {
-          priceId,
-          userId,
-          userEmail,
-          successUrl: `${window.location.origin}/account?session_id={CHECKOUT_SESSION_ID}`,
-          cancelUrl: `${window.location.origin}/account`,
-          mode: 'subscription',
-          metadata: {
-            userId,
-            planId,
-          },
-        },
+    // Call backend API to create checkout session
+    const response = await fetch(`${API_URL}/api/create-checkout-session`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
       },
-    );
+      body: JSON.stringify({
+        priceId,
+        userId,
+        userEmail,
+        planId,
+      }),
+    });
 
-    if (error) {
+    if (!response.ok) {
+      const error = await response.json();
       errorHandler.handlePaymentError(
         'create checkout session',
-        error instanceof Error ? error : new Error(String(error)),
+        new Error(error.error || 'Failed to create checkout session'),
         {
           userId,
           metadata: { planId, priceId },
         },
       );
-      return { error: error.message || 'Failed to create checkout session' };
+      return { error: error.error || 'Failed to create checkout session' };
     }
 
-    return { sessionId: data?.sessionId };
+    const data = await response.json();
+    return { sessionId: data.sessionId };
   } catch (error) {
     errorHandler.handlePaymentError(
       'create checkout session',
@@ -155,29 +152,31 @@ export async function createPortalSession(
   userId: string,
 ): Promise<{ url?: string; error?: string }> {
   try {
-    // Call Supabase Edge Function to create portal session
-    const { data, error } = await supabase.functions.invoke(
-      'create-portal-session',
-      {
-        body: {
-          userId,
-          returnUrl: `${window.location.origin}/account`,
-        },
+    // Call backend API to create portal session
+    const response = await fetch(`${API_URL}/api/create-portal-session`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
       },
-    );
+      body: JSON.stringify({
+        userId,
+      }),
+    });
 
-    if (error) {
+    if (!response.ok) {
+      const error = await response.json();
       errorHandler.handlePaymentError(
         'create portal session',
-        error instanceof Error ? error : new Error(String(error)),
+        new Error(error.error || 'Failed to create portal session'),
         {
           userId,
         },
       );
-      return { error: error.message || 'Failed to create portal session' };
+      return { error: error.error || 'Failed to create portal session' };
     }
 
-    return { url: data?.url };
+    const data = await response.json();
+    return { url: data.url };
   } catch (error) {
     errorHandler.handlePaymentError(
       'create portal session',
@@ -195,52 +194,10 @@ export async function createPortalSession(
  */
 export async function handlePaymentSuccess(sessionId: string): Promise<void> {
   try {
-    // Verify the session with backend
-    const { error } = await supabase.functions.invoke(
-      'verify-checkout-session',
-      {
-        body: { sessionId },
-      },
-    );
-
-    if (error) {
-      console.error('Failed to verify payment session:', error);
-    }
+    // The webhook will handle verification and updates
+    // This is just for client-side confirmation
+    console.log('Payment successful, session:', sessionId);
   } catch (error) {
     console.error('Error handling payment success:', error);
-  }
-}
-
-/**
- * Get subscription status from Stripe
- */
-export async function getSubscriptionStatus(userId: string): Promise<{
-  active: boolean;
-  planId?: 'advanced' | 'expert';
-  currentPeriodEnd?: string;
-  cancelAtPeriodEnd?: boolean;
-  error?: string;
-}> {
-  try {
-    const { data, error } = await supabase.functions.invoke(
-      'get-subscription-status',
-      {
-        body: { userId },
-      },
-    );
-
-    if (error) {
-      return { active: false, error: error.message };
-    }
-
-    return {
-      active: data?.active || false,
-      planId: data?.planId,
-      currentPeriodEnd: data?.currentPeriodEnd,
-      cancelAtPeriodEnd: data?.cancelAtPeriodEnd,
-    };
-  } catch (error) {
-    console.error('Error getting subscription status:', error);
-    return { active: false, error: 'Failed to get subscription status' };
   }
 }
