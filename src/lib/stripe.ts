@@ -291,7 +291,6 @@ export async function createPortalSession(): Promise<{
     const response = await fetch(`${API_URL}/api/create-portal-session`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
         Authorization: `Bearer ${token}`,
       },
     });
