@@ -262,7 +262,7 @@ export function useAccessControl(): AccessControlHook {
       if (!user) {
         const result = new Map<string, boolean>();
         resources.forEach((r) => {
-          result.set(r.id, r.tier === 'free');
+          result.set(r.id, (r.tier ?? 'unknown') === 'free');
         });
         return result;
       }
