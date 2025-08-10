@@ -382,15 +382,16 @@ export function HomePage({
               >
                 <CardHeader>
                   <div className='flex items-center gap-1 mb-2'>
-                    {[...(Array(testimonial.rating) as unknown[])].map(
-                      (_, i) => (
-                        <Star
-                          key={`star-${testimonial.name}-${i}-rating`}
-                          className='w-5 h-5 text-yellow-500'
-                          weight='fill'
-                        />
-                      ),
-                    )}
+                    {Array.from(
+                      { length: testimonial.rating },
+                      (_, i) => i,
+                    ).map((id) => (
+                      <Star
+                        key={`star-${testimonial.name}-${id}-rating`}
+                        className='w-5 h-5 text-yellow-500'
+                        weight='fill'
+                      />
+                    ))}
                   </div>
                   <div>
                     <CardTitle className='text-lg'>

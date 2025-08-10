@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-assignment */
 import { supabase } from './supabaseClient';
 import { sanitizeInput, validateEmail } from './security';
 
@@ -27,21 +28,21 @@ export async function upsertProfile(profile: Profile): Promise<Profile> {
   };
 
   const { data, error } = await supabase
-    .from('profiles')
+    .from<Profile>('profiles')
     .upsert(sanitized, { onConflict: 'id' })
     .select()
     .single();
-  if (error) throw error;
+  if (error || !data) throw error;
   return data;
 }
 
 export async function getProfile(id: string): Promise<Profile> {
   const { data, error } = await supabase
-    .from('profiles')
+    .from<Profile>('profiles')
     .select('*')
     .eq('id', id)
     .single();
-  if (error) throw error;
+  if (error || !data) throw error;
   return data;
 }
 
@@ -59,12 +60,12 @@ export async function updateProfile(
 
   if (updates.name) sanitized.name = sanitizeInput(updates.name);
   const { data, error } = await supabase
-    .from('profiles')
+    .from<Profile>('profiles')
     .update(sanitized)
     .eq('id', id)
     .select()
     .single();
-  if (error) throw error;
+  if (error || !data) throw error;
   return data;
 }
 
@@ -88,7 +89,7 @@ export async function getUserSubscription(
   userId: string,
 ): Promise<SubscriptionRow | undefined> {
   const { data, error } = await supabase
-    .from('subscriptions')
+    .from<SubscriptionRow>('subscriptions')
     .select('*')
     .eq('user_id', userId)
     .order('start_date', { ascending: false })
@@ -101,11 +102,11 @@ export async function upsertSubscription(
   row: Omit<SubscriptionRow, 'id'> & { id?: string },
 ): Promise<SubscriptionRow> {
   const { data, error } = await supabase
-    .from('subscriptions')
+    .from<SubscriptionRow>('subscriptions')
     .upsert(row)
     .select()
     .single();
-  if (error) throw error;
+  if (error || !data) throw error;
   return data;
 }
 
@@ -121,7 +122,7 @@ export interface InvoiceRow {
 
 export async function listInvoices(userId: string): Promise<InvoiceRow[]> {
   const { data, error } = await supabase
-    .from('invoices')
+    .from<InvoiceRow>('invoices')
     .select('*')
     .eq('user_id', userId)
     .order('date', { ascending: false })
@@ -134,11 +135,11 @@ export async function addInvoice(
   row: Omit<InvoiceRow, 'id'>,
 ): Promise<InvoiceRow> {
   const { data, error } = await supabase
-    .from('invoices')
+    .from<InvoiceRow>('invoices')
     .insert([row])
     .select()
     .single();
-  if (error) throw error;
+  if (error || !data) throw error;
   return data;
 }
 
@@ -160,22 +161,22 @@ export async function getCourseProgressRows(
   userId: string,
 ): Promise<CourseProgressRow[]> {
   const { data, error } = await supabase
-    .from('course_progress')
+    .from<CourseProgressRow>('course_progress')
     .select('*')
     .eq('user_id', userId);
   if (error) throw error;
-  return (data as CourseProgressRow[]) ?? [];
+  return data ?? [];
 }
 
 export async function upsertCourseProgress(
   row: Omit<CourseProgressRow, 'id'> & { id?: string },
 ): Promise<CourseProgressRow> {
   const { data, error } = await supabase
-    .from('course_progress')
+    .from<CourseProgressRow>('course_progress')
     .upsert(row)
     .select()
     .single();
-  if (error) throw error;
+  if (error || !data) throw error;
   return data;
 }
 
@@ -195,7 +196,7 @@ export async function getModuleProgressRows(
   userId: string,
 ): Promise<ModuleProgressRow[]> {
   const { data, error } = await supabase
-    .from('module_progress')
+    .from<ModuleProgressRow>('module_progress')
     .select('*')
     .eq('user_id', userId);
   if (error) throw error;
@@ -206,11 +207,11 @@ export async function upsertModuleProgress(
   row: Omit<ModuleProgressRow, 'id'> & { id?: string },
 ): Promise<ModuleProgressRow> {
   const { data, error } = await supabase
-    .from('module_progress')
+    .from<ModuleProgressRow>('module_progress')
     .upsert(row)
     .select()
     .single();
-  if (error) throw error;
+  if (error || !data) throw error;
   return data;
 }
 
@@ -230,11 +231,11 @@ export async function addUserActivity(
   row: Omit<UserActivityRow, 'id'>,
 ): Promise<UserActivityRow> {
   const { data, error } = await supabase
-    .from('user_activity')
+    .from<UserActivityRow>('user_activity')
     .insert(row)
     .select()
     .single();
-  if (error) throw error;
+  if (error || !data) throw error;
   return data;
 }
 
@@ -243,11 +244,11 @@ export async function listUserActivity(
   limit = 50,
 ): Promise<UserActivityRow[]> {
   const { data, error } = await supabase
-    .from('user_activity')
+    .from<UserActivityRow>('user_activity')
     .select('*')
     .eq('user_id', userId)
     .order('timestamp', { ascending: false })
     .limit(limit);
   if (error) throw error;
-  return (data as UserActivityRow[]) ?? [];
+  return data ?? [];
 }
