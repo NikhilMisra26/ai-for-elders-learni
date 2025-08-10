@@ -639,9 +639,12 @@ export function CoursesPage({
                                 },
                                 'info',
                               );
-                              onUpgradeClick(
-                                course.tier as 'advanced' | 'expert',
-                              );
+                              const validTier = getValidUpgradeTier(course.tier);
+                              if (validTier) {
+                                onUpgradeClick(validTier);
+                              } else {
+                                toast.error('Invalid course tier for upgrade.');
+                              }
                             } else {
                               onAuthClick();
                             }
