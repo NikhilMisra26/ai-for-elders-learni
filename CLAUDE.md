@@ -121,3 +121,6 @@ Currently no test framework is configured. When implementing tests:
 
 ## Important
 - After completing a task, edit the readme to reflect the changes you made. Either edit existing stuff in the readme or, for a new feature, add it in a concise way
+### SUPER IMPORTANT
+- When possible, run multiple subagents in parallel to save time and be efficient
+- When delegating to a subagent, remember that that subagent has NO context about what is happening, what is needed, or conversations between you and the user **When you prompt the agent, describe to them exactly what needs to be done.**
