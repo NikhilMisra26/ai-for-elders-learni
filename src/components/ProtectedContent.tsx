@@ -351,16 +351,35 @@ function AccessDeniedView({
       onUpgradeClick();
     } else {
       const { processStripePayment } = await import('@/lib/subscription');
+      const { toast } = await import('sonner');
       const { user } = await import('@/contexts/AuthContext').then((m) =>
         m.useAuth(),
       );
 
-      if (user) {
-        await processStripePayment(
+      if (!user) {
+        toast.error('Please sign in first');
+        return;
+      }
+
+      try {
+        const result = await processStripePayment(
           requiredTier as 'advanced' | 'expert',
           user.id,
           user.email,
         );
+
+        if (result.success) {
+          toast.success('Redirecting to checkout...');
+        } else {
+          toast.error('Upgrade failed', {
+            description: result.error || 'Please try again.',
+          });
+        }
+      } catch (error) {
+        console.error('Upgrade error:', error);
+        toast.error('Upgrade failed', {
+          description: 'An unexpected error occurred. Please try again later.',
+        });
       }
     }
   };

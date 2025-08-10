@@ -57,7 +57,7 @@ export function UpgradePage({
   onBack,
   onUpgradeSuccess,
 }: UpgradePageProps): ReactElement {
-  const { user } = useAuth();
+  const { user, isLoading } = useAuth();
   const { subscription } = useSubscription();
   const [processingTier, setProcessingTier] = useState<
     'advanced' | 'expert' | null
@@ -112,28 +112,72 @@ export function UpgradePage({
   ];
 
   const handleUpgrade = async (tier: 'advanced' | 'expert'): Promise<void> => {
-    if (!user) {
-      toast.error('Please sign in first');
+    // Debug logging for authentication state
+    console.log('🔍 UpgradePage - handleUpgrade called', {
+      tier,
+      user: user ? { id: user.id, email: user.email } : 'NULL',
+      isLoading,
+      timestamp: new Date().toISOString(),
+    });
+
+    if (isLoading) {
+      toast.error('Please wait, loading your account...');
+      console.log('❌ UpgradePage - handleUpgrade blocked: still loading auth state');
       return;
     }
+
+    if (!user) {
+      toast.error('Please sign in first');
+      console.error('❌ UpgradePage - handleUpgrade blocked: user is null', {
+        isLoading,
+        authContextLoaded: !isLoading,
+      });
+      return;
+    }
+
+    console.log('✅ UpgradePage - handleUpgrade proceeding with user:', {
+      userId: user.id,
+      userEmail: user.email,
+      tier,
+    });
 
     setProcessingTier(tier);
 
     try {
-      const success = await processStripePayment(tier, user.id, user.email);
+      console.log('🔄 UpgradePage - calling processStripePayment', {
+        tier,
+        userId: user.id,
+        userEmail: user.email,
+      });
 
-      if (success) {
-        toast.success('Subscription upgraded successfully!', {
-          description: `Welcome to the ${tier} tier! You now have access to premium content.`,
+      const result = await processStripePayment(tier, user.id, user.email);
+
+      console.log('📋 UpgradePage - processStripePayment result', {
+        success: result.success,
+        error: result.error,
+        tier,
+        userId: user.id,
+      });
+
+      if (result.success) {
+        toast.success('Redirecting to checkout...', {
+          description: `You will be redirected to complete your ${tier} subscription.`,
         });
+
+        console.log('✅ UpgradePage - payment processing successful, redirecting');
 
         if (onUpgradeSuccess) {
           setTimeout(onUpgradeSuccess, 1500);
         }
       } else {
+        console.error('❌ UpgradePage - payment processing failed', {
+          error: result.error,
+          tier,
+          userId: user.id,
+        });
+
         toast.error('Upgrade failed', {
-          description:
-            'There was an issue processing your upgrade. Please try again.',
+          description: result.error || 'There was an issue processing your upgrade. Please try again.',
         });
       }
     } catch (error) {
@@ -152,6 +196,27 @@ export function UpgradePage({
       : subscription.planId === 'advanced'
         ? 1
         : 0;
+
+  // Show loading state while authentication is initializing
+  if (isLoading) {
+    return (
+      <div className='min-h-screen bg-gradient-to-b from-background to-muted/20'>
+        <div className='max-w-6xl mx-auto p-6'>
+          <div className='flex items-center justify-center min-h-[400px]'>
+            <Card className='w-full max-w-md p-8 text-center'>
+              <div className='flex flex-col items-center space-y-4'>
+                <div className='h-8 w-8 border-4 border-primary border-t-transparent rounded-full animate-spin' />
+                <h2 className='text-xl font-semibold'>Loading your account...</h2>
+                <p className='text-muted-foreground'>
+                  Please wait while we verify your authentication status.
+                </p>
+              </div>
+            </Card>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className='min-h-screen bg-gradient-to-b from-background to-muted/20'>

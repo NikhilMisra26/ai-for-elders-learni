@@ -78,26 +78,61 @@ export function AuthProvider({
   // Initialize Supabase auth listener and hydrate user profile
   useEffect(() => {
     const init = async (): Promise<void> => {
-      const { data } = await supabase.auth.getSession();
-      const authUser = data.session?.user;
-      if (authUser) {
-        try {
-          const profile = await getProfile(authUser.id);
-          const mapped: User = {
-            id: profile.id,
-            email: profile.email,
-            name: profile.name ?? authUser.email ?? 'User',
-            tier: (profile.tier as User['tier']) ?? 'free',
-            verified: profile.verified,
-            joinDate: profile.join_date,
-            lastLoginAt: profile.last_login_at ?? undefined,
-            loginAttempts: profile.login_attempts,
-            isLocked: profile.is_locked,
-            lockedUntil: profile.locked_until ?? undefined,
-          };
-          setUser(mapped);
-        } catch {
+      console.log('🔍 AuthContext - Starting auth initialization');
+      setIsLoading(true);
+
+      try {
+        const { data } = await supabase.auth.getSession();
+        const authUser = data.session?.user;
+        
+        console.log('🔍 AuthContext - Supabase session check', {
+          hasSession: !!data.session,
+          hasUser: !!authUser,
+          userId: authUser?.id || 'none',
+          userEmail: authUser?.email || 'none',
+        });
+
+        if (authUser) {
+          try {
+            console.log('🔍 AuthContext - Fetching user profile for:', authUser.id);
+            const profile = await getProfile(authUser.id);
+            
+            console.log('✅ AuthContext - Profile fetched successfully', {
+              profileId: profile.id,
+              profileEmail: profile.email,
+              profileName: profile.name,
+              profileTier: profile.tier,
+            });
+
+            const mapped: User = {
+              id: profile.id,
+              email: profile.email,
+              name: profile.name ?? authUser.email ?? 'User',
+              tier: (profile.tier as User['tier']) ?? 'free',
+              verified: profile.verified,
+              joinDate: profile.join_date,
+              lastLoginAt: profile.last_login_at ?? undefined,
+              loginAttempts: profile.login_attempts,
+              isLocked: profile.is_locked,
+              lockedUntil: profile.locked_until ?? undefined,
+            };
+            
+            console.log('✅ AuthContext - Setting user state', {
+              userId: mapped.id,
+              userEmail: mapped.email,
+              userName: mapped.name,
+              userTier: mapped.tier,
+            });
+            
+            setUser(mapped);
+        } catch (profileError) {
           // First-time user: create profile
+          console.log('⚠️ AuthContext - Profile fetch failed, creating new profile', {
+            authUserId: authUser.id,
+            authUserEmail: authUser.email,
+            error: profileError instanceof Error ? profileError.message : 'Unknown error',
+          });
+
           const email = authUser.email ?? 'unknown@example.com';
           const newProfile = await upsertProfile({
             id: authUser.id,
@@ -111,6 +146,12 @@ export function AuthProvider({
             is_locked: false,
             locked_until: null,
           });
+          
+          console.log('✅ AuthContext - New profile created successfully', {
+            profileId: newProfile.id,
+            profileEmail: newProfile.email,
+          });
+
           setUser({
             id: newProfile.id,
             email: newProfile.email,
@@ -119,15 +160,35 @@ export function AuthProvider({
             verified: newProfile.verified,
             joinDate: newProfile.join_date,
           });
+
+          console.log('✅ AuthContext - New user state set for created profile');
         }
       } else {
+        console.log('ℹ️ AuthContext - No Supabase session found, setting user to null');
         setUser(null);
+      }
+    } catch (initError) {
+        console.error('❌ AuthContext - Initialization error', {
+          error: initError instanceof Error ? initError.message : 'Unknown error',
+          stack: initError instanceof Error ? initError.stack : undefined,
+        });
+        setUser(null);
+      } finally {
+        setIsLoading(false);
+        console.log('✅ AuthContext - Initialization complete, loading set to false');
       }
     };
 
-    const { data: listener } = supabase.auth.onAuthStateChange(() => {
+    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('🔄 AuthContext - Auth state changed', {
+        event,
+        hasSession: !!session,
+        userId: session?.user?.id || 'none',
+      });
       void init();
     });
+    
+    console.log('🚀 AuthContext - Starting initial auth check');
     void init();
 
     return (): void => {

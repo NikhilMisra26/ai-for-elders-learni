@@ -124,10 +124,28 @@ function TierUpgradePrompt({
   const handleUpgrade = async (): Promise<void> => {
     // Import the Stripe payment function
     const { processStripePayment } = await import('@/lib/subscription');
+    const { toast } = await import('sonner');
 
-    if (user) {
-      // Redirect to Stripe checkout for payment
-      await processStripePayment(requiredTier, user.id, user.email);
+    if (!user) {
+      toast.error('Please sign in first');
+      return;
+    }
+
+    try {
+      const result = await processStripePayment(requiredTier, user.id, user.email);
+
+      if (result.success) {
+        toast.success('Redirecting to checkout...');
+      } else {
+        toast.error('Upgrade failed', {
+          description: result.error || 'Please try again.',
+        });
+      }
+    } catch (error) {
+      console.error('Upgrade error:', error);
+      toast.error('Upgrade failed', {
+        description: 'An unexpected error occurred. Please try again later.',
+      });
     }
   };
 
