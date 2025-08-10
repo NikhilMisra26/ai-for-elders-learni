@@ -250,7 +250,9 @@ export function DashboardPage({
                       variant='outline'
                       className='flex items-center gap-2'
                     >
-                      Start Course
+                      {recommendations.startCourse.tier === 'free'
+                        ? 'Start Free Course'
+                        : 'Start Course'}
                       <ArrowRight />
                     </Button>
                   </div>
