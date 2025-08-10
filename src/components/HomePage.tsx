@@ -1,4 +1,4 @@
-import React, { type ReactElement } from 'react';
+import React, { useState, type ReactElement } from 'react';
 import {
   Brain,
   Shield,
@@ -18,7 +18,10 @@ import {
   CreditCard,
   Globe,
   ChartBar,
+  PencilSimple,
 } from '@phosphor-icons/react';
+
+import { ReviewForm } from './ReviewForm';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -30,12 +33,20 @@ import {
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Skeleton } from '@/components/ui/skeleton';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   useSubscription,
   subscriptionPlans,
   formatPrice,
 } from '@/lib/subscription';
+import { useMetrics } from '@/hooks/useMetrics';
 
 interface HomePageProps {
   onNavigate: (page: string) => void;
@@ -48,6 +59,8 @@ export function HomePage({
 }: HomePageProps): ReactElement {
   const { user } = useAuth();
   const { subscription: _subscription } = useSubscription();
+  const { stats, testimonials, isLoading } = useMetrics();
+  const [showReviewForm, setShowReviewForm] = useState(false);
 
   const heroFeatures = [
     {
@@ -107,39 +120,19 @@ export function HomePage({
     },
   ];
 
-  const testimonials = [
-    {
-      name: 'Margaret Thompson, 67',
-      location: 'Phoenix, AZ',
-      content:
-        'I never thought I could understand AI, but this course made it so simple and clear. Now I use AI to help write emails to my grandchildren and organize my medical appointments!',
-      rating: 5,
-      course: 'Advanced Course',
-    },
-    {
-      name: 'Robert Chen, 72',
-      location: 'Seattle, WA',
-      content:
-        "The audio narration feature is wonderful. I can listen while I follow along. It's like having a patient, knowledgeable teacher right beside me every step of the way.",
-      rating: 5,
-      course: 'Free Course',
-    },
-    {
-      name: 'Dorothy Williams, 61',
-      location: 'Orlando, FL',
-      content:
-        'The health applications module helped me organize my medical questions before doctor visits. My physician was so impressed with how prepared I was!',
-      rating: 5,
-      course: 'Advanced Course',
-    },
-  ];
-
-  const stats = [
-    { number: '15,000+', label: 'Happy Learners' },
-    { number: '4.9/5', label: 'Average Rating' },
-    { number: '92%', label: 'Course Completion' },
-    { number: '50+', label: 'Countries Reached' },
-  ];
+  // Format course tier for display
+  const formatCourseTier = (tier: string): string => {
+    switch (tier) {
+      case 'free':
+        return 'Free Course';
+      case 'advanced':
+        return 'Advanced Course';
+      case 'expert':
+        return 'Expert Course';
+      default:
+        return 'Course';
+    }
+  };
 
   const trustIndicators = [
     {
@@ -249,21 +242,46 @@ export function HomePage({
         </div>
       </section>
 
-      {/* Stats Section */}
-      <section className='py-16 px-4 sm:px-6 lg:px-8 bg-muted/30'>
-        <div className='max-w-6xl mx-auto'>
-          <div className='grid grid-cols-2 md:grid-cols-4 gap-8 text-center'>
-            {stats.map((stat) => (
-              <div key={stat.label}>
-                <div className='text-3xl font-bold text-primary mb-2'>
-                  {stat.number}
-                </div>
-                <div className='text-muted-foreground'>{stat.label}</div>
+      {/* Stats Section - Only show if we have impressive metrics */}
+      {(stats.length > 0 || isLoading) && (
+        <section className='py-16 px-4 sm:px-6 lg:px-8 bg-muted/30'>
+          <div className='max-w-6xl mx-auto'>
+            {isLoading ? (
+              // Loading skeleton
+              <div className='grid grid-cols-2 md:grid-cols-4 gap-8 text-center'>
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i}>
+                    <Skeleton className='h-10 w-24 mx-auto mb-2' />
+                    <Skeleton className='h-4 w-20 mx-auto' />
+                  </div>
+                ))}
               </div>
-            ))}
+            ) : (
+              // Dynamic grid that adjusts based on number of stats
+              <div
+                className={`grid gap-8 text-center ${
+                  stats.length === 1
+                    ? 'grid-cols-1 max-w-xs mx-auto'
+                    : stats.length === 2
+                      ? 'grid-cols-2 max-w-md mx-auto'
+                      : stats.length === 3
+                        ? 'grid-cols-3 max-w-2xl mx-auto'
+                        : 'grid-cols-2 md:grid-cols-4'
+                }`}
+              >
+                {stats.map((stat) => (
+                  <div key={stat.label}>
+                    <div className='text-3xl font-bold text-primary mb-2'>
+                      {stat.number}
+                    </div>
+                    <div className='text-muted-foreground'>{stat.label}</div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-        </div>
-      </section>
+        </section>
+      )}
 
       {/* Features Section */}
       <section className='py-20 px-4 sm:px-6 lg:px-8'>
@@ -363,55 +381,153 @@ export function HomePage({
         </div>
       </section>
 
-      {/* Testimonials Section */}
+      {/* Testimonials Section - Show reviews or call to action */}
       <section className='py-20 px-4 sm:px-6 lg:px-8'>
         <div className='max-w-6xl mx-auto'>
-          <div className='text-center mb-16'>
-            <h2 className='text-4xl font-bold mb-4'>What Our Learners Say</h2>
-            <p className='text-xl text-muted-foreground'>
-              Join thousands of adults who are successfully learning AI with our
-              courses
-            </p>
-          </div>
+          {isLoading ? (
+            // Loading skeleton
+            <div>
+              <div className='text-center mb-16'>
+                <Skeleton className='h-10 w-80 mx-auto mb-4' />
+                <Skeleton className='h-6 w-96 mx-auto' />
+              </div>
+              <div className='grid md:grid-cols-3 gap-8'>
+                {[1, 2, 3].map((i) => (
+                  <Card key={i} className='h-full'>
+                    <CardHeader>
+                      <Skeleton className='h-6 w-24 mb-2' />
+                      <Skeleton className='h-5 w-32' />
+                    </CardHeader>
+                    <CardContent>
+                      <Skeleton className='h-20 w-full' />
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          ) : testimonials.length > 0 ? (
+            // Show real testimonials
+            <>
+              <div className='text-center mb-16'>
+                <h2 className='text-4xl font-bold mb-4'>
+                  What Our Learners Say
+                </h2>
+                <p className='text-xl text-muted-foreground'>
+                  Real feedback from our community of learners
+                </p>
+              </div>
 
-          <div className='grid md:grid-cols-3 gap-8'>
-            {testimonials.map((testimonial) => (
-              <Card
-                key={`${testimonial.name}-${testimonial.location}`}
-                className='h-full'
+              <div
+                className={`grid gap-8 ${
+                  testimonials.length === 1
+                    ? 'max-w-2xl mx-auto'
+                    : testimonials.length === 2
+                      ? 'md:grid-cols-2 max-w-4xl mx-auto'
+                      : 'md:grid-cols-3'
+                }`}
               >
-                <CardHeader>
-                  <div className='flex items-center gap-1 mb-2'>
-                    {[...(Array(testimonial.rating) as unknown[])].map(
-                      (_, i) => (
-                        <Star
-                          key={`star-${testimonial.name}-${i}`}
-                          className='w-5 h-5 text-yellow-500'
-                          weight='fill'
-                        />
-                      ),
-                    )}
-                  </div>
+                {testimonials.map((testimonial) => (
+                  <Card key={testimonial.id} className='h-full'>
+                    <CardHeader>
+                      <div className='flex items-center gap-1 mb-2'>
+                        {[...(Array(testimonial.rating) as unknown[])].map(
+                          (_, i) => (
+                            <Star
+                              key={`star-${testimonial.id}-${i}`}
+                              className='w-5 h-5 text-yellow-500'
+                              weight='fill'
+                            />
+                          ),
+                        )}
+                      </div>
+                      <div>
+                        <CardTitle className='text-lg'>
+                          {testimonial.userName}
+                        </CardTitle>
+                        {testimonial.userLocation && (
+                          <CardDescription>
+                            {testimonial.userLocation}
+                          </CardDescription>
+                        )}
+                        <Badge variant='secondary' className='mt-2'>
+                          {formatCourseTier(testimonial.courseTier)}
+                        </Badge>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <p className='text-muted-foreground italic leading-relaxed'>
+                        &quot;{testimonial.content}&quot;
+                      </p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+
+              {/* Add review button for authenticated users */}
+              {user && (
+                <div className='text-center mt-12'>
+                  <Button
+                    variant='outline'
+                    size='lg'
+                    onClick={() => setShowReviewForm(true)}
+                  >
+                    <PencilSimple className='mr-2' />
+                    Share Your Experience
+                  </Button>
+                </div>
+              )}
+            </>
+          ) : (
+            // No testimonials yet - show call to action
+            <div className='text-center'>
+              <div className='max-w-2xl mx-auto'>
+                <h2 className='text-4xl font-bold mb-4'>
+                  Be the First to Review
+                </h2>
+                <p className='text-xl text-muted-foreground mb-8'>
+                  We're just getting started! Be among the first to share your
+                  learning experience and help others discover the benefits of
+                  AI education.
+                </p>
+
+                {user ? (
+                  <Button size='lg' onClick={() => setShowReviewForm(true)}>
+                    <Star className='mr-2' />
+                    Write the First Review
+                  </Button>
+                ) : (
                   <div>
-                    <CardTitle className='text-lg'>
-                      {testimonial.name}
-                    </CardTitle>
-                    <CardDescription>{testimonial.location}</CardDescription>
-                    <Badge variant='secondary' className='mt-2'>
-                      {testimonial.course}
-                    </Badge>
+                    <p className='text-muted-foreground mb-4'>
+                      Start your learning journey to share your experience
+                    </p>
+                    <Button size='lg' onClick={onAuthClick}>
+                      <Play className='mr-2' />
+                      Start Free Course
+                    </Button>
                   </div>
-                </CardHeader>
-                <CardContent>
-                  <p className='text-muted-foreground italic leading-relaxed'>
-                    &quot;{testimonial.content}&quot;
-                  </p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </section>
+
+      {/* Review Form Dialog */}
+      <Dialog open={showReviewForm} onOpenChange={setShowReviewForm}>
+        <DialogContent className='max-w-2xl max-h-[90vh] overflow-y-auto'>
+          <DialogHeader>
+            <DialogTitle>Share Your Experience</DialogTitle>
+          </DialogHeader>
+          <ReviewForm
+            onSuccess={() => {
+              setShowReviewForm(false);
+              // Optionally refresh testimonials
+              window.location.reload();
+            }}
+            onCancel={() => setShowReviewForm(false)}
+          />
+        </DialogContent>
+      </Dialog>
 
       {/* Final CTA Section */}
       <section className='py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-primary/10 to-accent/10'>
