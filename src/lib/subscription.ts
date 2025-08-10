@@ -351,7 +351,7 @@ export async function processStripePayment(
     if (error || !sessionId) {
       return {
         success: false,
-        error: error || 'Failed to create checkout session',
+        error: error ?? 'Failed to create checkout session',
       };
     }
 
@@ -385,7 +385,7 @@ export async function openStripePortal(userId: string): Promise<{
     if (error || !url) {
       return {
         success: false,
-        error: error || 'Failed to create portal session',
+        error: error ?? 'Failed to create portal session',
       };
     }
 

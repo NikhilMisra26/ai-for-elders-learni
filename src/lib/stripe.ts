@@ -35,14 +35,6 @@ export const getStripe = async (): Promise<Stripe | null> => {
   return stripePromise;
 };
 
-export interface CreateCheckoutSessionParams {
-  priceId: string;
-  userId: string;
-  userEmail: string;
-  successUrl: string;
-  cancelUrl: string;
-}
-
 export interface StripePrice {
   id: string;
   productId: string;
@@ -203,7 +195,6 @@ export async function createCheckoutSession(
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        priceId,
         userId,
         userEmail,
         planId,

@@ -63,8 +63,6 @@ export function AccountPage({ onNavigate }: AccountPageProps): ReactElement {
     subscription,
     getCurrentPlan,
     // canAccessTier,
-    startTrial,
-    upgradeToPaid,
     cancelSubscription,
     reactivateSubscription,
   } = useSubscription();
@@ -118,7 +116,7 @@ export function AccountPage({ onNavigate }: AccountPageProps): ReactElement {
         });
       }
       // If successful, user will be redirected to Stripe
-    } catch (error) {
+    } catch {
       toast.error('Upgrade failed', {
         description: 'Please try again or contact support',
       });
@@ -142,7 +140,7 @@ export function AccountPage({ onNavigate }: AccountPageProps): ReactElement {
         });
       }
       // If successful, user will be redirected to Stripe Customer Portal
-    } catch (error) {
+    } catch {
       toast.error('Failed to open billing portal', {
         description: 'Please try again or contact support',
       });
@@ -336,7 +334,7 @@ export function AccountPage({ onNavigate }: AccountPageProps): ReactElement {
                           <>
                             <Button
                               variant='outline'
-                              onClick={handleManageSubscription}
+                              onClick={() => void handleManageSubscription()}
                             >
                               <Gear className='w-4 h-4 mr-2' />
                               Manage Subscription
