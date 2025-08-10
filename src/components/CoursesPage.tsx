@@ -41,7 +41,7 @@ import { courseData } from '@/lib/courseData';
 
 interface CoursesPageProps {
   onAuthClick: () => void;
-  onUpgradeClick: (requiredTier: 'advanced' | 'expert') => void;
+  onUpgradeClick: (requiredTier: Course['tier']) => void;
   onNavigateToModule?: (courseId: string, moduleId: string) => void;
 }
 
