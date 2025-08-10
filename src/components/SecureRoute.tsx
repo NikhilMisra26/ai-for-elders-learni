@@ -119,11 +119,14 @@ function TierUpgradePrompt({
 
   const info = tierInfo[requiredTier];
 
-  const handleUpgrade = (): void => {
-    // Simulate approval flow; in a real app, show a UI modal instead of window.confirm
-    const approved = true;
-    if (approved) {
-      updateTier(requiredTier);
+  const handleUpgrade = async (): Promise<void> => {
+    // Import the Stripe payment function
+    const { processStripePayment } = await import('@/lib/subscription');
+    const { user } = useAuth();
+
+    if (user) {
+      // Redirect to Stripe checkout for payment
+      await processStripePayment(requiredTier, user.id, user.email);
     }
   };
 
@@ -168,10 +171,6 @@ function TierUpgradePrompt({
               <Shield className='h-4 w-4 mr-2' />
               Upgrade to {info.name} - {info.price}
             </Button>
-
-            <p className='text-xs text-muted-foreground mt-4'>
-              * This is a demo. No actual payment will be processed.
-            </p>
           </div>
         </CardContent>
       </Card>

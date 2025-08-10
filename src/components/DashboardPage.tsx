@@ -43,8 +43,7 @@ export function DashboardPage({
   onNavigate,
 }: DashboardPageProps): ReactElement {
   const { user } = useAuth();
-  const { subscription, getCurrentPlan, getDaysUntilExpiry } =
-    useSubscription();
+  const { subscription, getCurrentPlan } = useSubscription();
   const {
     getDashboardSummary,
     getLearningRecommendations,
@@ -76,7 +75,6 @@ export function DashboardPage({
   const dashboardSummary = getDashboardSummary();
   const recommendations = getLearningRecommendations();
   const currentPlan = getCurrentPlan();
-  const _daysUntilExpiry = getDaysUntilExpiry();
 
   // Get greeting based on time
   const getGreeting = (): string => {
@@ -94,18 +92,6 @@ export function DashboardPage({
           100,
         )
       : 0;
-
-  // Get recent courses
-  const _getRecentCourses = (): Array<
-    (typeof courseData)[keyof typeof courseData]
-  > => {
-    return Object.values(courseData)
-      .filter((_course) => {
-        const progress = dashboardSummary.startedCourses > 0;
-        return progress;
-      })
-      .slice(0, 3);
-  };
 
   const handleStartLearning = (): void => {
     if (recommendations.continueModule) {
@@ -352,7 +338,7 @@ export function DashboardPage({
                     })
                     .map((course) => {
                       const completedModules = course.modules.filter(
-                        (_module) =>
+                        () =>
                           // Check if module is completed - in real app, use progress tracking
                           false, // Placeholder
                       ).length;

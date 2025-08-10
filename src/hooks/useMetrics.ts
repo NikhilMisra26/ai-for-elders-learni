@@ -105,7 +105,7 @@ export function useMetrics(): MetricsData {
           isLoading: false,
           error: null,
         });
-      } catch (error) {
+      } catch {
         if (!mounted) return;
 
         setData({
@@ -117,9 +117,9 @@ export function useMetrics(): MetricsData {
       }
     }
 
-    fetchMetrics();
+    void fetchMetrics();
 
-    return () => {
+    return (): void => {
       mounted = false;
     };
   }, []);
@@ -138,4 +138,3 @@ export function useShouldShowTestimonials(): boolean {
   const { testimonials, isLoading } = useMetrics();
   return !isLoading && testimonials.length > 0;
 }
-

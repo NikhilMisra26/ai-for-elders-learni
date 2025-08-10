@@ -47,7 +47,7 @@ export function HomePage({
   onAuthClick,
 }: HomePageProps): ReactElement {
   const { user } = useAuth();
-  const { subscription: _subscription } = useSubscription();
+  useSubscription();
 
   const heroFeatures = [
     {
@@ -385,7 +385,7 @@ export function HomePage({
                     {[...(Array(testimonial.rating) as unknown[])].map(
                       (_, i) => (
                         <Star
-                          key={`star-${testimonial.name}-${i}`}
+                          key={`star-${testimonial.name}-${i}-rating`}
                           className='w-5 h-5 text-yellow-500'
                           weight='fill'
                         />

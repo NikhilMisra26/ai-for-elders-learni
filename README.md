@@ -5,6 +5,7 @@
 ## 🌟 Key Features
 
 ### 📊 **Dynamic Metrics System**
+
 - **Smart Thresholds**: Metrics only display when impressive enough
   - User count: Shows only when ≥ 1000 users
   - Course completion: Shows only when ≥ 85%
@@ -15,6 +16,7 @@
 - **Performance Optimized**: 5-minute caching for fast load times
 
 ### 🎯 **Testimonials & Reviews**
+
 - **Real User Reviews**: Displays approved testimonials from actual users
 - **Review Submission**: Authenticated users can submit reviews via dialog
 - **Admin Approval Workflow**: Reviews require approval before display
@@ -22,6 +24,7 @@
 - **Duplicate Prevention**: Users can only submit one review
 
 ### 🎨 **Senior-Friendly Design**
+
 - Large fonts and high contrast design
 - Audio narration for all content
 - Touch-friendly interface with proper target sizes
@@ -29,15 +32,22 @@
 - WCAG 2.1 AA accessibility compliance
 
 ### 🔐 **Security & Privacy**
+
 - Comprehensive security module with rate limiting
 - CSRF protection and XSS prevention
 - Session management with automatic timeout
 - Row Level Security (RLS) on all database tables
 
 ### 💳 **Subscription System**
+
 - **Free**: Basic AI course with community access
 - **Advanced ($1.99/month)**: Personal assistant course + advanced features
 - **Expert ($4.99/month)**: Cutting-edge AI technologies + custom assistants
+- **Stripe Payment Integration**: Real payment processing (no free trials)
+  - Automatic tier updates via webhooks
+  - Customer portal for subscription management
+  - Secure checkout with immediate payment
+  - Invoice history with downloadable PDFs
 
 ## 🛠️ Tech Stack
 
@@ -51,10 +61,12 @@
 ## 🚀 Quick Start
 
 ### Prerequisites
+
 - Node.js 18+
 - pnpm (recommended) or npm
 
 ### Development Commands
+
 ```bash
 pnpm run dev          # Start development server
 pnpm run build        # Build for production
@@ -66,13 +78,16 @@ pnpm run format       # Format code with Prettier
 ## 🗄️ Database Setup
 
 ### 1. Create Supabase Project
+
 - Create a new project at [supabase.com](https://supabase.com)
 - Get your project URL and anon key
 
 ### 2. Run Database Migrations
+
 Execute these SQL files in your Supabase SQL Editor in order:
 
 1. **Main Schema** (`supabase.schema.sql`):
+
    ```sql
    -- Creates profiles, subscriptions, progress, and activity tables
    -- Includes Row Level Security policies
@@ -85,25 +100,46 @@ Execute these SQL files in your Supabase SQL Editor in order:
    -- Includes admin approval workflow
    ```
 
+3. **Stripe Integration** (`supabase/migrations/002_add_stripe_fields.sql`):
+   ```sql
+   -- Adds Stripe customer and subscription fields
+   -- Creates automatic tier update triggers
+   -- Implements subscription-based RLS policies
+   ```
+
 ### 3. Environment Configuration
+
 Copy `.env.example` to `.env.local` and add:
+
 ```env
 VITE_SUPABASE_URL=your_supabase_project_url
 VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+VITE_STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key
 ```
+
+### 4. Stripe Setup
+
+See `STRIPE_SETUP.md` for detailed instructions on:
+- Creating Stripe products and prices
+- Deploying Supabase Edge Functions
+- Configuring webhooks
+- Setting up the customer portal
 
 ## 📊 Managing Dynamic Metrics
 
 ### Testimonials Administration
+
 1. **View Submissions**: Query `testimonials` table in Supabase
 2. **Approve Reviews**: Set `is_approved = true`
 3. **Order Display**: Set `display_order` for custom sorting
 4. **Thresholds**: Adjust thresholds in `src/hooks/useMetrics.ts`
 
 ### Metrics Thresholds
+
 Current settings ensure only impressive metrics are shown:
+
 - **Users**: 1000+ (configurable in `THRESHOLDS.MIN_USERS`)
-- **Completion Rate**: 85%+ (configurable in `THRESHOLDS.MIN_COMPLETION_RATE`)  
+- **Completion Rate**: 85%+ (configurable in `THRESHOLDS.MIN_COMPLETION_RATE`)
 - **Rating**: 4.0+ stars (configurable in `THRESHOLDS.MIN_RATING`)
 - **Countries**: 5+ (configurable in `THRESHOLDS.MIN_COUNTRIES`)
 

@@ -188,7 +188,8 @@ function ChartTooltipContent({
         {payload.map((item, index) => {
           const key = `${nameKey ?? item.name ?? item.dataKey ?? 'value'}`;
           const itemConfig = getPayloadConfigFromPayload(config, item, key);
-          const indicatorColor = color ?? item.payload.fill ?? item.color;
+          const indicatorColor =
+            color ?? (item.payload as { fill?: string }).fill ?? item.color;
 
           return (
             <div
@@ -199,7 +200,9 @@ function ChartTooltipContent({
               )}
             >
               {formatter && item?.value !== undefined && item.name ? (
-                formatter(item.value, item.name, item, index, item.payload)
+                formatter(item.value, item.name, item, index, [
+                  item.payload,
+                ] as never)
               ) : (
                 <>
                   {itemConfig?.icon ? (
@@ -235,7 +238,7 @@ function ChartTooltipContent({
                     <div className='grid gap-1.5'>
                       {nestLabel ? tooltipLabel : null}
                       <span className='text-muted-foreground'>
-                        {itemConfig?.label || item.name}
+                        {itemConfig?.label ?? item.name}
                       </span>
                     </div>
                     {item.value && (
@@ -282,12 +285,12 @@ function ChartLegendContent({
       )}
     >
       {payload.map((item) => {
-        const key = `${nameKey || item.dataKey || 'value'}`;
+        const key = `${String(nameKey ?? item.dataKey ?? 'value')}`;
         const itemConfig = getPayloadConfigFromPayload(config, item, key);
 
         return (
           <div
-            key={item.value}
+            key={String(item.value)}
             className={cn(
               '[&>svg]:text-muted-foreground flex items-center gap-1.5 [&>svg]:h-3 [&>svg]:w-3',
             )}

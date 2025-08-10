@@ -41,9 +41,7 @@ export function useAudioNarration(
   const [utterance, setUtterance] = useState<SpeechSynthesisUtterance | null>(
     null,
   );
-  const [_availableVoices, setAvailableVoices] = useState<
-    SpeechSynthesisVoice[]
-  >([]);
+  const [, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
 
   // Load available voices
   useEffect(() => {

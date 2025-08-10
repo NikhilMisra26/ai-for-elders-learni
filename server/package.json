@@ -1,0 +1,18 @@
+{
+  "name": "ai-for-elders-backend",
+  "version": "1.0.0",
+  "description": "Backend API for AI for Elders platform",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "stripe": "^13.10.0",
+    "@supabase/supabase-js": "^2.39.0",
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1"
+  }
+}

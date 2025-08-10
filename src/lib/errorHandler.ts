@@ -35,10 +35,19 @@ class ErrorHandlerService {
 
     // Handle uncaught errors globally
     if (typeof window !== 'undefined') {
-      window.addEventListener('error', this.handleGlobalError.bind(this));
+      window.addEventListener(
+        'error',
+        this.handleGlobalError.bind(this) as (
+          this: Window,
+          ev: ErrorEvent,
+        ) => unknown,
+      );
       window.addEventListener(
         'unhandledrejection',
-        this.handleUnhandledRejection.bind(this),
+        this.handleUnhandledRejection.bind(this) as (
+          this: Window,
+          ev: PromiseRejectionEvent,
+        ) => unknown,
       );
     }
   }
@@ -88,7 +97,7 @@ class ErrorHandlerService {
   };
 
   private handleGlobalError(event: ErrorEvent): void {
-    this.logError('Global JavaScript error', event.error, {
+    this.logError('Global JavaScript error', event.error as Error | undefined, {
       component: 'window',
       action: 'global_error',
       metadata: {
@@ -100,10 +109,14 @@ class ErrorHandlerService {
   }
 
   private handleUnhandledRejection(event: PromiseRejectionEvent): void {
-    this.logError('Unhandled Promise rejection', event.reason, {
-      component: 'window',
-      action: 'unhandled_rejection',
-    });
+    this.logError(
+      'Unhandled Promise rejection',
+      event.reason as Error | undefined,
+      {
+        component: 'window',
+        action: 'unhandled_rejection',
+      },
+    );
   }
 
   public addHandler(handler: ErrorHandler): void {

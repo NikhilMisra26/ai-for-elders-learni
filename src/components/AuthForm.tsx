@@ -425,7 +425,8 @@ export function AuthForm({ onClose }: AuthFormProps): ReactElement {
                 isLoading ||
                   securityState.isLocked ||
                   (!isLogin &&
-                    passwordValidation &&
+                    passwordValidation !== null &&
+                    passwordValidation !== undefined &&
                     !passwordValidation.isValid) ||
                   (emailValidation?.isValid ?? true) === false,
               )}

@@ -9,23 +9,27 @@ This is **AI for Elders**, a React-based educational platform designed to teach 
 ## Development Commands
 
 ### Core Development
+
 - `pnpm run dev` - Start the Vite development server on port 5173
 - `pnpm run build` - Type check with `tsc -b --noCheck` and build production bundle with Vite
 - `pnpm run preview` - Preview production build locally
 
 ### Code Quality
+
 - `pnpm run typecheck` - Run TypeScript type checking without emitting files
 - `pnpm run lint:fix` - Auto-fix ESLint issues where possible and check remaining ones
 - `pnpm run format` - Format all code with Prettier
 - `pnpm run format:check` - Check if code formatting is correct
 
 ### Utilities
+
 - `pnpm run kill` - Kill process on port 5000 (useful when port is stuck)
 - `pnpm run optimize` - Run Vite optimization
 
 ## Architecture
 
 ### Tech Stack
+
 - **Frontend Framework**: React 19 with TypeScript
 - **Build Tool**: Vite with SWC for fast compilation
 - **Styling**: Tailwind CSS v4 with shadcn/ui components
@@ -39,7 +43,7 @@ This is **AI for Elders**, a React-based educational platform designed to teach 
    - Pages: home, courses, dashboard, account
    - Auth handled via dialog modal overlay
 
-2. **Offline-First with Cloud Sync**: 
+2. **Offline-First with Cloud Sync**:
    - Local storage for immediate UI updates
    - Supabase sync when authenticated
    - Graceful fallback for network failures
@@ -57,6 +61,7 @@ This is **AI for Elders**, a React-based educational platform designed to teach 
 ### Database Schema
 
 The Supabase database includes:
+
 - **profiles**: Extended user data with tier, verification status, security features
 - **subscriptions**: Subscription management with billing cycles and grace periods
 - **course_progress**: Overall course tracking
@@ -79,18 +84,21 @@ All tables use Row Level Security (RLS) policies for data isolation.
 ## Code Style Guidelines
 
 ### TypeScript Configuration
+
 - Strict null checks enabled
 - No explicit `any` types (enforced by ESLint)
 - Path alias `@/` maps to `src/` directory
 - Return types required for all functions
 
 ### Component Patterns
+
 - Functional components with explicit return type annotations
 - Props interfaces defined inline or as separate types
 - Event handlers properly typed (e.g., `React.MouseEvent<HTMLButtonElement>`)
 - Use of shadcn/ui components for consistent styling
 
 ### State Management
+
 - AuthContext handles authentication state and user profile
 - AccessibilityContext manages UI preferences
 - Local component state for UI-only concerns
@@ -99,6 +107,7 @@ All tables use Row Level Security (RLS) policies for data isolation.
 ## Testing Approach
 
 Currently no test framework is configured. When implementing tests:
+
 1. Check for testing framework preference with the team
 2. Consider accessibility testing tools for senior-friendly validation
 3. Focus on critical user journeys: auth, subscription, course progress
@@ -120,4 +129,5 @@ Currently no test framework is configured. When implementing tests:
 - `/src/types/` - TypeScript type definitions
 
 ## Important
+
 - After completing a task, edit the readme to reflect the changes you made. Either edit existing stuff in the readme or, for a new feature, add it in a concise way

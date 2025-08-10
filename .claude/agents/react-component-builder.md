@@ -56,6 +56,7 @@ You are an expert React component architect specializing in building accessible,
    - Validate WCAG 2.1 AA compliance
 
 **Example Component Pattern:**
+
 ```tsx
 import React from 'react';
 import { cn } from '@/lib/utils';
@@ -67,19 +68,19 @@ interface ComponentNameProps {
 
 export const ComponentName: React.FC<ComponentNameProps> = (props) => {
   const { fontSize, darkMode } = useAccessibility();
-  
+
   // Component logic with proper error handling
-  
+
   return (
     <div
       className={cn(
         'base-styles',
         'dark:dark-styles',
         fontSize === 'large' && 'text-lg',
-        fontSize === 'extra-large' && 'text-xl'
+        fontSize === 'extra-large' && 'text-xl',
       )}
-      role="appropriate-role"
-      aria-label="descriptive-label"
+      role='appropriate-role'
+      aria-label='descriptive-label'
     >
       {/* Accessible, senior-friendly content */}
     </div>

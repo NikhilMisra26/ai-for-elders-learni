@@ -29,9 +29,9 @@ export function useSessionManager(): {
   }, [user, logout]);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user) return undefined;
     if (typeof document === 'undefined' || typeof window === 'undefined')
-      return;
+      return undefined;
 
     // Events that indicate user activity
     const activityEvents = [

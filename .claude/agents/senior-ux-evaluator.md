@@ -56,11 +56,13 @@ Your evaluation output will be structured as:
 🔴 **Critical Issues**: Problems that will significantly impair usability
 
 **Detailed Findings**:
+
 - Specific issues with severity ratings (Critical/High/Medium/Low)
 - Concrete recommendations with implementation examples
 - Rationale explaining why each change benefits older users
 
 **Priority Actions**:
+
 1. Most impactful changes to implement first
 2. Quick wins that can be addressed immediately
 3. Long-term improvements for consideration

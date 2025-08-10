@@ -15,7 +15,6 @@ import {
   ChartBar,
   Trophy,
   Fire,
-  Gift,
   Clock,
   ArrowRight,
   Phone,
@@ -47,7 +46,8 @@ import {
   useSubscription,
   subscriptionPlans,
   formatPrice,
-  simulatePaymentFlow,
+  processStripePayment,
+  openStripePortal,
   useInvoiceHistory,
 } from '@/lib/subscription';
 import { useProgress } from '@/lib/progressTracking';
@@ -67,7 +67,6 @@ export function AccountPage({ onNavigate }: AccountPageProps): ReactElement {
     upgradeToPaid,
     cancelSubscription,
     reactivateSubscription,
-    getDaysUntilExpiry,
   } = useSubscription();
   const { learningStats } = useProgress();
   const { invoices } = useInvoiceHistory();
@@ -98,45 +97,55 @@ export function AccountPage({ onNavigate }: AccountPageProps): ReactElement {
   }
 
   const currentPlan = getCurrentPlan();
-  const _daysUntilExpiry = getDaysUntilExpiry();
 
   const handleUpgrade = async (
     planId: 'advanced' | 'expert',
   ): Promise<void> => {
+    if (!user) {
+      toast.error('Please sign in to upgrade');
+      return;
+    }
+
     setIsProcessingPayment(true);
 
     try {
-      if (subscription.status === 'trial' || subscription.planId === 'free') {
-        // Start trial for new users
-        startTrial(planId);
-        toast.success(
-          `🎉 ${planId === 'advanced' ? '7' : '14'}-day free trial started!`,
-          {
-            description: 'You now have access to all premium content',
-          },
-        );
-      } else {
-        // Simulate payment for existing users
-        const result = await simulatePaymentFlow(planId);
+      // NO FREE TRIALS - Direct to Stripe checkout
+      const result = await processStripePayment(planId, user.id, user.email);
 
-        if (result.success && result.paymentMethod) {
-          upgradeToPaid(planId, result.paymentMethod);
-          toast.success('Subscription upgraded successfully!', {
-            description: 'You now have access to all premium content',
-          });
-        } else {
-          toast.error('Payment failed', {
-            description: result.error ?? 'Please try again',
-          });
-        }
+      if (!result.success) {
+        toast.error('Failed to start checkout', {
+          description: result.error ?? 'Please try again',
+        });
       }
-    } catch {
+      // If successful, user will be redirected to Stripe
+    } catch (error) {
       toast.error('Upgrade failed', {
         description: 'Please try again or contact support',
       });
     } finally {
       setIsProcessingPayment(false);
       setShowUpgradeDialog(false);
+    }
+  };
+
+  const handleManageSubscription = async (): Promise<void> => {
+    if (!user) {
+      toast.error('Please sign in to manage subscription');
+      return;
+    }
+
+    try {
+      const result = await openStripePortal(user.id);
+      if (!result.success) {
+        toast.error('Failed to open billing portal', {
+          description: result.error ?? 'Please try again',
+        });
+      }
+      // If successful, user will be redirected to Stripe Customer Portal
+    } catch (error) {
+      toast.error('Failed to open billing portal', {
+        description: 'Please try again or contact support',
+      });
     }
   };
 
@@ -262,23 +271,6 @@ export function AccountPage({ onNavigate }: AccountPageProps): ReactElement {
                     </div>
                   </div>
 
-                  {/* Trial Information */}
-                  {subscription.status === 'trial' &&
-                    subscription.trialEndDate && (
-                      <div className='p-3 bg-blue-50 border border-blue-200 rounded-md mb-4'>
-                        <div className='flex items-center gap-2 text-blue-800'>
-                          <Gift className='w-4 h-4' />
-                          <span className='font-medium'>Free Trial Active</span>
-                        </div>
-                        <p className='text-sm text-blue-600 mt-1'>
-                          Your trial ends on{' '}
-                          {new Date(
-                            subscription.trialEndDate,
-                          ).toLocaleDateString()}
-                        </p>
-                      </div>
-                    )}
-
                   {/* Cancellation Notice */}
                   {subscription.cancelAtPeriodEnd && (
                     <div className='p-3 bg-yellow-50 border border-yellow-200 rounded-md mb-4'>
@@ -341,12 +333,21 @@ export function AccountPage({ onNavigate }: AccountPageProps): ReactElement {
                           </Button>
                         )}
                         {!subscription.cancelAtPeriodEnd && (
-                          <Button
-                            variant='outline'
-                            onClick={() => setShowCancelDialog(true)}
-                          >
-                            Cancel Subscription
-                          </Button>
+                          <>
+                            <Button
+                              variant='outline'
+                              onClick={handleManageSubscription}
+                            >
+                              <Gear className='w-4 h-4 mr-2' />
+                              Manage Subscription
+                            </Button>
+                            <Button
+                              variant='outline'
+                              onClick={() => setShowCancelDialog(true)}
+                            >
+                              Cancel Subscription
+                            </Button>
+                          </>
                         )}
                       </>
                     )}
@@ -648,7 +649,7 @@ export function AccountPage({ onNavigate }: AccountPageProps): ReactElement {
                 onClick={() => void handleUpgrade(selectedPlan)}
                 disabled={isProcessingPayment}
               >
-                {isProcessingPayment ? 'Processing...' : 'Start Free Trial'}
+                {isProcessingPayment ? 'Processing...' : 'Purchase Now'}
                 <Crown className='w-4 h-4 ml-2' />
               </Button>
             </div>

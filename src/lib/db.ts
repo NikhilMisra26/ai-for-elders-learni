@@ -16,7 +16,7 @@ export interface Profile {
   locked_until?: string | null;
 }
 
-export async function upsertProfile(profile: Profile) {
+export async function upsertProfile(profile: Profile): Promise<Profile> {
   const emailCheck = validateEmail(profile.email);
   if (!emailCheck.isValid) throw new Error(emailCheck.errors.join(', '));
 
@@ -32,7 +32,7 @@ export async function upsertProfile(profile: Profile) {
     .select()
     .single();
   if (error) throw error;
-  return data as Profile;
+  return data;
 }
 
 export async function getProfile(id: string): Promise<Profile> {
@@ -42,10 +42,13 @@ export async function getProfile(id: string): Promise<Profile> {
     .eq('id', id)
     .single();
   if (error) throw error;
-  return data as Profile;
+  return data;
 }
 
-export async function updateProfile(id: string, updates: Partial<Profile>) {
+export async function updateProfile(
+  id: string,
+  updates: Partial<Profile>,
+): Promise<Profile> {
   const sanitized: Partial<Profile> = { ...updates };
 
   if (updates.email) {
@@ -62,7 +65,7 @@ export async function updateProfile(id: string, updates: Partial<Profile>) {
     .select()
     .single();
   if (error) throw error;
-  return data as Profile;
+  return data;
 }
 
 export interface SubscriptionRow {
@@ -103,7 +106,7 @@ export async function upsertSubscription(
     .select()
     .single();
   if (error) throw error;
-  return data as SubscriptionRow;
+  return data;
 }
 
 export interface InvoiceRow {
@@ -124,7 +127,7 @@ export async function listInvoices(userId: string): Promise<InvoiceRow[]> {
     .order('date', { ascending: false })
     .limit(50);
   if (error) throw error;
-  return (data as InvoiceRow[]) ?? [];
+  return data ?? [];
 }
 
 export async function addInvoice(
@@ -136,7 +139,7 @@ export async function addInvoice(
     .select()
     .single();
   if (error) throw error;
-  return data as InvoiceRow;
+  return data;
 }
 
 export interface CourseProgressRow {
@@ -173,7 +176,7 @@ export async function upsertCourseProgress(
     .select()
     .single();
   if (error) throw error;
-  return data as CourseProgressRow;
+  return data;
 }
 
 export interface ModuleProgressRow {
@@ -196,7 +199,7 @@ export async function getModuleProgressRows(
     .select('*')
     .eq('user_id', userId);
   if (error) throw error;
-  return (data as ModuleProgressRow[]) ?? [];
+  return data ?? [];
 }
 
 export async function upsertModuleProgress(
@@ -208,7 +211,7 @@ export async function upsertModuleProgress(
     .select()
     .single();
   if (error) throw error;
-  return data as ModuleProgressRow;
+  return data;
 }
 
 export interface UserActivityRow {
@@ -232,7 +235,7 @@ export async function addUserActivity(
     .select()
     .single();
   if (error) throw error;
-  return data as UserActivityRow;
+  return data;
 }
 
 export async function listUserActivity(

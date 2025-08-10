@@ -101,7 +101,7 @@ export function ReviewForm({
         setTimeout(onSuccess, 2000);
       }
     } else {
-      setError(result.error || 'Failed to submit review');
+      setError(result.error ?? 'Failed to submit review');
     }
   };
 
@@ -272,4 +272,3 @@ export function ReviewForm({
     </Card>
   );
 }
-

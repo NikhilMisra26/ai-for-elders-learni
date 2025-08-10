@@ -102,7 +102,7 @@ export function AuthProvider({
           const newProfile = await upsertProfile({
             id: authUser.id,
             email,
-            name: authUser.user_metadata?.name ?? '',
+            name: (authUser.user_metadata?.name as string) ?? '',
             tier: 'free',
             verified: !!authUser.email_confirmed_at,
             join_date: new Date().toISOString(),

@@ -58,7 +58,7 @@ export function HomePage({
   onAuthClick,
 }: HomePageProps): ReactElement {
   const { user } = useAuth();
-  const { subscription: _subscription } = useSubscription();
+  useSubscription();
   const { stats, testimonials, isLoading } = useMetrics();
   const [showReviewForm, setShowReviewForm] = useState(false);
 
@@ -433,7 +433,7 @@ export function HomePage({
                         {[...(Array(testimonial.rating) as unknown[])].map(
                           (_, i) => (
                             <Star
-                              key={`star-${testimonial.id}-${i}`}
+                              key={`star-${testimonial.id}-rating-${i}`}
                               className='w-5 h-5 text-yellow-500'
                               weight='fill'
                             />
@@ -485,9 +485,9 @@ export function HomePage({
                   Be the First to Review
                 </h2>
                 <p className='text-xl text-muted-foreground mb-8'>
-                  We're just getting started! Be among the first to share your
-                  learning experience and help others discover the benefits of
-                  AI education.
+                  We&apos;re just getting started! Be among the first to share
+                  your learning experience and help others discover the benefits
+                  of AI education.
                 </p>
 
                 {user ? (

@@ -8,6 +8,11 @@ import {
 } from './db';
 import { SecurityLogger } from './security';
 import { errorHandler } from './errorHandler';
+import {
+  createCheckoutSession,
+  redirectToCheckout,
+  createPortalSession,
+} from './stripe';
 
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -81,7 +86,6 @@ export const subscriptionPlans: SubscriptionPlan[] = [
       'Health & finance applications',
       'Monthly AI updates',
       'Priority email support',
-      '7-day free trial',
     ],
   },
   {
@@ -100,7 +104,6 @@ export const subscriptionPlans: SubscriptionPlan[] = [
       'Cutting-edge updates',
       'Live expert Q&A sessions',
       'Phone support',
-      '14-day free trial',
     ],
   },
 ];
@@ -326,37 +329,78 @@ export function useSubscription(): {
   };
 }
 
-// Payment simulation utilities
-export async function simulatePaymentFlow(_planId: string): Promise<{
+// Import Stripe functions
+
+// Payment processing with Stripe
+export async function processStripePayment(
+  planId: 'advanced' | 'expert',
+  userId: string,
+  userEmail: string,
+): Promise<{
   success: boolean;
-  paymentMethod?: PaymentMethod;
   error?: string;
 }> {
-  return new Promise((resolve) => {
-    // Simulate payment processing delay
-    setTimeout((): void => {
-      // Simulate 95% success rate
-      const success = Math.random() > 0.05;
+  try {
+    // Create Stripe checkout session
+    const { sessionId, error } = await createCheckoutSession(
+      planId,
+      userId,
+      userEmail,
+    );
 
-      if (success) {
-        const paymentMethod: PaymentMethod = {
-          id: `pm_${Date.now()}`,
-          type: 'card',
-          last4: Math.floor(Math.random() * 9000 + 1000).toString(),
-          brand: ['visa', 'mastercard', 'amex'][Math.floor(Math.random() * 3)],
-          expiry: '12/28',
-          isDefault: true,
-        };
-        resolve({ success: true, paymentMethod });
-      } else {
-        resolve({
-          success: false,
-          error:
-            'Payment failed. Please check your card details and try again.',
-        });
-      }
-    }, 2000); // 2 second delay to simulate processing
-  });
+    if (error || !sessionId) {
+      return {
+        success: false,
+        error: error || 'Failed to create checkout session',
+      };
+    }
+
+    // Redirect to Stripe checkout
+    const redirectResult = await redirectToCheckout(sessionId);
+
+    if (redirectResult.error) {
+      return { success: false, error: redirectResult.error };
+    }
+
+    // If we get here, the redirect was successful
+    // The user will be redirected to Stripe and won't see this
+    return { success: true };
+  } catch (error) {
+    return {
+      success: false,
+      error:
+        error instanceof Error ? error.message : 'Payment processing failed',
+    };
+  }
+}
+
+// Open Stripe Customer Portal for subscription management
+export async function openStripePortal(userId: string): Promise<{
+  success: boolean;
+  error?: string;
+}> {
+  try {
+    const { url, error } = await createPortalSession(userId);
+
+    if (error || !url) {
+      return {
+        success: false,
+        error: error || 'Failed to create portal session',
+      };
+    }
+
+    // Redirect to Stripe Customer Portal
+    window.location.href = url;
+    return { success: true };
+  } catch (error) {
+    return {
+      success: false,
+      error:
+        error instanceof Error
+          ? error.message
+          : 'Failed to open billing portal',
+    };
+  }
 }
 
 export function formatPrice(price: number): string {

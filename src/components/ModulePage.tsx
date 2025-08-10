@@ -53,8 +53,8 @@ export function ModulePage({
   onBack,
   onNavigate,
 }: ModulePageProps): ReactElement {
-  const { user: _user } = useAuth();
-  const { subscription: _subscription, canAccessTier } = useSubscription();
+  useAuth();
+  const { canAccessTier } = useSubscription();
   const {
     completeModule,
     isModuleCompleted,
