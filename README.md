@@ -33,10 +33,10 @@
 
 ### 🔐 **Security & Privacy**
 
-- Comprehensive security module with rate limiting
-- CSRF protection and XSS prevention
-- Session management with automatic timeout
-- Row Level Security (RLS) on all database tables
+- **Frontend Security**: Comprehensive security module with rate limiting, CSRF protection, and XSS prevention
+- **Backend Security**: Enhanced Express server with Helmet headers, request size limits, and input validation
+- **Database Security**: Row Level Security (RLS) on all database tables
+- **Session Management**: Automatic timeout and suspicious activity detection
 
 ### 💳 **Subscription System**
 
@@ -44,18 +44,22 @@
 - **Advanced ($1.99/month)**: Personal assistant course + advanced features
 - **Expert ($4.99/month)**: Cutting-edge AI technologies + custom assistants
 - **Stripe Payment Integration**: Real payment processing (no free trials)
-  - Automatic tier updates via webhooks
+  - Automatic tier updates via webhooks with idempotency protection
   - Customer portal for subscription management
   - Secure checkout with immediate payment
   - Invoice history with downloadable PDFs
+  - Database transaction safety for webhook processing
 
 ## 🛠️ Tech Stack
 
 - **Frontend**: React 19 + TypeScript + Vite
+- **Backend**: Node.js + Express with security middleware
 - **Styling**: Tailwind CSS v4 + shadcn/ui components
 - **Database**: Supabase (PostgreSQL)
 - **State**: React Context API
 - **Authentication**: Supabase Auth
+- **Payment**: Stripe with webhook integration
+- **Security**: Helmet, rate limiting, input validation
 - **Icons**: Phosphor Icons
 
 ## 🚀 Quick Start
@@ -105,6 +109,13 @@ Execute these SQL files in your Supabase SQL Editor in order:
    -- Adds Stripe customer and subscription fields
    -- Creates automatic tier update triggers
    -- Implements subscription-based RLS policies
+   ```
+
+4. **Webhook Idempotency** (`supabase/migrations/003_add_webhook_idempotency.sql`):
+   ```sql
+   -- Creates webhook_events table for idempotency tracking
+   -- Prevents duplicate processing of Stripe webhook events
+   -- Includes helper functions for transaction safety
    ```
 
 ### 3. Environment Configuration

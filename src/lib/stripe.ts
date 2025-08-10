@@ -3,17 +3,31 @@ import { loadStripe } from '@stripe/stripe-js';
 
 import { errorHandler } from './errorHandler';
 
+// Type-safe environment variable access
+const getEnvVar = (key: string): string | undefined => {
+  // Properly type the env object
+  const env = import.meta.env as Record<string, string | undefined>;
+  return env[key];
+};
+
 // Backend API URL - update for production
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+const API_URL = getEnvVar('VITE_API_URL') ?? 'http://localhost:3001';
 
 // Initialize Stripe with publishable key
 let stripePromise: Promise<Stripe | null> | null = null;
 
 export const getStripe = async (): Promise<Stripe | null> => {
   if (!stripePromise) {
-    const key = import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY;
+    const key = getEnvVar('VITE_STRIPE_PUBLISHABLE_KEY');
     if (!key) {
       console.error('Stripe publishable key not found');
+      if (import.meta.env.MODE === 'production') {
+        errorHandler.handlePaymentError(
+          'initialize stripe',
+          new Error('Stripe publishable key not configured'),
+          {},
+        );
+      }
       return Promise.resolve(null);
     }
     stripePromise = loadStripe(key);
@@ -39,19 +53,119 @@ export interface StripePrice {
   };
 }
 
-// Price IDs for subscription plans (you'll need to create these in Stripe Dashboard)
+// Helper function to get properly configured price ID
+export function getStripePriceId(
+  planId: 'advanced' | 'expert',
+  interval: 'monthly' = 'monthly',
+): string {
+  const priceId = STRIPE_PRICES[planId][interval];
+
+  // Warn in development if using placeholder
+  if (
+    import.meta.env.MODE === 'development' &&
+    typeof priceId === 'string' &&
+    priceId.includes('placeholder')
+  ) {
+    console.warn(
+      `Using placeholder price ID for ${planId} ${interval}. Configure VITE_STRIPE_PRICE_${planId.toUpperCase()}_MONTHLY in .env.local`,
+    );
+  }
+
+  return priceId;
+}
+
+// Helper function to validate Stripe configuration
+export function isStripeConfigured(): boolean {
+  const hasKeys =
+    !!getEnvVar('VITE_STRIPE_PUBLISHABLE_KEY') &&
+    !!getEnvVar('VITE_STRIPE_PRICE_ADVANCED_MONTHLY') &&
+    !!getEnvVar('VITE_STRIPE_PRICE_EXPERT_MONTHLY');
+
+  const notPlaceholders =
+    typeof STRIPE_PRICES.advanced.priceId === 'string' &&
+    !STRIPE_PRICES.advanced.priceId.includes('placeholder') &&
+    typeof STRIPE_PRICES.expert.priceId === 'string' &&
+    !STRIPE_PRICES.expert.priceId.includes('placeholder');
+
+  return hasKeys && notPlaceholders;
+}
+
+// Configuration validation
+const validateStripeConfig = (): void => {
+  const required = [
+    'VITE_STRIPE_PUBLISHABLE_KEY',
+    'VITE_STRIPE_PRICE_ADVANCED_MONTHLY',
+    'VITE_STRIPE_PRICE_EXPERT_MONTHLY',
+  ];
+
+  const missing = required.filter((key) => !getEnvVar(key));
+
+  if (missing.length > 0) {
+    console.error('Missing required Stripe configuration:', missing.join(', '));
+    if (import.meta.env.MODE === 'production') {
+      throw new Error(
+        `Missing required Stripe configuration: ${missing.join(', ')}`,
+      );
+    }
+  }
+};
+
+// Validate configuration on module load
+if (import.meta.env.MODE !== 'test') {
+  validateStripeConfig();
+}
+
+// Price IDs for subscription plans (configured via environment variables)
 export const STRIPE_PRICES = {
   advanced: {
-    monthly: 'price_advanced_monthly', // $1.99/month
-    priceId: 'price_advanced_monthly',
-    amount: 199, // in cents
+    monthly:
+      getEnvVar('VITE_STRIPE_PRICE_ADVANCED_MONTHLY') ??
+      (import.meta.env.MODE === 'production'
+        ? ((): string => {
+            throw new Error(
+              'VITE_STRIPE_PRICE_ADVANCED_MONTHLY is required in production',
+            );
+          })()
+        : 'price_placeholder_advanced'),
+    priceId:
+      getEnvVar('VITE_STRIPE_PRICE_ADVANCED_MONTHLY') ??
+      (import.meta.env.MODE === 'production'
+        ? ((): string => {
+            throw new Error(
+              'VITE_STRIPE_PRICE_ADVANCED_MONTHLY is required in production',
+            );
+          })()
+        : 'price_placeholder_advanced'),
+    amount: parseInt(
+      getEnvVar('VITE_STRIPE_AMOUNT_ADVANCED_MONTHLY') ?? '199',
+      10,
+    ), // in cents, defaults to $1.99
   },
   expert: {
-    monthly: 'price_expert_monthly', // $4.99/month
-    priceId: 'price_expert_monthly',
-    amount: 499, // in cents
+    monthly:
+      getEnvVar('VITE_STRIPE_PRICE_EXPERT_MONTHLY') ??
+      (import.meta.env.MODE === 'production'
+        ? ((): string => {
+            throw new Error(
+              'VITE_STRIPE_PRICE_EXPERT_MONTHLY is required in production',
+            );
+          })()
+        : 'price_placeholder_expert'),
+    priceId:
+      getEnvVar('VITE_STRIPE_PRICE_EXPERT_MONTHLY') ??
+      (import.meta.env.MODE === 'production'
+        ? ((): string => {
+            throw new Error(
+              'VITE_STRIPE_PRICE_EXPERT_MONTHLY is required in production',
+            );
+          })()
+        : 'price_placeholder_expert'),
+    amount: parseInt(
+      getEnvVar('VITE_STRIPE_AMOUNT_EXPERT_MONTHLY') ?? '499',
+      10,
+    ), // in cents, defaults to $4.99
   },
-};
+} as const;
 
 /**
  * Create a Stripe Checkout session for subscription
@@ -64,6 +178,23 @@ export async function createCheckoutSession(
 ): Promise<{ sessionId?: string; error?: string }> {
   try {
     const priceId = STRIPE_PRICES[planId].priceId;
+
+    // Validate price ID is not a placeholder in production
+    if (
+      import.meta.env.MODE === 'production' &&
+      typeof priceId === 'string' &&
+      priceId.includes('placeholder')
+    ) {
+      errorHandler.handlePaymentError(
+        'create checkout session',
+        new Error('Invalid Stripe price configuration'),
+        {
+          userId,
+          metadata: { planId, priceId },
+        },
+      );
+      return { error: 'Payment configuration error. Please contact support.' };
+    }
 
     // Call backend API to create checkout session
     const response = await fetch(`${API_URL}/api/create-checkout-session`, {
@@ -80,19 +211,20 @@ export async function createCheckoutSession(
     });
 
     if (!response.ok) {
-      const error = await response.json();
+      const error = (await response.json()) as { error?: string };
+      const errorMessage = error.error ?? 'Failed to create checkout session';
       errorHandler.handlePaymentError(
         'create checkout session',
-        new Error(error.error || 'Failed to create checkout session'),
+        new Error(errorMessage),
         {
           userId,
           metadata: { planId, priceId },
         },
       );
-      return { error: error.error || 'Failed to create checkout session' };
+      return { error: errorMessage };
     }
 
-    const data = await response.json();
+    const data = (await response.json()) as { sessionId: string };
     return { sessionId: data.sessionId };
   } catch (error) {
     errorHandler.handlePaymentError(
@@ -164,18 +296,19 @@ export async function createPortalSession(
     });
 
     if (!response.ok) {
-      const error = await response.json();
+      const error = (await response.json()) as { error?: string };
+      const errorMessage = error.error ?? 'Failed to create portal session';
       errorHandler.handlePaymentError(
         'create portal session',
-        new Error(error.error || 'Failed to create portal session'),
+        new Error(errorMessage),
         {
           userId,
         },
       );
-      return { error: error.error || 'Failed to create portal session' };
+      return { error: errorMessage };
     }
 
-    const data = await response.json();
+    const data = (await response.json()) as { url: string };
     return { url: data.url };
   } catch (error) {
     errorHandler.handlePaymentError(

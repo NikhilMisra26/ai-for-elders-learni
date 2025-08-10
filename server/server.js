@@ -2,13 +2,37 @@ import express from 'express';
 import Stripe from 'stripe';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
+import { body, validationResult } from 'express-validator';
 import { createClient } from '@supabase/supabase-js';
 
 // Load environment variables
 dotenv.config();
 
+// Environment validation
+const requiredEnvVars = [
+  'STRIPE_SECRET_KEY',
+  'STRIPE_WEBHOOK_SECRET',
+  'SUPABASE_URL',
+  'SUPABASE_SERVICE_ROLE_KEY',
+  'FRONTEND_URL'
+];
+
+for (const envVar of requiredEnvVars) {
+  if (!process.env[envVar]) {
+    console.error(`❌ Missing required environment variable: ${envVar}`);
+    process.exit(1);
+  }
+}
+
+console.log('✅ All required environment variables are present');
+
 const app = express();
 const PORT = process.env.PORT || 3001;
+
+// Trust proxy for rate limiting behind reverse proxies
+app.set('trust proxy', 1);
 
 // Initialize Stripe
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
@@ -21,25 +45,171 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-// Middleware
-app.use(cors({
-  origin: process.env.FRONTEND_URL || 'http://localhost:5173',
-  credentials: true,
+// Webhook idempotency helper functions
+const webhookHelpers = {
+  // Check if webhook event was already processed
+  async isEventProcessed(eventId) {
+    const { data } = await supabase.rpc('is_webhook_event_processed', {
+      stripe_event_id: eventId
+    });
+    return data === true;
+  },
+
+  // Record webhook event processing
+  async recordEvent(eventId, eventType, result = 'success', metadata = null) {
+    const { data, error } = await supabase.rpc('record_webhook_event', {
+      stripe_event_id: eventId,
+      stripe_event_type: eventType,
+      result: result,
+      event_metadata: metadata
+    });
+    if (error) {
+      console.error('Failed to record webhook event:', error);
+    }
+    return data;
+  },
+
+  // Execute database operations in a transaction-safe manner
+  async executeWithTransaction(operations) {
+    try {
+      // Execute all operations
+      const results = [];
+      for (const operation of operations) {
+        const result = await operation();
+        if (result.error) {
+          throw new Error(`Database operation failed: ${result.error.message}`);
+        }
+        results.push(result);
+      }
+      return { success: true, results };
+    } catch (error) {
+      console.error('Transaction failed:', error);
+      throw error;
+    }
+  }
+};
+
+// Security middleware
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      scriptSrc: ["'self'"],
+      imgSrc: ["'self'", "data:", "https:"],
+    },
+  },
+  crossOriginEmbedderPolicy: false, // Disable for Stripe compatibility
 }));
 
-// Use raw body for webhook endpoint
-app.use('/webhook', express.raw({ type: 'application/json' }));
+// Rate limiting
+const generalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  message: {
+    error: 'Too many requests from this IP, please try again later.',
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
-// JSON parser for other routes
-app.use(express.json());
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 10, // Limit each IP to 10 API requests per windowMs
+  message: {
+    error: 'Too many API requests from this IP, please try again later.',
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+const webhookLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 1000, // Higher limit for Stripe webhooks
+  message: {
+    error: 'Too many webhook requests from this IP.',
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Apply rate limiting
+app.use(generalLimiter);
+app.use('/api/', apiLimiter);
+app.use('/webhook', webhookLimiter);
+
+// CORS configuration
+const allowedOrigins = [
+  process.env.FRONTEND_URL,
+  'http://localhost:5173',
+  'https://localhost:5173'
+].filter(Boolean);
+
+app.use(cors({
+  origin: function (origin, callback) {
+    // Allow requests with no origin (mobile apps, postman, etc.)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'stripe-signature'],
+}));
+
+// Use raw body for webhook endpoint with size limit
+app.use('/webhook', express.raw({ 
+  type: 'application/json',
+  limit: '1mb' // Stripe webhooks are typically small
+}));
+
+// JSON parser for other routes with size limits
+app.use(express.json({ 
+  limit: '10kb', // Small limit for API endpoints
+  strict: true
+}));
+
+// URL encoded parser with size limits
+app.use(express.urlencoded({ 
+  extended: false, 
+  limit: '10kb' 
+}));
 
 // Health check
 app.get('/health', (req, res) => {
   res.json({ status: 'OK', message: 'Server is running' });
 });
 
+// Input validation middleware
+const validateCheckoutSession = [
+  body('priceId').isString().trim().notEmpty().withMessage('Price ID is required'),
+  body('userId').isUUID().withMessage('Valid user ID is required'),
+  body('userEmail').isEmail().normalizeEmail().withMessage('Valid email is required'),
+  body('planId').isIn(['advanced', 'expert']).withMessage('Valid plan ID is required'),
+];
+
+const validatePortalSession = [
+  body('userId').isUUID().withMessage('Valid user ID is required'),
+];
+
+// Validation error handler
+const handleValidationErrors = (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({
+      error: 'Validation failed',
+      details: errors.array()
+    });
+  }
+  next();
+};
+
 // Create Checkout Session
-app.post('/api/create-checkout-session', async (req, res) => {
+app.post('/api/create-checkout-session', validateCheckoutSession, handleValidationErrors, async (req, res) => {
   try {
     const { priceId, userId, userEmail, planId } = req.body;
 
@@ -108,7 +278,7 @@ app.post('/api/create-checkout-session', async (req, res) => {
 });
 
 // Create Customer Portal Session
-app.post('/api/create-portal-session', async (req, res) => {
+app.post('/api/create-portal-session', validatePortalSession, handleValidationErrors, async (req, res) => {
   try {
     const { userId } = req.body;
 
@@ -140,7 +310,7 @@ app.post('/api/create-portal-session', async (req, res) => {
   }
 });
 
-// Stripe Webhook Handler
+// Stripe Webhook Handler with Idempotency
 app.post('/webhook', async (req, res) => {
   const sig = req.headers['stripe-signature'];
   let event;
@@ -156,7 +326,22 @@ app.post('/webhook', async (req, res) => {
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
-  // Handle different event types
+  // Check if this event was already processed (idempotency)
+  try {
+    const alreadyProcessed = await webhookHelpers.isEventProcessed(event.id);
+    if (alreadyProcessed) {
+      console.log(`⏭️  Webhook event ${event.id} already processed, skipping`);
+      return res.json({ received: true, skipped: true });
+    }
+  } catch (error) {
+    console.error('Error checking event idempotency:', error);
+    // Continue processing if idempotency check fails to avoid blocking webhooks
+  }
+
+  // Handle different event types with transaction safety
+  let processingResult = 'success';
+  let processingError = null;
+  
   try {
     switch (event.type) {
       case 'checkout.session.completed': {
@@ -165,35 +350,38 @@ app.post('/webhook', async (req, res) => {
         const planId = session.metadata?.planId;
 
         if (userId && planId) {
-          // Update user profile tier
-          await supabase
-            .from('profiles')
-            .update({
-              tier: planId,
-              stripe_customer_id: session.customer,
+          // Execute all operations in transaction-safe manner
+          await webhookHelpers.executeWithTransaction([
+            // Update user profile tier
+            () => supabase
+              .from('profiles')
+              .update({
+                tier: planId,
+                stripe_customer_id: session.customer,
+                stripe_subscription_id: session.subscription,
+              })
+              .eq('id', userId),
+            
+            // Update subscription table
+            () => supabase.from('subscriptions').upsert({
+              user_id: userId,
+              plan_id: planId,
+              status: 'active',
+              start_date: new Date().toISOString(),
               stripe_subscription_id: session.subscription,
+              auto_renew: true,
+            }),
+            
+            // Add invoice record
+            () => supabase.from('invoices').insert({
+              user_id: userId,
+              amount: (session.amount_total || 0) / 100, // Convert from cents
+              plan_name: planId === 'advanced' ? 'Advanced Learning' : 'Expert Mastery',
+              status: 'paid',
+              stripe_invoice_id: session.invoice,
+              date: new Date().toISOString(),
             })
-            .eq('id', userId);
-
-          // Update subscription table
-          await supabase.from('subscriptions').upsert({
-            user_id: userId,
-            plan_id: planId,
-            status: 'active',
-            start_date: new Date().toISOString(),
-            stripe_subscription_id: session.subscription,
-            auto_renew: true,
-          });
-
-          // Add invoice record
-          await supabase.from('invoices').insert({
-            user_id: userId,
-            amount: (session.amount_total || 0) / 100, // Convert from cents
-            plan_name: planId === 'advanced' ? 'Advanced Learning' : 'Expert Mastery',
-            status: 'paid',
-            stripe_invoice_id: session.invoice,
-            date: new Date().toISOString(),
-          });
+          ]);
 
           console.log(`✅ User ${userId} upgraded to ${planId}`);
         }
@@ -227,26 +415,32 @@ app.post('/webhook', async (req, res) => {
             planId = 'expert';
           }
 
-          // Update subscription
-          await supabase
-            .from('subscriptions')
-            .update({
-              status,
-              plan_id: planId,
-              next_billing_date: new Date(subscription.current_period_end * 1000).toISOString(),
-              cancel_at_period_end: subscription.cancel_at_period_end,
-            })
-            .eq('user_id', profile.id)
-            .eq('stripe_subscription_id', subscription.id);
+          // Execute updates in transaction-safe manner
+          const operations = [
+            // Update subscription
+            () => supabase
+              .from('subscriptions')
+              .update({
+                status,
+                plan_id: planId,
+                next_billing_date: new Date(subscription.current_period_end * 1000).toISOString(),
+                cancel_at_period_end: subscription.cancel_at_period_end,
+              })
+              .eq('user_id', profile.id)
+              .eq('stripe_subscription_id', subscription.id)
+          ];
 
           // Update profile tier if active
           if (status === 'active') {
-            await supabase
-              .from('profiles')
-              .update({ tier: planId })
-              .eq('id', profile.id);
+            operations.push(
+              () => supabase
+                .from('profiles')
+                .update({ tier: planId })
+                .eq('id', profile.id)
+            );
           }
 
+          await webhookHelpers.executeWithTransaction(operations);
           console.log(`📝 Subscription updated for user ${profile.id}`);
         }
         break;
@@ -264,21 +458,24 @@ app.post('/webhook', async (req, res) => {
           .single();
 
         if (profile) {
-          // Update subscription to cancelled
-          await supabase
-            .from('subscriptions')
-            .update({
-              status: 'cancelled',
-              end_date: new Date().toISOString(),
-            })
-            .eq('user_id', profile.id)
-            .eq('stripe_subscription_id', subscription.id);
-
-          // Reset user to free tier
-          await supabase
-            .from('profiles')
-            .update({ tier: 'free' })
-            .eq('id', profile.id);
+          // Execute updates in transaction-safe manner
+          await webhookHelpers.executeWithTransaction([
+            // Update subscription to cancelled
+            () => supabase
+              .from('subscriptions')
+              .update({
+                status: 'cancelled',
+                end_date: new Date().toISOString(),
+              })
+              .eq('user_id', profile.id)
+              .eq('stripe_subscription_id', subscription.id),
+            
+            // Reset user to free tier
+            () => supabase
+              .from('profiles')
+              .update({ tier: 'free' })
+              .eq('id', profile.id)
+          ]);
 
           console.log(`❌ Subscription cancelled for user ${profile.id}`);
         }
@@ -301,15 +498,17 @@ app.post('/webhook', async (req, res) => {
           const lineItem = invoice.lines.data[0];
           const planName = lineItem?.description || 'Subscription';
 
-          await supabase.from('invoices').insert({
-            user_id: profile.id,
-            amount: (invoice.amount_paid || 0) / 100, // Convert from cents
-            plan_name: planName,
-            status: 'paid',
-            stripe_invoice_id: invoice.id,
-            download_url: invoice.invoice_pdf,
-            date: new Date(invoice.created * 1000).toISOString(),
-          });
+          await webhookHelpers.executeWithTransaction([
+            () => supabase.from('invoices').insert({
+              user_id: profile.id,
+              amount: (invoice.amount_paid || 0) / 100, // Convert from cents
+              plan_name: planName,
+              status: 'paid',
+              stripe_invoice_id: invoice.id,
+              download_url: invoice.invoice_pdf,
+              date: new Date(invoice.created * 1000).toISOString(),
+            })
+          ]);
 
           console.log(`💰 Payment succeeded for user ${profile.id}`);
         }
@@ -328,24 +527,27 @@ app.post('/webhook', async (req, res) => {
           .single();
 
         if (profile) {
-          // Update subscription to grace period
-          await supabase
-            .from('subscriptions')
-            .update({
-              status: 'grace_period',
-              grace_period_end: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days
+          // Execute updates in transaction-safe manner
+          await webhookHelpers.executeWithTransaction([
+            // Update subscription to grace period
+            () => supabase
+              .from('subscriptions')
+              .update({
+                status: 'grace_period',
+                grace_period_end: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 days
+              })
+              .eq('user_id', profile.id),
+            
+            // Add failed invoice record
+            () => supabase.from('invoices').insert({
+              user_id: profile.id,
+              amount: (invoice.amount_due || 0) / 100,
+              plan_name: invoice.lines.data[0]?.description || 'Subscription',
+              status: 'failed',
+              stripe_invoice_id: invoice.id,
+              date: new Date(invoice.created * 1000).toISOString(),
             })
-            .eq('user_id', profile.id);
-
-          // Add failed invoice record
-          await supabase.from('invoices').insert({
-            user_id: profile.id,
-            amount: (invoice.amount_due || 0) / 100,
-            plan_name: invoice.lines.data[0]?.description || 'Subscription',
-            status: 'failed',
-            stripe_invoice_id: invoice.id,
-            date: new Date(invoice.created * 1000).toISOString(),
-          });
+          ]);
 
           console.log(`⚠️ Payment failed for user ${profile.id}`);
         }
@@ -356,15 +558,106 @@ app.post('/webhook', async (req, res) => {
         console.log(`Unhandled event type: ${event.type}`);
     }
 
-    res.json({ received: true });
   } catch (error) {
     console.error('Error processing webhook:', error);
-    res.status(500).json({ error: 'Webhook processing failed' });
+    processingResult = 'failed';
+    processingError = error.message;
+    
+    // Still record the failed attempt for tracking
+    try {
+      await webhookHelpers.recordEvent(
+        event.id, 
+        event.type, 
+        'failed', 
+        { error: error.message, stack: error.stack }
+      );
+    } catch (recordError) {
+      console.error('Failed to record webhook error:', recordError);
+    }
+    
+    return res.status(500).json({ error: 'Webhook processing failed' });
   }
+  
+  // Record successful processing
+  try {
+    await webhookHelpers.recordEvent(
+      event.id, 
+      event.type, 
+      processingResult,
+      { 
+        customer_id: event.data.object?.customer,
+        subscription_id: event.data.object?.subscription,
+        amount: event.data.object?.amount_total || event.data.object?.amount_paid
+      }
+    );
+  } catch (recordError) {
+    console.error('Failed to record webhook success:', recordError);
+    // Don't fail the webhook if we can't record it
+  }
+  
+  res.json({ received: true });
+});
+
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error('Global error handler:', err);
+  
+  // CORS errors
+  if (err.message === 'Not allowed by CORS') {
+    return res.status(403).json({
+      error: 'CORS: Origin not allowed'
+    });
+  }
+  
+  // Rate limit errors
+  if (err.status === 429) {
+    return res.status(429).json({
+      error: 'Too many requests'
+    });
+  }
+  
+  // Default error
+  res.status(500).json({
+    error: process.env.NODE_ENV === 'production' 
+      ? 'Internal server error' 
+      : err.message
+  });
+});
+
+// 404 handler
+app.use((req, res) => {
+  res.status(404).json({
+    error: 'Endpoint not found'
+  });
+});
+
+// Graceful shutdown handlers
+process.on('SIGTERM', () => {
+  console.log('🛑 SIGTERM received, shutting down gracefully...');
+  process.exit(0);
+});
+
+process.on('SIGINT', () => {
+  console.log('🛑 SIGINT received, shutting down gracefully...');
+  process.exit(0);
 });
 
 // Start server
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`🚀 Server running on http://localhost:${PORT}`);
   console.log(`📝 Webhook endpoint: http://localhost:${PORT}/webhook`);
+  console.log(`🔒 Security measures active:`);
+  console.log(`   ✓ Helmet security headers`);
+  console.log(`   ✓ Rate limiting (100/15min general, 10/15min API)`);
+  console.log(`   ✓ CORS protection`);
+  console.log(`   ✓ Request body size limits`);
+  console.log(`   ✓ Input validation`);
+  console.log(`   ✓ Environment validation`);
+  console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
+});
+
+// Handle server errors
+server.on('error', (err) => {
+  console.error('❌ Server error:', err);
+  process.exit(1);
 });

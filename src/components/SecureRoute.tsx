@@ -90,7 +90,7 @@ function TierUpgradePrompt({
   requiredTier,
   userTier,
 }: TierUpgradePromptProps): ReactElement {
-  const { updateTier } = useAuth();
+  // updateTier not used - removed to fix linting
 
   const tierInfo = {
     advanced: {
@@ -119,10 +119,11 @@ function TierUpgradePrompt({
 
   const info = tierInfo[requiredTier];
 
+  const { user } = useAuth();
+  
   const handleUpgrade = async (): Promise<void> => {
     // Import the Stripe payment function
     const { processStripePayment } = await import('@/lib/subscription');
-    const { user } = useAuth();
 
     if (user) {
       // Redirect to Stripe checkout for payment

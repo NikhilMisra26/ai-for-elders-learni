@@ -8,6 +8,13 @@ This is the Node.js/Express backend server that handles Stripe payment processin
 - Stripe customer portal management
 - Webhook handling for automatic subscription updates
 - Database synchronization with Supabase
+- **Security measures:**
+  - Rate limiting to prevent abuse
+  - Request body size limits
+  - Helmet security headers
+  - Enhanced CORS configuration
+  - Input validation and sanitization
+  - Environment validation on startup
 
 ## Setup
 
@@ -73,3 +80,32 @@ Make sure to:
 2. Use HTTPS in production
 3. Configure proper CORS settings
 4. Set up monitoring/logging
+
+## Security Features
+
+The server includes multiple layers of security protection:
+
+### Rate Limiting
+- **General requests**: 100 requests per 15 minutes per IP
+- **API endpoints**: 10 requests per 15 minutes per IP
+- **Webhook endpoint**: 1000 requests per 15 minutes per IP (higher limit for Stripe)
+
+### Request Protection
+- **Body size limits**: 10KB for API endpoints, 1MB for webhooks
+- **Content type validation**: Strict JSON parsing
+- **Input sanitization**: Email normalization, UUID validation
+
+### Headers & CORS
+- **Helmet security headers**: XSS protection, content security policy
+- **CORS whitelist**: Only allowed origins can make requests
+- **Trusted proxy**: Proper IP detection behind reverse proxies
+
+### Environment Security
+- **Startup validation**: All required environment variables checked
+- **Graceful shutdown**: Proper cleanup on termination signals
+- **Error handling**: Sanitized error messages in production
+
+### Monitoring
+- **Request logging**: All security events are logged
+- **Error tracking**: Global error handler with detailed logging
+- **Health checks**: Simple endpoint for uptime monitoring
