@@ -41,11 +41,13 @@ import { courseData } from '@/lib/courseData';
 
 interface CoursesPageProps {
   onAuthClick: () => void;
+  onUpgradeClick: (requiredTier: 'advanced' | 'expert') => void;
   onNavigateToModule?: (courseId: string, moduleId: string) => void;
 }
 
 export function CoursesPage({
   onAuthClick,
+  onUpgradeClick,
   onNavigateToModule,
 }: CoursesPageProps): ReactElement {
   const { user } = useAuth();
@@ -456,7 +458,12 @@ export function CoursesPage({
                       description: `This course requires ${course.tier} tier access. Click the upgrade button to continue.`,
                       action: {
                         label: 'Upgrade',
-                        onClick: () => onAuthClick(),
+                        onClick: () =>
+                          user
+                            ? onUpgradeClick(
+                                course.tier as 'advanced' | 'expert',
+                              )
+                            : onAuthClick(),
                       },
                     });
                   }
@@ -620,7 +627,6 @@ export function CoursesPage({
                         <Button
                           onClick={(e) => {
                             e.stopPropagation();
-                            // Track upgrade button clicks
                             if (user) {
                               SecurityLogger.log(
                                 'upgrade_button_clicked',
@@ -633,8 +639,12 @@ export function CoursesPage({
                                 },
                                 'info',
                               );
+                              onUpgradeClick(
+                                course.tier as 'advanced' | 'expert',
+                              );
+                            } else {
+                              onAuthClick();
                             }
-                            onAuthClick();
                           }}
                           className='flex items-center gap-2 bg-yellow-600 hover:bg-yellow-700'
                         >
@@ -687,7 +697,12 @@ export function CoursesPage({
                                 description: `Upgrade to ${course.tier} to access this module.`,
                                 action: {
                                   label: 'Upgrade',
-                                  onClick: () => onAuthClick(),
+                                  onClick: () =>
+                                    user
+                                      ? onUpgradeClick(
+                                          course.tier as 'advanced' | 'expert',
+                                        )
+                                      : onAuthClick(),
                                 },
                               });
                             }

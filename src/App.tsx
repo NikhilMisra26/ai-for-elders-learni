@@ -338,6 +338,12 @@ function AppContent(): ReactElement {
         return (
           <CoursesPage
             onAuthClick={handleAuthClick}
+            onUpgradeClick={(tier) =>
+              handleProtectedNavigation('upgrade', {
+                requiredTier: tier,
+                returnPath: window.location.pathname,
+              })
+            }
             onNavigateToModule={(courseId, moduleId) =>
               handleProtectedNavigation('module', { courseId, moduleId })
             }
