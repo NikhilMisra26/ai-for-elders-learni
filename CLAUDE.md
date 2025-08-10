@@ -118,3 +118,6 @@ Currently no test framework is configured. When implementing tests:
 - `/src/hooks/` - Custom React hooks
 - `/src/lib/` - Core business logic and utilities
 - `/src/types/` - TypeScript type definitions
+
+## Important
+- After completing a task, edit the readme to reflect the changes you made. Either edit existing stuff in the readme or, for a new feature, add it in a concise way

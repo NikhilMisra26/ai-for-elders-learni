@@ -1,42 +1,115 @@
-# ✨ Welcome to Your Spark Template!
+# AI for Elders 🧠✨
 
-You've just launched your brand-new Spark Template Codespace — everything’s fired up and ready for you to explore, build, and create with Spark!
+**AI for Elders** is a React-based educational platform designed to teach adults 50+ how to effectively and safely use artificial intelligence. The platform features a multi-tier subscription system, user authentication, progress tracking, and accessibility features optimized for older learners.
 
-This template is your blank canvas. It comes with a minimal setup to help you get started quickly with Spark development.
+## 🌟 Key Features
 
-🚀 What's Inside?
+### 📊 **Dynamic Metrics System**
+- **Smart Thresholds**: Metrics only display when impressive enough
+  - User count: Shows only when ≥ 1000 users
+  - Course completion: Shows only when ≥ 85%
+  - Average rating: Shows only when ≥ 4.0 stars with testimonials
+  - Countries: Shows only when ≥ 5 countries
+- **Real-time Data**: Fetches actual statistics from Supabase database
+- **Responsive Layout**: Automatically adjusts grid to maintain symmetry
+- **Performance Optimized**: 5-minute caching for fast load times
 
-- A clean, minimal Spark environment
-- Pre-configured for local development
-- Ready to scale with your ideas
+### 🎯 **Testimonials & Reviews**
+- **Real User Reviews**: Displays approved testimonials from actual users
+- **Review Submission**: Authenticated users can submit reviews via dialog
+- **Admin Approval Workflow**: Reviews require approval before display
+- **Fallback CTA**: Shows "Be the First to Review" when no testimonials exist
+- **Duplicate Prevention**: Users can only submit one review
 
-🧠 What Can You Do?
+### 🎨 **Senior-Friendly Design**
+- Large fonts and high contrast design
+- Audio narration for all content
+- Touch-friendly interface with proper target sizes
+- Clear navigation with breadcrumbs
+- WCAG 2.1 AA accessibility compliance
 
-Right now, this is just a starting point — the perfect place to begin building and testing your Spark applications.
+### 🔐 **Security & Privacy**
+- Comprehensive security module with rate limiting
+- CSRF protection and XSS prevention
+- Session management with automatic timeout
+- Row Level Security (RLS) on all database tables
 
-🧹 Just Exploring?
-No problem! If you were just checking things out and don’t need to keep this code:
+### 💳 **Subscription System**
+- **Free**: Basic AI course with community access
+- **Advanced ($1.99/month)**: Personal assistant course + advanced features
+- **Expert ($4.99/month)**: Cutting-edge AI technologies + custom assistants
 
-- Simply delete your Spark.
-- Everything will be cleaned up — no traces left behind.
+## 🛠️ Tech Stack
 
-📄 License For Spark Template Resources
+- **Frontend**: React 19 + TypeScript + Vite
+- **Styling**: Tailwind CSS v4 + shadcn/ui components
+- **Database**: Supabase (PostgreSQL)
+- **State**: React Context API
+- **Authentication**: Supabase Auth
+- **Icons**: Phosphor Icons
 
-The Spark Template files and resources from GitHub are licensed under the terms of the MIT license, Copyright GitHub, Inc.
+## 🚀 Quick Start
 
-## Supabase setup
+### Prerequisites
+- Node.js 18+
+- pnpm (recommended) or npm
 
-This app can persist user data (auth, profiles, subscriptions, progress) to Supabase.
+### Development Commands
+```bash
+pnpm run dev          # Start development server
+pnpm run build        # Build for production
+pnpm run typecheck    # Run TypeScript checking
+pnpm run lint:fix     # Fix linting issues
+pnpm run format       # Format code with Prettier
+```
 
-Steps:
+## 🗄️ Database Setup
 
-- Create a Supabase project at https://supabase.com
-- In the SQL Editor, run the SQL in `supabase.schema.sql`
-- Copy `.env.example` to `.env.local` and fill in:
-  - `VITE_SUPABASE_URL`
-  - `VITE_SUPABASE_ANON_KEY`
+### 1. Create Supabase Project
+- Create a new project at [supabase.com](https://supabase.com)
+- Get your project URL and anon key
 
-Dev notes:
+### 2. Run Database Migrations
+Execute these SQL files in your Supabase SQL Editor in order:
 
-- AuthContext now uses Supabase Auth + a `profiles` row per user.
-- Local storage is still used for a smooth offline-first UX; when logged in, writes are mirrored to Supabase.
+1. **Main Schema** (`supabase.schema.sql`):
+   ```sql
+   -- Creates profiles, subscriptions, progress, and activity tables
+   -- Includes Row Level Security policies
+   ```
+
+2. **Testimonials System** (`supabase-testimonials.sql`):
+   ```sql
+   -- Creates testimonials table for user reviews
+   -- Adds get_platform_stats() function for dynamic metrics
+   -- Includes admin approval workflow
+   ```
+
+### 3. Environment Configuration
+Copy `.env.example` to `.env.local` and add:
+```env
+VITE_SUPABASE_URL=your_supabase_project_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
+
+## 📊 Managing Dynamic Metrics
+
+### Testimonials Administration
+1. **View Submissions**: Query `testimonials` table in Supabase
+2. **Approve Reviews**: Set `is_approved = true`
+3. **Order Display**: Set `display_order` for custom sorting
+4. **Thresholds**: Adjust thresholds in `src/hooks/useMetrics.ts`
+
+### Metrics Thresholds
+Current settings ensure only impressive metrics are shown:
+- **Users**: 1000+ (configurable in `THRESHOLDS.MIN_USERS`)
+- **Completion Rate**: 85%+ (configurable in `THRESHOLDS.MIN_COMPLETION_RATE`)  
+- **Rating**: 4.0+ stars (configurable in `THRESHOLDS.MIN_RATING`)
+- **Countries**: 5+ (configurable in `THRESHOLDS.MIN_COUNTRIES`)
+
+## 🏗️ Architecture Notes
+
+- **Offline-First**: Local storage with cloud sync when authenticated
+- **Caching**: 5-minute cache on analytics data for performance
+- **Security**: Comprehensive rate limiting and session management
+- **Accessibility**: Designed specifically for users 50+ with accessibility features
