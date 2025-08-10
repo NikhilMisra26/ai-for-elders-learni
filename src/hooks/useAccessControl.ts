@@ -261,7 +261,9 @@ export function useAccessControl(): AccessControlHook {
     ): Promise<Map<string, boolean>> => {
       if (!user) {
         const result = new Map<string, boolean>();
-        resources.forEach((r) => result.set(r.id, false));
+        resources.forEach((r) => {
+          result.set(r.id, r.tier === 'free');
+        });
         return result;
       }
 

@@ -380,7 +380,9 @@ export function CoursesPage({
                           variant='outline'
                           className='w-full'
                         >
-                          Start Course
+                          {course.tier === 'free'
+                            ? 'Start Free Course'
+                            : 'Start Course'}
                           <Play className='w-4 h-4 ml-2' />
                         </Button>
                       </>
@@ -591,7 +593,9 @@ export function CoursesPage({
                           className='flex items-center gap-2'
                         >
                           <Play className='w-4 h-4' />
-                          Start Course
+                          {course.tier === 'free'
+                            ? 'Start Free Course'
+                            : 'Start Course'}
                         </Button>
                       )}
                     </div>
