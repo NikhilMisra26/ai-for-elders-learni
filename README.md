@@ -37,6 +37,7 @@
 - **Backend Security**: Enhanced Express server with Helmet headers, request size limits, and input validation
 - **Database Security**: Row Level Security (RLS) on all database tables
 - **Session Management**: Automatic timeout and suspicious activity detection
+- **Defensive Initialization**: Robust Supabase client with graceful degradation when configuration is invalid
 
 ### 💳 **Subscription System**
 
@@ -55,7 +56,7 @@
 - **Frontend**: React 19 + TypeScript + Vite
 - **Backend**: Node.js + Express with security middleware
 - **Styling**: Tailwind CSS v4 + shadcn/ui components
-- **Database**: Supabase (PostgreSQL)
+- **Database**: Supabase (PostgreSQL) with defensive client initialization
 - **State**: React Context API
 - **Authentication**: Supabase Auth
 - **Payment**: Stripe with webhook integration
@@ -156,6 +157,32 @@ Current settings ensure only impressive metrics are shown:
 
 ## 🧪 Testing & Development
 
+### Debugging & Logging
+
+The application includes extensive logging throughout the startup and runtime process to help debug issues:
+
+#### **Application Startup Logging** (`src/main.tsx`):
+- Environment variable validation with status indicators
+- Root element detection and DOM inspection
+- React root creation and rendering process tracking
+- Error boundary integration with detailed error reporting
+- Critical error handling with stack traces
+
+#### **Component Lifecycle Logging** (`src/App.tsx`):
+- App component mount/unmount tracking
+- AppContent component initialization and state logging
+- Page navigation events with source and destination tracking
+- Auth dialog state changes and user interactions
+- Security dashboard keyboard shortcut detection
+- Lazy component loading progress for all page components
+
+#### **Accessing Debug Information**:
+- Open browser DevTools (F12) to view console logs
+- All logs are prefixed with `[MAIN]` or `[APP]` for easy filtering
+- Success messages marked with ✓, errors with ✗, warnings with ⚠️
+- Component mount/unmount lifecycle clearly tracked
+- Real-time state changes logged for debugging user interactions
+
 ### Stripe Payment Testing
 
 The `StripeTestDashboard` component provides comprehensive testing capabilities for the payment system:
@@ -181,3 +208,9 @@ The `StripeTestDashboard` component provides comprehensive testing capabilities 
 - **Caching**: 5-minute cache on analytics data for performance
 - **Security**: Comprehensive rate limiting and session management
 - **Accessibility**: Designed specifically for users 50+ with accessibility features
+- **Defensive Database Client**: Supabase client with crash-prevention and graceful degradation
+  - Extensive validation of environment variables with detailed console logging
+  - Automatic fallback to mock client when configuration is invalid
+  - Safe error handling with comprehensive try-catch blocks
+  - Health check system for monitoring connection status
+  - Application continues to function (with limited features) even when Supabase is unavailable
