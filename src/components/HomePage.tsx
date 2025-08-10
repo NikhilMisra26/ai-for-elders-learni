@@ -432,7 +432,7 @@ export function HomePage({
                       <div className='flex items-center gap-1 mb-2'>
                         {Array.from(
                           { length: testimonial.rating },
-                          (_, i) => `star-${i}`,
+                          (_, i) => i,
                         ).map((id) => (
                           <Star
                             key={`star-${testimonial.id}-rating-${id}`}
