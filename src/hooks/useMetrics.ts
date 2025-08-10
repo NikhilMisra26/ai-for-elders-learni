@@ -20,12 +20,19 @@ export interface MetricsData {
   error: string | null;
 }
 
-// Thresholds for displaying metrics
+// Thresholds for displaying metrics, configurable via environment variables
+function getEnvNumber(varName: string, defaultValue: number): number {
+  const value = process.env[varName];
+  if (value === undefined) return defaultValue;
+  const parsed = Number(value);
+  return isNaN(parsed) ? defaultValue : parsed;
+}
+
 const THRESHOLDS = {
-  MIN_USERS: 1000,
-  MIN_COMPLETION_RATE: 85,
-  MIN_RATING: 4.0,
-  MIN_COUNTRIES: 5,
+  MIN_USERS: getEnvNumber('NEXT_PUBLIC_MIN_USERS', 1000),
+  MIN_COMPLETION_RATE: getEnvNumber('NEXT_PUBLIC_MIN_COMPLETION_RATE', 85),
+  MIN_RATING: getEnvNumber('NEXT_PUBLIC_MIN_RATING', 4.0),
+  MIN_COUNTRIES: getEnvNumber('NEXT_PUBLIC_MIN_COUNTRIES', 5),
 };
 
 export function useMetrics(): MetricsData {
