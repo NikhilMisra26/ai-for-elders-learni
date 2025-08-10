@@ -2,6 +2,7 @@ import type { Stripe } from '@stripe/stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
 
 import { errorHandler } from './errorHandler';
+import { supabase } from './supabaseClient';
 
 // Type-safe environment variable access
 const getEnvVar = (key: string): string | undefined => {
@@ -165,8 +166,6 @@ export const STRIPE_PRICES = {
  */
 export async function createCheckoutSession(
   planId: 'advanced' | 'expert',
-  userId: string,
-  userEmail: string,
 ): Promise<{ sessionId?: string; error?: string }> {
   try {
     const priceId = STRIPE_PRICES[planId].priceId;
@@ -181,11 +180,18 @@ export async function createCheckoutSession(
         'create checkout session',
         new Error('Invalid Stripe price configuration'),
         {
-          userId,
           metadata: { planId, priceId },
         },
       );
       return { error: 'Payment configuration error. Please contact support.' };
+    }
+
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    const token = session?.access_token;
+    if (!token) {
+      return { error: 'Authentication required' };
     }
 
     // Call backend API to create checkout session
@@ -193,10 +199,9 @@ export async function createCheckoutSession(
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
       },
       body: JSON.stringify({
-        userId,
-        userEmail,
         planId,
       }),
     });
@@ -208,7 +213,6 @@ export async function createCheckoutSession(
         'create checkout session',
         new Error(errorMessage),
         {
-          userId,
           metadata: { planId, priceId },
         },
       );
@@ -222,7 +226,6 @@ export async function createCheckoutSession(
       'create checkout session',
       error instanceof Error ? error : new Error(String(error)),
       {
-        userId,
         metadata: { planId },
       },
     );
@@ -271,19 +274,25 @@ export async function redirectToCheckout(
 /**
  * Create a Stripe Customer Portal session for subscription management
  */
-export async function createPortalSession(
-  userId: string,
-): Promise<{ url?: string; error?: string }> {
+export async function createPortalSession(): Promise<{
+  url?: string;
+  error?: string;
+}> {
   try {
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    const token = session?.access_token;
+    if (!token) {
+      return { error: 'Authentication required' };
+    }
+
     // Call backend API to create portal session
     const response = await fetch(`${API_URL}/api/create-portal-session`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({
-        userId,
-      }),
     });
 
     if (!response.ok) {
@@ -292,9 +301,7 @@ export async function createPortalSession(
       errorHandler.handlePaymentError(
         'create portal session',
         new Error(errorMessage),
-        {
-          userId,
-        },
+        {},
       );
       return { error: errorMessage };
     }
@@ -305,9 +312,7 @@ export async function createPortalSession(
     errorHandler.handlePaymentError(
       'create portal session',
       error instanceof Error ? error : new Error(String(error)),
-      {
-        userId,
-      },
+      {},
     );
     return { error: 'Failed to create portal session' };
   }

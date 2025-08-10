@@ -218,14 +218,10 @@ app.get('/health', (req, res) => {
 
 // Input validation middleware
 const validateCheckoutSession = [
-  body('userId').isUUID().withMessage('Valid user ID is required'),
-  body('userEmail').isEmail().normalizeEmail().withMessage('Valid email is required'),
   body('planId').isIn(['advanced', 'expert']).withMessage('Valid plan ID is required'),
 ];
 
-const validatePortalSession = [
-  body('userId').isUUID().withMessage('Valid user ID is required'),
-];
+const validatePortalSession = [];
 
 // Validation error handler
 const handleValidationErrors = (req, res, next) => {
@@ -242,11 +238,23 @@ const handleValidationErrors = (req, res, next) => {
 // Create Checkout Session
 app.post('/api/create-checkout-session', validateCheckoutSession, handleValidationErrors, async (req, res) => {
   try {
-    const { userId, userEmail, planId } = req.body;
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+    if (!token) {
+      return res.status(401).json({ error: 'Missing auth token' });
+    }
 
-    if (!userId || !userEmail || !planId) {
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    if (authError || !user) {
+      return res.status(401).json({ error: 'Invalid auth token' });
+    }
+
+    const { planId } = req.body;
+    if (!planId) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
+
+    const userId = user.id;
+    const userEmail = user.email;
 
     const priceMap = {
       advanced: process.env.STRIPE_PRICE_ADVANCED,
@@ -321,11 +329,17 @@ app.post('/api/create-checkout-session', validateCheckoutSession, handleValidati
 // Create Customer Portal Session
 app.post('/api/create-portal-session', validatePortalSession, handleValidationErrors, async (req, res) => {
   try {
-    const { userId } = req.body;
-
-    if (!userId) {
-      return res.status(400).json({ error: 'Missing userId' });
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+    if (!token) {
+      return res.status(401).json({ error: 'Missing auth token' });
     }
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    if (authError || !user) {
+      return res.status(401).json({ error: 'Invalid auth token' });
+    }
+
+    const userId = user.id;
 
     // Get user's Stripe customer ID
     const { data: profile } = await supabase

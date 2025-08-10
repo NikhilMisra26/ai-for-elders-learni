@@ -334,19 +334,13 @@ export function useSubscription(): {
 // Payment processing with Stripe
 export async function processStripePayment(
   planId: 'advanced' | 'expert',
-  userId: string,
-  userEmail: string,
 ): Promise<{
   success: boolean;
   error?: string;
 }> {
   try {
     // Create Stripe checkout session
-    const { sessionId, error } = await createCheckoutSession(
-      planId,
-      userId,
-      userEmail,
-    );
+    const { sessionId, error } = await createCheckoutSession(planId);
 
     if (error || !sessionId) {
       return {
@@ -375,12 +369,12 @@ export async function processStripePayment(
 }
 
 // Open Stripe Customer Portal for subscription management
-export async function openStripePortal(userId: string): Promise<{
+export async function openStripePortal(): Promise<{
   success: boolean;
   error?: string;
 }> {
   try {
-    const { url, error } = await createPortalSession(userId);
+    const { url, error } = await createPortalSession();
 
     if (error || !url) {
       return {

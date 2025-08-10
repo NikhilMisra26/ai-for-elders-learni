@@ -364,15 +364,13 @@ function AccessDeniedView({
       try {
         const result = await processStripePayment(
           requiredTier as 'advanced' | 'expert',
-          user.id,
-          user.email,
         );
 
         if (result.success) {
           toast.success('Redirecting to checkout...');
         } else {
           toast.error('Upgrade failed', {
-            description: result.error || 'Please try again.',
+            description: result.error ?? 'Please try again.',
           });
         }
       } catch (error) {

@@ -122,7 +122,9 @@ export function UpgradePage({
 
     if (isLoading) {
       toast.error('Please wait, loading your account...');
-      console.log('❌ UpgradePage - handleUpgrade blocked: still loading auth state');
+      console.log(
+        '❌ UpgradePage - handleUpgrade blocked: still loading auth state',
+      );
       return;
     }
 
@@ -144,19 +146,14 @@ export function UpgradePage({
     setProcessingTier(tier);
 
     try {
-      console.log('🔄 UpgradePage - calling processStripePayment', {
-        tier,
-        userId: user.id,
-        userEmail: user.email,
-      });
+      console.log('🔄 UpgradePage - calling processStripePayment', { tier });
 
-      const result = await processStripePayment(tier, user.id, user.email);
+      const result = await processStripePayment(tier);
 
       console.log('📋 UpgradePage - processStripePayment result', {
         success: result.success,
         error: result.error,
         tier,
-        userId: user.id,
       });
 
       if (result.success) {
@@ -164,7 +161,9 @@ export function UpgradePage({
           description: `You will be redirected to complete your ${tier} subscription.`,
         });
 
-        console.log('✅ UpgradePage - payment processing successful, redirecting');
+        console.log(
+          '✅ UpgradePage - payment processing successful, redirecting',
+        );
 
         if (onUpgradeSuccess) {
           setTimeout(onUpgradeSuccess, 1500);
@@ -177,7 +176,9 @@ export function UpgradePage({
         });
 
         toast.error('Upgrade failed', {
-          description: result.error || 'There was an issue processing your upgrade. Please try again.',
+          description:
+            result.error ??
+            'There was an issue processing your upgrade. Please try again.',
         });
       }
     } catch (error) {
@@ -206,7 +207,9 @@ export function UpgradePage({
             <Card className='w-full max-w-md p-8 text-center'>
               <div className='flex flex-col items-center space-y-4'>
                 <div className='h-8 w-8 border-4 border-primary border-t-transparent rounded-full animate-spin' />
-                <h2 className='text-xl font-semibold'>Loading your account...</h2>
+                <h2 className='text-xl font-semibold'>
+                  Loading your account...
+                </h2>
                 <p className='text-muted-foreground'>
                   Please wait while we verify your authentication status.
                 </p>
@@ -241,8 +244,8 @@ export function UpgradePage({
           <Alert className='mb-6'>
             <Info className='h-4 w-4' />
             <AlertDescription>
-              You're currently on the <strong>{subscription.planId}</strong>{' '}
-              plan.
+              You&apos;re currently on the{' '}
+              <strong>{subscription.planId}</strong> plan.
               {subscription.planId === 'advanced' &&
                 ' Upgrade to Expert for access to all content!'}
               {subscription.planId === 'expert' &&
@@ -294,7 +297,7 @@ export function UpgradePage({
                   <div>
                     <h4 className='font-medium mb-3 flex items-center gap-2'>
                       <Star className='h-4 w-4 text-yellow-500' />
-                      What's Included
+                      What&apos;s Included
                     </h4>
                     <ul className='space-y-2'>
                       {plan.features.map((feature) => (
@@ -340,7 +343,7 @@ export function UpgradePage({
                     <Button
                       className='w-full'
                       size='lg'
-                      onClick={async () => handleUpgrade(plan.tier)}
+                      onClick={() => void handleUpgrade(plan.tier)}
                       disabled={processingTier !== null}
                     >
                       {processingTier === plan.tier ? (
@@ -425,8 +428,8 @@ export function UpgradePage({
             <div>
               <h4 className='font-medium mb-1'>Can I get a refund?</h4>
               <p className='text-sm text-muted-foreground'>
-                We offer a 30-day money-back guarantee. If you're not satisfied,
-                contact us for a full refund.
+                We offer a 30-day money-back guarantee. If you&apos;re not
+                satisfied, contact us for a full refund.
               </p>
             </div>
           </CardContent>
