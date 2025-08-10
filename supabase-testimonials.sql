@@ -71,7 +71,8 @@ begin
   
   -- For now, countries count is estimated (can be enhanced later with real geo data)
   -- Using a simple formula based on user count
-  countries_count := least(50, greatest(1, total_users / 300));
+  -- Estimate countries count by assuming each country has roughly USERS_PER_COUNTRY_ESTIMATE users.
+  countries_count := least(50, greatest(1, total_users / USERS_PER_COUNTRY_ESTIMATE));
   
   return json_build_object(
     'total_users', total_users,
