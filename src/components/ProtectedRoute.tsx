@@ -125,57 +125,47 @@ export function ProtectedRoute({
     onUpgradeRequired,
   ]);
 
-  // Loading state
-  if (validationState.isValidating) {
-    if (fallback) {
-      return <>{fallback}</>;
-    }
-    return <LoadingState />;
-  }
+  const isPending = validationState.isValidating || !validationState.canAccess;
+  if (fallback && isPending) return <>{fallback}</>;
 
-  // Access denied - show appropriate message
+  if (validationState.isValidating) return <LoadingState />;
+
   if (!validationState.canAccess) {
-    if (fallback) {
-      return <>{fallback}</>;
-    }
+    if (validationState.reason === 'unauthenticated')
+      return <UnauthenticatedView onAuthClick={onAuthRequired} />;
 
-    switch (validationState.reason) {
-      case 'unauthenticated':
-        return <UnauthenticatedView onAuthClick={onAuthRequired} />;
+    if (
+      validationState.reason === 'insufficient_tier' &&
+      validationState.requiredTier
+    )
+      return (
+        <InsufficientTierView
+          requiredTier={validationState.requiredTier}
+          currentTier={subscription.planId}
+          message={validationState.message}
+          onUpgradeClick={() =>
+            onUpgradeRequired?.(validationState.requiredTier)
+          }
+          onBack={() => onNavigate?.('courses')}
+        />
+      );
 
-      case 'insufficient_tier':
-        return (
-          <InsufficientTierView
-            requiredTier={validationState.requiredTier!}
-            currentTier={subscription.planId}
-            message={validationState.message}
-            onUpgradeClick={() =>
-              onUpgradeRequired &&
-              validationState.requiredTier &&
-              onUpgradeRequired(validationState.requiredTier)
-            }
-            onBack={() => onNavigate?.('courses')}
-          />
-        );
+    if (validationState.reason === 'expired')
+      return (
+        <ExpiredSubscriptionView
+          onRenewClick={() =>
+            onUpgradeRequired?.(subscription.planId as 'advanced' | 'expert')
+          }
+          onBack={() => onNavigate?.('courses')}
+        />
+      );
 
-      case 'expired':
-        return (
-          <ExpiredSubscriptionView
-            onRenewClick={() =>
-              onUpgradeRequired?.(subscription.planId as 'advanced' | 'expert')
-            }
-            onBack={() => onNavigate?.('courses')}
-          />
-        );
-
-      default:
-        return (
-          <AccessDeniedView
-            message={validationState.message}
-            onBack={() => onNavigate?.('courses')}
-          />
-        );
-    }
+    return (
+      <AccessDeniedView
+        message={validationState.message}
+        onBack={() => onNavigate?.('courses')}
+      />
+    );
   }
 
   // For module pages with course content, wrap in ProtectedContent for additional validation
@@ -298,7 +288,7 @@ function InsufficientTierView({
         </CardHeader>
         <CardContent>
           <p className='text-center text-muted-foreground mb-6'>
-            {message || `This content requires a ${requiredTier} subscription.`}
+            {message ?? `This content requires a ${requiredTier} subscription.`}
           </p>
 
           <div className='bg-muted/50 rounded-lg p-4 mb-6'>
@@ -413,7 +403,7 @@ function AccessDeniedView({
         </CardHeader>
         <CardContent className='text-center'>
           <p className='text-muted-foreground mb-6'>
-            {message || 'You do not have permission to access this content.'}
+            {message ?? 'You do not have permission to access this content.'}
           </p>
 
           {onBack && (
