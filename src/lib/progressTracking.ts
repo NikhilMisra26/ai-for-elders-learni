@@ -1,3 +1,4 @@
+import { useCallback } from 'react';
 import { useKV } from './kv';
 import {
   upsertCourseProgress,
@@ -460,7 +461,7 @@ export function useProgress(): UseProgressReturn {
   };
 
   // Update current module for a course
-  const setCurrentModule = (courseId: string, moduleId: string): void => {
+  const setCurrentModule = useCallback((courseId: string, moduleId: string): void => {
     setCourseProgress((current) =>
       current.map((cp) =>
         cp.courseId === courseId
@@ -472,7 +473,7 @@ export function useProgress(): UseProgressReturn {
           : cp,
       ),
     );
-  };
+  }, []);
 
   // Add user activity
   const addActivity = (
