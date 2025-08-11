@@ -145,3 +145,26 @@ The platform includes comprehensive route protection for future React Router mig
 - **Security**: Comprehensive rate limiting and session management
 - **Accessibility**: Designed specifically for users 50+ with accessibility features
 - **React Router v7**: Modern client-side routing with lazy loading and protected routes
+
+### 📚 Course Navigation System
+
+The platform now uses React Router v7 for seamless course and module navigation:
+
+**Route Structure:**
+- `/courses` - Course listing page
+- `/courses/basic` - Free AI basics course (redirects to first module)
+- `/courses/advanced` - Advanced course ($1.99/month, redirects to first module)
+- `/courses/expert` - Expert course ($4.99/month, redirects to first module)
+- `/courses/:courseType/module/:moduleId` - Individual module pages
+
+**Navigation Features:**
+- **Automatic Redirection**: Course root paths redirect to the first module automatically
+- **URL Parameters**: Course type and module ID are preserved in the URL for bookmarking
+- **Smart Back Navigation**: Back buttons intelligently navigate to course overview or main courses page
+- **Module Progression**: Previous/Next buttons update the URL for proper navigation history
+- **Course Outline Navigation**: Module sidebar allows direct navigation to any module within a course
+
+**Course Type Mapping:**
+- `basic` ↔ `ai-basics` (Free tier)
+- `advanced` ↔ `ai-assistant` (Advanced tier, $1.99/month)
+- `expert` ↔ `advanced-ai` (Expert tier, $4.99/month)

@@ -91,7 +91,7 @@ export function AccountPage(): ReactElement {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <AuthForm onClose={async () => navigate('/')} />
+            <AuthForm onClose={async () => navigate('/home')} />
           </CardContent>
         </Card>
       </div>

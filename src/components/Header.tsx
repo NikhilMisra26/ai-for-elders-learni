@@ -24,7 +24,7 @@ export function Header({ onAuthClick }: HeaderProps): ReactElement {
   const location = useLocation();
 
   const navItems = [
-    { id: 'home', label: 'Home', path: '/' },
+    { id: 'home', label: 'Home', path: '/home' },
     { id: 'courses', label: 'Courses', path: '/courses' },
     { id: 'dashboard', label: 'Progress', path: '/dashboard' },
     { id: 'account', label: 'Account', path: '/account' },
@@ -33,7 +33,7 @@ export function Header({ onAuthClick }: HeaderProps): ReactElement {
   // Get current page from location
   const getCurrentPage = (): string => {
     const path = location.pathname;
-    if (path === '/') return 'home';
+    if (path === '/home') return 'home';
     if (path.startsWith('/courses')) return 'courses';
     if (path.startsWith('/dashboard')) return 'dashboard';
     if (path.startsWith('/account')) return 'account';
@@ -45,7 +45,7 @@ export function Header({ onAuthClick }: HeaderProps): ReactElement {
   const handleLogout = (): void => {
     // If logout returns a Promise, explicitly ignore it to satisfy linting
     void logout();
-    navigate('/');
+    navigate('/home');
     setShowMobileMenu(false);
   };
 
@@ -56,7 +56,7 @@ export function Header({ onAuthClick }: HeaderProps): ReactElement {
           {/* Logo */}
           <div className='flex-shrink-0'>
             <button
-              onClick={async () => navigate('/')}
+              onClick={async () => navigate('/home')}
               className='text-xl font-bold text-primary hover:text-primary/80 transition-colors'
             >
               AI for Elders

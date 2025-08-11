@@ -19,7 +19,7 @@ interface ProtectedRouteProps {
   requiredRole?: 'free' | 'advanced' | 'expert' | 'admin';
   /** Custom fallback component to render instead of default auth prompt */
   fallback?: ReactNode;
-  /** Redirect path when not authenticated (defaults to '/') */
+  /** Redirect path when not authenticated (defaults to '/home') */
   redirectTo?: string;
   /** Whether to show upgrade prompt for insufficient tier access */
   showUpgradePrompt?: boolean;
@@ -50,7 +50,7 @@ export function ProtectedRoute({
   children,
   requiredRole,
   fallback,
-  redirectTo = '/',
+  redirectTo = '/home',
   showUpgradePrompt = true,
 }: ProtectedRouteProps): ReactElement {
   const { user, isLoading } = useAuth();
@@ -265,7 +265,7 @@ function AccessDeniedPrompt({
     if (window.history.length > 1) {
       window.history.back();
     } else {
-      window.location.href = '/';
+      window.location.href = '/home';
     }
   };
 
@@ -295,7 +295,7 @@ function AccessDeniedPrompt({
               Go Back
             </Button>
             <Button
-              onClick={() => (window.location.href = '/')}
+              onClick={() => (window.location.href = '/home')}
               aria-label='Go to home page'
             >
               Go to Home

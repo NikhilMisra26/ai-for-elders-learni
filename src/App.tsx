@@ -53,6 +53,16 @@ const SecurityDashboard = lazy(async () =>
     default: module.SecurityDashboard,
   })),
 );
+const ModulePage = lazy(async () =>
+  import('./components/ModulePage').then((module) => ({
+    default: module.ModulePage,
+  })),
+);
+const ReviewForm = lazy(async () =>
+  import('./components/ReviewForm').then((module) => ({
+    default: module.ReviewForm,
+  })),
+);
 
 // Loading fallback component for lazy-loaded pages
 function PageLoader(): ReactElement {
@@ -117,14 +127,56 @@ function AppContent(): ReactElement {
       <main id='main-content' role='main'>
         <Suspense fallback={<PageLoader />}>
           <Routes>
+            {/* Root redirects to home */}
+            <Route path='/' element={<Navigate to='/home' replace />} />
+
+            {/* Main pages */}
             <Route
-              path='/'
+              path='/home'
               element={<HomePage onAuthClick={handleAuthClick} />}
             />
+
+            {/* Courses section */}
             <Route
               path='/courses'
               element={<CoursesPage onAuthClick={handleAuthClick} />}
             />
+            <Route
+              path='/courses/basic'
+              element={
+                <ProtectedRoute>
+                  <ModulePage courseType='basic' />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path='/courses/advanced'
+              element={
+                <ProtectedRoute requiredRole='advanced'>
+                  <ModulePage courseType='advanced' />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path='/courses/expert'
+              element={
+                <ProtectedRoute requiredRole='expert'>
+                  <ModulePage courseType='expert' />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Module routes */}
+            <Route
+              path='/courses/:courseType/module/:moduleId'
+              element={
+                <ProtectedRoute>
+                  <ModulePage />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Dashboard/Progress */}
             <Route
               path='/dashboard'
               element={
@@ -134,6 +186,12 @@ function AppContent(): ReactElement {
               }
             />
             <Route
+              path='/progress'
+              element={<Navigate to='/dashboard' replace />}
+            />
+
+            {/* Account section */}
+            <Route
               path='/account'
               element={
                 <ProtectedRoute>
@@ -141,7 +199,31 @@ function AppContent(): ReactElement {
                 </ProtectedRoute>
               }
             />
-            <Route path='*' element={<Navigate to='/' replace />} />
+            <Route
+              path='/profile'
+              element={<Navigate to='/account' replace />}
+            />
+            <Route
+              path='/settings'
+              element={
+                <ProtectedRoute>
+                  <AccountPage />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Reviews */}
+            <Route
+              path='/reviews'
+              element={
+                <ProtectedRoute>
+                  <ReviewForm />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Catch all - redirect to home */}
+            <Route path='*' element={<Navigate to='/home' replace />} />
           </Routes>
         </Suspense>
       </main>
