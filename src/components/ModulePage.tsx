@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, type ReactElement } from 'react';
+import React, { useState, useEffect, useRef, useMemo, type ReactElement } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
@@ -92,8 +92,9 @@ export function ModulePage({
     ? getModuleProgress(courseId, moduleId)
     : null;
 
-  // Audio narration state - using null-safe content
-  const [audioState, audioControls] = useAudioNarration(module?.content ?? '');
+  // Audio narration state - memoize content to prevent hook recreation
+  const moduleContent = useMemo(() => module?.content ?? '', [module?.content]);
+  const [audioState, audioControls] = useAudioNarration(moduleContent);
   const [showAudioControls, setShowAudioControls] = useState(false);
 
   // Module interaction state
@@ -104,9 +105,11 @@ export function ModulePage({
   const [comment, setComment] = useState('');
   const [startTime] = useState(Date.now());
   const [showOutline, setShowOutline] = useState(false);
-  
+
   // Track the last module that was set to prevent redundant calls
   const lastSetModuleRef = useRef<string | null>(null);
+  // Track if cleanup has been performed to prevent double-cleanup
+  const cleanupPerformedRef = useRef<boolean>(false);
 
   // If no module ID is provided, navigate to first module
   useEffect(() => {
@@ -125,14 +128,14 @@ export function ModulePage({
   useEffect(() => {
     if (course && module && moduleId) {
       const moduleKey = `${courseId}-${moduleId}`;
-      
+
       // Only call setCurrentModule if we haven't already set this specific module
       if (lastSetModuleRef.current !== moduleKey) {
         lastSetModuleRef.current = moduleKey;
         setCurrentModule(courseId, moduleId);
       }
     }
-    
+
     // Cleanup function to reset the ref when component unmounts or course/module changes significantly
     return () => {
       // Reset if course or module becomes unavailable
@@ -155,13 +158,27 @@ export function ModulePage({
 
   // Handle component unmount to save progress and cleanup audio
   useEffect(() => {
+    // Reset cleanup flag when effect runs
+    cleanupPerformedRef.current = false;
+    
     return (): void => {
+      // Only perform cleanup once
+      if (cleanupPerformedRef.current) {
+        return;
+      }
+      cleanupPerformedRef.current = true;
+      
+      console.log('[ModulePage] Component unmounting, performing cleanup');
+      
       if (timeSpent > 0) {
         // Auto-save time spent when leaving module
+        console.log('[ModulePage] Auto-saving time spent:', timeSpent);
       }
+      
       // Cleanup audio on unmount
       try {
         if (audioState.isPlaying) {
+          console.log('[ModulePage] Stopping audio on unmount');
           audioControls.stop();
         }
         setShowAudioControls(false);
@@ -169,17 +186,30 @@ export function ModulePage({
         console.error('Error cleaning up audio on unmount:', error);
       }
     };
-  }, [timeSpent, audioState.isPlaying, audioControls]);
+    // Empty dependency array ensures this only runs on mount/unmount
+  }, []);
 
   // Handle audio state errors and auto-hide controls on stop
   useEffect(() => {
+    console.log('[ModulePage] Audio state effect', {
+      isPlaying: audioState.isPlaying,
+      isPaused: audioState.isPaused,
+      showAudioControls,
+      timestamp: new Date().toISOString()
+    });
+
     if (!audioState.isPlaying && !audioState.isPaused && showAudioControls) {
       // Auto-hide controls when audio stops naturally
+      console.log('[ModulePage] Setting timer to auto-hide controls in 2 seconds');
       const timer = setTimeout(() => {
+        console.log('[ModulePage] Auto-hiding audio controls');
         setShowAudioControls(false);
       }, 2000);
-      
-      return () => clearTimeout(timer);
+
+      return () => {
+        console.log('[ModulePage] Clearing auto-hide timer');
+        clearTimeout(timer);
+      };
     }
   }, [audioState.isPlaying, audioState.isPaused, showAudioControls]);
 
@@ -271,28 +301,43 @@ export function ModulePage({
   };
 
   const handleAudioPlay = (): void => {
+    console.log('[ModulePage] handleAudioPlay called', {
+      isPlaying: audioState.isPlaying,
+      isPaused: audioState.isPaused,
+      isSupported: audioState.isSupported,
+      timestamp: new Date().toISOString()
+    });
+
     try {
       if (audioState.isPlaying) {
+        console.log('[ModulePage] Pausing audio');
         audioControls.pause();
       } else if (audioState.isPaused) {
+        console.log('[ModulePage] Resuming audio');
         audioControls.resume();
       } else {
-        audioControls.play();
+        console.log('[ModulePage] Starting new audio playback');
+        // Show controls immediately for better UX
         setShowAudioControls(true);
+        audioControls.play();
       }
     } catch (error) {
-      console.error('Audio play failed:', error);
+      console.error('[ModulePage] Audio play failed:', error);
       toast.error('Audio playback failed. Please try again.');
       setShowAudioControls(false);
     }
   };
 
   const handleAudioStop = (): void => {
+    console.log('[ModulePage] handleAudioStop called', {
+      timestamp: new Date().toISOString()
+    });
+    
     try {
       audioControls.stop();
       setShowAudioControls(false);
     } catch (error) {
-      console.error('Audio stop failed:', error);
+      console.error('[ModulePage] Audio stop failed:', error);
       setShowAudioControls(false);
     }
   };
@@ -500,7 +545,7 @@ export function ModulePage({
             </Card>
 
             {/* Audio Controls */}
-            <AudioControlsErrorBoundary 
+            <AudioControlsErrorBoundary
               onError={() => {
                 setShowAudioControls(false);
                 audioControls.stop();
@@ -563,9 +608,17 @@ export function ModulePage({
                     {(() => {
                       try {
                         // Ensure values are properly initialized
-                        const rate = typeof audioState.rate === 'number' && !isNaN(audioState.rate) ? audioState.rate : 1;
-                        const volume = typeof audioState.volume === 'number' && !isNaN(audioState.volume) ? audioState.volume : 1;
-                        
+                        const rate =
+                          typeof audioState.rate === 'number' &&
+                          !isNaN(audioState.rate)
+                            ? audioState.rate
+                            : 1;
+                        const volume =
+                          typeof audioState.volume === 'number' &&
+                          !isNaN(audioState.volume)
+                            ? audioState.volume
+                            : 1;
+
                         return (
                           <>
                             <div>
@@ -578,7 +631,10 @@ export function ModulePage({
                                   try {
                                     audioControls.setRate(newRate);
                                   } catch (error) {
-                                    console.error('Failed to set audio rate:', error);
+                                    console.error(
+                                      'Failed to set audio rate:',
+                                      error,
+                                    );
                                   }
                                 }}
                                 min={0.5}
@@ -598,7 +654,10 @@ export function ModulePage({
                                   try {
                                     audioControls.setVolume(newVolume);
                                   } catch (error) {
-                                    console.error('Failed to set audio volume:', error);
+                                    console.error(
+                                      'Failed to set audio volume:',
+                                      error,
+                                    );
                                   }
                                 }}
                                 min={0}
@@ -615,14 +674,14 @@ export function ModulePage({
                         return (
                           <div className='text-center p-4 text-muted-foreground'>
                             <p>Audio controls temporarily unavailable</p>
-                            <Button 
-                              variant="outline" 
-                              size="sm" 
+                            <Button
+                              variant='outline'
+                              size='sm'
                               onClick={() => {
                                 setShowAudioControls(false);
                                 audioControls.stop();
                               }}
-                              className="mt-2"
+                              className='mt-2'
                             >
                               Close Controls
                             </Button>

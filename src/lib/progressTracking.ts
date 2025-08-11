@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+
 import { useKV } from './kv';
 import {
   upsertCourseProgress,
@@ -461,19 +462,22 @@ export function useProgress(): UseProgressReturn {
   };
 
   // Update current module for a course
-  const setCurrentModule = useCallback((courseId: string, moduleId: string): void => {
-    setCourseProgress((current) =>
-      current.map((cp) =>
-        cp.courseId === courseId
-          ? {
-              ...cp,
-              currentModuleId: moduleId,
-              lastAccessedAt: new Date().toISOString(),
-            }
-          : cp,
-      ),
-    );
-  }, []);
+  const setCurrentModule = useCallback(
+    (courseId: string, moduleId: string): void => {
+      setCourseProgress((current) =>
+        current.map((cp) =>
+          cp.courseId === courseId
+            ? {
+                ...cp,
+                currentModuleId: moduleId,
+                lastAccessedAt: new Date().toISOString(),
+              }
+            : cp,
+        ),
+      );
+    },
+    [],
+  );
 
   // Add user activity
   const addActivity = (
