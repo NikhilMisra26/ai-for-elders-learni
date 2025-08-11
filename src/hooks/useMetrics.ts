@@ -138,4 +138,3 @@ export function useShouldShowTestimonials(): boolean {
   const { testimonials, isLoading } = useMetrics();
   return !isLoading && testimonials.length > 0;
 }
-

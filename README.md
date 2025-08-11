@@ -107,9 +107,41 @@ Current settings ensure only impressive metrics are shown:
 - **Rating**: 4.0+ stars (configurable in `THRESHOLDS.MIN_RATING`)
 - **Countries**: 5+ (configurable in `THRESHOLDS.MIN_COUNTRIES`)
 
+## 🛡️ Route Protection System
+
+### React Router Compatible Components
+The platform includes comprehensive route protection for future React Router migration:
+
+- **`ProtectedRoute`** (`src/components/ProtectedRoute.tsx`): React Router v6/v7 compatible route wrapper
+- **`RouteGuard`** (`src/components/RouteGuard.tsx`): Works with current custom routing system
+- **`useRouteProtection`** (`src/hooks/useRouteProtection.ts`): Core protection logic hook
+
+### Features
+- **Authentication Guard**: Redirects unauthenticated users with preserved destination
+- **Role-Based Access**: Supports `free`, `advanced`, `expert`, and `admin` roles
+- **Tier Upgrades**: Shows upgrade prompts for insufficient subscription tiers
+- **Accessibility**: Full WCAG compliance with proper ARIA labels and keyboard navigation
+- **Senior-Friendly**: Large touch targets, clear messaging, and simplified UI flows
+
+### Usage Examples
+```tsx
+// React Router compatible (future migration)
+<Route path="/dashboard" element={
+  <ProtectedRoute requiredRole="advanced">
+    <DashboardPage />
+  </ProtectedRoute>
+} />
+
+// Current custom routing system
+<RouteGuard requiredRole="expert" onAuthRequired={openAuthDialog}>
+  <ExpertContent />
+</RouteGuard>
+```
+
 ## 🏗️ Architecture Notes
 
 - **Offline-First**: Local storage with cloud sync when authenticated
 - **Caching**: 5-minute cache on analytics data for performance
 - **Security**: Comprehensive rate limiting and session management
 - **Accessibility**: Designed specifically for users 50+ with accessibility features
+- **React Router v7**: Modern client-side routing with lazy loading and protected routes

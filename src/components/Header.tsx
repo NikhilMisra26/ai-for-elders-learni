@@ -1,5 +1,6 @@
 import { TextAa, Moon, Sun, User, SignOut, List } from '@phosphor-icons/react';
 import { useState, type ReactElement } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
@@ -7,15 +8,9 @@ import { useAccessibility } from '@/contexts/AccessibilityContext';
 
 interface HeaderProps {
   onAuthClick: () => void;
-  onNavigate: (page: string) => void;
-  currentPage: string;
 }
 
-export function Header({
-  onAuthClick,
-  onNavigate,
-  currentPage,
-}: HeaderProps): ReactElement {
+export function Header({ onAuthClick }: HeaderProps): ReactElement {
   const { user, logout } = useAuth();
   const {
     fontSize,
@@ -25,18 +20,32 @@ export function Header({
     toggleDarkMode,
   } = useAccessibility();
   const [showMobileMenu, setShowMobileMenu] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const navItems = [
-    { id: 'home', label: 'Home' },
-    { id: 'courses', label: 'Courses' },
-    { id: 'dashboard', label: 'Progress' },
-    { id: 'account', label: 'Account' },
+    { id: 'home', label: 'Home', path: '/' },
+    { id: 'courses', label: 'Courses', path: '/courses' },
+    { id: 'dashboard', label: 'Progress', path: '/dashboard' },
+    { id: 'account', label: 'Account', path: '/account' },
   ];
+
+  // Get current page from location
+  const getCurrentPage = (): string => {
+    const path = location.pathname;
+    if (path === '/') return 'home';
+    if (path.startsWith('/courses')) return 'courses';
+    if (path.startsWith('/dashboard')) return 'dashboard';
+    if (path.startsWith('/account')) return 'account';
+    return 'home';
+  };
+
+  const currentPage = getCurrentPage();
 
   const handleLogout = (): void => {
     // If logout returns a Promise, explicitly ignore it to satisfy linting
     void logout();
-    onNavigate('home');
+    navigate('/');
     setShowMobileMenu(false);
   };
 
@@ -47,7 +56,7 @@ export function Header({
           {/* Logo */}
           <div className='flex-shrink-0'>
             <button
-              onClick={() => onNavigate('home')}
+              onClick={async () => navigate('/')}
               className='text-xl font-bold text-primary hover:text-primary/80 transition-colors'
             >
               AI for Elders
@@ -63,7 +72,7 @@ export function Header({
             {navItems.map((item) => (
               <button
                 key={item.id}
-                onClick={() => onNavigate(item.id)}
+                onClick={async () => navigate(item.path)}
                 className={`text-base font-medium transition-colors hover:text-primary ${
                   currentPage === item.id
                     ? 'text-primary border-b-2 border-primary pb-1'
@@ -176,7 +185,7 @@ export function Header({
                   <button
                     key={item.id}
                     onClick={() => {
-                      onNavigate(item.id);
+                      navigate(item.path);
                       setShowMobileMenu(false);
                     }}
                     className={`block w-full text-left px-3 py-2 rounded-md text-base font-medium transition-colors ${

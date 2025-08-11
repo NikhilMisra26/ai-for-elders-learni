@@ -25,9 +25,7 @@ interface CachedData<T> {
 
 // Cache configuration
 const CACHE_DURATION =
-  typeof process !== 'undefined' &&
-  process.env &&
-  process.env.ANALYTICS_CACHE_DURATION_MS
+  typeof process !== 'undefined' && process.env?.ANALYTICS_CACHE_DURATION_MS
     ? parseInt(process.env.ANALYTICS_CACHE_DURATION_MS, 10)
     : 5 * 60 * 1000; // 5 minutes
 const statsCache: { current: CachedData<PlatformStats> | null } = {
@@ -247,4 +245,3 @@ export function formatMetricNumber(num: number): string {
   }
   return num.toString();
 }
-

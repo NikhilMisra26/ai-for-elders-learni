@@ -1,4 +1,5 @@
 import React, { useState, type ReactElement } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Brain,
   Shield,
@@ -49,14 +50,11 @@ import {
 import { useMetrics } from '@/hooks/useMetrics';
 
 interface HomePageProps {
-  onNavigate: (page: string) => void;
   onAuthClick: () => void;
 }
 
-export function HomePage({
-  onNavigate,
-  onAuthClick,
-}: HomePageProps): ReactElement {
+export function HomePage({ onAuthClick }: HomePageProps): ReactElement {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { subscription: _subscription } = useSubscription();
   const { stats, testimonials, isLoading } = useMetrics();
@@ -197,7 +195,7 @@ export function HomePage({
               {user ? (
                 <Button
                   size='lg'
-                  onClick={() => onNavigate('dashboard')}
+                  onClick={async () => navigate('/dashboard')}
                   className='text-lg px-8 py-6 h-auto'
                 >
                   Continue Learning
@@ -216,7 +214,7 @@ export function HomePage({
                   <Button
                     size='lg'
                     variant='outline'
-                    onClick={() => onNavigate('courses')}
+                    onClick={async () => navigate('/courses')}
                     className='text-lg px-8 py-6 h-auto'
                   >
                     View All Courses
@@ -369,7 +367,7 @@ export function HomePage({
                     className='w-full'
                     variant={plan.popular ? 'default' : 'outline'}
                     onClick={
-                      user ? (): void => onNavigate('account') : onAuthClick
+                      user ? async () => navigate('/account') : onAuthClick
                     }
                   >
                     {plan.ctaText}
@@ -546,7 +544,7 @@ export function HomePage({
               <>
                 <Button
                   size='lg'
-                  onClick={() => onNavigate('dashboard')}
+                  onClick={async () => navigate('/dashboard')}
                   className='text-lg px-8 py-6 h-auto'
                 >
                   Go to Dashboard
@@ -555,7 +553,7 @@ export function HomePage({
                 <Button
                   size='lg'
                   variant='outline'
-                  onClick={() => onNavigate('courses')}
+                  onClick={async () => navigate('/courses')}
                   className='text-lg px-8 py-6 h-auto'
                 >
                   Browse Courses
@@ -575,7 +573,7 @@ export function HomePage({
                 <Button
                   size='lg'
                   variant='outline'
-                  onClick={() => onNavigate('courses')}
+                  onClick={async () => navigate('/courses')}
                   className='text-lg px-8 py-6 h-auto'
                 >
                   Explore Courses
