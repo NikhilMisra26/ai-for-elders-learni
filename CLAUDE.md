@@ -1,6 +1,73 @@
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+**MOST IMPORTANT AND MANDATORY STEP**
+**Parallelization Protocol (MANDATORY)**
+- When in "Plan Mode," come up with a very brief summary of how you will use subagents IF you plan to use them in order to maximize efficiency
+- If you decide NOT to use subagnets **justify why they are unnecesary**. 
+- **Look at Critical Directive** for more info on **HOW to decide which subagents to use**
+
+## Subagent Parallel Execution Strategy
+
+### Common Parallel Patterns
+
+**Feature Implementation Pattern:**
+User: "Add a subscription management feature"
+→ Launch IN PARALLEL:
+- ui-component-builder (subscription UI)
+- api-endpoint-generator (subscription endpoints)  
+- database-schema-designer (subscription schema)
+- payment-integration-specialist (Stripe setup)
+
+**Code Quality Pattern:**
+User: "Clean up and optimize the codebase"
+→ Launch IN PARALLEL:
+- code-refactorer (optimize code)
+- ts-lint-fixer (fix type issues)
+- test-suite-writer (add missing tests)
+
+**Deployment Pattern:**
+User: "Prepare for production deployment"
+→ Launch IN PARALLEL:
+- deployment-configurator (setup deployment)
+- security-hardener (security audit)
+- test-suite-writer (E2E tests)
+
+**Authentication Pattern:**
+User: "Implement user authentication"
+→ Launch IN PARALLEL:
+- authentication-implementer (auth logic)
+- database-schema-designer (user tables)
+- ui-component-builder (login/signup forms)
+- api-endpoint-generator (auth endpoints)
+
+### Trigger Keywords → Agent Mapping
+
+- "component", "UI", "form", "button", "modal", "page" → ui-component-builder
+- "type error", "lint", "TypeScript", "ESLint" → ts-lint-fixer  
+- "security", "vulnerability", "audit", "OWASP" → security-hardener
+- "database", "table", "schema", "migration", "RLS" → database-schema-designer
+- "API", "endpoint", "route", "server", "webhook" → api-endpoint-generator
+- "login", "auth", "user", "protected", "OAuth" → authentication-implementer
+- "refactor", "optimize", "clean", "performance" → code-refactorer
+- "test", "testing", "coverage", "E2E" → test-suite-writer
+- "payment", "Stripe", "subscription", "billing" → payment-integration-specialist
+- "deploy", "production", "CI/CD", "Vercel", "Netlify" → deployment-configurator
+
+### Subagent Decision Matrix
+
+| If the task involves... | Use these agents IN PARALLEL |
+|-------------------------|------------------------------|
+| New feature with UI | ui-component-builder + api-endpoint-generator + database-schema-designer |
+| Authentication setup | authentication-implementer + database-schema-designer + ui-component-builder |
+| Payment integration | payment-integration-specialist + api-endpoint-generator + database-schema-designer |
+| Code quality improvement | code-refactorer + ts-lint-fixer + test-suite-writer |
+| Production preparation | deployment-configurator + security-hardener + test-suite-writer |
+| Bug fixing | ts-lint-fixer + test-suite-writer |
+| Performance optimization | code-refactorer + ts-lint-fixer |
+| Full-stack feature | ui-component-builder + api-endpoint-generator + database-schema-designer + ts-lint-fixer |
+| Security review | security-hardener + test-suite-writer + authentication-implementer |
+| Database changes | database-schema-designer + api-endpoint-generator + test-suite-writer |
 
 ## Important
 - After completing a task, edit the readme to reflect the changes you made. Either edit existing stuff in the readme or, for a new feature, add it in a concise way
@@ -25,10 +92,6 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 3. **Prioritize efficiency and correctness.**  
    - If a task involves multiple files or domains (e.g., backend, frontend, tests, docs), route each domain to the correct subagent immediately.  
    - Combine results and only then return the completed task to the user.
-
-4. **Parallelization Protocol (MANDATORY)**
-- WHen in "Plan Mode," come up with a very brief summary of how you will use subagents IF you plan to use them in order to maximize efficiency
-- If you decide NOT to use subagnets **justify why they are unnecesary**. 
 
 ## Project Overview
 

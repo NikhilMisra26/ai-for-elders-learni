@@ -23,7 +23,24 @@
 
 ### 🎨 **Senior-Friendly Design**
 - Large fonts and high contrast design
-- **Robust Audio narration** with intelligent error handling, smooth state management, and instance isolation
+- **Enhanced Audio Narration System** with comprehensive accessibility features
+  - **Primary Edge TTS Integration**: High-quality Microsoft Edge TTS with natural-sounding voices
+  - **Intelligent Web Speech API Fallback**: Seamless fallback when Edge TTS unavailable
+  - **Senior-Optimized Features**:
+    - Default speech rate: 0.9x (slower for better comprehension)
+    - Constrained rate range: 0.5x - 1.5x (prevents too-fast speech)
+    - Recommended voices: Aria, Jenny, Sara (female) and Guy (male)
+    - Enhanced text preprocessing (abbreviation expansion, natural pauses)
+  - **Advanced Audio Management**:
+    - Client-side audio caching with automatic cleanup
+    - Progress tracking and duration estimation
+    - Comprehensive error handling with user-friendly messages
+    - Screen reader announcements for all state changes
+  - **Accessibility-First Design**:
+    - Keyboard controls (Space=play/pause, Enter=play, Escape=stop)
+    - Volume/rate controls with arrow keys
+    - ARIA live announcements for audio state changes
+    - Touch-friendly controls with 44px minimum touch targets
 - Touch-friendly interface with proper target sizes
 - Clear navigation with breadcrumbs
 - WCAG 2.1 AA accessibility compliance
@@ -47,6 +64,8 @@
 - **Database**: Supabase (PostgreSQL)
 - **State**: React Context API
 - **Authentication**: Supabase Auth
+- **Audio**: Microsoft Edge TTS + Web Speech API fallback
+- **Server**: Express.js (TTS API on port 3001)
 - **Icons**: Phosphor Icons
 
 ## 🚀 Quick Start
@@ -57,11 +76,20 @@
 
 ### Development Commands
 ```bash
-pnpm run dev          # Start development server
+# Core Development
+pnpm run dev          # Start development server (port 5173)
+pnpm run dev:server   # Start TTS server (port 3001)
+pnpm run dev:full     # Start both frontend and TTS server concurrently
+
+# Build & Quality
 pnpm run build        # Build for production
 pnpm run typecheck    # Run TypeScript checking
 pnpm run lint:fix     # Fix linting issues
 pnpm run format       # Format code with Prettier
+
+# Utilities
+pnpm run kill         # Kill process on port 5000
+pnpm run kill:tts     # Kill TTS server on port 3001
 ```
 
 ## 🗄️ Database Setup
@@ -92,6 +120,221 @@ Copy `.env.example` to `.env.local` and add:
 VITE_SUPABASE_URL=your_supabase_project_url
 VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
+
+## 🎙️ TTS Server Setup
+
+The platform includes a high-quality text-to-speech server using Microsoft Edge TTS for enhanced audio narration.
+
+### Local Development
+```bash
+# Install dependencies (if not already installed)
+pnpm install
+
+# Start TTS server
+pnpm run dev:server  # Server runs on http://localhost:3001
+
+# Or start both frontend and TTS server
+pnpm run dev:full
+```
+
+### TTS Features
+
+#### **Enhanced Audio Narration System**
+
+**Primary Edge TTS Integration:**
+- **Elderly-Optimized Voices**: 
+  - Primary: `en-US-AriaNeural` (warm female voice, recommended for seniors)
+  - Secondary: `en-US-JennyNeural` (friendly female voice, natural and clear)
+  - Alternative: `en-US-SaraNeural` (professional female voice, clear articulation)
+  - Male option: `en-US-GuyNeural` (clear, pleasant male voice)
+
+**Senior-Friendly Audio Settings:**
+- **Default speech rate**: 0.9x (slower for better comprehension)
+- **Constrained rate range**: 0.5x - 1.5x (prevents too-fast speech)
+- **Maximum text length**: 5000 characters per request
+- **High-quality audio**: 24kHz, 48kbps MP3 output
+- **Smart volume control**: Gradual adjustments with accessibility announcements
+
+**Advanced Features:**
+- **Intelligent Fallback System**: 
+  - Automatic Web Speech API fallback when Edge TTS unavailable
+  - Health check monitoring with user notifications
+  - Graceful degradation with clear status messages
+- **Enhanced Text Processing**:
+  - Abbreviation expansion (AI → Artificial Intelligence, API → A-P-I)
+  - Emoji to text conversion (✅ → Checkmark, ⚠️ → Warning)
+  - Natural pause insertion for better comprehension
+  - Markdown formatting removal
+- **Memory-Efficient Caching**:
+  - Client-side audio caching with 50-item limit
+  - Automatic cleanup after 30 minutes
+  - Object URL management to prevent memory leaks
+- **Comprehensive Error Handling**:
+  - User-friendly error messages for seniors
+  - Automatic retry logic with exponential backoff
+  - Detailed logging for debugging and monitoring
+
+**Accessibility Features:**
+- **Keyboard Controls**:
+  - Space: Play/Pause toggle
+  - Enter: Start playback  
+  - Escape: Stop and reset
+  - Arrow keys: Volume and rate control
+- **Screen Reader Integration**:
+  - ARIA live announcements for all state changes
+  - Progress updates and completion notifications
+  - Error message announcements
+- **Touch-Friendly Controls**:
+  - Minimum 44px touch targets
+  - Large, clearly labeled buttons
+  - Visual feedback for all interactions
+
+### API Endpoints
+- `POST /api/tts` - Generate speech audio
+- `GET /api/tts/voices` - List available voices and settings
+- `GET /health` - Server health check
+
+### Testing the TTS Server
+```bash
+# Test server health
+curl http://localhost:3001/health
+
+# Generate speech (example)
+curl -X POST http://localhost:3001/api/tts \
+  -H "Content-Type: application/json" \
+  -d '{"text": "Hello, welcome to AI for Elders!", "voice": "en-US-AriaNeural", "rate": 0.9}' \
+  --output test-audio.mp3
+```
+
+### Using the Enhanced Audio System in Components
+
+#### Basic Usage with Enhanced Hook
+```tsx
+import { useAudioNarration } from '@/lib/audioNarration';
+
+function MyComponent() {
+  const [audioState, audioControls] = useAudioNarration(
+    "Welcome to AI for Elders! This text will be spoken using high-quality Edge TTS voices.",
+    true // prefer Edge TTS
+  );
+
+  return (
+    <div>
+      <button 
+        onClick={audioControls.play}
+        disabled={audioState.isLoading}
+        className="min-h-[44px] min-w-[44px]" // Touch-friendly
+      >
+        {audioState.isLoading ? 'Loading...' : 
+         audioState.isPlaying ? 'Pause' : 'Play'}
+      </button>
+      
+      <p>Duration: {audioControls.getFormattedDuration()}</p>
+      <p>Using: {audioState.usingEdgeTTS ? 'High-Quality Voice' : 'System Voice'}</p>
+    </div>
+  );
+}
+```
+
+#### Advanced Usage with Dedicated Edge TTS Hook
+```tsx
+import { useEdgeTTSAudio, useAudioKeyboardControls } from '@/hooks/useEdgeTTSAudio';
+
+function AdvancedAudioComponent() {
+  const [audioState, audioControls] = useEdgeTTSAudio(
+    "Advanced text-to-speech with full Edge TTS features.",
+    {
+      initialVoice: 'en-US-AriaNeural',
+      initialRate: 0.9,
+      onError: (error) => console.error('Audio error:', error),
+      onPlaybackStart: () => console.log('Audio started'),
+      onPlaybackEnd: () => console.log('Audio completed')
+    }
+  );
+
+  // Set up keyboard controls
+  const handleKeyDown = useAudioKeyboardControls(audioControls, audioState, {
+    enableRateControl: true,
+    volumeStep: 0.1,
+    rateStep: 0.1
+  });
+
+  React.useEffect(() => {
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [handleKeyDown]);
+
+  return (
+    <div className="space-y-4">
+      {/* Audio Controls */}
+      <div className="flex space-x-2">
+        <button onClick={audioControls.play} disabled={audioState.isLoading}>
+          {audioState.isLoading ? 'Loading...' : 'Play'}
+        </button>
+        <button onClick={audioControls.pause} disabled={!audioState.isPlaying}>
+          Pause
+        </button>
+        <button onClick={audioControls.stop} disabled={!audioState.isPlaying && !audioState.isPaused}>
+          Stop
+        </button>
+      </div>
+
+      {/* Progress and Info */}
+      <div>
+        <p>Progress: {audioState.progress}%</p>
+        <p>Duration: {audioControls.getFormattedDuration()}</p>
+        <p>Server: {audioState.isServerAvailable ? 'Available' : 'Unavailable'}</p>
+      </div>
+
+      {/* Rate and Volume Controls */}
+      <div className="space-y-2">
+        <div>
+          <label>Rate: {Math.round(audioState.rate * 100)}%</label>
+          <input
+            type="range"
+            min="0.5"
+            max="1.5"
+            step="0.1"
+            value={audioState.rate}
+            onChange={(e) => audioControls.setRate(parseFloat(e.target.value))}
+            className="w-full"
+          />
+        </div>
+        <div>
+          <label>Volume: {Math.round(audioState.volume * 100)}%</label>
+          <input
+            type="range"
+            min="0"
+            max="1"
+            step="0.1"
+            value={audioState.volume}
+            onChange={(e) => audioControls.setVolume(parseFloat(e.target.value))}
+            className="w-full"
+          />
+        </div>
+      </div>
+
+      {/* Error Display */}
+      {audioState.error && (
+        <div className="text-red-600 p-2 bg-red-50 rounded">
+          <p>{audioState.error}</p>
+          <button onClick={audioControls.clearError} className="text-sm underline">
+            Clear Error
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+```
+
+#### Component Features
+- **Automatic Health Checking**: Detects Edge TTS server availability on mount
+- **Intelligent Fallback**: Seamlessly switches to Web Speech API when needed
+- **Keyboard Accessibility**: Standard keyboard shortcuts for all audio controls
+- **Progress Tracking**: Real-time progress updates during playback
+- **Error Recovery**: Clear error messages with user-friendly recovery options
+- **Senior-Friendly Defaults**: Optimized settings for elderly users out of the box
 
 ## 📊 Managing Dynamic Metrics
 

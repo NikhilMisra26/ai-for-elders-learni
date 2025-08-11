@@ -1,6 +1,14 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-
 import { errorHandler } from './errorHandler';
+import { 
+  edgeTTSService, 
+  EdgeTTSService,
+  EdgeTTSServiceError,
+  type EdgeTTSRequest,
+  type EdgeTTSResponse,
+  getSeniorFriendlyVoices,
+  formatSpeechDuration
+} from './edgeTTSService';
 
 export interface AudioNarrationState {
   isPlaying: boolean;
@@ -10,22 +18,29 @@ export interface AudioNarrationState {
   position: number;
   rate: number;
   volume: number;
-  voice: SpeechSynthesisVoice | null;
+  voice: SpeechSynthesisVoice | string | null; // Can be Web Speech voice or Edge TTS voice name
+  usingEdgeTTS: boolean;
+  isServerAvailable: boolean | null;
+  estimatedDuration: number;
+  isLoading: boolean;
 }
 
 export interface AudioNarrationControls {
-  play: () => void;
+  play: () => Promise<void>;
   pause: () => void;
   stop: () => void;
   resume: () => void;
   setRate: (rate: number) => void;
   setVolume: (volume: number) => void;
-  setVoice: (voice: SpeechSynthesisVoice) => void;
+  setVoice: (voice: SpeechSynthesisVoice | string) => void;
+  toggleTTSMode: () => void;
   getText: () => string;
+  getFormattedDuration: () => string;
 }
 
 export function useAudioNarration(
   text: string,
+  preferEdgeTTS = true
 ): [AudioNarrationState, AudioNarrationControls] {
   // Create a unique ID for this hook instance for logging
   const hookId = useRef(Math.random().toString(36).substr(2, 9));
@@ -33,30 +48,62 @@ export function useAudioNarration(
   // Track if this hook instance has been disposed/cleaned up
   const isDisposedRef = useRef(false);
   
+  // Refs for managing audio playback
+  const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
+  const audioElementRef = useRef<HTMLAudioElement | null>(null);
+  const currentAudioUrlRef = useRef<string | null>(null);
+  
+  // Track actual speech state to prevent race conditions
+  const actualSpeechStateRef = useRef({
+    isActuallySpeaking: false,
+    isActuallyPaused: false
+  });
+  const currentTextRef = useRef<string>('');
+  
   const [state, setState] = useState<AudioNarrationState>({
     isPlaying: false,
     isPaused: false,
     isSupported: typeof window !== 'undefined' && 'speechSynthesis' in window,
     currentText: text,
     position: 0,
-    rate: 1,
+    rate: 0.9, // Senior-friendly default rate
     volume: 1,
-    voice: null,
+    voice: 'en-US-AriaNeural', // Default to Edge TTS voice
+    usingEdgeTTS: preferEdgeTTS,
+    isServerAvailable: null,
+    estimatedDuration: 0,
+    isLoading: false,
   });
 
-  // Use refs to prevent recreation during renders
-  const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
-  const actualSpeechStateRef = useRef({
-    isActuallySpeaking: false,
-    isActuallyPaused: false
-  });
-  const currentTextRef = useRef<string>('');
   const [_availableVoices, setAvailableVoices] = useState<
     SpeechSynthesisVoice[]
   >([]);
   
 
-  // Load available voices
+  // Check Edge TTS server availability on mount
+  useEffect(() => {
+    let mounted = true;
+    
+    edgeTTSService.checkServerHealth().then((available) => {
+      if (mounted) {
+        setState(prev => ({ ...prev, isServerAvailable: available }));
+        
+        // Switch to Web Speech if Edge TTS server is unavailable and we're trying to use it
+        if (!available && state.usingEdgeTTS) {
+          setState(prev => ({ ...prev, usingEdgeTTS: false }));
+          
+          // Announce fallback to users
+          announceToScreenReader('High-quality voice unavailable. Using system voice.');
+        }
+      }
+    });
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
+
+  // Load available Web Speech voices for fallback
   useEffect(() => {
     if (!state.isSupported) {
       return;
@@ -67,8 +114,8 @@ export function useAudioNarration(
       
       setAvailableVoices(voices);
 
-      // Set default voice (prefer female voice for senior-friendly experience)
-      if (voices.length > 0 && !state.voice) {
+      // Set default Web Speech voice if we're not using Edge TTS and don't have a voice set
+      if (voices.length > 0 && !state.usingEdgeTTS && typeof state.voice === 'string') {
         const preferredVoice =
           voices.find(
             (voice) =>
@@ -86,10 +133,10 @@ export function useAudioNarration(
 
     loadVoices();
     window.speechSynthesis.onvoiceschanged = loadVoices;
-  }, [state.isSupported, state.voice]);
+  }, [state.isSupported, state.usingEdgeTTS, state.voice]);
 
-  // Clean up text for better narration
-  const cleanTextForSpeech = (rawText: string): string => {
+  // Clean text for better narration (moved up to be available in useEffect)
+  const cleanTextForSpeech = useCallback((rawText: string): string => {
     return (
       rawText
         // Remove markdown formatting
@@ -104,345 +151,441 @@ export function useAudioNarration(
         .replace(/⚠️/g, 'Warning: ')
         .replace(/🚨/g, 'Alert: ')
         .replace(/🔒/g, 'Lock icon: ')
-        // Add pauses for better pacing
-        .replace(/\.\s+/g, '. ... ')
-        .replace(/:\s+/g, ': ... ')
-        .replace(/\n\n/g, ' ... ... ')
-        .replace(/\n/g, ' ... ')
+        .replace(/🎓/g, 'Graduation cap: ')
+        .replace(/📚/g, 'Books: ')
+        .replace(/💡/g, 'Light bulb: ')
+        .replace(/🔍/g, 'Search: ')
+        // Improve pronunciation of common abbreviations
+        .replace(/\bAI\b/g, 'Artificial Intelligence')
+        .replace(/\bAPI\b/g, 'A P I')
+        .replace(/\bURL\b/g, 'U R L')
+        .replace(/\bHTML\b/g, 'H T M L')
+        .replace(/\bCSS\b/g, 'C S S')
+        .replace(/\bJS\b/g, 'JavaScript')
+        // Add pauses for better pacing (senior-friendly)
+        .replace(/\.\s+/g, '. ')
+        .replace(/:\s+/g, ': ')
+        .replace(/;\s+/g, '; ')
+        .replace(/\?\s+/g, '? ')
+        .replace(/!\s+/g, '! ')
+        .replace(/\n\n/g, ' ')
+        .replace(/\n/g, ' ')
         // Clean up extra whitespace
         .replace(/\s+/g, ' ')
         .trim()
     );
-  };
+  }, []);
 
-  // Create or update utterance when text actually changes (not on rate/volume/voice changes)
+  // Update estimated duration when text or rate changes
   useEffect(() => {
-    if (!state.isSupported) {
+    const cleanText = cleanTextForSpeech(text);
+    const duration = edgeTTSService.estimateDuration(cleanText, state.rate);
+    setState(prev => ({ ...prev, estimatedDuration: duration, currentText: cleanText }));
+  }, [text, state.rate, cleanTextForSpeech]);
+
+
+  const play = useCallback(async (): Promise<void> => {
+    if (isDisposedRef.current) {
       return;
     }
 
     const cleanText = cleanTextForSpeech(text);
-    
-    // Only recreate utterance if text actually changed
-    if (currentTextRef.current === cleanText && utteranceRef.current) {
-      return;
+    setState(prev => ({ ...prev, currentText: cleanText, isLoading: true }));
+
+    try {
+      // Try Edge TTS first if preferred and server is available
+      if (state.usingEdgeTTS && state.isServerAvailable) {
+        const voiceName = typeof state.voice === 'string' ? state.voice : 'en-US-AriaNeural';
+        
+        const request: EdgeTTSRequest = {
+          text: cleanText,
+          voice: voiceName,
+          rate: state.rate
+        };
+
+        try {
+          const response: EdgeTTSResponse = await edgeTTSService.generateSpeech(request);
+          
+          // Clean up previous audio
+          if (audioElementRef.current) {
+            audioElementRef.current.pause();
+            audioElementRef.current = null;
+          }
+          if (currentAudioUrlRef.current) {
+            URL.revokeObjectURL(currentAudioUrlRef.current);
+            currentAudioUrlRef.current = null;
+          }
+
+          // Create new audio element
+          const audio = edgeTTSService.createAudioElement(response.audioUrl, state.volume);
+          audioElementRef.current = audio;
+          currentAudioUrlRef.current = response.audioUrl;
+
+          // Set up audio event listeners
+          audio.addEventListener('loadstart', () => {
+            setState(prev => ({ ...prev, isPlaying: true, isPaused: false, isLoading: false }));
+            announceToScreenReader('Audio is playing with high-quality voice.');
+          });
+
+          audio.addEventListener('ended', () => {
+            setState(prev => ({ ...prev, isPlaying: false, isPaused: false, position: 0 }));
+            announceToScreenReader('Audio playback completed.');
+          });
+
+          audio.addEventListener('pause', () => {
+            setState(prev => ({ ...prev, isPaused: true }));
+          });
+
+          audio.addEventListener('play', () => {
+            setState(prev => ({ ...prev, isPaused: false }));
+          });
+
+          audio.addEventListener('timeupdate', () => {
+            if (audio.duration > 0) {
+              setState(prev => ({ ...prev, position: Math.round((audio.currentTime / audio.duration) * 100) }));
+            }
+          });
+
+          audio.addEventListener('error', (event) => {
+            const audioElement = event.target as HTMLAudioElement;
+            const errorMessage = `Edge TTS audio playback failed: ${audioElement.error?.message || 'Unknown error'}`;
+            
+            errorHandler.logError(
+              'Edge TTS audio playback error',
+              new Error(errorMessage),
+              {
+                component: 'audio_narration',
+                action: 'edge_tts_playback',
+                metadata: {
+                  hookId: hookId.current,
+                  errorCode: audioElement.error?.code,
+                  voice: voiceName,
+                  textLength: cleanText.length
+                }
+              }
+            );
+
+            setState(prev => ({ ...prev, isPlaying: false, isPaused: false, isLoading: false }));
+            announceToScreenReader('High-quality voice failed. Switching to system voice.');
+            
+            // Fall back to Web Speech API
+            setTimeout(() => playWithWebSpeech(cleanText), 100);
+          });
+
+          // Start playback
+          await audio.play();
+          return;
+
+        } catch (error) {
+          // Edge TTS failed, fall back to Web Speech API
+          errorHandler.logWarning(
+            'Edge TTS generation failed, falling back to Web Speech API',
+            {
+              component: 'audio_narration',
+              action: 'edge_tts_fallback',
+              metadata: {
+                hookId: hookId.current,
+                error: error instanceof Error ? error.message : String(error),
+                voice: voiceName,
+                textLength: cleanText.length
+              }
+            }
+          );
+
+          announceToScreenReader('High-quality voice unavailable. Using system voice.');
+          setState(prev => ({ ...prev, usingEdgeTTS: false }));
+          
+          // Continue to Web Speech API fallback
+        }
+      }
+
+      // Use Web Speech API (either as primary choice or fallback)
+      await playWithWebSpeech(cleanText);
+
+    } catch (error) {
+      errorHandler.logError(
+        'Audio narration completely failed',
+        error instanceof Error ? error : new Error(String(error)),
+        {
+          component: 'audio_narration',
+          action: 'play_failure',
+          metadata: {
+            hookId: hookId.current,
+            textLength: cleanText.length,
+            usingEdgeTTS: state.usingEdgeTTS,
+            isServerAvailable: state.isServerAvailable
+          }
+        }
+      );
+
+      setState(prev => ({ ...prev, isPlaying: false, isPaused: false, isLoading: false }));
+      announceToScreenReader('Audio playback failed. Please try again.');
     }
-    
-    // Cancel any existing speech before creating new utterance
+  }, [text, state.usingEdgeTTS, state.isServerAvailable, state.voice, state.rate, state.volume]);
+
+  // Helper function for Web Speech API playback
+  const playWithWebSpeech = useCallback(async (cleanText: string): Promise<void> => {
+    if (!state.isSupported) {
+      throw new Error('Speech synthesis not supported');
+    }
+
+    // Cancel any existing speech
     if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
       window.speechSynthesis.cancel();
       actualSpeechStateRef.current = { isActuallySpeaking: false, isActuallyPaused: false };
     }
 
-    const newUtterance = new window.SpeechSynthesisUtterance(cleanText);
-    currentTextRef.current = cleanText;
-
-    // Apply current settings to utterance
-    newUtterance.rate = state.rate;
-    newUtterance.volume = state.volume;
-    if (state.voice) {
-      newUtterance.voice = state.voice;
+    // Create new utterance
+    const utterance = new window.SpeechSynthesisUtterance(cleanText);
+    utterance.rate = state.rate;
+    utterance.volume = state.volume;
+    
+    if (state.voice && typeof state.voice !== 'string') {
+      utterance.voice = state.voice;
     }
 
-    newUtterance.onstart = (): void => {
+    // Set up event listeners
+    utterance.onstart = () => {
       actualSpeechStateRef.current.isActuallySpeaking = true;
       actualSpeechStateRef.current.isActuallyPaused = false;
-      setState((prev) => ({ ...prev, isPlaying: true, isPaused: false }));
+      setState(prev => ({ ...prev, isPlaying: true, isPaused: false, isLoading: false }));
+      announceToScreenReader('Audio is playing with system voice.');
     };
 
-    newUtterance.onend = (): void => {
+    utterance.onend = () => {
       actualSpeechStateRef.current.isActuallySpeaking = false;
       actualSpeechStateRef.current.isActuallyPaused = false;
-      setState((prev) => ({
-        ...prev,
-        isPlaying: false,
-        isPaused: false,
-        position: 0,
-      }));
+      setState(prev => ({ ...prev, isPlaying: false, isPaused: false, position: 0 }));
+      announceToScreenReader('Audio playback completed.');
     };
 
-    newUtterance.onpause = (): void => {
+    utterance.onpause = () => {
       actualSpeechStateRef.current.isActuallyPaused = true;
-      setState((prev) => ({ ...prev, isPaused: true }));
+      setState(prev => ({ ...prev, isPaused: true }));
     };
 
-    newUtterance.onresume = (): void => {
+    utterance.onresume = () => {
       actualSpeechStateRef.current.isActuallyPaused = false;
-      setState((prev) => ({ ...prev, isPaused: false }));
+      setState(prev => ({ ...prev, isPaused: false }));
     };
 
-    newUtterance.onerror = (event): void => {
+    utterance.onerror = (event) => {
       actualSpeechStateRef.current.isActuallySpeaking = false;
       actualSpeechStateRef.current.isActuallyPaused = false;
       
-      // Don't log 'interrupted' as an error since it's expected when user stops/restarts audio
       if (event.error !== 'interrupted') {
-        const errorMessage = `Speech synthesis failed: ${event.error}`;
+        const errorMessage = `Web Speech API failed: ${event.error}`;
         errorHandler.logError(errorMessage, new Error(event.error), {
           component: 'audio_narration',
-          action: 'speech_synthesis',
+          action: 'web_speech_api',
           metadata: {
             errorType: event.error,
             textLength: cleanText.length,
             rate: state.rate,
             volume: state.volume,
-            voiceName: state.voice?.name ?? 'default',
+            voiceName: typeof state.voice !== 'string' ? state.voice?.name ?? 'default' : 'edge-tts-voice',
             hookId: hookId.current
           },
         });
+        announceToScreenReader('System voice playback failed. Please try again.');
       }
-      setState((prev) => ({ ...prev, isPlaying: false, isPaused: false }));
+      
+      setState(prev => ({ ...prev, isPlaying: false, isPaused: false, isLoading: false }));
     };
 
     // Track position (approximate)
-    newUtterance.onboundary = (event): void => {
-      // Some browsers may not provide charIndex reliably
-      const idx = (event as unknown as { charIndex?: number }).charIndex ?? 0;
-      setState((prev) => ({ ...prev, position: idx }));
+    utterance.onboundary = (event) => {
+      const boundaryEvent = event as unknown as { charIndex?: number };
+      const idx = boundaryEvent.charIndex ?? 0;
+      const progress = Math.round((idx / cleanText.length) * 100);
+      setState(prev => ({ ...prev, position: progress }));
     };
 
-    utteranceRef.current = newUtterance;
-    setState((prev) => ({ ...prev, currentText: cleanText }));
-  }, [text, state.isSupported]); // Only depend on text and isSupported, not rate/volume/voice
-  
-  // Separate effect to handle rate/volume/voice changes on existing utterance
-  useEffect(() => {
-    if (!utteranceRef.current) {
-      return;
-    }
+    utteranceRef.current = utterance;
     
-    // Update existing utterance settings without recreating it
-    utteranceRef.current.rate = state.rate;
-    utteranceRef.current.volume = state.volume;
-    if (state.voice) {
-      utteranceRef.current.voice = state.voice;
-    }
-  }, [state.rate, state.volume, state.voice]);
-
-  const play = useCallback((): void => {
-    if (isDisposedRef.current) {
-      return;
-    }
-    
-    if (!state.isSupported || !utteranceRef.current) {
-      if (!state.isSupported) {
-        errorHandler.logWarning(
-          'Speech synthesis not supported in this browser',
-          {
-            component: 'audio_narration',
-            action: 'play_attempt',
-            metadata: {
-              hookId: hookId.current,
-              userAgent:
-                typeof navigator !== 'undefined'
-                  ? navigator.userAgent
-                  : 'unknown',
-              platform:
-                typeof navigator !== 'undefined'
-                  ? navigator.platform
-                  : 'unknown',
-            },
-          },
-        );
-      }
-      return;
-    }
-
-    try {
-      // Check actual speech synthesis state vs our tracked state
-      const synthesisSpeaking = window.speechSynthesis.speaking;
-      const synthesisPending = window.speechSynthesis.pending;
-      
-      // If speech is paused, resume instead of starting new
-      if (actualSpeechStateRef.current.isActuallyPaused && synthesisSpeaking) {
-        window.speechSynthesis.resume();
-        return;
-      }
-      
-      // Only cancel if there's actually something playing to avoid interruption errors
-      if (synthesisSpeaking || synthesisPending) {
-        window.speechSynthesis.cancel();
-        actualSpeechStateRef.current = { isActuallySpeaking: false, isActuallyPaused: false };
-        
-        // Add small delay to ensure cancel completes
-        setTimeout(() => {
-          try {
-            window.speechSynthesis.speak(utteranceRef.current!);
-          } catch (delayedError) {
-            errorHandler.logError(
-              'Failed to start speech synthesis after delay',
-              delayedError instanceof Error
-                ? delayedError
-                : new Error(String(delayedError)),
-              {
-                component: 'audio_narration',
-                action: 'play_delayed',
-                metadata: {
-                  hookId: hookId.current,
-                  textLength: state.currentText.length,
-                  hasVoice: !!state.voice,
-                  voiceName: state.voice?.name,
-                },
-              },
-            );
-            setState((prev) => ({
-              ...prev,
-              isPlaying: false,
-              isPaused: false,
-            }));
-          }
-        }, 100);
-      } else {
-        // Start new speech immediately if nothing is playing
-        window.speechSynthesis.speak(utteranceRef.current);
-      }
-    } catch (error) {
-      errorHandler.logError(
-        'Failed to start speech synthesis',
-        error instanceof Error ? error : new Error(String(error)),
-        {
-          component: 'audio_narration',
-          action: 'play',
-          metadata: {
-            hookId: hookId.current,
-            textLength: state.currentText.length,
-            hasVoice: !!state.voice,
-            voiceName: state.voice?.name,
-          },
-        },
-      );
-      setState((prev) => ({ ...prev, isPlaying: false, isPaused: false }));
-    }
-  }, [state.isSupported, state.currentText.length, state.voice, state.isPlaying, state.isPaused]);
+    // Start speech synthesis
+    window.speechSynthesis.speak(utterance);
+  }, [state.isSupported, state.rate, state.volume, state.voice]);
 
   const pause = useCallback((): void => {
-    if (isDisposedRef.current) {
-      return;
-    }
-    
-    if (!state.isSupported) {
-      return;
-    }
+    if (isDisposedRef.current) return;
 
     try {
-      window.speechSynthesis.pause();
+      if (state.usingEdgeTTS && audioElementRef.current) {
+        audioElementRef.current.pause();
+        announceToScreenReader('Audio paused.');
+      } else if (state.isSupported) {
+        window.speechSynthesis.pause();
+        announceToScreenReader('Audio paused.');
+      }
     } catch (error) {
       errorHandler.logError(
-        'Failed to pause speech synthesis',
+        'Failed to pause audio',
         error instanceof Error ? error : new Error(String(error)),
         {
           component: 'audio_narration',
           action: 'pause',
           metadata: {
-            hookId: hookId.current
+            hookId: hookId.current,
+            usingEdgeTTS: state.usingEdgeTTS
           }
         },
       );
     }
-  }, [state.isSupported]);
+  }, [state.usingEdgeTTS, state.isSupported]);
 
   const stop = useCallback((): void => {
-    if (isDisposedRef.current) {
-      return;
-    }
-    
-    if (!state.isSupported) {
-      return;
-    }
+    if (isDisposedRef.current) return;
 
     try {
-      window.speechSynthesis.cancel();
-      actualSpeechStateRef.current = { isActuallySpeaking: false, isActuallyPaused: false };
+      if (state.usingEdgeTTS && audioElementRef.current) {
+        audioElementRef.current.pause();
+        audioElementRef.current.currentTime = 0;
+        announceToScreenReader('Audio stopped.');
+      } else if (state.isSupported) {
+        window.speechSynthesis.cancel();
+        actualSpeechStateRef.current = { isActuallySpeaking: false, isActuallyPaused: false };
+        announceToScreenReader('Audio stopped.');
+      }
       
-      setState((prev) => ({
+      setState(prev => ({
         ...prev,
         isPlaying: false,
         isPaused: false,
         position: 0,
       }));
+
     } catch (error) {
       errorHandler.logError(
-        'Failed to stop speech synthesis',
+        'Failed to stop audio',
         error instanceof Error ? error : new Error(String(error)),
         {
           component: 'audio_narration',
           action: 'stop',
           metadata: {
-            hookId: hookId.current
+            hookId: hookId.current,
+            usingEdgeTTS: state.usingEdgeTTS
           }
         },
       );
-      // Still update state even if stop failed
+      
+      // Force state update even if stop failed
       actualSpeechStateRef.current = { isActuallySpeaking: false, isActuallyPaused: false };
-      setState((prev) => ({
+      setState(prev => ({
         ...prev,
         isPlaying: false,
         isPaused: false,
         position: 0,
       }));
     }
-  }, [state.isSupported]);
+  }, [state.usingEdgeTTS, state.isSupported]);
 
   const resume = useCallback((): void => {
-    if (isDisposedRef.current) {
-      return;
-    }
-    
-    if (!state.isSupported) {
-      return;
-    }
+    if (isDisposedRef.current) return;
 
     try {
-      window.speechSynthesis.resume();
+      if (state.usingEdgeTTS && audioElementRef.current) {
+        audioElementRef.current.play();
+        announceToScreenReader('Audio resumed.');
+      } else if (state.isSupported) {
+        window.speechSynthesis.resume();
+        announceToScreenReader('Audio resumed.');
+      }
     } catch (error) {
       errorHandler.logError(
-        'Failed to resume speech synthesis',
+        'Failed to resume audio',
         error instanceof Error ? error : new Error(String(error)),
         {
           component: 'audio_narration',
           action: 'resume',
           metadata: {
-            hookId: hookId.current
+            hookId: hookId.current,
+            usingEdgeTTS: state.usingEdgeTTS
           }
         },
       );
     }
-  }, [state.isSupported]);
+  }, [state.usingEdgeTTS, state.isSupported]);
 
   const setRate = useCallback((rate: number): void => {
-    const clampedRate = Math.max(0.1, Math.min(2, rate));
-    setState((prev) => ({ ...prev, rate: clampedRate }));
+    // Constrained range for elderly users (0.5 - 1.5)
+    const clampedRate = Math.max(0.5, Math.min(1.5, rate));
+    setState(prev => ({ ...prev, rate: clampedRate }));
+    announceToScreenReader(`Speech rate set to ${Math.round(clampedRate * 100)}%.`);
   }, []);
 
   const setVolume = useCallback((volume: number): void => {
     const clampedVolume = Math.max(0, Math.min(1, volume));
-    setState((prev) => ({ ...prev, volume: clampedVolume }));
+    setState(prev => ({ ...prev, volume: clampedVolume }));
+    
+    // Update current audio if playing
+    if (audioElementRef.current) {
+      audioElementRef.current.volume = clampedVolume;
+    }
+    
+    announceToScreenReader(`Volume set to ${Math.round(clampedVolume * 100)}%.`);
   }, []);
 
-  const setVoice = useCallback((voice: SpeechSynthesisVoice): void => {
-    setState((prev) => ({ ...prev, voice }));
+  const setVoice = useCallback((voice: SpeechSynthesisVoice | string): void => {
+    setState(prev => ({ ...prev, voice }));
+    const voiceName = typeof voice === 'string' ? voice : voice.name;
+    announceToScreenReader(`Voice changed to ${voiceName}.`);
   }, []);
+
+  const toggleTTSMode = useCallback((): void => {
+    // Only allow toggle if server is available or we're switching away from Edge TTS
+    if (state.isServerAvailable || state.usingEdgeTTS) {
+      const newMode = !state.usingEdgeTTS;
+      setState(prev => ({ ...prev, usingEdgeTTS: newMode }));
+      
+      const modeDescription = newMode ? 'high-quality voice' : 'system voice';
+      announceToScreenReader(`Switched to ${modeDescription}.`);
+    } else {
+      announceToScreenReader('High-quality voice server is not available.');
+    }
+  }, [state.isServerAvailable, state.usingEdgeTTS]);
 
   const getText = useCallback((): string => {
     return state.currentText;
   }, [state.currentText]);
+
+  const getFormattedDuration = useCallback((): string => {
+    return formatSpeechDuration(state.estimatedDuration);
+  }, [state.estimatedDuration]);
   
   // Cleanup effect
   useEffect(() => {
     return () => {
       isDisposedRef.current = true;
       
-      // Only cancel speech if this specific instance's utterance is currently playing
+      // Clean up Edge TTS audio
+      if (audioElementRef.current) {
+        try {
+          audioElementRef.current.pause();
+          audioElementRef.current = null;
+        } catch (error) {
+          // Silent cleanup
+        }
+      }
+      
+      // Clean up audio URL
+      if (currentAudioUrlRef.current) {
+        try {
+          URL.revokeObjectURL(currentAudioUrlRef.current);
+          currentAudioUrlRef.current = null;
+        } catch (error) {
+          // Silent cleanup
+        }
+      }
+      
+      // Clean up Web Speech API
       if (typeof window !== 'undefined' && utteranceRef.current) {
         try {
-          // Check if the current utterance matches this instance's utterance
-          // We can't directly check if our utterance is the one playing, but we can
-          // check if speech is active and we have an utterance
           if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
             window.speechSynthesis.cancel();
           }
         } catch (error) {
-          // Error during cleanup - this is expected to be silent
+          // Silent cleanup
         }
       }
     };
@@ -458,7 +601,9 @@ export function useAudioNarration(
       setRate,
       setVolume,
       setVoice,
+      toggleTTSMode,
       getText,
+      getFormattedDuration,
     },
   ];
 }
@@ -478,9 +623,9 @@ export function useNarrationPreferences(): [
 ] {
   const defaultPrefs: NarrationPreferences = {
     autoPlay: false,
-    defaultRate: 1,
+    defaultRate: 0.9, // Senior-friendly slower rate
     defaultVolume: 1,
-    preferredVoice: null,
+    preferredVoice: 'en-US-AriaNeural', // Default to Edge TTS voice
     enabled: true,
   };
   const [preferences, setPreferences] = useState<NarrationPreferences | null>(
@@ -567,16 +712,20 @@ export interface NarrationControlsProps {
 }
 
 // Utility for senior-friendly voice selection
-export function getRecommendedVoices(): string[] {
-  // Voices that tend to be clearer and more pleasant for seniors
-  return [
-    'Microsoft Zira Desktop',
-    'Microsoft Susan Desktop',
-    'Google UK English Female',
-    'Google US English Female',
-    'Apple Samantha',
-    'Apple Victoria',
-  ];
+export function getRecommendedVoices(): { edgeTTS: string[]; webSpeech: string[] } {
+  return {
+    // Edge TTS voices (preferred for seniors)
+    edgeTTS: getSeniorFriendlyVoices(),
+    // Web Speech API voices (fallback)
+    webSpeech: [
+      'Microsoft Zira Desktop',
+      'Microsoft Susan Desktop',
+      'Google UK English Female',
+      'Google US English Female',
+      'Apple Samantha',
+      'Apple Victoria',
+    ]
+  };
 }
 
 // Accessibility helpers
@@ -627,4 +776,53 @@ export function formatSpeechTime(minutes: number): string {
   if (minutes < 1) return 'Less than 1 minute';
   if (minutes === 1) return '1 minute';
   return `${minutes} minutes`;
+}
+
+// Enhanced hook alias for backward compatibility
+export const useEnhancedAudioNarration = useAudioNarration;
+
+// Export Edge TTS service for advanced usage
+export { edgeTTSService, EdgeTTSServiceError } from './edgeTTSService';
+
+/**
+ * Get available Edge TTS voices with senior-friendly information
+ */
+export async function getEdgeTTSVoices() {
+  try {
+    const voices = await edgeTTSService.getAvailableVoices();
+    return voices;
+  } catch (error) {
+    errorHandler.logWarning(
+      'Failed to get Edge TTS voices',
+      {
+        component: 'audio_narration',
+        action: 'get_edge_voices',
+        metadata: {
+          error: error instanceof Error ? error.message : String(error)
+        }
+      }
+    );
+    
+    // Return fallback voice information
+    return {
+      recommended: {
+        primary: 'en-US-AriaNeural',
+        secondary: 'en-US-JennyNeural',
+        alternative: 'en-US-SaraNeural',
+        male: 'en-US-GuyNeural'
+      },
+      all: getSeniorFriendlyVoices().map(voiceName => ({
+        name: voiceName,
+        description: `${voiceName.replace('en-US-', '').replace('Neural', '')} - High-quality voice optimized for seniors`,
+        gender: voiceName.includes('Guy') ? 'male' : 'female' as const,
+        language: 'en-US',
+        isRecommendedForSeniors: true
+      })),
+      settings: {
+        recommendedRate: 0.9,
+        rateRange: { min: 0.5, max: 1.5 },
+        maxTextLength: 5000
+      }
+    };
+  }
 }
