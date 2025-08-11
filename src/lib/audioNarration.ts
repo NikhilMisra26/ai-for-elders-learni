@@ -29,12 +29,9 @@ export function useAudioNarration(
 ): [AudioNarrationState, AudioNarrationControls] {
   // Create a unique ID for this hook instance for logging
   const hookId = useRef(Math.random().toString(36).substr(2, 9));
-  const logPrefix = `[AudioNarration-${hookId.current}]`;
   
   // Track if this hook instance has been disposed/cleaned up
   const isDisposedRef = useRef(false);
-  
-  console.log(`${logPrefix} Hook initialized with text length:`, text.length);
   
   const [state, setState] = useState<AudioNarrationState>({
     isPlaying: false,
@@ -58,24 +55,15 @@ export function useAudioNarration(
     SpeechSynthesisVoice[]
   >([]);
   
-  console.log(`${logPrefix} Initial state:`, {
-    isSupported: state.isSupported,
-    textLength: text.length
-  });
 
   // Load available voices
   useEffect(() => {
-    console.log(`${logPrefix} Loading voices, isSupported:`, state.isSupported);
-    
     if (!state.isSupported) {
-      console.log(`${logPrefix} Speech synthesis not supported, skipping voice loading`);
       return;
     }
 
     const loadVoices = (): void => {
-      console.log(`${logPrefix} loadVoices called at:`, new Date().toISOString());
       const voices = window.speechSynthesis.getVoices();
-      console.log(`${logPrefix} Found ${voices.length} voices:`, voices.map(v => ({ name: v.name, lang: v.lang })));
       
       setAvailableVoices(voices);
 
@@ -92,17 +80,12 @@ export function useAudioNarration(
           voices.find((voice) => voice.lang.startsWith('en')) ??
           voices[0];
 
-        console.log(`${logPrefix} Setting default voice:`, {
-          name: preferredVoice.name,
-          lang: preferredVoice.lang
-        });
         setState((prev) => ({ ...prev, voice: preferredVoice }));
       }
     };
 
     loadVoices();
     window.speechSynthesis.onvoiceschanged = loadVoices;
-    console.log(`${logPrefix} Voice loading setup complete`);
   }, [state.isSupported, state.voice]);
 
   // Clean up text for better narration
@@ -134,15 +117,7 @@ export function useAudioNarration(
 
   // Create or update utterance when text actually changes (not on rate/volume/voice changes)
   useEffect(() => {
-    console.log(`${logPrefix} Text change effect triggered`, {
-      timestamp: new Date().toISOString(),
-      isSupported: state.isSupported,
-      textLength: text.length,
-      textPreview: text.substring(0, 50) + '...'
-    });
-    
     if (!state.isSupported) {
-      console.log(`${logPrefix} Speech not supported, skipping utterance creation`);
       return;
     }
 
@@ -150,19 +125,11 @@ export function useAudioNarration(
     
     // Only recreate utterance if text actually changed
     if (currentTextRef.current === cleanText && utteranceRef.current) {
-      console.log(`${logPrefix} Text unchanged, reusing existing utterance`);
       return;
     }
     
-    console.log(`${logPrefix} Creating new utterance`, {
-      timestamp: new Date().toISOString(),
-      cleanTextLength: cleanText.length,
-      wasNull: utteranceRef.current === null
-    });
-    
     // Cancel any existing speech before creating new utterance
     if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
-      console.log(`${logPrefix} Cancelling existing speech before creating new utterance`);
       window.speechSynthesis.cancel();
       actualSpeechStateRef.current = { isActuallySpeaking: false, isActuallyPaused: false };
     }
@@ -176,22 +143,14 @@ export function useAudioNarration(
     if (state.voice) {
       newUtterance.voice = state.voice;
     }
-    
-    console.log(`${logPrefix} Utterance created with settings:`, {
-      rate: newUtterance.rate,
-      volume: newUtterance.volume,
-      voice: newUtterance.voice?.name ?? 'default'
-    });
 
     newUtterance.onstart = (): void => {
-      console.log(`${logPrefix} Speech started at:`, new Date().toISOString());
       actualSpeechStateRef.current.isActuallySpeaking = true;
       actualSpeechStateRef.current.isActuallyPaused = false;
       setState((prev) => ({ ...prev, isPlaying: true, isPaused: false }));
     };
 
     newUtterance.onend = (): void => {
-      console.log(`${logPrefix} Speech ended at:`, new Date().toISOString());
       actualSpeechStateRef.current.isActuallySpeaking = false;
       actualSpeechStateRef.current.isActuallyPaused = false;
       setState((prev) => ({
@@ -203,23 +162,16 @@ export function useAudioNarration(
     };
 
     newUtterance.onpause = (): void => {
-      console.log(`${logPrefix} Speech paused at:`, new Date().toISOString());
       actualSpeechStateRef.current.isActuallyPaused = true;
       setState((prev) => ({ ...prev, isPaused: true }));
     };
 
     newUtterance.onresume = (): void => {
-      console.log(`${logPrefix} Speech resumed at:`, new Date().toISOString());
       actualSpeechStateRef.current.isActuallyPaused = false;
       setState((prev) => ({ ...prev, isPaused: false }));
     };
 
     newUtterance.onerror = (event): void => {
-      console.log(`${logPrefix} Speech error at:`, new Date().toISOString(), {
-        errorType: event.error,
-        isInterrupted: event.error === 'interrupted'
-      });
-      
       actualSpeechStateRef.current.isActuallySpeaking = false;
       actualSpeechStateRef.current.isActuallyPaused = false;
       
@@ -246,27 +198,16 @@ export function useAudioNarration(
     newUtterance.onboundary = (event): void => {
       // Some browsers may not provide charIndex reliably
       const idx = (event as unknown as { charIndex?: number }).charIndex ?? 0;
-      console.log(`${logPrefix} Speech boundary at position:`, idx);
       setState((prev) => ({ ...prev, position: idx }));
     };
 
     utteranceRef.current = newUtterance;
     setState((prev) => ({ ...prev, currentText: cleanText }));
-    console.log(`${logPrefix} Utterance setup complete`);
   }, [text, state.isSupported]); // Only depend on text and isSupported, not rate/volume/voice
   
   // Separate effect to handle rate/volume/voice changes on existing utterance
   useEffect(() => {
-    console.log(`${logPrefix} Settings change effect triggered`, {
-      timestamp: new Date().toISOString(),
-      rate: state.rate,
-      volume: state.volume,
-      voice: state.voice?.name ?? 'none',
-      hasUtterance: !!utteranceRef.current
-    });
-    
     if (!utteranceRef.current) {
-      console.log(`${logPrefix} No utterance to update settings on`);
       return;
     }
     
@@ -276,36 +217,14 @@ export function useAudioNarration(
     if (state.voice) {
       utteranceRef.current.voice = state.voice;
     }
-    
-    console.log(`${logPrefix} Updated utterance settings:`, {
-      rate: utteranceRef.current.rate,
-      volume: utteranceRef.current.volume,
-      voice: utteranceRef.current.voice?.name ?? 'default'
-    });
   }, [state.rate, state.volume, state.voice]);
 
   const play = useCallback((): void => {
-    console.log(`${logPrefix} play() called at:`, new Date().toISOString(), {
-      isSupported: state.isSupported,
-      hasUtterance: !!utteranceRef.current,
-      actualSpeechState: actualSpeechStateRef.current,
-      reactState: { isPlaying: state.isPlaying, isPaused: state.isPaused },
-      synthesisSpeaking: typeof window !== 'undefined' ? window.speechSynthesis.speaking : 'unknown',
-      synthesisPending: typeof window !== 'undefined' ? window.speechSynthesis.pending : 'unknown',
-      isDisposed: isDisposedRef.current
-    });
-    
     if (isDisposedRef.current) {
-      console.log(`${logPrefix} Cannot play - hook instance has been disposed`);
       return;
     }
     
     if (!state.isSupported || !utteranceRef.current) {
-      console.log(`${logPrefix} Cannot play - missing requirements:`, {
-        isSupported: state.isSupported,
-        hasUtterance: !!utteranceRef.current
-      });
-      
       if (!state.isSupported) {
         errorHandler.logWarning(
           'Speech synthesis not supported in this browser',
@@ -334,32 +253,22 @@ export function useAudioNarration(
       const synthesisSpeaking = window.speechSynthesis.speaking;
       const synthesisPending = window.speechSynthesis.pending;
       
-      console.log(`${logPrefix} Speech synthesis state check:`, {
-        synthesisSpeaking,
-        synthesisPending,
-        actuallyPaused: actualSpeechStateRef.current.isActuallyPaused
-      });
-      
       // If speech is paused, resume instead of starting new
       if (actualSpeechStateRef.current.isActuallyPaused && synthesisSpeaking) {
-        console.log(`${logPrefix} Resuming paused speech instead of restarting`);
         window.speechSynthesis.resume();
         return;
       }
       
       // Only cancel if there's actually something playing to avoid interruption errors
       if (synthesisSpeaking || synthesisPending) {
-        console.log(`${logPrefix} Cancelling existing speech before starting new`);
         window.speechSynthesis.cancel();
         actualSpeechStateRef.current = { isActuallySpeaking: false, isActuallyPaused: false };
         
         // Add small delay to ensure cancel completes
         setTimeout(() => {
           try {
-            console.log(`${logPrefix} Starting speech after cancel delay`);
             window.speechSynthesis.speak(utteranceRef.current!);
           } catch (delayedError) {
-            console.log(`${logPrefix} Error starting speech after delay:`, delayedError);
             errorHandler.logError(
               'Failed to start speech synthesis after delay',
               delayedError instanceof Error
@@ -385,11 +294,9 @@ export function useAudioNarration(
         }, 100);
       } else {
         // Start new speech immediately if nothing is playing
-        console.log(`${logPrefix} Starting speech immediately`);
         window.speechSynthesis.speak(utteranceRef.current);
       }
     } catch (error) {
-      console.log(`${logPrefix} Error in play():`, error);
       errorHandler.logError(
         'Failed to start speech synthesis',
         error instanceof Error ? error : new Error(String(error)),
@@ -409,28 +316,17 @@ export function useAudioNarration(
   }, [state.isSupported, state.currentText.length, state.voice, state.isPlaying, state.isPaused]);
 
   const pause = useCallback((): void => {
-    console.log(`${logPrefix} pause() called at:`, new Date().toISOString(), {
-      isSupported: state.isSupported,
-      actualSpeechState: actualSpeechStateRef.current,
-      synthesisSpeaking: typeof window !== 'undefined' ? window.speechSynthesis.speaking : 'unknown',
-      isDisposed: isDisposedRef.current
-    });
-    
     if (isDisposedRef.current) {
-      console.log(`${logPrefix} Cannot pause - hook instance has been disposed`);
       return;
     }
     
     if (!state.isSupported) {
-      console.log(`${logPrefix} Cannot pause - speech not supported`);
       return;
     }
 
     try {
       window.speechSynthesis.pause();
-      console.log(`${logPrefix} Speech paused successfully`);
     } catch (error) {
-      console.log(`${logPrefix} Error pausing speech:`, error);
       errorHandler.logError(
         'Failed to pause speech synthesis',
         error instanceof Error ? error : new Error(String(error)),
@@ -446,27 +342,17 @@ export function useAudioNarration(
   }, [state.isSupported]);
 
   const stop = useCallback((): void => {
-    console.log(`${logPrefix} stop() called at:`, new Date().toISOString(), {
-      isSupported: state.isSupported,
-      actualSpeechState: actualSpeechStateRef.current,
-      synthesisSpeaking: typeof window !== 'undefined' ? window.speechSynthesis.speaking : 'unknown',
-      isDisposed: isDisposedRef.current
-    });
-    
     if (isDisposedRef.current) {
-      console.log(`${logPrefix} Cannot stop - hook instance has been disposed`);
       return;
     }
     
     if (!state.isSupported) {
-      console.log(`${logPrefix} Cannot stop - speech not supported`);
       return;
     }
 
     try {
       window.speechSynthesis.cancel();
       actualSpeechStateRef.current = { isActuallySpeaking: false, isActuallyPaused: false };
-      console.log(`${logPrefix} Speech stopped successfully`);
       
       setState((prev) => ({
         ...prev,
@@ -475,7 +361,6 @@ export function useAudioNarration(
         position: 0,
       }));
     } catch (error) {
-      console.log(`${logPrefix} Error stopping speech:`, error);
       errorHandler.logError(
         'Failed to stop speech synthesis',
         error instanceof Error ? error : new Error(String(error)),
@@ -499,28 +384,17 @@ export function useAudioNarration(
   }, [state.isSupported]);
 
   const resume = useCallback((): void => {
-    console.log(`${logPrefix} resume() called at:`, new Date().toISOString(), {
-      isSupported: state.isSupported,
-      actualSpeechState: actualSpeechStateRef.current,
-      synthesisSpeaking: typeof window !== 'undefined' ? window.speechSynthesis.speaking : 'unknown',
-      isDisposed: isDisposedRef.current
-    });
-    
     if (isDisposedRef.current) {
-      console.log(`${logPrefix} Cannot resume - hook instance has been disposed`);
       return;
     }
     
     if (!state.isSupported) {
-      console.log(`${logPrefix} Cannot resume - speech not supported`);
       return;
     }
 
     try {
       window.speechSynthesis.resume();
-      console.log(`${logPrefix} Speech resumed successfully`);
     } catch (error) {
-      console.log(`${logPrefix} Error resuming speech:`, error);
       errorHandler.logError(
         'Failed to resume speech synthesis',
         error instanceof Error ? error : new Error(String(error)),
@@ -537,42 +411,25 @@ export function useAudioNarration(
 
   const setRate = useCallback((rate: number): void => {
     const clampedRate = Math.max(0.1, Math.min(2, rate));
-    console.log(`${logPrefix} setRate() called:`, {
-      originalRate: rate,
-      clampedRate,
-      timestamp: new Date().toISOString()
-    });
     setState((prev) => ({ ...prev, rate: clampedRate }));
   }, []);
 
   const setVolume = useCallback((volume: number): void => {
     const clampedVolume = Math.max(0, Math.min(1, volume));
-    console.log(`${logPrefix} setVolume() called:`, {
-      originalVolume: volume,
-      clampedVolume,
-      timestamp: new Date().toISOString()
-    });
     setState((prev) => ({ ...prev, volume: clampedVolume }));
   }, []);
 
   const setVoice = useCallback((voice: SpeechSynthesisVoice): void => {
-    console.log(`${logPrefix} setVoice() called:`, {
-      voiceName: voice.name,
-      voiceLang: voice.lang,
-      timestamp: new Date().toISOString()
-    });
     setState((prev) => ({ ...prev, voice }));
   }, []);
 
   const getText = useCallback((): string => {
-    console.log(`${logPrefix} getText() called, returning ${state.currentText.length} characters`);
     return state.currentText;
   }, [state.currentText]);
   
   // Cleanup effect
   useEffect(() => {
     return () => {
-      console.log(`${logPrefix} Hook cleanup - marking instance as disposed`);
       isDisposedRef.current = true;
       
       // Only cancel speech if this specific instance's utterance is currently playing
@@ -582,11 +439,10 @@ export function useAudioNarration(
           // We can't directly check if our utterance is the one playing, but we can
           // check if speech is active and we have an utterance
           if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
-            console.log(`${logPrefix} Speech is active during cleanup - cancelling to prevent interference`);
             window.speechSynthesis.cancel();
           }
         } catch (error) {
-          console.log(`${logPrefix} Error during cleanup:`, error);
+          // Error during cleanup - this is expected to be silent
         }
       }
     };

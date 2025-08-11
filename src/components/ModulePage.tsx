@@ -168,17 +168,13 @@ export function ModulePage({
       }
       cleanupPerformedRef.current = true;
       
-      console.log('[ModulePage] Component unmounting, performing cleanup');
-      
       if (timeSpent > 0) {
         // Auto-save time spent when leaving module
-        console.log('[ModulePage] Auto-saving time spent:', timeSpent);
       }
       
       // Cleanup audio on unmount
       try {
         if (audioState.isPlaying) {
-          console.log('[ModulePage] Stopping audio on unmount');
           audioControls.stop();
         }
         setShowAudioControls(false);
@@ -191,23 +187,13 @@ export function ModulePage({
 
   // Handle audio state errors and auto-hide controls on stop
   useEffect(() => {
-    console.log('[ModulePage] Audio state effect', {
-      isPlaying: audioState.isPlaying,
-      isPaused: audioState.isPaused,
-      showAudioControls,
-      timestamp: new Date().toISOString()
-    });
-
     if (!audioState.isPlaying && !audioState.isPaused && showAudioControls) {
       // Auto-hide controls when audio stops naturally
-      console.log('[ModulePage] Setting timer to auto-hide controls in 2 seconds');
       const timer = setTimeout(() => {
-        console.log('[ModulePage] Auto-hiding audio controls');
         setShowAudioControls(false);
       }, 2000);
 
       return () => {
-        console.log('[ModulePage] Clearing auto-hide timer');
         clearTimeout(timer);
       };
     }
@@ -301,22 +287,12 @@ export function ModulePage({
   };
 
   const handleAudioPlay = (): void => {
-    console.log('[ModulePage] handleAudioPlay called', {
-      isPlaying: audioState.isPlaying,
-      isPaused: audioState.isPaused,
-      isSupported: audioState.isSupported,
-      timestamp: new Date().toISOString()
-    });
-
     try {
       if (audioState.isPlaying) {
-        console.log('[ModulePage] Pausing audio');
         audioControls.pause();
       } else if (audioState.isPaused) {
-        console.log('[ModulePage] Resuming audio');
         audioControls.resume();
       } else {
-        console.log('[ModulePage] Starting new audio playback');
         // Show controls immediately for better UX
         setShowAudioControls(true);
         audioControls.play();
@@ -329,10 +305,6 @@ export function ModulePage({
   };
 
   const handleAudioStop = (): void => {
-    console.log('[ModulePage] handleAudioStop called', {
-      timestamp: new Date().toISOString()
-    });
-    
     try {
       audioControls.stop();
       setShowAudioControls(false);
