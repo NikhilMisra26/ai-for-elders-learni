@@ -1,4 +1,18 @@
-import React, { useState, lazy, Suspense, type ReactElement } from 'react';
+import React, {
+  useState,
+  lazy,
+  Suspense,
+  type ReactElement,
+  useEffect,
+} from 'react';
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+  useSearchParams,
+  useLocation,
+} from 'react-router-dom';
 
 import { AuthProvider } from './contexts/AuthContext';
 import { AccessibilityProvider } from './contexts/AccessibilityContext';
@@ -6,6 +20,7 @@ import { Header } from './components/Header';
 import { Dialog, DialogContent } from './components/ui/dialog';
 import { Toaster } from './components/ui/sonner';
 import { useSessionManager } from './hooks/useSessionManager';
+import { ProtectedRoute } from './components/ProtectedRoute';
 
 // Lazy load page components for code splitting
 const HomePage = lazy(async () =>
@@ -38,8 +53,16 @@ const SecurityDashboard = lazy(async () =>
     default: module.SecurityDashboard,
   })),
 );
-
-type Page = 'home' | 'courses' | 'dashboard' | 'account';
+const ModulePage = lazy(async () =>
+  import('./components/ModulePage').then((module) => ({
+    default: module.ModulePage,
+  })),
+);
+const ReviewForm = lazy(async () =>
+  import('./components/ReviewForm').then((module) => ({
+    default: module.ReviewForm,
+  })),
+);
 
 // Loading fallback component for lazy-loaded pages
 function PageLoader(): ReactElement {
@@ -54,23 +77,25 @@ function PageLoader(): ReactElement {
 }
 
 function AppContent(): ReactElement {
-  const [currentPage, setCurrentPage] = useState<Page>('home');
-  const [showAuthDialog, setShowAuthDialog] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
   const [showSecurityDashboard, setShowSecurityDashboard] = useState(false);
+
+  // Check for auth query param
+  const showAuthDialog = searchParams.get('auth') === 'true';
 
   // Initialize session management
   useSessionManager();
 
-  const handleNavigate = (page: string): void => {
-    setCurrentPage(page as Page);
-  };
-
   const handleAuthClick = (): void => {
-    setShowAuthDialog(true);
+    setSearchParams({ auth: 'true', redirect: location.pathname });
   };
 
   const handleAuthClose = (): void => {
-    setShowAuthDialog(false);
+    const newParams = new URLSearchParams(searchParams);
+    newParams.delete('auth');
+    newParams.delete('redirect');
+    setSearchParams(newParams);
   };
 
   // Security dashboard access (for demo purposes - in production, this would be admin-only)
@@ -81,34 +106,10 @@ function AppContent(): ReactElement {
   };
 
   // Add keyboard listener for security dashboard
-  React.useEffect((): (() => void) => {
+  useEffect((): (() => void) => {
     window.addEventListener('keydown', handleKeyPress);
     return (): void => window.removeEventListener('keydown', handleKeyPress);
   }, []);
-
-  const renderPage = (): ReactElement => {
-    switch (currentPage) {
-      case 'home':
-        return (
-          <HomePage onNavigate={handleNavigate} onAuthClick={handleAuthClick} />
-        );
-      case 'courses':
-        return <CoursesPage onAuthClick={handleAuthClick} />;
-      case 'dashboard':
-        return <DashboardPage onNavigate={handleNavigate} />;
-      case 'account':
-        return (
-          <AccountPage
-            onNavigate={handleNavigate}
-            onAuthClick={handleAuthClick}
-          />
-        );
-      default:
-        return (
-          <HomePage onNavigate={handleNavigate} onAuthClick={handleAuthClick} />
-        );
-    }
-  };
 
   return (
     <div className='min-h-screen bg-background text-foreground'>
@@ -121,18 +122,119 @@ function AppContent(): ReactElement {
         Skip to main content
       </a>
 
-      <Header
-        onAuthClick={handleAuthClick}
-        onNavigate={handleNavigate}
-        currentPage={currentPage}
-      />
+      <Header onAuthClick={handleAuthClick} />
 
       <main id='main-content' role='main'>
-        <Suspense fallback={<PageLoader />}>{renderPage()}</Suspense>
+        <Suspense fallback={<PageLoader />}>
+          <Routes>
+            {/* Root redirects to home */}
+            <Route path='/' element={<Navigate to='/home' replace />} />
+
+            {/* Main pages */}
+            <Route
+              path='/home'
+              element={<HomePage onAuthClick={handleAuthClick} />}
+            />
+
+            {/* Courses section */}
+            <Route
+              path='/courses'
+              element={<CoursesPage onAuthClick={handleAuthClick} />}
+            />
+            <Route
+              path='/courses/basic'
+              element={
+                <ProtectedRoute>
+                  <ModulePage courseType='basic' />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path='/courses/advanced'
+              element={
+                <ProtectedRoute requiredRole='advanced'>
+                  <ModulePage courseType='advanced' />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path='/courses/expert'
+              element={
+                <ProtectedRoute requiredRole='expert'>
+                  <ModulePage courseType='expert' />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Module routes */}
+            <Route
+              path='/courses/:courseType/module/:moduleId'
+              element={
+                <ProtectedRoute>
+                  <ModulePage />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Dashboard/Progress */}
+            <Route
+              path='/dashboard'
+              element={
+                <ProtectedRoute>
+                  <DashboardPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path='/progress'
+              element={<Navigate to='/dashboard' replace />}
+            />
+
+            {/* Account section */}
+            <Route
+              path='/account'
+              element={
+                <ProtectedRoute>
+                  <AccountPage />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path='/profile'
+              element={<Navigate to='/account' replace />}
+            />
+            <Route
+              path='/settings'
+              element={
+                <ProtectedRoute>
+                  <AccountPage />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Reviews */}
+            <Route
+              path='/reviews'
+              element={
+                <ProtectedRoute>
+                  <ReviewForm />
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Catch all - redirect to home */}
+            <Route path='*' element={<Navigate to='/home' replace />} />
+          </Routes>
+        </Suspense>
       </main>
 
       {/* Authentication Dialog */}
-      <Dialog open={showAuthDialog} onOpenChange={setShowAuthDialog}>
+      <Dialog
+        open={showAuthDialog}
+        onOpenChange={(open) => {
+          if (!open) handleAuthClose();
+        }}
+      >
         <DialogContent className='sm:max-w-md'>
           <Suspense fallback={<PageLoader />}>
             <AuthForm onClose={handleAuthClose} />
@@ -165,11 +267,13 @@ function AppContent(): ReactElement {
 
 function App(): ReactElement {
   return (
-    <AuthProvider>
-      <AccessibilityProvider>
-        <AppContent />
-      </AccessibilityProvider>
-    </AuthProvider>
+    <BrowserRouter>
+      <AuthProvider>
+        <AccessibilityProvider>
+          <AppContent />
+        </AccessibilityProvider>
+      </AuthProvider>
+    </BrowserRouter>
   );
 }
 

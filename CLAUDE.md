@@ -2,6 +2,31 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## Important
+- After completing a task, edit the readme to reflect the changes you made. Either edit existing stuff in the readme or, for a new feature, add it in a concise way
+
+### Critical Directives
+
+
+1. **Maximize parallel execution.**  
+   - Default to running multiple subagents **at the same time** whenever tasks can be done independently.  
+   - Split work into atomic units so each subagent can execute without waiting for others, unless there’s a dependency.
+   -This applies both for planning (in plan mode or otherwise) AND in execution (actually creating code)
+
+2. **Fully brief subagents.**  
+   - Subagents have **no prior context** from this repo or from our conversations.  
+   - Every subagent prompt must contain:
+     - The current problem or goal  
+     - The relevant tech stack (Vite + React + TypeScript + Supabase + Stripe)  
+     - Any constraints, patterns, or naming conventions to follow  
+     - Expected deliverables (files, diffs, docs, tests, etc.)  
+   - Include just enough context so they can produce correct, repo-compatible code on the first pass. Do not over-engineer this though.
+
+3. **Prioritize efficiency and correctness.**  
+   - If a task involves multiple files or domains (e.g., backend, frontend, tests, docs), route each domain to the correct subagent immediately.  
+   - Combine results and only then return the completed task to the user.
+
+
 ## Project Overview
 
 This is **AI for Elders**, a React-based educational platform designed to teach adults 50+ how to effectively and safely use artificial intelligence through structured, accessible courses. The platform features a multi-tier subscription system (Free, Advanced $1.99/month, Expert $4.99/month) with user authentication, progress tracking, and accessibility features optimized for older learners.
@@ -119,5 +144,3 @@ Currently no test framework is configured. When implementing tests:
 - `/src/lib/` - Core business logic and utilities
 - `/src/types/` - TypeScript type definitions
 
-## Important
-- After completing a task, edit the readme to reflect the changes you made. Either edit existing stuff in the readme or, for a new feature, add it in a concise way

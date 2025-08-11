@@ -1,4 +1,5 @@
 import React, { useState, type ReactElement } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
   BookOpen,
@@ -16,8 +17,6 @@ import {
   ChartBar,
   Trophy,
 } from '@phosphor-icons/react';
-
-import { ModulePage } from './ModulePage';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -44,11 +43,8 @@ export function CoursesPage({ onAuthClick }: CoursesPageProps): ReactElement {
   const { user } = useAuth();
   const { subscription, canAccessTier } = useSubscription();
   const { getCourseProgress, startCourse, getDashboardSummary } = useProgress();
+  const navigate = useNavigate();
 
-  const [selectedModule, setSelectedModule] = useState<{
-    courseId: string;
-    moduleId: string;
-  } | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterTier, setFilterTier] = useState<
     'all' | 'free' | 'advanced' | 'expert'
@@ -66,41 +62,6 @@ export function CoursesPage({ onAuthClick }: CoursesPageProps): ReactElement {
     return matchesSearch && matchesFilter;
   });
 
-  if (selectedModule) {
-    return (
-      <ModulePage
-        courseId={selectedModule.courseId}
-        moduleId={selectedModule.moduleId}
-        onBack={() => setSelectedModule(null)}
-        onNavigate={(courseId, moduleId) =>
-          setSelectedModule({ courseId, moduleId })
-        }
-      />
-    );
-  }
-
-  const handleModuleClick = (
-    courseId: string,
-    moduleId: string,
-    course: Course,
-  ): void => {
-    // Check authentication
-    if (!user) {
-      onAuthClick();
-      return;
-    }
-
-    // Check access permissions
-    if (!canAccessTier(course.tier)) {
-      toast.error('Subscription required', {
-        description: `This content requires a ${course.tier} subscription.`,
-      });
-      return;
-    }
-
-    setSelectedModule({ courseId, moduleId });
-  };
-
   const handleStartCourse = (courseId: string, course: Course): void => {
     if (!user) {
       onAuthClick();
@@ -115,10 +76,24 @@ export function CoursesPage({ onAuthClick }: CoursesPageProps): ReactElement {
     }
 
     startCourse(courseId);
-    const firstModule = course.modules[0];
-    if (firstModule) {
-      setSelectedModule({ courseId, moduleId: firstModule.id });
+
+    // Navigate to the appropriate course route based on tier
+    let routePath = '/courses';
+    switch (course.tier) {
+      case 'free':
+        routePath = '/courses/basic';
+        break;
+      case 'advanced':
+        routePath = '/courses/advanced';
+        break;
+      case 'expert':
+        routePath = '/courses/expert';
+        break;
+      default:
+        routePath = '/courses/basic';
     }
+
+    navigate(routePath);
   };
 
   const getCourseCompletionData = (
@@ -530,10 +505,19 @@ export function CoursesPage({ onAuthClick }: CoursesPageProps): ReactElement {
                               ? 'hover:bg-muted/50 cursor-pointer'
                               : 'opacity-60'
                           }`}
-                          onClick={() =>
-                            hasAccess &&
-                            handleModuleClick(course.id, module.id, course)
-                          }
+                          onClick={() => {
+                            if (hasAccess) {
+                              const courseType =
+                                course.id === 'ai-basics'
+                                  ? 'basic'
+                                  : course.id === 'ai-assistant'
+                                    ? 'advanced'
+                                    : 'expert';
+                              navigate(
+                                `/courses/${courseType}/module/${module.id}`,
+                              );
+                            }
+                          }}
                         >
                           <div className='flex items-start gap-4'>
                             <div className='flex-shrink-0 w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-sm font-medium'>
@@ -578,10 +562,14 @@ export function CoursesPage({ onAuthClick }: CoursesPageProps): ReactElement {
                                 className='flex items-center gap-2'
                                 onClick={(e) => {
                                   e.stopPropagation();
-                                  handleModuleClick(
-                                    course.id,
-                                    module.id,
-                                    course,
+                                  const courseType =
+                                    course.id === 'ai-basics'
+                                      ? 'basic'
+                                      : course.id === 'ai-assistant'
+                                        ? 'advanced'
+                                        : 'expert';
+                                  navigate(
+                                    `/courses/${courseType}/module/${module.id}`,
                                   );
                                 }}
                               >

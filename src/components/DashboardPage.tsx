@@ -1,4 +1,5 @@
 import React, { useState, type ReactElement } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   BookOpen,
   CheckCircle,
@@ -35,13 +36,10 @@ import { useProgress } from '@/lib/progressTracking';
 import { useSubscription } from '@/lib/subscription';
 import { courseData } from '@/lib/courseData';
 
-interface DashboardPageProps {
-  onNavigate: (page: string) => void;
-}
+interface DashboardPageProps {}
 
-export function DashboardPage({
-  onNavigate,
-}: DashboardPageProps): ReactElement {
+export function DashboardPage(): ReactElement {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { subscription, getCurrentPlan, getDaysUntilExpiry } =
     useSubscription();
@@ -66,7 +64,7 @@ export function DashboardPage({
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <AuthForm onClose={() => onNavigate('home')} />
+            <AuthForm onClose={async () => navigate('/home')} />
           </CardContent>
         </Card>
       </div>
@@ -110,9 +108,9 @@ export function DashboardPage({
   const handleStartLearning = (): void => {
     if (recommendations.continueModule) {
       // Navigate to specific module - in a real app, you'd implement this routing
-      onNavigate('courses');
+      navigate('/courses');
     } else if (recommendations.startCourse) {
-      onNavigate('courses');
+      navigate('/courses');
     }
   };
 
@@ -395,7 +393,7 @@ export function DashboardPage({
                 <Button
                   variant='outline'
                   className='w-full mt-6'
-                  onClick={() => onNavigate('courses')}
+                  onClick={async () => navigate('/courses')}
                 >
                   View All Courses
                   <ArrowRight className='w-4 h-4 ml-2' />
@@ -482,7 +480,7 @@ export function DashboardPage({
                       <Button
                         size='sm'
                         variant='outline'
-                        onClick={() => onNavigate('account')}
+                        onClick={async () => navigate('/account')}
                       >
                         Upgrade
                       </Button>
@@ -519,7 +517,7 @@ export function DashboardPage({
                 <Button
                   variant='outline'
                   className='w-full'
-                  onClick={() => onNavigate('account')}
+                  onClick={async () => navigate('/account')}
                 >
                   Manage Account
                   <Gear className='w-4 h-4 ml-2' />
@@ -629,7 +627,7 @@ export function DashboardPage({
                     techniques and expert-level content.
                   </p>
                   <Button
-                    onClick={() => onNavigate('account')}
+                    onClick={async () => navigate('/account')}
                     className='w-full'
                   >
                     View Plans

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, type ReactElement } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
   Play,
@@ -41,18 +42,19 @@ import {
 } from '@/lib/courseData';
 
 interface ModulePageProps {
-  courseId: string;
-  moduleId: string;
-  onBack: () => void;
-  onNavigate: (courseId: string, moduleId: string) => void;
+  courseType?: 'basic' | 'advanced' | 'expert';
 }
 
 export function ModulePage({
-  courseId,
-  moduleId,
-  onBack,
-  onNavigate,
+  courseType: propCourseType,
 }: ModulePageProps): ReactElement {
+  const { courseType: paramCourseType, moduleId: paramModuleId } = useParams<{
+    courseType: string;
+    moduleId: string;
+  }>();
+  const navigate = useNavigate();
+
+  // Call ALL hooks at the top, before any conditional logic
   const { user: _user } = useAuth();
   const { subscription: _subscription, canAccessTier } = useSubscription();
   const {
@@ -64,15 +66,32 @@ export function ModulePage({
     setCurrentModule,
   } = useProgress();
 
-  // Get course and module data
-  const course = getCourseById(courseId);
-  const module = getModuleById(courseId, moduleId);
-  const nextModule = getNextModule(courseId, moduleId);
-  const previousModule = getPreviousModule(courseId, moduleId);
-  const courseProgress = getCourseProgress(courseId);
-  const moduleProgress = getModuleProgress(courseId, moduleId);
+  // Map route course types to course IDs
+  const courseTypeToId = {
+    basic: 'ai-basics',
+    advanced: 'ai-assistant',
+    expert: 'advanced-ai',
+  } as const;
 
-  // Audio narration state
+  // Determine course type and module ID from props or URL params
+  const courseType = (propCourseType ||
+    paramCourseType) as keyof typeof courseTypeToId;
+  const courseId = courseTypeToId[courseType];
+  const moduleId = paramModuleId || null;
+
+  // Get course and module data (may be null)
+  const course = getCourseById(courseId);
+  const module = moduleId ? getModuleById(courseId, moduleId) : null;
+  const nextModule = moduleId ? getNextModule(courseId, moduleId) : null;
+  const previousModule = moduleId
+    ? getPreviousModule(courseId, moduleId)
+    : null;
+  const courseProgress = getCourseProgress(courseId);
+  const moduleProgress = moduleId
+    ? getModuleProgress(courseId, moduleId)
+    : null;
+
+  // Audio narration state - using null-safe content
   const [audioState, audioControls] = useAudioNarration(module?.content ?? '');
   const [showAudioControls, setShowAudioControls] = useState(false);
 
@@ -85,20 +104,36 @@ export function ModulePage({
   const [startTime] = useState(Date.now());
   const [showOutline, setShowOutline] = useState(false);
 
+  // If no module ID is provided, navigate to first module
   useEffect(() => {
-    if (course && module) {
+    if (courseType && !moduleId) {
+      const course = getCourseById(courseId);
+      if (course && course.modules.length > 0) {
+        navigate(`/courses/${courseType}/module/${course.modules[0].id}`, {
+          replace: true,
+        });
+        return;
+      }
+    }
+  }, [courseType, moduleId, courseId, navigate]);
+
+  // Set current module when available
+  useEffect(() => {
+    if (course && module && moduleId) {
       setCurrentModule(courseId, moduleId);
     }
   }, [courseId, moduleId, course, module, setCurrentModule]);
 
   // Track time spent
   useEffect(() => {
+    if (!moduleId) return; // Don't track time if no module
+
     const interval = window.setInterval((): void => {
       setTimeSpent(Math.floor((Date.now() - startTime) / 1000 / 60));
     }, 60000); // Update every minute
 
     return (): void => window.clearInterval(interval);
-  }, [startTime]);
+  }, [startTime, moduleId]);
 
   // Handle component unmount to save progress
   useEffect(() => {
@@ -109,6 +144,51 @@ export function ModulePage({
     };
   }, [timeSpent]);
 
+  // Loading fallback component
+  const PageLoader = (): ReactElement => (
+    <div className='flex items-center justify-center min-h-[60vh]'>
+      <div className='text-center'>
+        <div className='w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4' />
+        <p className='text-lg text-muted-foreground'>Loading...</p>
+      </div>
+    </div>
+  );
+
+  // Early return if no module ID is available yet
+  if (!moduleId) {
+    return (
+      <div className='min-h-screen flex items-center justify-center'>
+        <PageLoader />
+      </div>
+    );
+  }
+
+  const handleBackToCourses = (): void => {
+    navigate('/courses');
+  };
+
+  const handleBackToCourse = (): void => {
+    navigate(`/courses/${courseType}`);
+  };
+
+  const handleNavigateToModule = (
+    targetCourseId: string,
+    targetModuleId: string,
+  ): void => {
+    // Map course ID back to course type
+    const idToCourseType = {
+      'ai-basics': 'basic',
+      'ai-assistant': 'advanced',
+      'advanced-ai': 'expert',
+    } as const;
+
+    const targetCourseType =
+      idToCourseType[targetCourseId as keyof typeof idToCourseType];
+    if (targetCourseType) {
+      navigate(`/courses/${targetCourseType}/module/${targetModuleId}`);
+    }
+  };
+
   if (!course || !module) {
     return (
       <div className='min-h-screen flex items-center justify-center'>
@@ -118,7 +198,7 @@ export function ModulePage({
             <p className='text-muted-foreground mb-4'>
               The requested module could not be found.
             </p>
-            <Button onClick={onBack}>Back to Courses</Button>
+            <Button onClick={handleBackToCourses}>Back to Courses</Button>
           </CardContent>
         </Card>
       </div>
@@ -209,7 +289,11 @@ export function ModulePage({
     return (
       <div className='min-h-screen bg-background'>
         <div className='max-w-4xl mx-auto p-6'>
-          <Button variant='outline' onClick={onBack} className='mb-6'>
+          <Button
+            variant='outline'
+            onClick={handleBackToCourses}
+            className='mb-6'
+          >
             <ArrowLeft className='mr-2' />
             Back to Courses
           </Button>
@@ -244,7 +328,7 @@ export function ModulePage({
                 <Button size='lg' className='w-full max-w-sm'>
                   Upgrade to {plan} Plan
                 </Button>
-                <Button variant='outline' onClick={onBack}>
+                <Button variant='outline' onClick={handleBackToCourses}>
                   Browse Free Content
                 </Button>
               </div>
@@ -272,7 +356,11 @@ export function ModulePage({
       <div className='max-w-6xl mx-auto p-6'>
         {/* Header Navigation */}
         <div className='mb-6'>
-          <Button variant='outline' onClick={onBack} className='mb-4'>
+          <Button
+            variant='outline'
+            onClick={handleBackToCourse}
+            className='mb-4'
+          >
             <ArrowLeft className='mr-2' />
             Back to Course
           </Button>
@@ -281,7 +369,10 @@ export function ModulePage({
           <nav aria-label='Breadcrumb' className='mb-4'>
             <ol className='flex items-center space-x-2 text-sm text-muted-foreground'>
               <li>
-                <button onClick={onBack} className='hover:text-foreground'>
+                <button
+                  onClick={handleBackToCourse}
+                  className='hover:text-foreground'
+                >
                   {course.title}
                 </button>
               </li>
@@ -486,7 +577,9 @@ export function ModulePage({
                     {previousModule && (
                       <Button
                         variant='outline'
-                        onClick={() => onNavigate(courseId, previousModule.id)}
+                        onClick={() =>
+                          handleNavigateToModule(courseId, previousModule.id)
+                        }
                       >
                         <ArrowLeft className='w-4 h-4 mr-2' />
                         Previous
@@ -494,7 +587,9 @@ export function ModulePage({
                     )}
                     {nextModule && (
                       <Button
-                        onClick={() => onNavigate(courseId, nextModule.id)}
+                        onClick={() =>
+                          handleNavigateToModule(courseId, nextModule.id)
+                        }
                       >
                         Next
                         <ArrowRight className='w-4 h-4 ml-2' />
@@ -595,7 +690,9 @@ export function ModulePage({
                       return (
                         <li key={mod.id}>
                           <button
-                            onClick={() => onNavigate(courseId, mod.id)}
+                            onClick={() =>
+                              handleNavigateToModule(courseId, mod.id)
+                            }
                             className={`w-full text-left p-3 rounded-lg transition-colors ${
                               isCurrent
                                 ? 'bg-primary text-primary-foreground'

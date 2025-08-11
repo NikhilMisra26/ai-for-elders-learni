@@ -107,9 +107,64 @@ Current settings ensure only impressive metrics are shown:
 - **Rating**: 4.0+ stars (configurable in `THRESHOLDS.MIN_RATING`)
 - **Countries**: 5+ (configurable in `THRESHOLDS.MIN_COUNTRIES`)
 
+## 🛡️ Route Protection System
+
+### React Router Compatible Components
+The platform includes comprehensive route protection for future React Router migration:
+
+- **`ProtectedRoute`** (`src/components/ProtectedRoute.tsx`): React Router v6/v7 compatible route wrapper
+- **`RouteGuard`** (`src/components/RouteGuard.tsx`): Works with current custom routing system
+- **`useRouteProtection`** (`src/hooks/useRouteProtection.ts`): Core protection logic hook
+
+### Features
+- **Authentication Guard**: Redirects unauthenticated users with preserved destination
+- **Role-Based Access**: Supports `free`, `advanced`, `expert`, and `admin` roles
+- **Tier Upgrades**: Shows upgrade prompts for insufficient subscription tiers
+- **Accessibility**: Full WCAG compliance with proper ARIA labels and keyboard navigation
+- **Senior-Friendly**: Large touch targets, clear messaging, and simplified UI flows
+
+### Usage Examples
+```tsx
+// React Router compatible (future migration)
+<Route path="/dashboard" element={
+  <ProtectedRoute requiredRole="advanced">
+    <DashboardPage />
+  </ProtectedRoute>
+} />
+
+// Current custom routing system
+<RouteGuard requiredRole="expert" onAuthRequired={openAuthDialog}>
+  <ExpertContent />
+</RouteGuard>
+```
+
 ## 🏗️ Architecture Notes
 
 - **Offline-First**: Local storage with cloud sync when authenticated
 - **Caching**: 5-minute cache on analytics data for performance
 - **Security**: Comprehensive rate limiting and session management
 - **Accessibility**: Designed specifically for users 50+ with accessibility features
+- **React Router v7**: Modern client-side routing with lazy loading and protected routes
+
+### 📚 Course Navigation System
+
+The platform now uses React Router v7 for seamless course and module navigation:
+
+**Route Structure:**
+- `/courses` - Course listing page
+- `/courses/basic` - Free AI basics course (redirects to first module)
+- `/courses/advanced` - Advanced course ($1.99/month, redirects to first module)
+- `/courses/expert` - Expert course ($4.99/month, redirects to first module)
+- `/courses/:courseType/module/:moduleId` - Individual module pages
+
+**Navigation Features:**
+- **Automatic Redirection**: Course root paths redirect to the first module automatically
+- **URL Parameters**: Course type and module ID are preserved in the URL for bookmarking
+- **Smart Back Navigation**: Back buttons intelligently navigate to course overview or main courses page
+- **Module Progression**: Previous/Next buttons update the URL for proper navigation history
+- **Course Outline Navigation**: Module sidebar allows direct navigation to any module within a course
+
+**Course Type Mapping:**
+- `basic` ↔ `ai-basics` (Free tier)
+- `advanced` ↔ `ai-assistant` (Advanced tier, $1.99/month)
+- `expert` ↔ `advanced-ai` (Expert tier, $4.99/month)

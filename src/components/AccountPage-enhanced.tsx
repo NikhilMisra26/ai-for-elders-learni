@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
   CreditCard,
@@ -53,11 +54,11 @@ import {
 import { useProgress } from '@/lib/progressTracking';
 
 interface AccountPageProps {
-  onNavigate: (page: string) => void;
   onAuthClick: () => void;
 }
 
-export function AccountPage({ onNavigate }: AccountPageProps): ReactElement {
+export function AccountPage(): ReactElement {
+  const navigate = useNavigate();
   const { user } = useAuth();
   const {
     subscription,
@@ -90,7 +91,7 @@ export function AccountPage({ onNavigate }: AccountPageProps): ReactElement {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <AuthForm onClose={() => onNavigate('home')} />
+            <AuthForm onClose={async () => navigate('/home')} />
           </CardContent>
         </Card>
       </div>
@@ -499,7 +500,7 @@ export function AccountPage({ onNavigate }: AccountPageProps): ReactElement {
                 <Button
                   variant='outline'
                   className='w-full justify-start'
-                  onClick={() => onNavigate('dashboard')}
+                  onClick={async () => navigate('/dashboard')}
                 >
                   <ChartBar className='w-4 h-4 mr-2' />
                   View Dashboard
@@ -507,7 +508,7 @@ export function AccountPage({ onNavigate }: AccountPageProps): ReactElement {
                 <Button
                   variant='outline'
                   className='w-full justify-start'
-                  onClick={() => onNavigate('courses')}
+                  onClick={async () => navigate('/courses')}
                 >
                   <Trophy className='w-4 h-4 mr-2' />
                   Browse Courses
