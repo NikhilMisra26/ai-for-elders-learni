@@ -642,7 +642,7 @@ export function ModulePage({
                           </>
                         );
                       } catch (error) {
-                        console.error('Error rendering audio controls:', error);
+                        errorHandler.logError('Error rendering audio controls:', error);
                         return (
                           <div className='text-center p-4 text-muted-foreground'>
                             <p>Audio controls temporarily unavailable</p>
