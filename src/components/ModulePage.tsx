@@ -1,4 +1,4 @@
-import React, { useState, useEffect, type ReactElement } from 'react';
+import React, { useState, useEffect, useRef, useMemo, type ReactElement } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
@@ -26,6 +26,7 @@ import { Badge } from '@/components/ui/badge';
 import { Slider } from '@/components/ui/slider';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
+import { AudioControlsErrorBoundary } from '@/components/AudioControlsErrorBoundary';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProgress } from '@/lib/progressTracking';
 import { useSubscription } from '@/lib/subscription';
@@ -91,8 +92,9 @@ export function ModulePage({
     ? getModuleProgress(courseId, moduleId)
     : null;
 
-  // Audio narration state - using null-safe content
-  const [audioState, audioControls] = useAudioNarration(module?.content ?? '');
+  // Audio narration state - memoize content to prevent hook recreation
+  const moduleContent = useMemo(() => module?.content ?? '', [module?.content]);
+  const [audioState, audioControls] = useAudioNarration(moduleContent);
   const [showAudioControls, setShowAudioControls] = useState(false);
 
   // Module interaction state
@@ -103,6 +105,11 @@ export function ModulePage({
   const [comment, setComment] = useState('');
   const [startTime] = useState(Date.now());
   const [showOutline, setShowOutline] = useState(false);
+
+  // Track the last module that was set to prevent redundant calls
+  const lastSetModuleRef = useRef<string | null>(null);
+  // Track if cleanup has been performed to prevent double-cleanup
+  const cleanupPerformedRef = useRef<boolean>(false);
 
   // If no module ID is provided, navigate to first module
   useEffect(() => {
@@ -117,11 +124,25 @@ export function ModulePage({
     }
   }, [courseType, moduleId, courseId, navigate]);
 
-  // Set current module when available
+  // Set current module when available - with guard to prevent infinite loops
   useEffect(() => {
     if (course && module && moduleId) {
-      setCurrentModule(courseId, moduleId);
+      const moduleKey = `${courseId}-${moduleId}`;
+
+      // Only call setCurrentModule if we haven't already set this specific module
+      if (lastSetModuleRef.current !== moduleKey) {
+        lastSetModuleRef.current = moduleKey;
+        setCurrentModule(courseId, moduleId);
+      }
     }
+
+    // Cleanup function to reset the ref when component unmounts or course/module changes significantly
+    return () => {
+      // Reset if course or module becomes unavailable
+      if (!course || !module || !moduleId) {
+        lastSetModuleRef.current = null;
+      }
+    };
   }, [courseId, moduleId, course, module, setCurrentModule]);
 
   // Track time spent
@@ -135,14 +156,48 @@ export function ModulePage({
     return (): void => window.clearInterval(interval);
   }, [startTime, moduleId]);
 
-  // Handle component unmount to save progress
+  // Handle component unmount to save progress and cleanup audio
   useEffect(() => {
+    // Reset cleanup flag when effect runs
+    cleanupPerformedRef.current = false;
+    
     return (): void => {
+      // Only perform cleanup once
+      if (cleanupPerformedRef.current) {
+        return;
+      }
+      cleanupPerformedRef.current = true;
+      
       if (timeSpent > 0) {
         // Auto-save time spent when leaving module
       }
+      
+      // Cleanup audio on unmount
+      try {
+        if (audioState.isPlaying) {
+          audioControls.stop();
+        }
+        setShowAudioControls(false);
+      } catch (error) {
+        console.error('Error cleaning up audio on unmount:', error);
+      }
     };
-  }, [timeSpent]);
+    // Empty dependency array ensures this only runs on mount/unmount
+  }, []);
+
+  // Handle audio state errors and auto-hide controls on stop
+  useEffect(() => {
+    if (!audioState.isPlaying && !audioState.isPaused && showAudioControls) {
+      // Auto-hide controls when audio stops naturally
+      const timer = setTimeout(() => {
+        setShowAudioControls(false);
+      }, 2000);
+
+      return () => {
+        clearTimeout(timer);
+      };
+    }
+  }, [audioState.isPlaying, audioState.isPaused, showAudioControls]);
 
   // Loading fallback component
   const PageLoader = (): ReactElement => (
@@ -232,19 +287,31 @@ export function ModulePage({
   };
 
   const handleAudioPlay = (): void => {
-    if (audioState.isPlaying) {
-      audioControls.pause();
-    } else if (audioState.isPaused) {
-      audioControls.resume();
-    } else {
-      audioControls.play();
-      setShowAudioControls(true);
+    try {
+      if (audioState.isPlaying) {
+        audioControls.pause();
+      } else if (audioState.isPaused) {
+        audioControls.resume();
+      } else {
+        // Show controls immediately for better UX
+        setShowAudioControls(true);
+        audioControls.play();
+      }
+    } catch (error) {
+      console.error('[ModulePage] Audio play failed:', error);
+      toast.error('Audio playback failed. Please try again.');
+      setShowAudioControls(false);
     }
   };
 
   const handleAudioStop = (): void => {
-    audioControls.stop();
-    setShowAudioControls(false);
+    try {
+      audioControls.stop();
+      setShowAudioControls(false);
+    } catch (error) {
+      errorHandler.logError('[ModulePage] Audio stop failed:', error);
+      setShowAudioControls(false);
+    }
   };
 
   const handlePrint = (): void => {
@@ -450,91 +517,154 @@ export function ModulePage({
             </Card>
 
             {/* Audio Controls */}
-            <Card>
-              <CardHeader>
-                <div className='flex items-center justify-between'>
-                  <CardTitle className='flex items-center gap-2'>
-                    <SpeakerHigh className='w-5 h-5' />
-                    Audio Narration
-                  </CardTitle>
-                  {audioState.isSupported ? (
-                    <div className='flex items-center gap-2'>
-                      <Button
-                        variant='outline'
-                        size='sm'
-                        onClick={handleAudioPlay}
-                        aria-label={
-                          audioState.isPlaying
-                            ? 'Pause narration'
-                            : 'Play narration'
-                        }
-                      >
-                        {audioState.isPlaying ? (
-                          <Pause className='w-4 h-4' />
-                        ) : (
-                          <Play className='w-4 h-4' />
-                        )}
-                        {audioState.isPlaying
-                          ? 'Pause'
-                          : audioState.isPaused
-                            ? 'Resume'
-                            : 'Play'}
-                      </Button>
-                      {audioState.isPlaying && (
+            <AudioControlsErrorBoundary
+              onError={() => {
+                setShowAudioControls(false);
+                audioControls.stop();
+              }}
+            >
+              <Card>
+                <CardHeader>
+                  <div className='flex items-center justify-between'>
+                    <CardTitle className='flex items-center gap-2'>
+                      <SpeakerHigh className='w-5 h-5' />
+                      Audio Narration
+                    </CardTitle>
+                    {audioState.isSupported ? (
+                      <div className='flex items-center gap-2'>
                         <Button
                           variant='outline'
                           size='sm'
-                          onClick={handleAudioStop}
+                          onClick={handleAudioPlay}
+                          aria-label={
+                            audioState.isPlaying
+                              ? 'Pause narration'
+                              : 'Play narration'
+                          }
                         >
-                          <Stop className='w-4 h-4' />
+                          {audioState.isPlaying ? (
+                            <Pause className='w-4 h-4' />
+                          ) : (
+                            <Play className='w-4 h-4' />
+                          )}
+                          {audioState.isPlaying
+                            ? 'Pause'
+                            : audioState.isPaused
+                              ? 'Resume'
+                              : 'Play'}
                         </Button>
-                      )}
-                    </div>
-                  ) : (
-                    <Badge variant='secondary'>Not Supported</Badge>
+                        {audioState.isPlaying && (
+                          <Button
+                            variant='outline'
+                            size='sm'
+                            onClick={handleAudioStop}
+                          >
+                            <Stop className='w-4 h-4' />
+                          </Button>
+                        )}
+                      </div>
+                    ) : (
+                      <Badge variant='secondary'>Not Supported</Badge>
+                    )}
+                  </div>
+                  {audioState.isSupported && (
+                    <p className='text-sm text-muted-foreground'>
+                      Estimated listening time: {estimatedSpeechTime} minute
+                      {estimatedSpeechTime !== 1 ? 's' : ''}
+                    </p>
                   )}
-                </div>
-                {audioState.isSupported && (
-                  <p className='text-sm text-muted-foreground'>
-                    Estimated listening time: {estimatedSpeechTime} minute
-                    {estimatedSpeechTime !== 1 ? 's' : ''}
-                  </p>
-                )}
-              </CardHeader>
+                </CardHeader>
 
-              {showAudioControls && audioState.isSupported && (
-                <CardContent className='space-y-4'>
-                  <div>
-                    <label className='text-sm font-medium mb-2 block'>
-                      Speed: {audioState.rate}x
-                    </label>
-                    <Slider
-                      value={[audioState.rate]}
-                      onValueChange={([rate]) => audioControls.setRate(rate)}
-                      min={0.5}
-                      max={2}
-                      step={0.1}
-                      className='w-full'
-                    />
-                  </div>
-                  <div>
-                    <label className='text-sm font-medium mb-2 block'>
-                      Volume: {Math.round(audioState.volume * 100)}%
-                    </label>
-                    <Slider
-                      value={[audioState.volume]}
-                      onValueChange={([volume]) =>
-                        audioControls.setVolume(volume)
+                {showAudioControls && audioState.isSupported && (
+                  <CardContent className='space-y-4'>
+                    {(() => {
+                      try {
+                        // Ensure values are properly initialized
+                        const rate =
+                          typeof audioState.rate === 'number' &&
+                          !isNaN(audioState.rate)
+                            ? audioState.rate
+                            : 1;
+                        const volume =
+                          typeof audioState.volume === 'number' &&
+                          !isNaN(audioState.volume)
+                            ? audioState.volume
+                            : 1;
+
+                        return (
+                          <>
+                            <div>
+                              <label className='text-sm font-medium mb-2 block'>
+                                Speed: {rate.toFixed(1)}x
+                              </label>
+                              <Slider
+                                value={[rate]}
+                                onValueChange={([newRate]) => {
+                                  try {
+                                    audioControls.setRate(newRate);
+                                  } catch (error) {
+                                    console.error(
+                                      'Failed to set audio rate:',
+                                      error,
+                                    );
+                                  }
+                                }}
+                                min={0.5}
+                                max={2}
+                                step={0.1}
+                                className='w-full'
+                                aria-label='Adjust playback speed'
+                              />
+                            </div>
+                            <div>
+                              <label className='text-sm font-medium mb-2 block'>
+                                Volume: {Math.round(volume * 100)}%
+                              </label>
+                              <Slider
+                                value={[volume]}
+                                onValueChange={([newVolume]) => {
+                                  try {
+                                    audioControls.setVolume(newVolume);
+                                  } catch (error) {
+                                    console.error(
+                                      'Failed to set audio volume:',
+                                      error,
+                                    );
+                                  }
+                                }}
+                                min={0}
+                                max={1}
+                                step={0.1}
+                                className='w-full'
+                                aria-label='Adjust volume'
+                              />
+                            </div>
+                          </>
+                        );
+                      } catch (error) {
+                        errorHandler.logError('Error rendering audio controls:', error);
+                        return (
+                          <div className='text-center p-4 text-muted-foreground'>
+                            <p>Audio controls temporarily unavailable</p>
+                            <Button
+                              variant='outline'
+                              size='sm'
+                              onClick={() => {
+                                setShowAudioControls(false);
+                                audioControls.stop();
+                              }}
+                              className='mt-2'
+                            >
+                              Close Controls
+                            </Button>
+                          </div>
+                        );
                       }
-                      min={0}
-                      max={1}
-                      step={0.1}
-                      className='w-full'
-                    />
-                  </div>
-                </CardContent>
-              )}
-            </Card>
+                    })()}
+                  </CardContent>
+                )}
+              </Card>
+            </AudioControlsErrorBoundary>
 
             {/* Module Content */}
             <Card>

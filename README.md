@@ -23,10 +23,11 @@
 
 ### 🎨 **Senior-Friendly Design**
 - Large fonts and high contrast design
-- Audio narration for all content
+- **Robust Audio narration** with intelligent error handling, smooth state management, and instance isolation
 - Touch-friendly interface with proper target sizes
 - Clear navigation with breadcrumbs
 - WCAG 2.1 AA accessibility compliance
+- **Error-resilient UI** preventing blank screens from component failures
 
 ### 🔐 **Security & Privacy**
 - Comprehensive security module with rate limiting
@@ -145,6 +146,7 @@ The platform includes comprehensive route protection for future React Router mig
 - **Security**: Comprehensive rate limiting and session management
 - **Accessibility**: Designed specifically for users 50+ with accessibility features
 - **React Router v7**: Modern client-side routing with lazy loading and protected routes
+- **Performance Optimizations**: Infinite loop prevention in module navigation with ref-based tracking
 
 ### 📚 Course Navigation System
 
@@ -168,3 +170,19 @@ The platform now uses React Router v7 for seamless course and module navigation:
 - `basic` ↔ `ai-basics` (Free tier)
 - `advanced` ↔ `ai-assistant` (Advanced tier, $1.99/month)
 - `expert` ↔ `advanced-ai` (Expert tier, $4.99/month)
+
+**Recent Bug Fixes:**
+- **Module Navigation Performance**: Fixed "Maximum update depth exceeded" error in ModulePage.tsx by implementing ref-based tracking to prevent redundant `setCurrentModule` calls in useEffect hooks
+- **Audio Narration Hook Recreation Fix**: 
+  - **Fixed hook recreation issue**: Added `useMemo` to memoize module content passed to `useAudioNarration` hook, preventing unnecessary hook recreation on every render
+  - **Improved cleanup logic**: Fixed cleanup effect to only run on actual component unmount by removing problematic dependencies that caused audio to stop immediately after starting
+  - **Double-cleanup prevention**: Added ref tracking to ensure cleanup operations only run once per component lifecycle
+  - **Enhanced unmount handling**: Cleanup now properly detects component unmount vs effect re-run to preserve audio playback during normal state changes
+- **Audio Narration Critical Fixes**: 
+  - **Fixed utterance recreation bug**: Moved utterance to ref to prevent recreation during state changes that interrupted active speech
+  - **Resolved race conditions**: Added separate ref tracking for actual speech state vs React state to prevent sync issues
+  - **Enhanced state management**: Only recreate utterance when text changes, not on rate/volume/voice adjustments
+  - **Improved settings handling**: Apply rate/volume/voice changes to existing utterance dynamically without interruption
+  - **Extensive debugging**: Added comprehensive console logging with timestamps and context for troubleshooting
+  - **Better error handling**: Graceful handling of 'interrupted' errors and proper cleanup on component unmount
+  - **Pause/Resume intelligence**: Improved logic to resume paused speech instead of restarting unnecessarily

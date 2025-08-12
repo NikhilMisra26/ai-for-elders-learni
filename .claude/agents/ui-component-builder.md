@@ -1,6 +1,6 @@
 ---
 name: ui-component-builder
-description: Use proactively for creating accessible React components with Tailwind CSS styling. Specialist for building reusable UI components with comprehensive ARIA attributes, keyboard navigation, and senior-friendly design patterns. Handles component creation, accessibility implementation, and responsive styling.
+description: IMMEDIATELY use when creating ANY React component or UI element. Examples - "build a login form", "create a dashboard card", "add a modal dialog", "implement a data table", "design a navigation menu", "create buttons or inputs". Use IN PARALLEL with ts-lint-fixer for type safety, authentication-implementer for auth components, api-endpoint-generator when components need backend data.
 tools: Read, Edit, Write, Grep, Glob
 model: sonnet
 color: blue

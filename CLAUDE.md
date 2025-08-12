@@ -26,6 +26,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
    - If a task involves multiple files or domains (e.g., backend, frontend, tests, docs), route each domain to the correct subagent immediately.  
    - Combine results and only then return the completed task to the user.
 
+4. **Parallelization Protocol (MANDATORY)**
+- WHen in "Plan Mode," come up with a very brief summary of how you will use subagents IF you plan to use them in order to maximize efficiency
+- If you decide NOT to use subagnets **justify why they are unnecesary**. 
 
 ## Project Overview
 

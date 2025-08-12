@@ -1,6 +1,6 @@
 ---
 name: test-suite-writer
-description: Use proactively for adding comprehensive testing infrastructure to Vite applications including unit tests, component tests, E2E tests, and API tests with proper CI configuration
+description: ALWAYS add after feature implementation or bug fixes. Examples - "test new components", "add E2E tests", "test payment flow", "verify auth works", "add unit tests", "create integration tests". Run IN PARALLEL with ts-lint-fixer for type checking, security-hardener for security tests, code-refactorer before refactoring.
 tools: Read, Edit, Write, Bash, Grep, Glob
 model: sonnet
 color: cyan
