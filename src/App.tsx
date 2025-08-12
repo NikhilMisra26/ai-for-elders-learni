@@ -13,14 +13,17 @@ import {
   useSearchParams,
   useLocation,
 } from 'react-router-dom';
+import { ErrorBoundary } from 'react-error-boundary';
 
 import { AuthProvider } from './contexts/AuthContext';
 import { AccessibilityProvider } from './contexts/AccessibilityContext';
 import { Header } from './components/Header';
+import { errorHandler } from './lib/errorHandler';
 import { Dialog, DialogContent } from './components/ui/dialog';
 import { Toaster } from './components/ui/sonner';
 import { useSessionManager } from './hooks/useSessionManager';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { ErrorFallback } from './ErrorFallback';
 
 // Lazy load page components for code splitting
 const HomePage = lazy(async () =>
@@ -61,6 +64,11 @@ const ModulePage = lazy(async () =>
 const ReviewForm = lazy(async () =>
   import('./components/ReviewForm').then((module) => ({
     default: module.ReviewForm,
+  })),
+);
+const NotFoundPage = lazy(async () =>
+  import('./components/NotFoundPage').then((module) => ({
+    default: module.NotFoundPage,
   })),
 );
 
@@ -125,8 +133,20 @@ function AppContent(): ReactElement {
       <Header onAuthClick={handleAuthClick} />
 
       <main id='main-content' role='main'>
-        <Suspense fallback={<PageLoader />}>
-          <Routes>
+        <ErrorBoundary 
+          FallbackComponent={ErrorFallback}
+          onError={(error) => {
+            if (import.meta.env.DEV) {
+              console.error('Application error:', error);
+            }
+            errorHandler.logError('Application boundary error', error, {
+              component: 'App',
+              action: 'error_boundary'
+            });
+          }}
+        >
+          <Suspense fallback={<PageLoader />}>
+            <Routes>
             {/* Root redirects to home */}
             <Route path='/' element={<Navigate to='/home' replace />} />
 
@@ -139,13 +159,19 @@ function AppContent(): ReactElement {
             {/* Courses section */}
             <Route
               path='/courses'
-              element={<CoursesPage onAuthClick={handleAuthClick} />}
+              element={
+                <ErrorBoundary FallbackComponent={ErrorFallback}>
+                  <CoursesPage onAuthClick={handleAuthClick} />
+                </ErrorBoundary>
+              }
             />
             <Route
               path='/courses/basic'
               element={
                 <ProtectedRoute>
-                  <ModulePage courseType='basic' />
+                  <ErrorBoundary FallbackComponent={ErrorFallback}>
+                    <ModulePage courseType='basic' />
+                  </ErrorBoundary>
                 </ProtectedRoute>
               }
             />
@@ -153,7 +179,9 @@ function AppContent(): ReactElement {
               path='/courses/advanced'
               element={
                 <ProtectedRoute requiredRole='advanced'>
-                  <ModulePage courseType='advanced' />
+                  <ErrorBoundary FallbackComponent={ErrorFallback}>
+                    <ModulePage courseType='advanced' />
+                  </ErrorBoundary>
                 </ProtectedRoute>
               }
             />
@@ -161,7 +189,9 @@ function AppContent(): ReactElement {
               path='/courses/expert'
               element={
                 <ProtectedRoute requiredRole='expert'>
-                  <ModulePage courseType='expert' />
+                  <ErrorBoundary FallbackComponent={ErrorFallback}>
+                    <ModulePage courseType='expert' />
+                  </ErrorBoundary>
                 </ProtectedRoute>
               }
             />
@@ -171,7 +201,9 @@ function AppContent(): ReactElement {
               path='/courses/:courseType/module/:moduleId'
               element={
                 <ProtectedRoute>
-                  <ModulePage />
+                  <ErrorBoundary FallbackComponent={ErrorFallback}>
+                    <ModulePage />
+                  </ErrorBoundary>
                 </ProtectedRoute>
               }
             />
@@ -181,7 +213,9 @@ function AppContent(): ReactElement {
               path='/dashboard'
               element={
                 <ProtectedRoute>
-                  <DashboardPage />
+                  <ErrorBoundary FallbackComponent={ErrorFallback}>
+                    <DashboardPage />
+                  </ErrorBoundary>
                 </ProtectedRoute>
               }
             />
@@ -222,10 +256,11 @@ function AppContent(): ReactElement {
               }
             />
 
-            {/* Catch all - redirect to home */}
-            <Route path='*' element={<Navigate to='/home' replace />} />
-          </Routes>
-        </Suspense>
+            {/* 404 - Not Found */}
+            <Route path='*' element={<NotFoundPage />} />
+            </Routes>
+          </Suspense>
+        </ErrorBoundary>
       </main>
 
       {/* Authentication Dialog */}

@@ -9,7 +9,6 @@ import {
   validateEmail,
   validatePassword,
   RateLimiter,
-  SessionManager,
   SecurityLogger,
   sanitizeInput,
 } from '@/lib/security';
@@ -401,7 +400,7 @@ export function AuthProvider({
       SecurityLogger.log('user_logout', { userId: user.id });
     }
     await supabase.auth.signOut();
-    SessionManager.clearSession();
+    // Session is cleared by Supabase signOut
     setUser(null);
     setSecurityState((prev) => ({
       ...prev,
@@ -436,7 +435,7 @@ export function AuthProvider({
   };
 
   const extendSession = (): void => {
-    SessionManager.extendSession();
+    // Session extension is handled automatically by Supabase with autoRefreshToken: true
     if (user) {
       SecurityLogger.log('session_extended', { userId: user.id });
     }

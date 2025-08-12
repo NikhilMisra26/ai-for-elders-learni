@@ -264,33 +264,6 @@ export function useAudioNarration(
         window.speechSynthesis.cancel();
         actualSpeechStateRef.current = { isActuallySpeaking: false, isActuallyPaused: false };
         
-        // Add small delay to ensure cancel completes
-        setTimeout(() => {
-          try {
-            window.speechSynthesis.speak(utteranceRef.current!);
-          } catch (delayedError) {
-            errorHandler.logError(
-              'Failed to start speech synthesis after delay',
-              delayedError instanceof Error
-                ? delayedError
-                : new Error(String(delayedError)),
-              {
-                component: 'audio_narration',
-                action: 'play_delayed',
-                metadata: {
-                  hookId: hookId.current,
-                  textLength: state.currentText.length,
-                  hasVoice: !!state.voice,
-                  voiceName: state.voice?.name,
-                },
-              },
-            );
-            setState((prev) => ({
-              ...prev,
-              isPlaying: false,
-              isPaused: false,
-            }));
-          }
         // Wait until speechSynthesis is no longer speaking or pending before starting new utterance
         const waitAndSpeak = () => {
           if (!window.speechSynthesis.speaking && !window.speechSynthesis.pending) {
@@ -571,14 +544,16 @@ export function useNarrationPreferences(): [
 export function extractTextFromHTML(html: string): string {
   if (typeof document === 'undefined') return html;
 
-  const div = document.createElement('div');
-  div.innerHTML = html;
+  // Use DOMParser for safer HTML parsing
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, 'text/html');
 
   // Remove script and style elements
-  const scripts = div.querySelectorAll('script, style');
+  const scripts = doc.querySelectorAll('script, style, iframe, object, embed');
   scripts.forEach((el) => el.remove());
 
-  return div.textContent ?? div.innerText ?? '';
+  // Extract text content safely
+  return doc.body?.textContent ?? '';
 }
 
 // Utility to get estimated reading time

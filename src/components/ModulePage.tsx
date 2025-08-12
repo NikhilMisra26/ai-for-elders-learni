@@ -35,6 +35,7 @@ import {
   getEstimatedSpeechTime,
   announceToScreenReader,
 } from '@/lib/audioNarration';
+import { errorHandler } from '@/lib/errorHandler';
 import {
   getCourseById,
   getModuleById,
@@ -179,7 +180,13 @@ export function ModulePage({
         }
         setShowAudioControls(false);
       } catch (error) {
-        console.error('Error cleaning up audio on unmount:', error);
+        if (import.meta.env.DEV) {
+          console.error('Error cleaning up audio on unmount:', error);
+        }
+        errorHandler.logError('Audio cleanup failed on unmount', error instanceof Error ? error : new Error(String(error)), {
+          component: 'ModulePage',
+          action: 'audio_cleanup'
+        });
       }
     };
     // Empty dependency array ensures this only runs on mount/unmount
@@ -298,7 +305,13 @@ export function ModulePage({
         audioControls.play();
       }
     } catch (error) {
-      console.error('[ModulePage] Audio play failed:', error);
+      if (import.meta.env.DEV) {
+        console.error('[ModulePage] Audio play failed:', error);
+      }
+      errorHandler.logError('Audio playback failed', error instanceof Error ? error : new Error(String(error)), {
+        component: 'ModulePage',
+        action: 'audio_play'
+      });
       toast.error('Audio playback failed. Please try again.');
       setShowAudioControls(false);
     }
@@ -603,10 +616,16 @@ export function ModulePage({
                                   try {
                                     audioControls.setRate(newRate);
                                   } catch (error) {
-                                    console.error(
-                                      'Failed to set audio rate:',
-                                      error,
-                                    );
+                                    if (import.meta.env.DEV) {
+                                      console.error(
+                                        'Failed to set audio rate:',
+                                        error,
+                                      );
+                                    }
+                                    errorHandler.logError('Failed to set audio rate', error instanceof Error ? error : new Error(String(error)), {
+                                      component: 'ModulePage',
+                                      action: 'set_audio_rate'
+                                    });
                                   }
                                 }}
                                 min={0.5}
@@ -626,10 +645,16 @@ export function ModulePage({
                                   try {
                                     audioControls.setVolume(newVolume);
                                   } catch (error) {
-                                    console.error(
-                                      'Failed to set audio volume:',
-                                      error,
-                                    );
+                                    if (import.meta.env.DEV) {
+                                      console.error(
+                                        'Failed to set audio volume:',
+                                        error,
+                                      );
+                                    }
+                                    errorHandler.logError('Failed to set audio volume', error instanceof Error ? error : new Error(String(error)), {
+                                      component: 'ModulePage',
+                                      action: 'set_audio_volume'
+                                    });
                                   }
                                 }}
                                 min={0}

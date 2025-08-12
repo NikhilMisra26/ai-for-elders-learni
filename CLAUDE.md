@@ -1,6 +1,17 @@
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+**Before writing or editing any code**:
+1. Decide if multiple subagents can run in parallel for this task.  
+2. If YES — list exactly which subagents will be used, their goals, and spawn them now.  
+3. If NO — write a one-line justification for why parallelization is unnecessary.  
+4. Always give each subagent a **full standalone brief**:
+   - Goal  
+   - Current problem/context  
+   - Tech stack (Vite + React + TS + Supabase + Stripe)  
+   - Constraints/patterns/naming conventions  
+   - Deliverables (files, diffs, docs, tests)  
+5. Default to parallelization unless strict dependencies force sequential work.
 
 ## Important
 - After completing a task, edit the readme to reflect the changes you made. Either edit existing stuff in the readme or, for a new feature, add it in a concise way
