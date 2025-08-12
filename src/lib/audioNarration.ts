@@ -28,7 +28,7 @@ export function useAudioNarration(
   text: string,
 ): [AudioNarrationState, AudioNarrationControls] {
   // Create a unique ID for this hook instance for logging
-  const hookId = useRef(Math.random().toString(36).substr(2, 9));
+  const hookId = useRef(typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substr(2, 9));
   
   // Track if this hook instance has been disposed/cleaned up
   const isDisposedRef = useRef(false);
