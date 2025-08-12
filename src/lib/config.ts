@@ -75,7 +75,7 @@ export const config: AppConfig = {
  * @param options - Fetch options
  * @returns Promise with the response or error
  */
-export async function apiCall<T = any>(
+export async function apiCall<T = unknown>(
   endpoint: string,
   options?: RequestInit,
 ): Promise<{ data?: T; error?: string }> {
