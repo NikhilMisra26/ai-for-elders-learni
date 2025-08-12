@@ -476,7 +476,7 @@ export function useProgress(): UseProgressReturn {
         ),
       );
     },
-    [],
+    [setCourseProgress],
   );
 
   // Add user activity
