@@ -19,7 +19,13 @@ import { AuthProvider } from './contexts/AuthContext';
 import { AccessibilityProvider } from './contexts/AccessibilityContext';
 import { Header } from './components/Header';
 import { errorHandler } from './lib/errorHandler';
-import { Dialog, DialogContent, DialogTitle, DialogDescription, VisuallyHidden } from './components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+  VisuallyHidden,
+} from './components/ui/dialog';
 import { Toaster } from './components/ui/sonner';
 import { useSessionManager } from './hooks/useSessionManager';
 import { ProtectedRoute } from './components/ProtectedRoute';
@@ -277,7 +283,9 @@ function AppContent(): ReactElement {
         <DialogContent className='sm:max-w-md'>
           <VisuallyHidden>
             <DialogTitle>Authentication</DialogTitle>
-            <DialogDescription>Sign in or create an account to continue</DialogDescription>
+            <DialogDescription>
+              Sign in or create an account to continue
+            </DialogDescription>
           </VisuallyHidden>
           <Suspense fallback={<PageLoader />}>
             <AuthForm onClose={handleAuthClose} />

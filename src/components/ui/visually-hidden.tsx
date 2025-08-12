@@ -8,10 +8,7 @@ function VisuallyHidden({
   ...props
 }: React.HTMLAttributes<HTMLSpanElement>): React.ReactElement {
   return (
-    <span
-      className={cn('sr-only', className)}
-      {...props}
-    >
+    <span className={cn('sr-only', className)} {...props}>
       {children}
     </span>
   );
