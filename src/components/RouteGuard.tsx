@@ -141,7 +141,9 @@ function AuthRequiredPrompt({
       onAuthRequired();
     } else {
       // Fallback: Could trigger a default auth flow or show a message
-      console.warn('No onAuthRequired callback provided to RouteGuard');
+      if (import.meta.env.DEV) {
+        console.warn('No onAuthRequired callback provided to RouteGuard');
+      }
     }
   };
 

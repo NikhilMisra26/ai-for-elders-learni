@@ -149,7 +149,9 @@ class ErrorHandlerService {
         handler(report);
       } catch (handlerError) {
         // Prevent infinite loops - log handler errors to console only
-        console.error('Error handler failed:', handlerError);
+        if (import.meta.env.DEV) {
+          console.error('Error handler failed:', handlerError);
+        }
       }
     });
 

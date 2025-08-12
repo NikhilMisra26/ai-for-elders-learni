@@ -40,24 +40,29 @@ function validateEnvironment(): SupabaseConfig {
 
   // Log validation results
   if (errors.length > 0) {
-    const errorMessage = `Supabase configuration validation failed: ${errors.join(', ')}`;
-
     if (isProduction) {
+      // In production, log sanitized error without exposing configuration details
       errorHandler.logError(
-        errorMessage,
-        new Error('Invalid Supabase configuration'),
+        'Configuration validation failed',
+        new Error('Invalid configuration'),
         {
           component: 'supabase',
           action: 'validate_config',
-          metadata: { errors, hasUrl: !!url, hasKey: !!anonKey },
+          // Only log boolean flags, not actual values or detailed errors
+          metadata: {
+            hasValidConfig: false,
+            errorCount: errors.length,
+          },
         },
       );
 
-      // In production, throw to prevent app from starting with invalid config
+      // In production, throw generic error to prevent app from starting with invalid config
       throw new Error(
         'Application configuration error. Please contact support if this issue persists.',
       );
     } else {
+      // In development, provide detailed errors for debugging
+      const errorMessage = `Supabase configuration validation failed: ${errors.join(', ')}`;
       errorHandler.logWarning(errorMessage, {
         component: 'supabase',
         action: 'validate_config',
@@ -65,10 +70,13 @@ function validateEnvironment(): SupabaseConfig {
       });
     }
   } else {
-    errorHandler.logInfo('Supabase configuration validated successfully', {
-      component: 'supabase',
-      action: 'validate_config',
-    });
+    // Only log success in non-production environments
+    if (!isProduction) {
+      errorHandler.logInfo('Supabase configuration validated successfully', {
+        component: 'supabase',
+        action: 'validate_config',
+      });
+    }
   }
 
   return {
@@ -102,9 +110,14 @@ export async function withSupabaseErrorHandling<T>(
   operation: () => Promise<T>,
   context: SupabaseOperation,
 ): Promise<{ data: T | null; error: Error | null; errorId?: string }> {
+  const isProduction = import.meta.env.MODE === 'production';
+
   if (!config.isValid) {
+    // Use generic error message in production to avoid exposing config details
     const configError = new Error(
-      `Supabase not properly configured: ${config.errors.join(', ')}`,
+      isProduction
+        ? 'Database configuration error. Please contact support.'
+        : `Supabase not properly configured: ${config.errors.join(', ')}`,
     );
     const errorId = errorHandler.handleDatabaseError(
       `${context.operation}${context.table ? ` on ${context.table}` : ''}`,
@@ -112,7 +125,10 @@ export async function withSupabaseErrorHandling<T>(
       {
         component: 'supabase',
         userId: context.userId,
-        metadata: { configErrors: config.errors },
+        // Don't expose config errors in production
+        metadata: isProduction
+          ? { hasValidConfig: false }
+          : { configErrors: config.errors },
       },
     );
 
@@ -160,32 +176,48 @@ export async function checkSupabaseHealth(): Promise<{
     return result;
   }
 
+  const isProduction = import.meta.env.MODE === 'production';
+
   try {
     // Simple query to check connection
     const { error } = await supabase.from('profiles').select('count').limit(1);
 
     if (error) {
-      result.errors.push(`Connection test failed: ${error.message}`);
-      errorHandler.logWarning('Supabase health check failed', {
-        component: 'supabase',
-        action: 'health_check',
-        metadata: { error: error.message },
-      });
+      // Sanitize error message for production
+      const sanitizedMessage = isProduction
+        ? 'Connection test failed'
+        : `Connection test failed: ${error.message}`;
+      result.errors.push(sanitizedMessage);
+
+      if (!isProduction) {
+        errorHandler.logWarning('Supabase health check failed', {
+          component: 'supabase',
+          action: 'health_check',
+          metadata: { error: error.message },
+        });
+      }
     } else {
       result.connectionWorking = true;
       result.healthy = true;
     }
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    result.errors.push(`Health check error: ${errorMessage}`);
-    errorHandler.logError(
-      'Supabase health check error',
-      error instanceof Error ? error : new Error(errorMessage),
-      {
-        component: 'supabase',
-        action: 'health_check',
-      },
-    );
+    // Sanitize error message for production
+    const sanitizedMessage = isProduction
+      ? 'Health check error'
+      : `Health check error: ${errorMessage}`;
+    result.errors.push(sanitizedMessage);
+
+    if (!isProduction) {
+      errorHandler.logError(
+        'Supabase health check error',
+        error instanceof Error ? error : new Error(errorMessage),
+        {
+          component: 'supabase',
+          action: 'health_check',
+        },
+      );
+    }
   }
 
   return result;

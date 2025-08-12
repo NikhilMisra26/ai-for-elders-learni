@@ -25,7 +25,17 @@ export class AudioControlsErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
-    console.error('Audio controls error:', error, errorInfo);
+    if (import.meta.env.DEV) {
+      console.error('Audio controls error:', error, errorInfo);
+    }
+    // Log to error handler service instead of console in production
+    import('@/lib/errorHandler').then(({ errorHandler }) => {
+      errorHandler.logError('Audio controls error boundary triggered', error, {
+        component: 'AudioControlsErrorBoundary',
+        action: 'component_did_catch',
+        metadata: { errorInfo },
+      });
+    });
     this.props.onError?.();
   }
 

@@ -28,11 +28,15 @@ export function useAudioNarration(
   text: string,
 ): [AudioNarrationState, AudioNarrationControls] {
   // Create a unique ID for this hook instance for logging
-  const hookId = useRef(typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID() : Math.random().toString(36).substr(2, 9));
-  
+  const hookId = useRef(
+    typeof crypto !== 'undefined' && crypto.randomUUID
+      ? crypto.randomUUID()
+      : Math.random().toString(36).substr(2, 9),
+  );
+
   // Track if this hook instance has been disposed/cleaned up
   const isDisposedRef = useRef(false);
-  
+
   const [state, setState] = useState<AudioNarrationState>({
     isPlaying: false,
     isPaused: false,
@@ -48,13 +52,12 @@ export function useAudioNarration(
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
   const actualSpeechStateRef = useRef({
     isActuallySpeaking: false,
-    isActuallyPaused: false
+    isActuallyPaused: false,
   });
   const currentTextRef = useRef<string>('');
   const [_availableVoices, setAvailableVoices] = useState<
     SpeechSynthesisVoice[]
   >([]);
-  
 
   // Load available voices
   useEffect(() => {
@@ -64,7 +67,7 @@ export function useAudioNarration(
 
     const loadVoices = (): void => {
       const voices = window.speechSynthesis.getVoices();
-      
+
       setAvailableVoices(voices);
 
       // Set default voice (prefer female voice for senior-friendly experience)
@@ -122,16 +125,19 @@ export function useAudioNarration(
     }
 
     const cleanText = cleanTextForSpeech(text);
-    
+
     // Only recreate utterance if text actually changed
     if (currentTextRef.current === cleanText && utteranceRef.current) {
       return;
     }
-    
+
     // Cancel any existing speech before creating new utterance
     if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
       window.speechSynthesis.cancel();
-      actualSpeechStateRef.current = { isActuallySpeaking: false, isActuallyPaused: false };
+      actualSpeechStateRef.current = {
+        isActuallySpeaking: false,
+        isActuallyPaused: false,
+      };
     }
 
     const newUtterance = new window.SpeechSynthesisUtterance(cleanText);
@@ -174,7 +180,7 @@ export function useAudioNarration(
     newUtterance.onerror = (event): void => {
       actualSpeechStateRef.current.isActuallySpeaking = false;
       actualSpeechStateRef.current.isActuallyPaused = false;
-      
+
       // Don't log 'interrupted' as an error since it's expected when user stops/restarts audio
       if (event.error !== 'interrupted') {
         const errorMessage = `Speech synthesis failed: ${event.error}`;
@@ -187,7 +193,7 @@ export function useAudioNarration(
             rate: state.rate,
             volume: state.volume,
             voiceName: state.voice?.name ?? 'default',
-            hookId: hookId.current
+            hookId: hookId.current,
           },
         });
       }
@@ -204,13 +210,13 @@ export function useAudioNarration(
     utteranceRef.current = newUtterance;
     setState((prev) => ({ ...prev, currentText: cleanText }));
   }, [text, state.isSupported]); // Only depend on text and isSupported, not rate/volume/voice
-  
+
   // Separate effect to handle rate/volume/voice changes on existing utterance
   useEffect(() => {
     if (!utteranceRef.current) {
       return;
     }
-    
+
     // Update existing utterance settings without recreating it
     utteranceRef.current.rate = state.rate;
     utteranceRef.current.volume = state.volume;
@@ -223,7 +229,7 @@ export function useAudioNarration(
     if (isDisposedRef.current) {
       return;
     }
-    
+
     if (!state.isSupported || !utteranceRef.current) {
       if (!state.isSupported) {
         errorHandler.logWarning(
@@ -252,48 +258,27 @@ export function useAudioNarration(
       // Check actual speech synthesis state vs our tracked state
       const synthesisSpeaking = window.speechSynthesis.speaking;
       const synthesisPending = window.speechSynthesis.pending;
-      
+
       // If speech is paused, resume instead of starting new
       if (actualSpeechStateRef.current.isActuallyPaused && synthesisSpeaking) {
         window.speechSynthesis.resume();
         return;
       }
-      
+
       // Only cancel if there's actually something playing to avoid interruption errors
       if (synthesisSpeaking || synthesisPending) {
         window.speechSynthesis.cancel();
-        actualSpeechStateRef.current = { isActuallySpeaking: false, isActuallyPaused: false };
-        
-        // Add small delay to ensure cancel completes
-        setTimeout(() => {
-          try {
-            window.speechSynthesis.speak(utteranceRef.current!);
-          } catch (delayedError) {
-            errorHandler.logError(
-              'Failed to start speech synthesis after delay',
-              delayedError instanceof Error
-                ? delayedError
-                : new Error(String(delayedError)),
-              {
-                component: 'audio_narration',
-                action: 'play_delayed',
-                metadata: {
-                  hookId: hookId.current,
-                  textLength: state.currentText.length,
-                  hasVoice: !!state.voice,
-                  voiceName: state.voice?.name,
-                },
-              },
-            );
-            setState((prev) => ({
-              ...prev,
-              isPlaying: false,
-              isPaused: false,
-            }));
-          }
+        actualSpeechStateRef.current = {
+          isActuallySpeaking: false,
+          isActuallyPaused: false,
+        };
+
         // Wait until speechSynthesis is no longer speaking or pending before starting new utterance
         const waitAndSpeak = () => {
-          if (!window.speechSynthesis.speaking && !window.speechSynthesis.pending) {
+          if (
+            !window.speechSynthesis.speaking &&
+            !window.speechSynthesis.pending
+          ) {
             try {
               window.speechSynthesis.speak(utteranceRef.current!);
             } catch (delayedError) {
@@ -345,13 +330,19 @@ export function useAudioNarration(
       );
       setState((prev) => ({ ...prev, isPlaying: false, isPaused: false }));
     }
-  }, [state.isSupported, state.currentText.length, state.voice, state.isPlaying, state.isPaused]);
+  }, [
+    state.isSupported,
+    state.currentText.length,
+    state.voice,
+    state.isPlaying,
+    state.isPaused,
+  ]);
 
   const pause = useCallback((): void => {
     if (isDisposedRef.current) {
       return;
     }
-    
+
     if (!state.isSupported) {
       return;
     }
@@ -366,8 +357,8 @@ export function useAudioNarration(
           component: 'audio_narration',
           action: 'pause',
           metadata: {
-            hookId: hookId.current
-          }
+            hookId: hookId.current,
+          },
         },
       );
     }
@@ -377,15 +368,18 @@ export function useAudioNarration(
     if (isDisposedRef.current) {
       return;
     }
-    
+
     if (!state.isSupported) {
       return;
     }
 
     try {
       window.speechSynthesis.cancel();
-      actualSpeechStateRef.current = { isActuallySpeaking: false, isActuallyPaused: false };
-      
+      actualSpeechStateRef.current = {
+        isActuallySpeaking: false,
+        isActuallyPaused: false,
+      };
+
       setState((prev) => ({
         ...prev,
         isPlaying: false,
@@ -400,12 +394,15 @@ export function useAudioNarration(
           component: 'audio_narration',
           action: 'stop',
           metadata: {
-            hookId: hookId.current
-          }
+            hookId: hookId.current,
+          },
         },
       );
       // Still update state even if stop failed
-      actualSpeechStateRef.current = { isActuallySpeaking: false, isActuallyPaused: false };
+      actualSpeechStateRef.current = {
+        isActuallySpeaking: false,
+        isActuallyPaused: false,
+      };
       setState((prev) => ({
         ...prev,
         isPlaying: false,
@@ -419,7 +416,7 @@ export function useAudioNarration(
     if (isDisposedRef.current) {
       return;
     }
-    
+
     if (!state.isSupported) {
       return;
     }
@@ -434,8 +431,8 @@ export function useAudioNarration(
           component: 'audio_narration',
           action: 'resume',
           metadata: {
-            hookId: hookId.current
-          }
+            hookId: hookId.current,
+          },
         },
       );
     }
@@ -458,19 +455,22 @@ export function useAudioNarration(
   const getText = useCallback((): string => {
     return state.currentText;
   }, [state.currentText]);
-  
+
   // Cleanup effect
   useEffect(() => {
     return () => {
       isDisposedRef.current = true;
-      
+
       // Only cancel speech if this specific instance's utterance is currently playing
       if (typeof window !== 'undefined' && utteranceRef.current) {
         try {
           // Check if the current utterance matches this instance's utterance
           // We can't directly check if our utterance is the one playing, but we can
           // check if speech is active and we have an utterance
-          if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
+          if (
+            window.speechSynthesis.speaking ||
+            window.speechSynthesis.pending
+          ) {
             window.speechSynthesis.cancel();
           }
         } catch (error) {
@@ -571,14 +571,16 @@ export function useNarrationPreferences(): [
 export function extractTextFromHTML(html: string): string {
   if (typeof document === 'undefined') return html;
 
-  const div = document.createElement('div');
-  div.innerHTML = html;
+  // Use DOMParser for safer HTML parsing
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, 'text/html');
 
   // Remove script and style elements
-  const scripts = div.querySelectorAll('script, style');
+  const scripts = doc.querySelectorAll('script, style, iframe, object, embed');
   scripts.forEach((el) => el.remove());
 
-  return div.textContent ?? div.innerText ?? '';
+  // Extract text content safely
+  return doc.body?.textContent ?? '';
 }
 
 // Utility to get estimated reading time

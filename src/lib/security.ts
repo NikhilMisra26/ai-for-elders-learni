@@ -213,19 +213,19 @@ export function sanitizeInput(input: string): string {
 }
 
 /**
- * Generate a secure session token (for demo purposes)
+ * Generate a secure session token
+ * Requires Web Crypto API for security - no fallback to insecure methods
  */
 export function generateSessionToken(): string {
-  const array = new Uint8Array(32);
   const cryptoObj = globalThis.crypto;
-  if (cryptoObj && typeof cryptoObj.getRandomValues === 'function') {
-    cryptoObj.getRandomValues(array);
-  } else {
-    // Fallback for non-browser/test environments (not cryptographically secure)
-    for (let i = 0; i < array.length; i += 1) {
-      array[i] = Math.floor(Math.random() * 256);
-    }
+  if (!cryptoObj || typeof cryptoObj.getRandomValues !== 'function') {
+    throw new Error(
+      'Web Crypto API is not available. Secure token generation requires a modern browser environment.',
+    );
   }
+
+  const array = new Uint8Array(32);
+  cryptoObj.getRandomValues(array);
   return Array.from(array, (byte) => byte.toString(16).padStart(2, '0')).join(
     '',
   );
@@ -233,78 +233,71 @@ export function generateSessionToken(): string {
 
 /**
  * Session management utilities
+ * IMPORTANT: This class is deprecated - use Supabase Auth for session management
+ * Keeping interface for backward compatibility but delegating to Supabase
  */
 export class SessionManager {
-  private static readonly SESSION_KEY = 'auth-session';
-  private static readonly TIMEOUT_KEY = 'session-timeout';
-
-  static createSession(userId: string): string {
-    const token = generateSessionToken();
-    const timeout =
-      Date.now() + defaultSecurityConfig.sessionTimeout * 60 * 1000;
-
-    const storage = (globalThis as unknown as { localStorage?: Storage })
-      .localStorage;
-    if (storage) {
-      storage.setItem(
-        this.SESSION_KEY,
-        JSON.stringify({ userId, token, createdAt: Date.now() }),
+  /**
+   * @deprecated Use Supabase Auth instead
+   * Sessions should be managed by Supabase with secure httpOnly cookies
+   */
+  static createSession(_userId: string): string {
+    if (import.meta.env.DEV) {
+      console.warn(
+        'SessionManager.createSession is deprecated. Use Supabase Auth for secure session management.',
       );
-      storage.setItem(this.TIMEOUT_KEY, timeout.toString());
     }
-
-    return token;
+    // Return a dummy token - actual session is managed by Supabase
+    return 'supabase-managed-session';
   }
 
+  /**
+   * @deprecated Use supabase.auth.getSession() instead
+   */
   static getSession(): {
     userId: string;
     token: string;
     createdAt: number;
   } | null {
-    try {
-      const storage = (globalThis as unknown as { localStorage?: Storage })
-        .localStorage;
-      if (!storage) return null;
-      const sessionData = storage.getItem(this.SESSION_KEY);
-      const timeout = storage.getItem(this.TIMEOUT_KEY);
+    if (import.meta.env.DEV) {
+      console.warn(
+        'SessionManager.getSession is deprecated. Use supabase.auth.getSession() for secure session retrieval.',
+      );
+    }
+    return null;
+  }
 
-      if (!sessionData || !timeout) return null;
-
-      // Check if session expired
-      if (Date.now() > parseInt(timeout)) {
-        this.clearSession();
-        return null;
-      }
-
-      return JSON.parse(sessionData) as {
-        userId: string;
-        token: string;
-        createdAt: number;
-      } | null;
-    } catch {
-      return null;
+  /**
+   * @deprecated Use supabase.auth.signOut() instead
+   */
+  static clearSession(): void {
+    if (import.meta.env.DEV) {
+      console.warn(
+        'SessionManager.clearSession is deprecated. Use supabase.auth.signOut() for secure session clearing.',
+      );
     }
   }
 
-  static clearSession(): void {
-    const storage = (globalThis as unknown as { localStorage?: Storage })
-      .localStorage;
-    if (!storage) return;
-    storage.removeItem(this.SESSION_KEY);
-    storage.removeItem(this.TIMEOUT_KEY);
-  }
-
+  /**
+   * @deprecated Use supabase.auth.getSession() instead
+   */
   static isSessionValid(): boolean {
-    return this.getSession() !== null;
+    if (import.meta.env.DEV) {
+      console.warn(
+        'SessionManager.isSessionValid is deprecated. Use supabase.auth.getSession() to check session validity.',
+      );
+    }
+    return false;
   }
 
+  /**
+   * @deprecated Session extension is handled automatically by Supabase
+   */
   static extendSession(): void {
-    const storage = (globalThis as unknown as { localStorage?: Storage })
-      .localStorage;
-    if (this.isSessionValid() && storage) {
-      const timeout =
-        Date.now() + defaultSecurityConfig.sessionTimeout * 60 * 1000;
-      storage.setItem(this.TIMEOUT_KEY, timeout.toString());
+    if (import.meta.env.DEV) {
+      console.warn(
+        'SessionManager.extendSession is deprecated. Supabase automatically handles session refresh.',
+      );
     }
   }
 }
@@ -364,10 +357,12 @@ export class SecurityLogger {
 
     // In a real app, this would send to a secure logging service
     if (severity === 'error') {
-      console.warn(
-        `Security Event [${severity.toUpperCase()}]: ${event}`,
-        details,
-      );
+      if (import.meta.env.DEV) {
+        console.warn(
+          `Security Event [${severity.toUpperCase()}]: ${event}`,
+          details,
+        );
+      }
     }
   }
 

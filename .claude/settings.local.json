@@ -4,7 +4,9 @@
       "Bash(npm run build:*)",
       "Bash(npx vite build:*)",
       "WebFetch(domain:webaim.org)",
-      "WebFetch(domain:docs.anthropic.com)"
+      "WebFetch(domain:docs.anthropic.com)",
+      "Bash(pnpm list:*)",
+      "mcp__ide__getDiagnostics"
     ],
     "deny": []
   }

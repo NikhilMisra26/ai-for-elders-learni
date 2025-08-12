@@ -195,7 +195,7 @@ export function HomePage({ onAuthClick }: HomePageProps): ReactElement {
               {user ? (
                 <Button
                   size='lg'
-                  onClick={async () => navigate('/dashboard')}
+                  onClick={async () => navigate('/courses')}
                   className='text-lg px-8 py-6 h-auto'
                 >
                   Continue Learning

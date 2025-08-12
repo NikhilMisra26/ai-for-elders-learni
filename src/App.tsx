@@ -13,14 +13,23 @@ import {
   useSearchParams,
   useLocation,
 } from 'react-router-dom';
+import { ErrorBoundary } from 'react-error-boundary';
 
 import { AuthProvider } from './contexts/AuthContext';
 import { AccessibilityProvider } from './contexts/AccessibilityContext';
 import { Header } from './components/Header';
-import { Dialog, DialogContent } from './components/ui/dialog';
+import { errorHandler } from './lib/errorHandler';
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+  VisuallyHidden,
+} from './components/ui/dialog';
 import { Toaster } from './components/ui/sonner';
 import { useSessionManager } from './hooks/useSessionManager';
 import { ProtectedRoute } from './components/ProtectedRoute';
+import { ErrorFallback } from './ErrorFallback';
 
 // Lazy load page components for code splitting
 const HomePage = lazy(async () =>
@@ -61,6 +70,11 @@ const ModulePage = lazy(async () =>
 const ReviewForm = lazy(async () =>
   import('./components/ReviewForm').then((module) => ({
     default: module.ReviewForm,
+  })),
+);
+const NotFoundPage = lazy(async () =>
+  import('./components/NotFoundPage').then((module) => ({
+    default: module.NotFoundPage,
   })),
 );
 
@@ -125,107 +139,138 @@ function AppContent(): ReactElement {
       <Header onAuthClick={handleAuthClick} />
 
       <main id='main-content' role='main'>
-        <Suspense fallback={<PageLoader />}>
-          <Routes>
-            {/* Root redirects to home */}
-            <Route path='/' element={<Navigate to='/home' replace />} />
+        <ErrorBoundary
+          FallbackComponent={ErrorFallback}
+          onError={(error) => {
+            if (import.meta.env.DEV) {
+              console.error('Application error:', error);
+            }
+            errorHandler.logError('Application boundary error', error, {
+              component: 'App',
+              action: 'error_boundary',
+            });
+          }}
+        >
+          <Suspense fallback={<PageLoader />}>
+            <Routes>
+              {/* Root redirects to home */}
+              <Route path='/' element={<Navigate to='/home' replace />} />
 
-            {/* Main pages */}
-            <Route
-              path='/home'
-              element={<HomePage onAuthClick={handleAuthClick} />}
-            />
+              {/* Main pages */}
+              <Route
+                path='/home'
+                element={
+                  <ErrorBoundary FallbackComponent={ErrorFallback}>
+                    <HomePage onAuthClick={handleAuthClick} />
+                  </ErrorBoundary>
+                }
+              />
 
-            {/* Courses section */}
-            <Route
-              path='/courses'
-              element={<CoursesPage onAuthClick={handleAuthClick} />}
-            />
-            <Route
-              path='/courses/basic'
-              element={
-                <ProtectedRoute>
-                  <ModulePage courseType='basic' />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path='/courses/advanced'
-              element={
-                <ProtectedRoute requiredRole='advanced'>
-                  <ModulePage courseType='advanced' />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path='/courses/expert'
-              element={
-                <ProtectedRoute requiredRole='expert'>
-                  <ModulePage courseType='expert' />
-                </ProtectedRoute>
-              }
-            />
+              {/* Courses section */}
+              <Route
+                path='/courses'
+                element={
+                  <ErrorBoundary FallbackComponent={ErrorFallback}>
+                    <CoursesPage onAuthClick={handleAuthClick} />
+                  </ErrorBoundary>
+                }
+              />
+              <Route
+                path='/courses/basic'
+                element={
+                  <ProtectedRoute>
+                    <ErrorBoundary FallbackComponent={ErrorFallback}>
+                      <ModulePage courseType='basic' />
+                    </ErrorBoundary>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path='/courses/advanced'
+                element={
+                  <ProtectedRoute requiredRole='advanced'>
+                    <ErrorBoundary FallbackComponent={ErrorFallback}>
+                      <ModulePage courseType='advanced' />
+                    </ErrorBoundary>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path='/courses/expert'
+                element={
+                  <ProtectedRoute requiredRole='expert'>
+                    <ErrorBoundary FallbackComponent={ErrorFallback}>
+                      <ModulePage courseType='expert' />
+                    </ErrorBoundary>
+                  </ProtectedRoute>
+                }
+              />
 
-            {/* Module routes */}
-            <Route
-              path='/courses/:courseType/module/:moduleId'
-              element={
-                <ProtectedRoute>
-                  <ModulePage />
-                </ProtectedRoute>
-              }
-            />
+              {/* Module routes */}
+              <Route
+                path='/courses/:courseType/module/:moduleId'
+                element={
+                  <ProtectedRoute>
+                    <ErrorBoundary FallbackComponent={ErrorFallback}>
+                      <ModulePage />
+                    </ErrorBoundary>
+                  </ProtectedRoute>
+                }
+              />
 
-            {/* Dashboard/Progress */}
-            <Route
-              path='/dashboard'
-              element={
-                <ProtectedRoute>
-                  <DashboardPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path='/progress'
-              element={<Navigate to='/dashboard' replace />}
-            />
+              {/* Dashboard/Progress */}
+              <Route
+                path='/dashboard'
+                element={
+                  <ProtectedRoute>
+                    <ErrorBoundary FallbackComponent={ErrorFallback}>
+                      <DashboardPage />
+                    </ErrorBoundary>
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path='/progress'
+                element={<Navigate to='/dashboard' replace />}
+              />
 
-            {/* Account section */}
-            <Route
-              path='/account'
-              element={
-                <ProtectedRoute>
-                  <AccountPage />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path='/profile'
-              element={<Navigate to='/account' replace />}
-            />
-            <Route
-              path='/settings'
-              element={
-                <ProtectedRoute>
-                  <AccountPage />
-                </ProtectedRoute>
-              }
-            />
+              {/* Account section */}
+              <Route
+                path='/account'
+                element={
+                  <ProtectedRoute>
+                    <AccountPage />
+                  </ProtectedRoute>
+                }
+              />
+              <Route
+                path='/profile'
+                element={<Navigate to='/account' replace />}
+              />
+              <Route
+                path='/settings'
+                element={
+                  <ProtectedRoute>
+                    <AccountPage />
+                  </ProtectedRoute>
+                }
+              />
 
-            {/* Reviews */}
-            <Route
-              path='/reviews'
-              element={
-                <ProtectedRoute>
-                  <ReviewForm />
-                </ProtectedRoute>
-              }
-            />
+              {/* Reviews */}
+              <Route
+                path='/reviews'
+                element={
+                  <ProtectedRoute>
+                    <ReviewForm />
+                  </ProtectedRoute>
+                }
+              />
 
-            {/* Catch all - redirect to home */}
-            <Route path='*' element={<Navigate to='/home' replace />} />
-          </Routes>
-        </Suspense>
+              {/* 404 - Not Found */}
+              <Route path='*' element={<NotFoundPage />} />
+            </Routes>
+          </Suspense>
+        </ErrorBoundary>
       </main>
 
       {/* Authentication Dialog */}
@@ -236,6 +281,12 @@ function AppContent(): ReactElement {
         }}
       >
         <DialogContent className='sm:max-w-md'>
+          <VisuallyHidden>
+            <DialogTitle>Authentication</DialogTitle>
+            <DialogDescription>
+              Sign in or create an account to continue
+            </DialogDescription>
+          </VisuallyHidden>
           <Suspense fallback={<PageLoader />}>
             <AuthForm onClose={handleAuthClose} />
           </Suspense>
