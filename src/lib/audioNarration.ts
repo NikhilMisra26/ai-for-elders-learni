@@ -291,7 +291,39 @@ export function useAudioNarration(
               isPaused: false,
             }));
           }
-        }, 100);
+        // Wait until speechSynthesis is no longer speaking or pending before starting new utterance
+        const waitAndSpeak = () => {
+          if (!window.speechSynthesis.speaking && !window.speechSynthesis.pending) {
+            try {
+              window.speechSynthesis.speak(utteranceRef.current!);
+            } catch (delayedError) {
+              errorHandler.logError(
+                'Failed to start speech synthesis after waiting',
+                delayedError instanceof Error
+                  ? delayedError
+                  : new Error(String(delayedError)),
+                {
+                  component: 'audio_narration',
+                  action: 'play_delayed',
+                  metadata: {
+                    hookId: hookId.current,
+                    textLength: state.currentText.length,
+                    hasVoice: !!state.voice,
+                    voiceName: state.voice?.name,
+                  },
+                },
+              );
+              setState((prev) => ({
+                ...prev,
+                isPlaying: false,
+                isPaused: false,
+              }));
+            }
+          } else {
+            setTimeout(waitAndSpeak, 50);
+          }
+        };
+        waitAndSpeak();
       } else {
         // Start new speech immediately if nothing is playing
         window.speechSynthesis.speak(utteranceRef.current);
