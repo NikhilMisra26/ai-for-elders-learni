@@ -258,7 +258,8 @@ interface AccessDeniedPromptProps {
 function AccessDeniedPrompt({
   requiredRole,
 }: AccessDeniedPromptProps): ReactElement {
-  const location = useLocation();
+  // Commented out unused location - keeping for potential future use
+  // const location = useLocation();
 
   const handleGoBack = (): void => {
     // Go back in history, or to home if no history

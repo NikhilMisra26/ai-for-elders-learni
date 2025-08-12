@@ -41,7 +41,7 @@ export default defineConfig(
       rollupOptions: {
         output: {
           // Optimized chunking strategy for better caching
-          manualChunks: (id) => {
+          manualChunks: (id): string | undefined => {
             // Core React libraries
             if (
               id.includes('node_modules/react') ||
@@ -82,6 +82,9 @@ export default defineConfig(
             if (id.includes('node_modules')) {
               return 'vendor';
             }
+
+            // Return undefined for other files (default chunking)
+            return undefined;
           },
         },
       },

@@ -32,8 +32,8 @@ export const ErrorFallback = ({
           <CardContent className='space-y-6'>
             <div className='text-lg text-muted-foreground max-w-lg mx-auto leading-relaxed'>
               <p className='mb-4'>
-                We're sorry, but something unexpected happened while loading
-                this page.
+                We&apos;re sorry, but something unexpected happened while
+                loading this page.
               </p>
               <p>
                 This is usually a temporary issue. Please try refreshing the

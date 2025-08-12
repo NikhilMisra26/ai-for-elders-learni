@@ -160,7 +160,7 @@ export function ReviewForm({
       <CardHeader>
         <CardTitle>Share Your Learning Experience</CardTitle>
         <CardDescription>
-          Help others by sharing your experience with AI for Elders
+          Help others by sharing your experience with DISCOVER 50 AI
         </CardDescription>
       </CardHeader>
       <CardContent>

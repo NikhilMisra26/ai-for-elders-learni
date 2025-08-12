@@ -1,10 +1,10 @@
-# AI for Elders - Product Requirements Document
+# DISCOVER 50 AI - Product Requirements Document
 
-A comprehensive learning platform designed to teach adults 50+ how to effectively and safely use artificial intelligence through structured, accessible courses.
+A comprehensive learning platform designed to teach people over 50 how to effectively and safely use artificial intelligence through structured, accessible courses.
 
 **Experience Qualities**:
 
-1. **Accessible** - Every interaction prioritizes clarity, readability, and ease of use for older adults
+1. **Accessible** - Every interaction prioritizes clarity, readability, and ease of use for people over 50
 2. **Trustworthy** - Professional design that builds confidence in AI learning with clear progress indicators
 3. **Empowering** - Content that transforms AI from intimidating to empowering through graduated skill building
 
@@ -33,7 +33,7 @@ A comprehensive learning platform designed to teach adults 50+ how to effectivel
 ### Accessibility Controls
 
 - **Functionality**: Font size adjustment (A-/A+), dark mode toggle, audio narration via Web Speech API
-- **Purpose**: Ensures platform usability for older adults with varying visual and cognitive needs
+- **Purpose**: Ensures platform usability for people over 50 with varying visual and cognitive needs
 - **Trigger**: User activates accessibility controls in header or module pages
 - **Progression**: Control activation → Immediate visual/audio feedback → Setting persistence
 - **Success criteria**: All content remains accessible with size/contrast adjustments and audio narration
@@ -57,7 +57,7 @@ A comprehensive learning platform designed to teach adults 50+ how to effectivel
 
 ## Design Direction
 
-The design should feel trustworthy, professional, and approachable - like a community college extension program rather than a flashy tech startup, with generous spacing and clear visual hierarchy that reduces cognitive load for older learners.
+The design should feel trustworthy, professional, and approachable - like a community college extension program rather than a flashy tech startup, with generous spacing and clear visual hierarchy that reduces cognitive load for learners over 50.
 
 ## Color Selection
 

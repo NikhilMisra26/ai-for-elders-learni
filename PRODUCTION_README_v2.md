@@ -1,11 +1,11 @@
-# AI for Elders — Production Blueprint and Code Reference
+# DISCOVER 50 AI — Production Blueprint and Code Reference
 
 _Generated: 2025-08-08 01:37:48 UTC_
 
 ## Codebase Tree
 
 ```
-ai-for-elders-learni/
+discover-50-ai/
   .gitignore
   .spark-initial-sha
   LICENSE
@@ -488,7 +488,7 @@ export default {
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>AI for Elders - Learn AI at Your Own Pace</title>
+    <title>DISCOVER 50 AI - Learn AI at Your Own Pace</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -1192,7 +1192,7 @@ export function Header({ onAuthClick, onNavigate, currentPage }: HeaderProps) {
               onClick={() => onNavigate('home')}
               className="text-xl font-bold text-primary hover:text-primary/80 transition-colors"
             >
-              AI for Elders
+              DISCOVER 50 AI
             </button>
           </div>
 
@@ -4817,11 +4817,11 @@ export const defaultSecurityConfig: SecurityConfig = {
   passwordMinLength: 8,
   passwordRequireSpecialChar: true,
   passwordRequireNumber: true,
-  sessionTimeout: 60, // 1 hour for seniors
+  sessionTimeout: 60, // 1 hour for people over 50
 }
 
 /**
- * Password validation with senior-friendly requirements
+ * Password validation with 50+ friendly requirements
  */
 export function validatePassword(password: string, config = defaultSecurityConfig): {
   isValid: boolean
@@ -5051,7 +5051,7 @@ createRoot(document.getElementById('root')!).render(
 Preview:
 
 ```tsx
-# AI for Elders - Complete Platform PRD
+# DISCOVER 50 AI - Complete Platform PRD
 
 ## Core Purpose & Success
 
@@ -5085,7 +5085,7 @@ Preview:
 ### Course Structure & Content
 - **Free Tier**: "AI Basics for Everyday Life" (4 modules) - accessible after registration
 - **Advanced Tier**: "AI as Your Personal Assistant" ($1.99/month, 4 modules)
-- **Expert Tier**: "Advanced AI for Active Seniors" ($4.99/month, 4 modules)
+- **Expert Tier**: "Advanced AI for Active Learners" ($4.99/month, 4 modules)
 - Individual module pages with content, progress tracking, accessibility features
 - Breadcrumb navigation and course outline sidebar
 - Estimated reading time and module progress indicators
@@ -5121,7 +5121,7 @@ Notes: uses localStorage
 Preview:
 
 ```tsx
-# AI for Elders - Enhanced Security & Platform Foundation PRD
+# DISCOVER 50 AI - Enhanced Security & Platform Foundation PRD
 
 ## Core Purpose & Success
 
@@ -5159,7 +5159,7 @@ Adults 50+ need to learn AI safely but face multiple security concerns:
 - Session management with automatic timeout (60 minutes)
 - Account lockout protection with progressive delays
 
-**Purpose**: Protect user accounts while maintaining usability for seniors
+**Purpose**: Protect user accounts while maintaining usability for people over 50
 **Success Criteria**: <5% failed legitimate login attempts, 100% malicious attempt blocking
 
 ### 2. Input Validation & Sanitization
