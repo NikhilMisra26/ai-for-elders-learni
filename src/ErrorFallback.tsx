@@ -2,7 +2,6 @@ import { Warning, ArrowsClockwise, House } from '@phosphor-icons/react';
 import type { FallbackProps } from 'react-error-boundary';
 import type { ReactElement } from 'react';
 
-import { Alert, AlertTitle, AlertDescription } from './components/ui/alert';
 import { Button } from './components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './components/ui/card';
 
@@ -33,10 +32,12 @@ export const ErrorFallback = ({
           <CardContent className='space-y-6'>
             <div className='text-lg text-muted-foreground max-w-lg mx-auto leading-relaxed'>
               <p className='mb-4'>
-                We're sorry, but something unexpected happened while loading this page.
+                We're sorry, but something unexpected happened while loading
+                this page.
               </p>
               <p>
-                This is usually a temporary issue. Please try refreshing the page or going back to the home page.
+                This is usually a temporary issue. Please try refreshing the
+                page or going back to the home page.
               </p>
             </div>
 
@@ -62,7 +63,7 @@ export const ErrorFallback = ({
                 <ArrowsClockwise className='w-5 h-5 mr-2' />
                 Try Again
               </Button>
-              
+
               <Button
                 onClick={handleGoHome}
                 variant='outline'
@@ -77,7 +78,8 @@ export const ErrorFallback = ({
 
             <div className='pt-4 border-t border-border'>
               <p className='text-sm text-muted-foreground'>
-                If this problem continues, please contact our support team for assistance.
+                If this problem continues, please contact our support team for
+                assistance.
               </p>
             </div>
           </CardContent>

@@ -223,7 +223,7 @@ export function generateSessionToken(): string {
       'Web Crypto API is not available. Secure token generation requires a modern browser environment.',
     );
   }
-  
+
   const array = new Uint8Array(32);
   cryptoObj.getRandomValues(array);
   return Array.from(array, (byte) => byte.toString(16).padStart(2, '0')).join(

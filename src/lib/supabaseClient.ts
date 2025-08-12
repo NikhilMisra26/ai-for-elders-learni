@@ -49,9 +49,9 @@ function validateEnvironment(): SupabaseConfig {
           component: 'supabase',
           action: 'validate_config',
           // Only log boolean flags, not actual values or detailed errors
-          metadata: { 
+          metadata: {
             hasValidConfig: false,
-            errorCount: errors.length 
+            errorCount: errors.length,
           },
         },
       );
@@ -111,7 +111,7 @@ export async function withSupabaseErrorHandling<T>(
   context: SupabaseOperation,
 ): Promise<{ data: T | null; error: Error | null; errorId?: string }> {
   const isProduction = import.meta.env.MODE === 'production';
-  
+
   if (!config.isValid) {
     // Use generic error message in production to avoid exposing config details
     const configError = new Error(
@@ -126,7 +126,7 @@ export async function withSupabaseErrorHandling<T>(
         component: 'supabase',
         userId: context.userId,
         // Don't expose config errors in production
-        metadata: isProduction 
+        metadata: isProduction
           ? { hasValidConfig: false }
           : { configErrors: config.errors },
       },
@@ -177,18 +177,18 @@ export async function checkSupabaseHealth(): Promise<{
   }
 
   const isProduction = import.meta.env.MODE === 'production';
-  
+
   try {
     // Simple query to check connection
     const { error } = await supabase.from('profiles').select('count').limit(1);
 
     if (error) {
       // Sanitize error message for production
-      const sanitizedMessage = isProduction 
-        ? 'Connection test failed' 
+      const sanitizedMessage = isProduction
+        ? 'Connection test failed'
         : `Connection test failed: ${error.message}`;
       result.errors.push(sanitizedMessage);
-      
+
       if (!isProduction) {
         errorHandler.logWarning('Supabase health check failed', {
           component: 'supabase',
@@ -203,11 +203,11 @@ export async function checkSupabaseHealth(): Promise<{
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     // Sanitize error message for production
-    const sanitizedMessage = isProduction 
-      ? 'Health check error' 
+    const sanitizedMessage = isProduction
+      ? 'Health check error'
       : `Health check error: ${errorMessage}`;
     result.errors.push(sanitizedMessage);
-    
+
     if (!isProduction) {
       errorHandler.logError(
         'Supabase health check error',

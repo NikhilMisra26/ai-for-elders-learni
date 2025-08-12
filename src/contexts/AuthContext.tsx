@@ -1,5 +1,5 @@
 import type { ReactNode, ReactElement } from 'react';
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect, useRef } from 'react';
 import type { VerifyOtpParams } from '@supabase/supabase-js';
 
 import { useKV } from '@/lib/kv';
@@ -74,12 +74,20 @@ export function AuthProvider({
     isLocked: false,
   });
 
+  // Track profile creation to prevent race conditions
+  const profileCreationInProgress = useRef<Set<string>>(new Set());
+
   // Initialize Supabase auth listener and hydrate user profile
   useEffect(() => {
     const init = async (): Promise<void> => {
       const { data } = await supabase.auth.getSession();
       const authUser = data.session?.user;
       if (authUser) {
+        // Check if profile creation is already in progress for this user
+        if (profileCreationInProgress.current.has(authUser.id)) {
+          return; // Skip to prevent duplicate profile creation
+        }
+
         try {
           const profile = await getProfile(authUser.id);
           const mapped: User = {
@@ -95,39 +103,79 @@ export function AuthProvider({
             lockedUntil: profile.locked_until ?? undefined,
           };
           setUser(mapped);
-        } catch {
-          // First-time user: create profile
-          const email = authUser.email ?? 'unknown@example.com';
-          const newProfile = await upsertProfile({
-            id: authUser.id,
-            email,
-            name: authUser.user_metadata?.name ?? '',
-            tier: 'free',
-            verified: !!authUser.email_confirmed_at,
-            join_date: new Date().toISOString(),
-            last_login_at: new Date().toISOString(),
-            login_attempts: 0,
-            is_locked: false,
-            locked_until: null,
-          });
-          setUser({
-            id: newProfile.id,
-            email: newProfile.email,
-            name: newProfile.name ?? email,
-            tier: 'free',
-            verified: newProfile.verified,
-            joinDate: newProfile.join_date,
-          });
+        } catch (error) {
+          // First-time user: create profile with race condition protection
+          profileCreationInProgress.current.add(authUser.id);
+
+          try {
+            const email = authUser.email ?? 'unknown@example.com';
+            const newProfile = await upsertProfile({
+              id: authUser.id,
+              email,
+              name: authUser.user_metadata?.name ?? '',
+              tier: 'free',
+              verified: !!authUser.email_confirmed_at,
+              join_date: new Date().toISOString(),
+              last_login_at: new Date().toISOString(),
+              login_attempts: 0,
+              is_locked: false,
+              locked_until: null,
+            });
+            setUser({
+              id: newProfile.id,
+              email: newProfile.email,
+              name: newProfile.name ?? email,
+              tier: 'free',
+              verified: newProfile.verified,
+              joinDate: newProfile.join_date,
+            });
+          } catch (upsertError) {
+            // If upsert fails, it might be a duplicate - try to fetch again
+            try {
+              const profile = await getProfile(authUser.id);
+              setUser({
+                id: profile.id,
+                email: profile.email,
+                name: profile.name ?? authUser.email ?? 'User',
+                tier: (profile.tier as User['tier']) ?? 'free',
+                verified: profile.verified,
+                joinDate: profile.join_date,
+                lastLoginAt: profile.last_login_at ?? undefined,
+                loginAttempts: profile.login_attempts,
+                isLocked: profile.is_locked,
+                lockedUntil: profile.locked_until ?? undefined,
+              });
+            } catch {
+              // Unable to create or fetch profile
+              SecurityLogger.log(
+                'profile_creation_failed',
+                { userId: authUser.id, error: upsertError },
+                'error',
+              );
+            }
+          } finally {
+            profileCreationInProgress.current.delete(authUser.id);
+          }
         }
       } else {
         setUser(null);
       }
     };
 
-    const { data: listener } = supabase.auth.onAuthStateChange(() => {
-      void init();
-    });
+    // Only call init once initially
     void init();
+
+    // Set up auth state change listener
+    const { data: listener } = supabase.auth.onAuthStateChange((event) => {
+      // Only re-init on actual auth state changes, not on token refresh
+      if (
+        event === 'SIGNED_IN' ||
+        event === 'SIGNED_OUT' ||
+        event === 'USER_UPDATED'
+      ) {
+        void init();
+      }
+    });
 
     return (): void => {
       listener.subscription.unsubscribe();

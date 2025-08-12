@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useRef, useMemo, type ReactElement } from 'react';
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useMemo,
+  type ReactElement,
+} from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
@@ -161,18 +167,18 @@ export function ModulePage({
   useEffect(() => {
     // Reset cleanup flag when effect runs
     cleanupPerformedRef.current = false;
-    
+
     return (): void => {
       // Only perform cleanup once
       if (cleanupPerformedRef.current) {
         return;
       }
       cleanupPerformedRef.current = true;
-      
+
       if (timeSpent > 0) {
         // Auto-save time spent when leaving module
       }
-      
+
       // Cleanup audio on unmount
       try {
         if (audioState.isPlaying) {
@@ -183,10 +189,14 @@ export function ModulePage({
         if (import.meta.env.DEV) {
           console.error('Error cleaning up audio on unmount:', error);
         }
-        errorHandler.logError('Audio cleanup failed on unmount', error instanceof Error ? error : new Error(String(error)), {
-          component: 'ModulePage',
-          action: 'audio_cleanup'
-        });
+        errorHandler.logError(
+          'Audio cleanup failed on unmount',
+          error instanceof Error ? error : new Error(String(error)),
+          {
+            component: 'ModulePage',
+            action: 'audio_cleanup',
+          },
+        );
       }
     };
     // Empty dependency array ensures this only runs on mount/unmount
@@ -308,10 +318,14 @@ export function ModulePage({
       if (import.meta.env.DEV) {
         console.error('[ModulePage] Audio play failed:', error);
       }
-      errorHandler.logError('Audio playback failed', error instanceof Error ? error : new Error(String(error)), {
-        component: 'ModulePage',
-        action: 'audio_play'
-      });
+      errorHandler.logError(
+        'Audio playback failed',
+        error instanceof Error ? error : new Error(String(error)),
+        {
+          component: 'ModulePage',
+          action: 'audio_play',
+        },
+      );
       toast.error('Audio playback failed. Please try again.');
       setShowAudioControls(false);
     }
@@ -622,10 +636,16 @@ export function ModulePage({
                                         error,
                                       );
                                     }
-                                    errorHandler.logError('Failed to set audio rate', error instanceof Error ? error : new Error(String(error)), {
-                                      component: 'ModulePage',
-                                      action: 'set_audio_rate'
-                                    });
+                                    errorHandler.logError(
+                                      'Failed to set audio rate',
+                                      error instanceof Error
+                                        ? error
+                                        : new Error(String(error)),
+                                      {
+                                        component: 'ModulePage',
+                                        action: 'set_audio_rate',
+                                      },
+                                    );
                                   }
                                 }}
                                 min={0.5}
@@ -651,10 +671,16 @@ export function ModulePage({
                                         error,
                                       );
                                     }
-                                    errorHandler.logError('Failed to set audio volume', error instanceof Error ? error : new Error(String(error)), {
-                                      component: 'ModulePage',
-                                      action: 'set_audio_volume'
-                                    });
+                                    errorHandler.logError(
+                                      'Failed to set audio volume',
+                                      error instanceof Error
+                                        ? error
+                                        : new Error(String(error)),
+                                      {
+                                        component: 'ModulePage',
+                                        action: 'set_audio_volume',
+                                      },
+                                    );
                                   }
                                 }}
                                 min={0}
@@ -667,7 +693,10 @@ export function ModulePage({
                           </>
                         );
                       } catch (error) {
-                        errorHandler.logError('Error rendering audio controls:', error);
+                        errorHandler.logError(
+                          'Error rendering audio controls:',
+                          error,
+                        );
                         return (
                           <div className='text-center p-4 text-muted-foreground'>
                             <p>Audio controls temporarily unavailable</p>

@@ -33,7 +33,7 @@ export class AudioControlsErrorBoundary extends Component<Props, State> {
       errorHandler.logError('Audio controls error boundary triggered', error, {
         component: 'AudioControlsErrorBoundary',
         action: 'component_did_catch',
-        metadata: { errorInfo }
+        metadata: { errorInfo },
       });
     });
     this.props.onError?.();

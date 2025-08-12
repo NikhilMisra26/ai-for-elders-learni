@@ -3,6 +3,7 @@ import * as DialogPrimitive from '@radix-ui/react-dialog';
 import { X } from '@phosphor-icons/react';
 
 import { cn } from '@/lib/utils';
+import { VisuallyHidden } from './visually-hidden';
 
 function Dialog({
   ...props
@@ -136,4 +137,5 @@ export {
   DialogPortal,
   DialogTitle,
   DialogTrigger,
+  VisuallyHidden,
 };

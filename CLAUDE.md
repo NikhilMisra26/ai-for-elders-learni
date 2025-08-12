@@ -41,6 +41,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - WHen in "Plan Mode," come up with a very brief summary of how you will use subagents IF you plan to use them in order to maximize efficiency
 - If you decide NOT to use subagnets **justify why they are unnecesary**. 
 
+5. When fixing bugs or adding features, use the smartest and most minimalistic approach possible white still maintaining UI/UX, security, and all other important things
+
+6. After finishing edits, use pnpm lint:fix
+
 ## Project Overview
 
 This is **AI for Elders**, a React-based educational platform designed to teach adults 50+ how to effectively and safely use artificial intelligence through structured, accessible courses. The platform features a multi-tier subscription system (Free, Advanced $1.99/month, Expert $4.99/month) with user authentication, progress tracking, and accessibility features optimized for older learners.

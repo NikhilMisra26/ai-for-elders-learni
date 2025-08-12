@@ -18,7 +18,8 @@ export default defineConfig(
         'X-Frame-Options': 'DENY',
         'X-Content-Type-Options': 'nosniff',
         'Referrer-Policy': 'strict-origin-when-cross-origin',
-        'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=(self https://checkout.stripe.com)',
+        'Permissions-Policy':
+          'camera=(), microphone=(), geolocation=(), payment=(self https://checkout.stripe.com)',
         // Note: CSP is handled by meta tags in HTML due to Vite's dynamic imports in dev
       },
     },
@@ -28,7 +29,8 @@ export default defineConfig(
         'X-Frame-Options': 'DENY',
         'X-Content-Type-Options': 'nosniff',
         'Referrer-Policy': 'strict-origin-when-cross-origin',
-        'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=(self https://checkout.stripe.com)',
+        'Permissions-Policy':
+          'camera=(), microphone=(), geolocation=(), payment=(self https://checkout.stripe.com)',
         // Note: CSP is handled by meta tags in HTML
       },
     },
@@ -41,35 +43,41 @@ export default defineConfig(
           // Optimized chunking strategy for better caching
           manualChunks: (id) => {
             // Core React libraries
-            if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) {
+            if (
+              id.includes('node_modules/react') ||
+              id.includes('node_modules/react-dom')
+            ) {
               return 'react-vendor';
             }
-            
+
             // Supabase client - separate chunk for authentication/database
-            if (id.includes('node_modules/@supabase') || id.includes('src/lib/supabaseClient')) {
+            if (
+              id.includes('node_modules/@supabase') ||
+              id.includes('src/lib/supabaseClient')
+            ) {
               return 'supabase';
             }
-            
+
             // Radix UI components - large UI library
             if (id.includes('node_modules/@radix-ui')) {
               return 'radix-ui';
             }
-            
+
             // Framer Motion - animation library
             if (id.includes('node_modules/framer-motion')) {
               return 'framer-motion';
             }
-            
+
             // React Query - data fetching
             if (id.includes('node_modules/@tanstack/react-query')) {
               return 'react-query';
             }
-            
+
             // Other large dependencies
             if (id.includes('node_modules/react-router-dom')) {
               return 'router';
             }
-            
+
             // Group other node_modules into a general vendor chunk
             if (id.includes('node_modules')) {
               return 'vendor';
