@@ -309,7 +309,7 @@ export function ModulePage({
       audioControls.stop();
       setShowAudioControls(false);
     } catch (error) {
-      console.error('[ModulePage] Audio stop failed:', error);
+      errorHandler.logError('[ModulePage] Audio stop failed:', error);
       setShowAudioControls(false);
     }
   };
