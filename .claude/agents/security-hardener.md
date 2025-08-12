@@ -1,6 +1,6 @@
 ---
 name: security-hardener
-description: Use proactively for comprehensive security auditing and hardening of web applications including dependency vulnerabilities, CSP headers, cookie security, payment handling, database RLS policies, and API security posture. Specialist for identifying security issues and implementing fixes with focus on enterprise-grade security standards.
+description: PROACTIVELY audit BEFORE deployment and after auth/payment changes. Examples - "check for vulnerabilities", "audit Stripe integration", "review authentication security", "scan dependencies", "check OWASP compliance", "review API security". Run IN PARALLEL with test-suite-writer for security tests, deployment-configurator before production, payment-integration-specialist for payment security.
 tools: Read, Edit, Write, Bash, Grep, Glob
 color: red
 model: opus

@@ -3,7 +3,8 @@
     "allow": [
       "Bash(npm run build:*)",
       "Bash(npx vite build:*)",
-      "WebFetch(domain:webaim.org)"
+      "WebFetch(domain:webaim.org)",
+      "WebFetch(domain:docs.anthropic.com)"
     ],
     "deny": []
   }

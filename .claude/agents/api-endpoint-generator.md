@@ -1,6 +1,6 @@
 ---
 name: api-endpoint-generator
-description: Use proactively when scaffolding API endpoints for Vite applications with Express or serverless functions, including Zod validation, Supabase integration, and typed client SDK generation, or anything else of the sort
+description: ALWAYS use when creating backend routes or API endpoints. Examples - "create user API", "add payment endpoints", "build CRUD operations", "implement webhooks", "create REST API", "add GraphQL endpoint". Run IN PARALLEL with database-schema-designer for schemas, payment-integration-specialist for Stripe APIs, authentication-implementer for auth endpoints.
 tools: Read, Edit, Write, Glob, Grep
 model: sonnet
 color: cyan

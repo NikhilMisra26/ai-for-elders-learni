@@ -1,6 +1,6 @@
 ---
 name: authentication-implementer
-description: Use proactively for implementing Supabase authentication in Vite + React + React Router applications. Specialist for setting up complete auth flows including email/password, OAuth providers, session handling, protected routes, and role-based access control.
+description: Use IMMEDIATELY for ANY auth-related changes. Examples - "add login system", "implement OAuth", "create protected routes", "add role-based access", "setup user registration", "implement password reset". Run IN PARALLEL with database-schema-designer for user tables, ui-component-builder for auth forms, api-endpoint-generator for auth APIs.
 tools: Read, Edit, Write, Grep, Glob
 model: sonnet
 color: green

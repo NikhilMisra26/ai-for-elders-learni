@@ -1,6 +1,6 @@
 ---
 name: payment-integration-specialist
-description: Stripe payment integration specialist for implementing checkout flows, webhooks, and subscription management. Use proactively for payment gateway setup, Stripe API integration, and secure webhook handling.
+description: Use IMMEDIATELY for ANY payment or billing features. Examples - "add Stripe checkout", "implement subscriptions", "create billing page", "handle payment webhooks", "add payment methods", "process refunds". Run IN PARALLEL with api-endpoint-generator for payment APIs, database-schema-designer for billing tables, ui-component-builder for payment UI.
 tools: Read, Edit, Write, Bash, Grep, Glob
 model: sonnet
 color: green

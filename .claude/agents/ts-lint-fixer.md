@@ -1,6 +1,6 @@
 ---
 name: ts-lint-fixer
-description: Use proactively to fix TypeScript compilation and ESLint errors in Vite + React projects while maintaining or improving performance. Specialist for resolving type errors without suppressing them.
+description: ALWAYS run after ANY code changes or when errors appear. Examples - "fix TypeScript errors", "resolve ESLint warnings", "type errors in components", "import issues", "undefined property errors", "missing return types". Run IN PARALLEL with test-suite-writer after features, code-refactorer for cleanup, ui-component-builder when fixing component types.
 tools: Read, Edit, Write, Bash, Grep, Glob
 color: blue
 model: sonnet

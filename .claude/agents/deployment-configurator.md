@@ -1,6 +1,6 @@
 ---
 name: deployment-configurator
-description: Use proactively for setting up production deployments, CI/CD pipelines, and platform-specific configurations for Vite frontends and Express backends
+description: Run BEFORE production deployment or CI/CD setup. Examples - "deploy to Vercel", "setup GitHub Actions", "configure Docker", "create CI/CD pipeline", "setup Netlify", "configure environment variables". Run IN PARALLEL with security-hardener for security review, test-suite-writer for CI tests, api-endpoint-generator for serverless functions.
 tools: Read, Edit, Write, Grep, Glob
 color: cyan
 model: sonnet

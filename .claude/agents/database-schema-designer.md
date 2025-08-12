@@ -1,6 +1,6 @@
 ---
 name: database-schema-designer
-description: Use proactively for designing and generating Supabase PostgreSQL database schemas, migrations, RLS policies, and TypeScript types. Specialist for creating production-ready SQL files and database architecture.
+description: Use IMMEDIATELY for ANY database changes or schema design. Examples - "add user profiles table", "create subscription schema", "design course tracking", "add RLS policies", "create migrations", "design relational structure". Run IN PARALLEL with api-endpoint-generator for APIs, authentication-implementer for auth tables, payment-integration-specialist for billing schemas.
 tools: Read, Edit, Write
 color: purple
 model: sonnet
