@@ -29,13 +29,24 @@ export class AudioControlsErrorBoundary extends Component<Props, State> {
       console.error('Audio controls error:', error, errorInfo);
     }
     // Log to error handler service instead of console in production
-    import('@/lib/errorHandler').then(({ errorHandler }) => {
-      errorHandler.logError('Audio controls error boundary triggered', error, {
-        component: 'AudioControlsErrorBoundary',
-        action: 'component_did_catch',
-        metadata: { errorInfo },
+    import('@/lib/errorHandler')
+      .then(({ errorHandler }) => {
+        errorHandler.logError(
+          'Audio controls error boundary triggered',
+          error,
+          {
+            component: 'AudioControlsErrorBoundary',
+            action: 'component_did_catch',
+            metadata: { errorInfo },
+          },
+        );
+      })
+      .catch((importError) => {
+        // Silently fail if error handler module cannot be loaded
+        if (import.meta.env.DEV) {
+          console.warn('Failed to load error handler module:', importError);
+        }
       });
-    });
     this.props.onError?.();
   }
 

@@ -2,7 +2,7 @@
 name: api-endpoint-generator
 description: ALWAYS use when creating backend routes or API endpoints. Examples - "create user API", "add payment endpoints", "build CRUD operations", "implement webhooks", "create REST API", "add GraphQL endpoint". Run IN PARALLEL with database-schema-designer for schemas, payment-integration-specialist for Stripe APIs, authentication-implementer for auth endpoints.
 tools: Read, Edit, Write, Glob, Grep
-model: sonnet
+model: inherit
 color: cyan
 ---
 
@@ -81,6 +81,7 @@ When invoked, you must follow these steps:
     - Provide migration path between Express and serverless
 
 **Best Practices:**
+
 - Use Zod's `.parse()` for runtime validation, `.safeParse()` for error handling
 - Implement centralized error handling with proper status codes
 - Create reusable middleware for common patterns (auth, rate limiting)
@@ -95,6 +96,7 @@ When invoked, you must follow these steps:
 ## Code Templates
 
 ### Express Server Template:
+
 ```typescript
 // server/index.ts
 import express from 'express';
@@ -116,6 +118,7 @@ app.listen(PORT);
 ```
 
 ### Serverless Function Template:
+
 ```typescript
 // netlify/functions/api.ts
 import { Handler } from '@netlify/functions';
@@ -127,6 +130,7 @@ export const handler: Handler = async (event, context) => {
 ```
 
 ### Zod Validation Example:
+
 ```typescript
 // server/routes/users.ts
 import { z } from 'zod';
@@ -134,13 +138,14 @@ import { z } from 'zod';
 const CreateUserSchema = z.object({
   email: z.string().email(),
   name: z.string().min(1).max(100),
-  tier: z.enum(['free', 'advanced', 'expert']).optional()
+  tier: z.enum(['free', 'advanced', 'expert']).optional(),
 });
 
 export type CreateUserInput = z.infer<typeof CreateUserSchema>;
 ```
 
 ### Client SDK Example:
+
 ```typescript
 // src/lib/apiClient.ts
 import type { CreateUserInput } from '../../server/routes/users';
@@ -149,7 +154,7 @@ class ApiClient {
   async createUser(data: CreateUserInput) {
     return this.fetch<User>('/api/users', {
       method: 'POST',
-      body: JSON.stringify(data)
+      body: JSON.stringify(data),
     });
   }
 }
@@ -158,6 +163,7 @@ class ApiClient {
 ## Report / Response
 
 Provide your final response with:
+
 1. List of generated files with their paths
 2. Key architectural decisions made
 3. Setup instructions for local development

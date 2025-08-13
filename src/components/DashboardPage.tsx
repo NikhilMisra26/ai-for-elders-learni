@@ -1,4 +1,4 @@
-import React, { useState, type ReactElement } from 'react';
+import { useState, type ReactElement } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   BookOpen,
@@ -20,6 +20,7 @@ import {
 
 import { AuthForm } from './AuthForm';
 
+import { BrandName } from '@/components/BrandName';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -36,13 +37,10 @@ import { useProgress } from '@/lib/progressTracking';
 import { useSubscription } from '@/lib/subscription';
 import { courseData } from '@/lib/courseData';
 
-interface DashboardPageProps {}
-
 export function DashboardPage(): ReactElement {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { subscription, getCurrentPlan, getDaysUntilExpiry } =
-    useSubscription();
+  const { subscription, getCurrentPlan } = useSubscription();
   const {
     getDashboardSummary,
     getLearningRecommendations,
@@ -64,7 +62,7 @@ export function DashboardPage(): ReactElement {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <AuthForm onClose={async () => navigate('/home')} />
+            <AuthForm onClose={() => void navigate('/home')} />
           </CardContent>
         </Card>
       </div>
@@ -74,7 +72,8 @@ export function DashboardPage(): ReactElement {
   const dashboardSummary = getDashboardSummary();
   const recommendations = getLearningRecommendations();
   const currentPlan = getCurrentPlan();
-  const _daysUntilExpiry = getDaysUntilExpiry();
+  // Commented out unused variable - keeping for potential future use
+  // const _daysUntilExpiry = getDaysUntilExpiry();
 
   // Get greeting based on time
   const getGreeting = (): string => {
@@ -93,24 +92,24 @@ export function DashboardPage(): ReactElement {
         )
       : 0;
 
-  // Get recent courses
-  const _getRecentCourses = (): Array<
-    (typeof courseData)[keyof typeof courseData]
-  > => {
-    return Object.values(courseData)
-      .filter((_course) => {
-        const progress = dashboardSummary.startedCourses > 0;
-        return progress;
-      })
-      .slice(0, 3);
-  };
+  // Commented out unused function - keeping for potential future use
+  // const _getRecentCourses = (): Array<
+  //   (typeof courseData)[keyof typeof courseData]
+  // > => {
+  //   return Object.values(courseData)
+  //     .filter((_course) => {
+  //       const progress = dashboardSummary.startedCourses > 0;
+  //       return progress;
+  //     })
+  //     .slice(0, 3);
+  // };
 
   const handleStartLearning = (): void => {
     if (recommendations.continueModule) {
       // Navigate to specific module - in a real app, you'd implement this routing
-      navigate('/courses');
+      void navigate('/courses');
     } else if (recommendations.startCourse) {
-      navigate('/courses');
+      void navigate('/courses');
     }
   };
 
@@ -123,7 +122,8 @@ export function DashboardPage(): ReactElement {
             {getGreeting()}, {user.name}! 👋
           </h1>
           <p className='text-xl text-muted-foreground'>
-            Ready to continue your AI learning journey today?
+            Ready to continue your AI learning journey with{' '}
+            <BrandName variant='short' /> today?
           </p>
         </div>
 
@@ -350,7 +350,7 @@ export function DashboardPage(): ReactElement {
                     })
                     .map((course) => {
                       const completedModules = course.modules.filter(
-                        (_module) =>
+                        () =>
                           // Check if module is completed - in real app, use progress tracking
                           false, // Placeholder
                       ).length;
@@ -393,7 +393,7 @@ export function DashboardPage(): ReactElement {
                 <Button
                   variant='outline'
                   className='w-full mt-6'
-                  onClick={async () => navigate('/courses')}
+                  onClick={() => void navigate('/courses')}
                 >
                   View All Courses
                   <ArrowRight className='w-4 h-4 ml-2' />
@@ -480,7 +480,7 @@ export function DashboardPage(): ReactElement {
                       <Button
                         size='sm'
                         variant='outline'
-                        onClick={async () => navigate('/account')}
+                        onClick={() => void navigate('/account')}
                       >
                         Upgrade
                       </Button>
@@ -517,7 +517,7 @@ export function DashboardPage(): ReactElement {
                 <Button
                   variant='outline'
                   className='w-full'
-                  onClick={async () => navigate('/account')}
+                  onClick={() => void navigate('/account')}
                 >
                   Manage Account
                   <Gear className='w-4 h-4 ml-2' />
@@ -627,7 +627,7 @@ export function DashboardPage(): ReactElement {
                     techniques and expert-level content.
                   </p>
                   <Button
-                    onClick={async () => navigate('/account')}
+                    onClick={() => void navigate('/account')}
                     className='w-full'
                   >
                     View Plans

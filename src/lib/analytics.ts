@@ -40,30 +40,48 @@ function isCacheValid<T>(cache: CachedData<T> | null): boolean {
   return Date.now() - cache.timestamp < CACHE_DURATION;
 }
 
+interface PlatformStatsData {
+  total_users: number;
+  avg_completion: number;
+  avg_rating: number;
+  countries_count: number;
+}
+
 // Fetch platform statistics from Supabase
 export async function getPlatformStats(): Promise<PlatformStats | null> {
   // Check cache first
   if (isCacheValid(statsCache.current)) {
-    return statsCache.current!.data;
+    return statsCache.current?.data ?? null;
   }
 
   try {
     // Use the database function we created
-    const { data, error } = await supabase.rpc('get_platform_stats');
+    const response = await supabase.rpc('get_platform_stats');
 
-    if (error) {
-      errorHandler.logError('Failed to fetch platform stats', error, {
+    if (response.error) {
+      errorHandler.logError('Failed to fetch platform stats', response.error, {
         component: 'analytics',
         action: 'get_platform_stats',
       });
       return null;
     }
 
+    const data = response.data as PlatformStatsData | null;
+
+    if (!data) {
+      errorHandler.logWarning('No platform stats data received', {
+        component: 'analytics',
+        action: 'get_platform_stats',
+      });
+      return null;
+    }
+
+    const statsData = data;
     const stats: PlatformStats = {
-      totalUsers: data.total_users || 0,
-      avgCompletion: Math.round(data.avg_completion || 0),
-      avgRating: Number((data.avg_rating || 0).toFixed(1)),
-      countriesCount: data.countries_count || 0,
+      totalUsers: statsData.total_users ?? 0,
+      avgCompletion: Math.round(statsData.avg_completion ?? 0),
+      avgRating: Number((statsData.avg_rating ?? 0).toFixed(1)),
+      countriesCount: statsData.countries_count ?? 0,
     };
 
     // Update cache
@@ -86,11 +104,21 @@ export async function getPlatformStats(): Promise<PlatformStats | null> {
   }
 }
 
+interface TestimonialData {
+  id: string;
+  user_name: string;
+  user_location: string | null;
+  course_tier: 'free' | 'advanced' | 'expert';
+  rating: number;
+  content: string;
+  created_at: string;
+}
+
 // Fetch approved testimonials
 export async function getTestimonials(limit = 3): Promise<Testimonial[]> {
   // Check cache first
   if (isCacheValid(testimonialsCache.current)) {
-    return testimonialsCache.current!.data.slice(0, limit);
+    return testimonialsCache.current?.data.slice(0, limit) ?? [];
   }
 
   try {
@@ -110,15 +138,17 @@ export async function getTestimonials(limit = 3): Promise<Testimonial[]> {
       return [];
     }
 
-    const testimonials: Testimonial[] = (data || []).map((t) => ({
-      id: t.id,
-      userName: t.user_name,
-      userLocation: t.user_location,
-      courseTier: t.course_tier,
-      rating: t.rating,
-      content: t.content,
-      createdAt: t.created_at,
-    }));
+    const testimonials: Testimonial[] = (data ?? []).map(
+      (t: TestimonialData) => ({
+        id: t.id,
+        userName: t.user_name,
+        userLocation: t.user_location,
+        courseTier: t.course_tier,
+        rating: t.rating,
+        content: t.content,
+        createdAt: t.created_at,
+      }),
+    );
 
     // Update cache
     testimonialsCache.current = {
@@ -214,7 +244,7 @@ export async function hasUserSubmittedTestimonial(
       return false;
     }
 
-    return (count || 0) > 0;
+    return (count ?? 0) > 0;
   } catch (error) {
     errorHandler.logWarning('Error checking user testimonial', {
       component: 'analytics',

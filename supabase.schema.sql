@@ -1,4 +1,4 @@
--- Supabase SQL schema for ai-for-elders-learni
+-- Supabase SQL schema for DISCOVER 50 AI
 -- Run this in Supabase SQL Editor or via migrations
 
 -- Enable UUID extension if not already enabled

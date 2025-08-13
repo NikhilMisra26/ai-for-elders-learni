@@ -55,9 +55,7 @@ export function useAudioNarration(
     isActuallyPaused: false,
   });
   const currentTextRef = useRef<string>('');
-  const [_availableVoices, setAvailableVoices] = useState<
-    SpeechSynthesisVoice[]
-  >([]);
+  const [, setAvailableVoices] = useState<SpeechSynthesisVoice[]>([]);
 
   // Load available voices
   useEffect(() => {
@@ -209,7 +207,7 @@ export function useAudioNarration(
 
     utteranceRef.current = newUtterance;
     setState((prev) => ({ ...prev, currentText: cleanText }));
-  }, [text, state.isSupported]); // Only depend on text and isSupported, not rate/volume/voice
+  }, [text, state.isSupported, state.rate, state.volume, state.voice]); // Include rate, volume, voice in dependencies
 
   // Separate effect to handle rate/volume/voice changes on existing utterance
   useEffect(() => {
@@ -274,13 +272,15 @@ export function useAudioNarration(
         };
 
         // Wait until speechSynthesis is no longer speaking or pending before starting new utterance
-        const waitAndSpeak = () => {
+        const waitAndSpeak = (): void => {
           if (
             !window.speechSynthesis.speaking &&
             !window.speechSynthesis.pending
           ) {
             try {
-              window.speechSynthesis.speak(utteranceRef.current!);
+              if (utteranceRef.current) {
+                window.speechSynthesis.speak(utteranceRef.current);
+              }
             } catch (delayedError) {
               errorHandler.logError(
                 'Failed to start speech synthesis after waiting',
@@ -330,13 +330,7 @@ export function useAudioNarration(
       );
       setState((prev) => ({ ...prev, isPlaying: false, isPaused: false }));
     }
-  }, [
-    state.isSupported,
-    state.currentText.length,
-    state.voice,
-    state.isPlaying,
-    state.isPaused,
-  ]);
+  }, [state.isSupported, state.currentText.length, state.voice]);
 
   const pause = useCallback((): void => {
     if (isDisposedRef.current) {
@@ -458,7 +452,7 @@ export function useAudioNarration(
 
   // Cleanup effect
   useEffect(() => {
-    return () => {
+    return (): void => {
       isDisposedRef.current = true;
 
       // Only cancel speech if this specific instance's utterance is currently playing
@@ -473,7 +467,7 @@ export function useAudioNarration(
           ) {
             window.speechSynthesis.cancel();
           }
-        } catch (error) {
+        } catch {
           // Error during cleanup - this is expected to be silent
         }
       }

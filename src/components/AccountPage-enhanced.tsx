@@ -1,5 +1,4 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState } from 'react';
 import { toast } from 'sonner';
 import {
   CreditCard,
@@ -53,12 +52,12 @@ import {
 } from '@/lib/subscription';
 import { useProgress } from '@/lib/progressTracking';
 
-interface AccountPageProps {
-  onAuthClick: () => void;
-}
+// Commented out unused interface - keeping for potential future use
+// interface AccountPageProps {
+//   onAuthClick: () => void;
+// }
 
 export function AccountPage(): ReactElement {
-  const navigate = useNavigate();
   const { user } = useAuth();
   const {
     subscription,
@@ -68,7 +67,7 @@ export function AccountPage(): ReactElement {
     upgradeToPaid,
     cancelSubscription,
     reactivateSubscription,
-    getDaysUntilExpiry,
+    // getDaysUntilExpiry, // Commented out - unused for now
   } = useSubscription();
   const { learningStats } = useProgress();
   const { invoices } = useInvoiceHistory();
@@ -91,7 +90,7 @@ export function AccountPage(): ReactElement {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <AuthForm onClose={async () => navigate('/home')} />
+            <AuthForm onClose={() => handleNavigation('home')} />
           </CardContent>
         </Card>
       </div>
@@ -99,7 +98,8 @@ export function AccountPage(): ReactElement {
   }
 
   const currentPlan = getCurrentPlan();
-  const _daysUntilExpiry = getDaysUntilExpiry();
+  // Commented out unused variable - keeping for potential future use
+  // const _daysUntilExpiry = getDaysUntilExpiry();
 
   const handleUpgrade = async (
     planId: 'advanced' | 'expert',
@@ -157,6 +157,12 @@ export function AccountPage(): ReactElement {
     toast.success('Subscription reactivated!', {
       description: 'Your subscription will continue as normal',
     });
+  };
+
+  const handleNavigation = (page: string): void => {
+    // In a real app, this would use proper routing
+    // For now, we'll use window.location or emit a navigation event
+    window.location.hash = `#/${page}`;
   };
 
   return (
@@ -500,7 +506,7 @@ export function AccountPage(): ReactElement {
                 <Button
                   variant='outline'
                   className='w-full justify-start'
-                  onClick={async () => navigate('/dashboard')}
+                  onClick={() => handleNavigation('dashboard')}
                 >
                   <ChartBar className='w-4 h-4 mr-2' />
                   View Dashboard
@@ -508,7 +514,7 @@ export function AccountPage(): ReactElement {
                 <Button
                   variant='outline'
                   className='w-full justify-start'
-                  onClick={async () => navigate('/courses')}
+                  onClick={() => handleNavigation('courses')}
                 >
                   <Trophy className='w-4 h-4 mr-2' />
                   Browse Courses

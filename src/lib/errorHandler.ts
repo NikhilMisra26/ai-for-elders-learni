@@ -1,6 +1,6 @@
 // Centralized error handling service for robust production error management
 // This service provides structured error logging, user-friendly error messages,
-// and security-conscious error reporting for the AI for Elders platform
+// and security-conscious error reporting for the DISCOVER 50 AI platform
 
 export interface ErrorContext {
   userId?: string;
@@ -35,10 +35,13 @@ class ErrorHandlerService {
 
     // Handle uncaught errors globally
     if (typeof window !== 'undefined') {
-      window.addEventListener('error', this.handleGlobalError.bind(this));
+      window.addEventListener(
+        'error',
+        this.handleGlobalError.bind(this) as EventListener,
+      );
       window.addEventListener(
         'unhandledrejection',
-        this.handleUnhandledRejection.bind(this),
+        this.handleUnhandledRejection.bind(this) as EventListener,
       );
     }
   }
@@ -88,22 +91,34 @@ class ErrorHandlerService {
   };
 
   private handleGlobalError(event: ErrorEvent): void {
-    this.logError('Global JavaScript error', event.error, {
-      component: 'window',
-      action: 'global_error',
-      metadata: {
-        filename: event.filename,
-        lineno: event.lineno,
-        colno: event.colno,
+    this.logError(
+      'Global JavaScript error',
+      event.error instanceof Error
+        ? event.error
+        : new Error(String(event.error)),
+      {
+        component: 'window',
+        action: 'global_error',
+        metadata: {
+          filename: event.filename,
+          lineno: event.lineno,
+          colno: event.colno,
+        },
       },
-    });
+    );
   }
 
   private handleUnhandledRejection(event: PromiseRejectionEvent): void {
-    this.logError('Unhandled Promise rejection', event.reason, {
-      component: 'window',
-      action: 'unhandled_rejection',
-    });
+    this.logError(
+      'Unhandled Promise rejection',
+      event.reason instanceof Error
+        ? event.reason
+        : new Error(String(event.reason)),
+      {
+        component: 'window',
+        action: 'unhandled_rejection',
+      },
+    );
   }
 
   public addHandler(handler: ErrorHandler): void {

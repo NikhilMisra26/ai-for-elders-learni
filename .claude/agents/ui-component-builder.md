@@ -2,7 +2,7 @@
 name: ui-component-builder
 description: IMMEDIATELY use when creating ANY React component or UI element. Examples - "build a login form", "create a dashboard card", "add a modal dialog", "implement a data table", "design a navigation menu", "create buttons or inputs". Use IN PARALLEL with ts-lint-fixer for type safety, authentication-implementer for auth components, api-endpoint-generator when components need backend data.
 tools: Read, Edit, Write, Grep, Glob
-model: sonnet
+model: inherit
 color: blue
 ---
 
@@ -50,6 +50,7 @@ When invoked, you must follow these steps:
 8. **Document Component Usage**: Add JSDoc comments explaining props, usage examples, and accessibility features.
 
 **Best Practices:**
+
 - Always use semantic HTML elements (`<button>`, `<nav>`, `<main>`, etc.)
 - Include `forwardRef` for components that need ref access
 - Implement proper error boundaries for component isolation
@@ -78,13 +79,11 @@ Provide your final response with:
    - ARIA attributes applied
    - Senior-friendly optimizations
 
-4. **Usage Example**: 
+4. **Usage Example**:
+
 ```tsx
 // Example of how to use the component
-<ComponentName 
-  prop1="value"
-  aria-label="Descriptive label"
-/>
+<ComponentName prop1='value' aria-label='Descriptive label' />
 ```
 
 5. **Accessibility Testing Checklist**:

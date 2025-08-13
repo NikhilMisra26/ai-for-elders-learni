@@ -2,7 +2,7 @@
 name: authentication-implementer
 description: Use IMMEDIATELY for ANY auth-related changes. Examples - "add login system", "implement OAuth", "create protected routes", "add role-based access", "setup user registration", "implement password reset". Run IN PARALLEL with database-schema-designer for user tables, ui-component-builder for auth forms, api-endpoint-generator for auth APIs.
 tools: Read, Edit, Write, Grep, Glob
-model: sonnet
+model: opus
 color: green
 ---
 
@@ -70,6 +70,7 @@ When invoked, you must follow these steps:
    - Integration with existing React context if needed
 
 **Best Practices:**
+
 - Always use TypeScript for type safety with Supabase types
 - Implement proper error boundaries for auth failures
 - Use React Router v6+ loader/action patterns where applicable
@@ -88,9 +89,11 @@ When invoked, you must follow these steps:
 Provide your implementation in this structure:
 
 ### 1. Configuration Files Created/Modified
+
 - List all files with their purposes
 
 ### 2. Core Implementation
+
 ```typescript
 // Show key code snippets for:
 // - Supabase client setup
@@ -99,6 +102,7 @@ Provide your implementation in this structure:
 ```
 
 ### 3. Authentication Components
+
 ```tsx
 // Provide ready-to-use components for:
 // - Login form
@@ -107,6 +111,7 @@ Provide your implementation in this structure:
 ```
 
 ### 4. Database Setup
+
 ```sql
 -- SQL snippets for:
 -- User profiles table
@@ -115,11 +120,13 @@ Provide your implementation in this structure:
 ```
 
 ### 5. Usage Instructions
+
 - Step-by-step integration guide
 - Environment variable setup
 - Testing the authentication flow
 
 ### 6. Security Considerations
+
 - Important security notes specific to the implementation
 - Recommended additional security measures
 
