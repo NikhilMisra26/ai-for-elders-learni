@@ -1,6 +1,7 @@
 import { supabase } from './supabase';
+import { stripeConfig } from './stripe-config';
 
-export type CheckoutPlan = 'advanced' | 'expert';
+export type CheckoutPlan = keyof typeof stripeConfig.prices;
 
 interface CheckoutSessionResponse {
   success: boolean;
@@ -41,12 +42,12 @@ export async function createCheckoutSession(
     });
 
     // Parse the response
-    const data: CheckoutSessionResponse = await response.json();
+    const data = (await response.json()) as unknown as CheckoutSessionResponse;
 
     // Handle errors from the API
     if (!response.ok || !data.success) {
       console.error('Checkout session creation failed:', data.error);
-      throw new Error(data.error || 'Failed to create checkout session');
+      throw new Error(data.error ?? 'Failed to create checkout session');
     }
 
     // Validate the response contains a URL
@@ -92,7 +93,7 @@ export async function redirectToCheckout(plan: CheckoutPlan): Promise<void> {
  * @returns True if the plan is valid
  */
 export function isValidCheckoutPlan(plan: string): plan is CheckoutPlan {
-  return plan === 'advanced' || plan === 'expert';
+  return plan in stripeConfig.prices;
 }
 
 /**

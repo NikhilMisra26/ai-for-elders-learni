@@ -134,6 +134,18 @@ VITE_SUPABASE_URL=your_supabase_url
 VITE_SUPABASE_ANON_KEY=your_anon_key
 ```
 
+### Switching Between Test and Live
+
+Adjust `VITE_STRIPE_ENVIRONMENT` to choose which Stripe keys are loaded by `stripe-config.ts`:
+
+```bash
+# Default to Stripe test mode
+VITE_STRIPE_ENVIRONMENT=test
+
+# Enable live mode for production
+VITE_STRIPE_ENVIRONMENT=live
+```
+
 ### Production Setup (Vercel Dashboard)
 
 1. **Go to Vercel Dashboard** → Your Project → Settings → Environment Variables

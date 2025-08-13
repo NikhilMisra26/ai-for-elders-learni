@@ -15,27 +15,88 @@ import {
   createSecureResponse,
 } from '../lib/security';
 
+import { stripeConfig, stripeSecretKey } from '../../src/lib/stripe-config';
+
 // Security: Use environment variables for all sensitive data
-const stripeSecret = process.env.STRIPE_SECRET_KEY;
-if (!stripeSecret) throw new Error('STRIPE_SECRET_KEY not set');
-const stripe = new Stripe(stripeSecret, {
+if (!stripeSecretKey || typeof stripeSecretKey !== 'string' || stripeSecretKey.trim() === '') {
+  throw new Error('Stripe secret key is missing or invalid. Please set the STRIPE_SECRET_KEY environment variable.');
+}
+const stripe = new Stripe(stripeSecretKey, {
+
   apiVersion: '2023-10-16',
   typescript: true,
 });
+
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY;
 if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Supabase environment variables not set');
 }
+
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // Type definitions for request validation
-type CheckoutPlan = 'advanced' | 'expert';
+type CheckoutPlan = keyof typeof stripeConfig.prices;
 
 interface CheckoutSessionRequest {
   plan: CheckoutPlan;
 }
+
+// Security headers for all responses
+const securityHeaders = {
+  'X-Content-Type-Options': 'nosniff',
+  'X-Frame-Options': 'DENY',
+  'X-XSS-Protection': '1; mode=block',
+  'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload',
+  'Content-Security-Policy': "default-src 'self'",
+  'Cache-Control': 'no-store, no-cache, must-revalidate, private',
+  'Referrer-Policy': 'strict-origin-when-cross-origin',
+};
+
+// Helper function to send error response with security headers
+const sendError = (
+  res: VercelResponse,
+  statusCode: number,
+  message: string,
+): VercelResponse => {
+  // Set security headers individually
+  Object.entries(securityHeaders).forEach(([key, value]) => {
+    res.setHeader(key, value);
+  });
+
+  return res.status(statusCode).json({
+    error: message,
+    timestamp: new Date().toISOString(),
+  });
+};
+
+// Helper function to send success response with security headers
+const sendSuccess = (
+  res: VercelResponse,
+  data: Record<string, unknown>,
+): VercelResponse => {
+  // Set security headers individually
+  Object.entries(securityHeaders).forEach(([key, value]) => {
+    res.setHeader(key, value);
+  });
+
+  return res.status(200).json({
+    success: true,
+    ...data,
+    timestamp: new Date().toISOString(),
+  });
+};
+
+// Validate request method
+const validateMethod = (req: VercelRequest, res: VercelResponse): boolean => {
+  if (req.method !== 'POST') {
+    sendError(res, 405, 'Method not allowed');
+    return false;
+  }
+  return true;
+};
+
 
 // Extract and validate JWT token from Authorization header
 function extractToken(req: VercelRequest): string | null {
@@ -50,7 +111,18 @@ function extractToken(req: VercelRequest): string | null {
   }
 
   return parts[1];
-}
+};
+
+// Validate the plan parameter
+const validatePlan = (plan: unknown): plan is CheckoutPlan => {
+  return typeof plan === 'string' && plan in stripeConfig.prices;
+};
+
+// Map plan to Stripe price ID from configuration
+const getPriceId = (plan: CheckoutPlan): string | undefined => {
+  return stripeConfig.prices[plan];
+};
+
 
 // Main handler function
 export default async function handler(req: VercelRequest): Promise<Response> {
@@ -126,6 +198,7 @@ export default async function handler(req: VercelRequest): Promise<Response> {
     // 4. Parse and validate request body
     let body: CheckoutSessionRequest;
     try {
+
       const rawBody: unknown =
         typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
       body = rawBody as CheckoutSessionRequest;
@@ -138,6 +211,7 @@ export default async function handler(req: VercelRequest): Promise<Response> {
         400,
         SECURITY_HEADERS,
       );
+
     }
 
     // 5. Validate plan parameter
@@ -167,11 +241,19 @@ export default async function handler(req: VercelRequest): Promise<Response> {
     }
 
     // 7. Get user's current subscription status to prevent duplicate subscriptions
-    const { data: profile, error: profileError } = await supabase
+    interface Profile {
+      tier: string | null;
+      stripe_customer_id: string | null;
+    }
+
+    const profileResult = await supabase
+    const profileResult: PostgrestSingleResponse<Profile> = await supabase
       .from('profiles')
       .select('tier, stripe_customer_id')
       .eq('id', user.id)
       .single();
+    const profile = profileResult.data as Profile | null;
+    const profileError = profileResult.error;
 
     if (profileError) {
       console.error('Profile fetch error:', profileError.message);
@@ -201,19 +283,17 @@ export default async function handler(req: VercelRequest): Promise<Response> {
         },
       ],
       customer_email: user.email,
-      customer: profile?.stripe_customer_id,
+      customer: profile?.stripe_customer_id ?? undefined,
+
       client_reference_id: user.id,
       metadata: {
         user_id: user.id,
         plan: body.plan,
         email: user.email ?? '',
       },
-      success_url: `${
-        req.headers.origin ?? process.env.VITE_APP_URL
-      }/dashboard?session_id={CHECKOUT_SESSION_ID}&success=true`,
-      cancel_url: `${
-        req.headers.origin ?? process.env.VITE_APP_URL
-      }/account?canceled=true`,
+      success_url: `${req.headers.origin ?? process.env.VITE_APP_URL}/dashboard?session_id={CHECKOUT_SESSION_ID}&success=true`,
+      cancel_url: `${req.headers.origin ?? process.env.VITE_APP_URL}/account?canceled=true`,
+
       allow_promotion_codes: true,
       billing_address_collection: 'required',
       payment_method_collection: 'if_required',
