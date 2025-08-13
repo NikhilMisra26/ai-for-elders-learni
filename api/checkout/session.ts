@@ -172,7 +172,7 @@ export default async function handler(req: VercelRequest): Promise<Response> {
         },
       ],
       customer_email: user.email,
-      customer: profile?.stripe_customer_id ?? undefined,
+      customer: profile?.stripe_customer_id,
       client_reference_id: user.id,
       metadata: {
         user_id: user.id,
