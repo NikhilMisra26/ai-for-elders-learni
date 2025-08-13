@@ -2,19 +2,20 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
 
+import { stripeConfig, stripeSecretKey } from '../../src/lib/stripe-config';
+
 // Security: Use environment variables for all sensitive data
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+const stripe = new Stripe(stripeSecretKey ?? '', {
   apiVersion: '2023-10-16',
   typescript: true,
 });
 
-const supabase = createClient(
-  process.env.VITE_SUPABASE_URL!,
-  process.env.VITE_SUPABASE_ANON_KEY!,
-);
+const supabaseUrl = process.env.VITE_SUPABASE_URL ?? '';
+const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY ?? '';
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // Type definitions for request validation
-type CheckoutPlan = 'advanced' | 'expert';
+type CheckoutPlan = keyof typeof stripeConfig.prices;
 
 interface CheckoutSessionRequest {
   plan: CheckoutPlan;
@@ -36,7 +37,7 @@ const sendError = (
   res: VercelResponse,
   statusCode: number,
   message: string,
-) => {
+): VercelResponse => {
   // Set security headers individually
   Object.entries(securityHeaders).forEach(([key, value]) => {
     res.setHeader(key, value);
@@ -49,7 +50,10 @@ const sendError = (
 };
 
 // Helper function to send success response with security headers
-const sendSuccess = (res: VercelResponse, data: any) => {
+const sendSuccess = (
+  res: VercelResponse,
+  data: Record<string, unknown>,
+): VercelResponse => {
   // Set security headers individually
   Object.entries(securityHeaders).forEach(([key, value]) => {
     res.setHeader(key, value);
@@ -87,18 +91,13 @@ const extractToken = (req: VercelRequest): string | null => {
 };
 
 // Validate the plan parameter
-const validatePlan = (plan: any): plan is CheckoutPlan => {
-  return plan === 'advanced' || plan === 'expert';
+const validatePlan = (plan: unknown): plan is CheckoutPlan => {
+  return typeof plan === 'string' && plan in stripeConfig.prices;
 };
 
-// Map plan to Stripe price ID from environment variables
-const getPriceId = (plan: CheckoutPlan): string => {
-  const priceIds: Record<CheckoutPlan, string> = {
-    advanced: process.env.PRICE_ID_ADVANCED!,
-    expert: process.env.PRICE_ID_EXPERT!,
-  };
-
-  return priceIds[plan];
+// Map plan to Stripe price ID from configuration
+const getPriceId = (plan: CheckoutPlan): string | undefined => {
+  return stripeConfig.prices[plan];
 };
 
 // Main handler function
@@ -132,8 +131,11 @@ export default async function handler(
     // 4. Parse and validate request body
     let body: CheckoutSessionRequest;
     try {
-      body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
-    } catch (parseError) {
+      body =
+        typeof req.body === 'string'
+          ? (JSON.parse(req.body) as CheckoutSessionRequest)
+          : (req.body as CheckoutSessionRequest);
+    } catch {
       return sendError(res, 400, 'Invalid request format');
     }
 
@@ -150,11 +152,18 @@ export default async function handler(
     }
 
     // 7. Get user's current subscription status to prevent duplicate subscriptions
-    const { data: profile, error: profileError } = await supabase
-      .from('profiles')
+    interface Profile {
+      tier: string | null;
+      stripe_customer_id: string | null;
+    }
+
+    const profileResult = await supabase
+      .from<Profile>('profiles')
       .select('tier, stripe_customer_id')
       .eq('id', user.id)
       .single();
+    const profile = profileResult.data as Profile | null;
+    const profileError = profileResult.error;
 
     if (profileError) {
       console.error('Profile fetch error:', profileError.message);
@@ -177,15 +186,15 @@ export default async function handler(
         },
       ],
       customer_email: user.email,
-      customer: profile?.stripe_customer_id || undefined,
+      customer: profile?.stripe_customer_id ?? undefined,
       client_reference_id: user.id,
       metadata: {
         user_id: user.id,
         plan: body.plan,
-        email: user.email || '',
+        email: user.email ?? '',
       },
-      success_url: `${req.headers.origin || process.env.VITE_APP_URL}/dashboard?session_id={CHECKOUT_SESSION_ID}&success=true`,
-      cancel_url: `${req.headers.origin || process.env.VITE_APP_URL}/account?canceled=true`,
+      success_url: `${req.headers.origin ?? process.env.VITE_APP_URL}/dashboard?session_id={CHECKOUT_SESSION_ID}&success=true`,
+      cancel_url: `${req.headers.origin ?? process.env.VITE_APP_URL}/account?canceled=true`,
       allow_promotion_codes: true,
       billing_address_collection: 'required',
       payment_method_collection: 'if_required',
