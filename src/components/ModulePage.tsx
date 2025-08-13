@@ -57,8 +57,12 @@ export function ModulePage({
   const navigate = useNavigate();
 
   // Call ALL hooks at the top, before any conditional logic
-  const { user: _user } = useAuth();
-  const { subscription: _subscription, canAccessTier } = useSubscription();
+  const { user } = useAuth();
+  const { subscription, canAccessTier } = useSubscription();
+
+  // Suppress unused variable warnings for required hook calls
+  void user;
+  void subscription;
   const {
     completeModule,
     isModuleCompleted,
@@ -76,10 +80,10 @@ export function ModulePage({
   } as const;
 
   // Determine course type and module ID from props or URL params
-  const courseType = (propCourseType ||
+  const courseType = (propCourseType ??
     paramCourseType) as keyof typeof courseTypeToId;
   const courseId = courseTypeToId[courseType];
-  const moduleId = paramModuleId || null;
+  const moduleId = paramModuleId ?? null;
 
   // Get course and module data (may be null)
   const course = getCourseById(courseId);
@@ -117,7 +121,7 @@ export function ModulePage({
     if (courseType && !moduleId) {
       const course = getCourseById(courseId);
       if (course && course.modules.length > 0) {
-        navigate(`/courses/${courseType}/module/${course.modules[0].id}`, {
+        void navigate(`/courses/${courseType}/module/${course.modules[0].id}`, {
           replace: true,
         });
         return;
@@ -138,7 +142,7 @@ export function ModulePage({
     }
 
     // Cleanup function to reset the ref when component unmounts or course/module changes significantly
-    return () => {
+    return (): void => {
       // Reset if course or module becomes unavailable
       if (!course || !module || !moduleId) {
         lastSetModuleRef.current = null;
@@ -148,13 +152,15 @@ export function ModulePage({
 
   // Track time spent
   useEffect(() => {
-    if (!moduleId) return; // Don't track time if no module
+    if (!moduleId) return undefined;
 
     const interval = window.setInterval((): void => {
       setTimeSpent(Math.floor((Date.now() - startTime) / 1000 / 60));
     }, 60000); // Update every minute
 
-    return (): void => window.clearInterval(interval);
+    return (): void => {
+      window.clearInterval(interval);
+    };
   }, [startTime, moduleId]);
 
   // Handle component unmount to save progress and cleanup audio
@@ -193,8 +199,8 @@ export function ModulePage({
         );
       }
     };
-    // Empty dependency array ensures this only runs on mount/unmount
-  }, []);
+    // Dependencies for cleanup effect
+  }, [timeSpent, audioState.isPlaying, audioControls]);
 
   // Handle audio state errors and auto-hide controls on stop
   useEffect(() => {
@@ -204,7 +210,7 @@ export function ModulePage({
         setShowAudioControls(false);
       }, 2000);
 
-      return () => {
+      return (): void => {
         clearTimeout(timer);
       };
     }
@@ -233,11 +239,11 @@ export function ModulePage({
   }
 
   const handleBackToCourses = (): void => {
-    navigate('/courses');
+    void navigate('/courses');
   };
 
   const handleBackToCourse = (): void => {
-    navigate(`/courses/${courseType}`);
+    void navigate(`/courses/${courseType}`);
   };
 
   const handleNavigateToModule = (
@@ -254,7 +260,7 @@ export function ModulePage({
     const targetCourseType =
       idToCourseType[targetCourseId as keyof typeof idToCourseType];
     if (targetCourseType) {
-      navigate(`/courses/${targetCourseType}/module/${targetModuleId}`);
+      void navigate(`/courses/${targetCourseType}/module/${targetModuleId}`);
     }
   };
 
@@ -608,7 +614,7 @@ export function ModulePage({
 
                 {showAudioControls && audioState.isSupported && (
                   <CardContent className='space-y-4'>
-                    {(() => {
+                    {((): ReactElement => {
                       try {
                         // Ensure values are properly initialized
                         const rate =

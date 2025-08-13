@@ -241,10 +241,11 @@ export class SessionManager {
    * @deprecated Use Supabase Auth instead
    * Sessions should be managed by Supabase with secure httpOnly cookies
    */
-  static createSession(_userId: string): string {
+  static createSession(userId: string): string {
     if (import.meta.env.DEV) {
       console.warn(
         'SessionManager.createSession is deprecated. Use Supabase Auth for secure session management.',
+        { userId },
       );
     }
     // Return a dummy token - actual session is managed by Supabase

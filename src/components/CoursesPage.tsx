@@ -94,7 +94,7 @@ export function CoursesPage({ onAuthClick }: CoursesPageProps): ReactElement {
         routePath = '/courses/basic';
     }
 
-    navigate(routePath);
+    void navigate(routePath);
   };
 
   const getCourseCompletionData = (
@@ -514,7 +514,7 @@ export function CoursesPage({ onAuthClick }: CoursesPageProps): ReactElement {
                                   : course.id === 'ai-assistant'
                                     ? 'advanced'
                                     : 'expert';
-                              navigate(
+                              void navigate(
                                 `/courses/${courseType}/module/${module.id}`,
                               );
                             }
@@ -569,7 +569,7 @@ export function CoursesPage({ onAuthClick }: CoursesPageProps): ReactElement {
                                       : course.id === 'ai-assistant'
                                         ? 'advanced'
                                         : 'expert';
-                                  navigate(
+                                  void navigate(
                                     `/courses/${courseType}/module/${module.id}`,
                                   );
                                 }}

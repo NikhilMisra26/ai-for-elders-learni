@@ -327,7 +327,7 @@ export function useSubscription(): {
 }
 
 // Payment simulation utilities
-export async function simulatePaymentFlow(_planId: string): Promise<{
+export async function simulatePaymentFlow(planId: string): Promise<{
   success: boolean;
   paymentMethod?: PaymentMethod;
   error?: string;
@@ -335,6 +335,8 @@ export async function simulatePaymentFlow(_planId: string): Promise<{
   return new Promise((resolve) => {
     // Simulate payment processing delay
     setTimeout((): void => {
+      // Use planId for consistent simulation based on plan
+      console.debug(`Simulating payment for plan: ${planId}`);
       // Simulate 95% success rate
       const success = Math.random() > 0.05;
 

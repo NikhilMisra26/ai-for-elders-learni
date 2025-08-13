@@ -22,7 +22,7 @@ export interface MetricsData {
 
 // Thresholds for displaying metrics, configurable via environment variables
 function getEnvNumber(varName: string, defaultValue: number): number {
-  const value = import.meta.env[varName];
+  const value = import.meta.env[varName] as string | undefined;
   if (value === undefined) return defaultValue;
   const parsed = Number(value);
   return isNaN(parsed) ? defaultValue : parsed;
@@ -105,7 +105,7 @@ export function useMetrics(): MetricsData {
           isLoading: false,
           error: null,
         });
-      } catch (error) {
+      } catch {
         if (!mounted) return;
 
         setData({
@@ -117,9 +117,9 @@ export function useMetrics(): MetricsData {
       }
     }
 
-    fetchMetrics();
+    void fetchMetrics();
 
-    return () => {
+    return (): void => {
       mounted = false;
     };
   }, []);

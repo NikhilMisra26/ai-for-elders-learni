@@ -43,11 +43,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { useAuth } from '@/contexts/AuthContext';
-import {
-  useSubscription,
-  subscriptionPlans,
-  formatPrice,
-} from '@/lib/subscription';
+import { subscriptionPlans, formatPrice } from '@/lib/subscription';
 import { useMetrics } from '@/hooks/useMetrics';
 
 interface HomePageProps {
@@ -57,7 +53,6 @@ interface HomePageProps {
 export function HomePage({ onAuthClick }: HomePageProps): ReactElement {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { subscription: _subscription } = useSubscription();
   const { stats, testimonials, isLoading } = useMetrics();
   const [showReviewForm, setShowReviewForm] = useState(false);
 
@@ -379,7 +374,7 @@ export function HomePage({ onAuthClick }: HomePageProps): ReactElement {
                     className='w-full'
                     variant={plan.popular ? 'default' : 'outline'}
                     onClick={
-                      user ? async () => navigate('/account') : onAuthClick
+                      user ? (): void => void navigate('/account') : onAuthClick
                     }
                   >
                     {plan.ctaText}
@@ -440,15 +435,13 @@ export function HomePage({ onAuthClick }: HomePageProps): ReactElement {
                   <Card key={testimonial.id} className='h-full'>
                     <CardHeader>
                       <div className='flex items-center gap-1 mb-2'>
-                        {[...(Array(testimonial.rating) as unknown[])].map(
-                          (_, i) => (
-                            <Star
-                              key={`star-${testimonial.id}-${i}`}
-                              className='w-5 h-5 text-yellow-500'
-                              weight='fill'
-                            />
-                          ),
-                        )}
+                        {Array.from({ length: testimonial.rating }, (_, i) => (
+                          <Star
+                            key={`star-${testimonial.id}-${i}`}
+                            className='w-5 h-5 text-yellow-500'
+                            weight='fill'
+                          />
+                        ))}
                       </div>
                       <div>
                         <CardTitle className='text-lg'>
@@ -495,9 +488,9 @@ export function HomePage({ onAuthClick }: HomePageProps): ReactElement {
                   Be the First to Review
                 </h2>
                 <p className='text-xl text-muted-foreground mb-8'>
-                  We're just getting started! Be among the first to share your
-                  learning experience and help others discover the benefits of
-                  AI education.
+                  We&apos;re just getting started! Be among the first to share
+                  your learning experience and help others discover the benefits
+                  of AI education.
                 </p>
 
                 {user ? (

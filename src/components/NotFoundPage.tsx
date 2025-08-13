@@ -1,23 +1,24 @@
 import type { ReactElement } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { House, ArrowLeft, BookOpen } from '@phosphor-icons/react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-export function NotFoundPage(): ReactElement {
-  const navigate = useNavigate();
+interface NotFoundPageProps {
+  onNavigate: (page: string) => void;
+}
 
+export function NotFoundPage({ onNavigate }: NotFoundPageProps): ReactElement {
   const handleGoHome = (): void => {
-    navigate('/home');
+    onNavigate('home');
   };
 
   const handleGoBack = (): void => {
-    navigate(-1);
+    window.history.back();
   };
 
   const handleViewCourses = (): void => {
-    navigate('/courses');
+    onNavigate('courses');
   };
 
   return (
@@ -37,7 +38,8 @@ export function NotFoundPage(): ReactElement {
           <CardContent className='space-y-6'>
             <div className='text-lg text-muted-foreground max-w-lg mx-auto leading-relaxed'>
               <p className='mb-4'>
-                We're sorry, but we couldn't find the page you're looking for.
+                We&apos;re sorry, but we couldn&apos;t find the page you&apos;re
+                looking for.
               </p>
               <p>
                 This might happen if you clicked on an old link or typed the web
