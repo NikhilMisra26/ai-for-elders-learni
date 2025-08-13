@@ -32,7 +32,19 @@ assert.equal(isInGracePeriod(grace), true);
 
 const expiring: UserSubscription = {
   ...base,
-  endDate: new Date(Date.now() + 5 * 86400000).toISOString(),
+  trialEndDate: new Date(Date.now() + DAY_IN_MS).toISOString(),
+};
+assert.equal(isTrialActive(trial), true);
+
+const grace: UserSubscription = {
+  ...base,
+  gracePeriodEnd: new Date(Date.now() + DAY_IN_MS).toISOString(),
+};
+assert.equal(isInGracePeriod(grace), true);
+
+const expiring: UserSubscription = {
+  ...base,
+  endDate: new Date(Date.now() + 5 * DAY_IN_MS).toISOString(),
 };
 assert.equal(getDaysUntilExpiry(expiring), 5);
 
