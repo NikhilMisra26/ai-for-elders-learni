@@ -5,7 +5,10 @@ export * from './utils';
 export * from './courseData';
 
 // Export subscription utilities
-export * from './subscription';
+export * from './subscription-plans';
+export * from './useSubscription';
+export * from './invoice';
+export * from './payment-sim';
 
 // Export progress tracking
 export * from './progressTracking';
