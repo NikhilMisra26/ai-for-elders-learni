@@ -142,7 +142,7 @@ export default async function handler(req: VercelRequest): Promise<Response> {
       .from('profiles')
       .select('tier, stripe_customer_id')
       .eq('id', user.id)
-      .single<{ tier: string | null; stripe_customer_id: string | null }>();
+      .single();
 
     if (profileError) {
       console.error('Profile fetch error:', profileError.message);
