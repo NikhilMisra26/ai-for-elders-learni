@@ -152,7 +152,7 @@ export default async function handler(
       response.headers.forEach((value, key) => res.setHeader(key, value));
       res.status(status).json({
         error: error ?? 'Invalid request',
-        timestamp: new Date().toISOString(),
+        timestamp,
       });
       return;
     }
