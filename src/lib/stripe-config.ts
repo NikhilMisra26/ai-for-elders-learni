@@ -5,7 +5,7 @@ interface StripePrices {
 
 interface StripeConfig {
   publishableKey?: string;
-  prices: StripePrices;
+  prices?: StripePrices;
 }
 
 type Env = Record<string, string | undefined>;
