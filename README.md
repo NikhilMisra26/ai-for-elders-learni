@@ -24,6 +24,7 @@
 - **Duplicate Prevention**: Users can only submit one review
 
 ### 🎨 **Senior-Friendly Design**
+
 - Large fonts and high contrast design for people over 50
 - **Robust Audio narration** with intelligent error handling, smooth state management, and instance isolation
 - Touch-friendly interface with proper target sizes

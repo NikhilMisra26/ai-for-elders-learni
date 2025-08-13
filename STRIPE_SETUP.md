@@ -47,11 +47,13 @@ This guide covers setting up Stripe Products, Prices, payment methods, and envir
 ### 2. Get API Keys
 
 #### Test Mode Keys
+
 - **Publishable Key**: `pk_test_...` (frontend-safe)
 - **Secret Key**: `sk_test_...` (server-only)
 - **Webhook Endpoint Secret**: `whsec_...` (server-only, after webhook setup)
 
 #### Live Mode Keys
+
 - **Publishable Key**: `pk_live_...` (frontend-safe)
 - **Secret Key**: `sk_live_...` (server-only)
 - **Webhook Endpoint Secret**: `whsec_live_...` (server-only, after webhook setup)
@@ -74,7 +76,8 @@ This guide covers setting up Stripe Products, Prices, payment methods, and envir
 
 ### Variable Classification
 
-#### Frontend-Safe Variables (use VITE_ prefix)
+#### Frontend-Safe Variables (use VITE\_ prefix)
+
 ```bash
 # Stripe Publishable Keys (safe to expose to client)
 VITE_STRIPE_PUBLISHABLE_KEY_TEST=pk_test_...
@@ -90,7 +93,8 @@ VITE_PRICE_ID_EXPERT_LIVE=price_live_5678efgh...
 VITE_STRIPE_ENVIRONMENT=test  # or 'live' for production
 ```
 
-#### Server-Only Variables (NO VITE_ prefix)
+#### Server-Only Variables (NO VITE\_ prefix)
+
 ```bash
 # Stripe Secret Keys (NEVER expose to client)
 STRIPE_SECRET_KEY_TEST=sk_test_...
@@ -151,6 +155,7 @@ VITE_STRIPE_ENVIRONMENT=live
 1. **Go to Vercel Dashboard** → Your Project → Settings → Environment Variables
 
 2. **Add Frontend-Safe Variables** (Available to Browser):
+
    ```
    VITE_STRIPE_ENVIRONMENT = live
    VITE_STRIPE_PUBLISHABLE_KEY_TEST = pk_test_...
@@ -172,12 +177,14 @@ VITE_STRIPE_ENVIRONMENT=live
 ## Finding Your Price IDs
 
 ### Method 1: Stripe Dashboard
+
 1. Go to **Products** in Stripe Dashboard
 2. Click on your product
 3. In the **Pricing** section, click on the price
 4. Copy the **Price ID** (starts with `price_`)
 
 ### Method 2: Stripe CLI (if installed)
+
 ```bash
 # List all prices in test mode
 stripe prices list
@@ -187,6 +194,7 @@ stripe prices list --live
 ```
 
 ### Method 3: API Call
+
 ```bash
 # Test mode
 curl https://api.stripe.com/v1/prices \
@@ -206,27 +214,27 @@ curl https://api.stripe.com/v1/prices \
 const isLive = import.meta.env.VITE_STRIPE_ENVIRONMENT === 'live';
 
 export const stripeConfig = {
-  publishableKey: isLive 
+  publishableKey: isLive
     ? import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY_LIVE
     : import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY_TEST,
-  
+
   prices: {
-    advanced: isLive 
+    advanced: isLive
       ? import.meta.env.VITE_PRICE_ID_ADVANCED_LIVE
       : import.meta.env.VITE_PRICE_ID_ADVANCED_TEST,
-    
-    expert: isLive 
+
+    expert: isLive
       ? import.meta.env.VITE_PRICE_ID_EXPERT_LIVE
       : import.meta.env.VITE_PRICE_ID_EXPERT_TEST,
-  }
+  },
 };
 
 // Server-side configuration
-export const stripeSecretKey = isLive 
+export const stripeSecretKey = isLive
   ? process.env.STRIPE_SECRET_KEY_LIVE
   : process.env.STRIPE_SECRET_KEY_TEST;
 
-export const webhookSecret = isLive 
+export const webhookSecret = isLive
   ? process.env.STRIPE_WEBHOOK_SECRET_LIVE
   : process.env.STRIPE_WEBHOOK_SECRET_TEST;
 ```
@@ -234,12 +242,14 @@ export const webhookSecret = isLive
 ## Testing Your Setup
 
 ### 1. Test Mode Verification
+
 - Use Stripe test card: `4242 4242 4242 4242`
 - Any future expiry date
 - Any 3-digit CVC
 - Any billing zip code
 
 ### 2. Environment Variable Check
+
 ```bash
 # In your development environment
 pnpm run dev
@@ -250,6 +260,7 @@ console.log('Publishable Key:', import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY_TEST
 ```
 
 ### 3. Production Deployment Test
+
 - Deploy to Vercel
 - Verify environment variables are loaded
 - Test with live mode (small amounts initially)
@@ -266,6 +277,7 @@ console.log('Publishable Key:', import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY_TEST
 ## Next Steps
 
 Once this setup is complete, you'll be ready for:
+
 1. Stripe integration implementation
 2. Subscription management
 3. Webhook handling
@@ -275,12 +287,14 @@ Once this setup is complete, you'll be ready for:
 ## Troubleshooting
 
 ### Common Issues
+
 - **Invalid Price ID**: Ensure you're using the correct test/live price ID for your environment
 - **Webhook not working**: Verify the webhook URL is accessible and the secret is correct
 - **CORS errors**: Check that your publishable key matches your environment
 - **Environment variables not loading**: Restart your development server after adding new variables
 
 ### Verification Commands
+
 ```bash
 # Check if environment variables are loaded
 echo $VITE_STRIPE_ENVIRONMENT

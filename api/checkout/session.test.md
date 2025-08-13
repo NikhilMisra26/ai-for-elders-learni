@@ -1,17 +1,20 @@
 # Stripe Checkout Session API - Security Test Guide
 
 ## Overview
+
 This document provides test cases to verify the security of the `/api/checkout/session` endpoint.
 
 ## Environment Setup
 
 1. Install dependencies:
+
 ```bash
 pnpm install
 pnpm install -D @vercel/node
 ```
 
 2. Set environment variables in Vercel Dashboard:
+
 - `STRIPE_SECRET_KEY` - Your Stripe secret key (test mode)
 - `PRICE_ID_ADVANCED` - Stripe price ID for Advanced plan
 - `PRICE_ID_EXPERT` - Stripe price ID for Expert plan
@@ -22,6 +25,7 @@ pnpm install -D @vercel/node
 ## Security Test Cases
 
 ### 1. Method Validation
+
 ```bash
 # Should return 405 Method Not Allowed
 curl -X GET https://your-app.vercel.app/api/checkout/session
@@ -30,6 +34,7 @@ curl -X DELETE https://your-app.vercel.app/api/checkout/session
 ```
 
 ### 2. Authentication Required
+
 ```bash
 # Should return 401 Unauthorized - No token
 curl -X POST https://your-app.vercel.app/api/checkout/session \
@@ -50,6 +55,7 @@ curl -X POST https://your-app.vercel.app/api/checkout/session \
 ```
 
 ### 3. Input Validation
+
 ```bash
 # Should return 400 Bad Request - Invalid plan
 curl -X POST https://your-app.vercel.app/api/checkout/session \
@@ -71,6 +77,7 @@ curl -X POST https://your-app.vercel.app/api/checkout/session \
 ```
 
 ### 4. Duplicate Subscription Prevention
+
 ```bash
 # First request should succeed (if user has no active subscription)
 curl -X POST https://your-app.vercel.app/api/checkout/session \
@@ -82,6 +89,7 @@ curl -X POST https://your-app.vercel.app/api/checkout/session \
 ```
 
 ### 5. Security Headers Verification
+
 ```bash
 # Check response headers
 curl -I -X POST https://your-app.vercel.app/api/checkout/session \
@@ -100,6 +108,7 @@ curl -I -X POST https://your-app.vercel.app/api/checkout/session \
 ```
 
 ### 6. Successful Request
+
 ```bash
 # Valid request with proper authentication
 curl -X POST https://your-app.vercel.app/api/checkout/session \
@@ -117,6 +126,7 @@ curl -X POST https://your-app.vercel.app/api/checkout/session \
 ```
 
 ### 7. Rate Limiting (if implemented)
+
 ```bash
 # Send multiple rapid requests to test rate limiting
 for i in {1..20}; do
@@ -130,7 +140,10 @@ done
 ## Client-Side Integration Test
 
 ```typescript
-import { createCheckoutSession, redirectToCheckout } from '@/lib/stripe-checkout';
+import {
+  createCheckoutSession,
+  redirectToCheckout,
+} from '@/lib/stripe-checkout';
 
 // Test creating a session
 try {

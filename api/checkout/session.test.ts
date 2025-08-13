@@ -38,24 +38,6 @@ function createMockReq(options: {
   } as unknown as VercelRequest;
 }
 
-function createMockRes(): VercelResponse & {
-  body?: unknown;
-  headers: Record<string, string>;
-  statusCode: number;
-} {
-  const res: any = {};
-  res.headers = {};
-  res.statusCode = 200;
-  res.setHeader = (key: string, value: string) => {
-    res.headers[key] = value;
-  };
-  res.status = (code: number) => {
-    res.statusCode = code;
-    return res;
-  };
-  res.json = (payload: unknown) => {
-    res.body = payload;
-    return res;
 interface MockVercelResponse {
   body?: unknown;
   headers: Record<string, string>;
@@ -85,27 +67,13 @@ function createMockRes(): VercelResponse & {
       return res;
     },
   };
-  return res as VercelResponse & {
+  return res as unknown as VercelResponse & {
     body?: unknown;
     headers: Record<string, string>;
     statusCode: number;
   };
 }
 
-async function loadHandler() {
-  vi.resetModules();
-  stripeCreateMock.mockReset();
-  getUserMock.mockReset();
-  fromMock.mockReset();
-  process.env.STRIPE_SECRET_KEY = 'sk_test';
-  process.env.PRICE_ID_ADVANCED = 'price_advanced';
-  process.env.PRICE_ID_EXPERT = 'price_expert';
-  process.env.VITE_SUPABASE_URL = 'https://example.supabase.co';
-  process.env.VITE_SUPABASE_ANON_KEY = 'anon';
-  process.env.VITE_APP_URL = 'https://example.com';
-  const mod = await import('./session');
-  return mod.default;
-}
 function resetMocks() {
   vi.resetModules();
   stripeCreateMock.mockReset();
@@ -115,8 +83,9 @@ function resetMocks() {
 
 function setupEnv() {
   process.env.STRIPE_SECRET_KEY = 'sk_test';
-  process.env.PRICE_ID_ADVANCED = 'price_advanced';
-  process.env.PRICE_ID_EXPERT = 'price_expert';
+  // Use *_TEST variables because getPriceIdForPlan reads PRICE_ID_ADVANCED_TEST / PRICE_ID_EXPERT_TEST
+  process.env.PRICE_ID_ADVANCED_TEST = 'price_advanced';
+  process.env.PRICE_ID_EXPERT_TEST = 'price_expert';
   process.env.VITE_SUPABASE_URL = 'https://example.supabase.co';
   process.env.VITE_SUPABASE_ANON_KEY = 'anon';
   process.env.VITE_APP_URL = 'https://example.com';

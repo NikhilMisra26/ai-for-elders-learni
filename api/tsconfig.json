@@ -11,7 +11,8 @@
     "noEmit": true,
     "isolatedModules": true,
     "moduleResolution": "node",
-    "types": ["node"],
+  // Removed explicit "types" list so TypeScript doesn't error on missing @types packages.
+  // Vitest & Node globals will be inferred where available or shimmed locally in tests.
     "allowSyntheticDefaultImports": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,

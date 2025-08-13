@@ -52,7 +52,8 @@ export function checkRateLimit(key: string, config: RateLimitConfig): boolean {
  */
 export function cleanupRateLimit(): void {
   const now = Date.now();
-  for (const [key, bucket] of rateLimitStore.entries()) {
+  const entries = Array.from(rateLimitStore.entries());
+  for (const [key, bucket] of entries) {
     if (now > bucket.resetTime) {
       rateLimitStore.delete(key);
     }
@@ -89,7 +90,7 @@ export function validateRequest(
   options: RequestValidationOptions,
 ): { valid: boolean; error?: string } {
   // Check method
-  if (!options.allowedMethods.includes(request.method || '')) {
+  if (!options.allowedMethods.includes(request.method ?? '')) {
     return { valid: false, error: 'Method not allowed' };
   }
 
@@ -113,11 +114,31 @@ export function validateRequest(
 }
 
 /**
+ * Supabase user data from JWT validation
+ */
+export interface SupabaseUser {
+  id: string;
+  email?: string;
+  aud?: string;
+  role?: string;
+  email_confirmed_at?: string;
+  phone?: string;
+  confirmed_at?: string;
+  last_sign_in_at?: string;
+  app_metadata?: Record<string, unknown>;
+  user_metadata?: Record<string, unknown>;
+  identities?: unknown[];
+  created_at?: string;
+  updated_at?: string;
+  [key: string]: unknown;
+}
+
+/**
  * Extract and validate Supabase JWT from Authorization header
  */
 export async function validateSupabaseAuth(request: VercelRequest): Promise<{
   valid: boolean;
-  user?: any;
+  user?: SupabaseUser;
   error?: string;
 }> {
   try {
@@ -132,10 +153,14 @@ export async function validateSupabaseAuth(request: VercelRequest): Promise<{
     }
 
     // Initialize Supabase client
-    const supabase = createClient(
-      process.env.VITE_SUPABASE_URL!,
-      process.env.VITE_SUPABASE_ANON_KEY!,
-    );
+    const supabaseUrl = process.env.SUPABASE_URL;
+    const supabaseKey = process.env.SUPABASE_ANON_KEY;
+
+    if (!supabaseUrl || !supabaseKey) {
+      return { valid: false, error: 'Supabase configuration missing' };
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Verify the JWT token
     const {
@@ -147,8 +172,8 @@ export async function validateSupabaseAuth(request: VercelRequest): Promise<{
       return { valid: false, error: 'Invalid or expired token' };
     }
 
-    return { valid: true, user };
-  } catch (error) {
+    return { valid: true, user: user as unknown as SupabaseUser };
+  } catch {
     return { valid: false, error: 'Authentication failed' };
   }
 }
@@ -163,7 +188,13 @@ export function verifyStripeSignature(
   webhookSecret: string,
 ): boolean {
   try {
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY_TEST!, {
+    const stripeKey = process.env.STRIPE_SECRET_KEY_TEST;
+    if (!stripeKey) {
+      console.error('Stripe secret key not configured');
+      return false;
+    }
+
+    const stripe = new Stripe(stripeKey, {
       apiVersion: '2023-10-16',
     });
 
@@ -177,12 +208,30 @@ export function verifyStripeSignature(
 }
 
 /**
+ * Type for data that can be sanitized for logging
+ */
+export type LoggableData =
+  | Record<string, unknown>
+  | unknown[]
+  | string
+  | number
+  | boolean
+  | null
+  | undefined;
+
+/**
  * Sanitize data for logging
  * Removes sensitive information that should never be logged
  */
-export function sanitizeForLogging(data: any): any {
+export function sanitizeForLogging(data: LoggableData): LoggableData {
   if (typeof data !== 'object' || data === null) {
     return data;
+  }
+
+  // Handle arrays
+  if (Array.isArray(data)) {
+    // Cast each array element to LoggableData for recursive sanitization
+    return (data as unknown[]).map((item) => sanitizeForLogging(item as LoggableData));
   }
 
   const sensitiveKeys = [
@@ -202,7 +251,9 @@ export function sanitizeForLogging(data: any): any {
     'cvc',
   ];
 
-  const sanitized = { ...data };
+  // Type guard to ensure we're working with a record
+  const record = data;
+  const sanitized: Record<string, unknown> = { ...record };
 
   for (const key in sanitized) {
     if (
@@ -211,8 +262,8 @@ export function sanitizeForLogging(data: any): any {
       )
     ) {
       sanitized[key] = '[REDACTED]';
-    } else if (typeof sanitized[key] === 'object') {
-      sanitized[key] = sanitizeForLogging(sanitized[key]);
+    } else if (typeof sanitized[key] === 'object' && sanitized[key] !== null) {
+      sanitized[key] = sanitizeForLogging(sanitized[key] as LoggableData);
     }
   }
 
@@ -223,7 +274,7 @@ export function sanitizeForLogging(data: any): any {
  * Create safe error response that doesn't leak internal information
  */
 export function createSafeErrorResponse(
-  error: any,
+  error: LoggableData,
   defaultMessage = 'An error occurred',
 ): { error: string } {
   // Log the actual error for debugging (sanitized)
@@ -236,7 +287,7 @@ export function createSafeErrorResponse(
 /**
  * Validate plan parameter against allowed values
  */
-export function validatePlan(plan: any): plan is 'advanced' | 'expert' {
+export function validatePlan(plan: unknown): plan is 'advanced' | 'expert' {
   return typeof plan === 'string' && ['advanced', 'expert'].includes(plan);
 }
 
@@ -249,7 +300,7 @@ export function getPriceIdForPlan(plan: 'advanced' | 'expert'): string | null {
       ? process.env.PRICE_ID_ADVANCED_TEST
       : process.env.PRICE_ID_EXPERT_TEST;
 
-  return priceId || null;
+  return priceId ?? null;
 }
 
 /**
@@ -265,7 +316,7 @@ export function applySecurityHeaders(headers: Headers): void {
  * Create standardized API response with security headers
  */
 export function createSecureResponse(
-  data: any,
+  data: unknown,
   status = 200,
   additionalHeaders: Record<string, string> = {},
 ): Response {

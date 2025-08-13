@@ -37,8 +37,7 @@ export function useInvoiceHistory(): {
   const [invoices, setInvoices] = useKV<Invoice[]>('user-invoices', []);
   const { user } = useAuth();
 
-  useEffect(() => {
-  }, [user]);
+  useEffect(() => {}, [user]);
 
   const addInvoice = (planId: 'advanced' | 'expert', amount: number): void => {
     const newInvoice = createInvoiceRecord(planId, amount);
