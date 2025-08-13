@@ -38,7 +38,6 @@ export function useInvoiceHistory(): {
   const { user } = useAuth();
 
   useEffect(() => {
-    void user;
   }, [user]);
 
   const addInvoice = (planId: 'advanced' | 'expert', amount: number): void => {
