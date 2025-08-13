@@ -294,7 +294,9 @@ export function HomePage({ onAuthClick }: HomePageProps): ReactElement {
       <section className='py-20 px-4 sm:px-6 lg:px-8'>
         <div className='max-w-6xl mx-auto'>
           <div className='text-center mb-16'>
-            <h2 className='text-4xl font-bold mb-4'>Why Choose <BrandName variant='short' />?</h2>
+            <h2 className='text-4xl font-bold mb-4'>
+              Why Choose <BrandName variant='short' />?
+            </h2>
             <p className='text-xl text-muted-foreground max-w-3xl mx-auto'>
               We understand the unique needs of adult learners and have designed
               every aspect of our platform with accessibility, safety, and
