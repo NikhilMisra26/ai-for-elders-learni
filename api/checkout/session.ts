@@ -128,7 +128,7 @@ export default async function handler(
       return res.status(429).json({
         error: 'Too many requests',
         timestamp: new Date().toISOString(),
-      });
+      return res.status(rateLimitResponse.status).json(rateLimitResponse.body);
     }
 
     // 1. Validate HTTP method (only POST allowed)
