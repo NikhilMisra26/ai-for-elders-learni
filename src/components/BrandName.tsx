@@ -131,7 +131,7 @@ export function BrandName({
       >
         OVER 50
       </span>
-      <span className="text-black">&nbsp;AI</span>
+      <span className="text-gray-900 dark:text-white">&nbsp;AI</span>
 
     </span>
   );
