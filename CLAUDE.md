@@ -2,44 +2,46 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 **Before writing or editing any code**:
-1. Decide if multiple subagents can run in parallel for this task.  
-2. If YES — list exactly which subagents will be used, their goals, and spawn them now.  
-3. If NO — write a one-line justification for why parallelization is unnecessary.  
+
+1. Decide if multiple subagents can run in parallel for this task.
+2. If YES — list exactly which subagents will be used, their goals, and spawn them now.
+3. If NO — write a one-line justification for why parallelization is unnecessary.
 4. Always give each subagent a **full standalone brief**:
-   - Goal  
-   - Current problem/context  
-   - Tech stack (Vite + React + TS + Supabase + Stripe)  
-   - Constraints/patterns/naming conventions  
-   - Deliverables (files, diffs, docs, tests)  
+   - Goal
+   - Current problem/context
+   - Tech stack (Vite + React + TS + Supabase + Stripe)
+   - Constraints/patterns/naming conventions
+   - Deliverables (files, diffs, docs, tests)
 5. Default to parallelization unless strict dependencies force sequential work.
 
 ## Important
+
 - After completing a task, edit the readme to reflect the changes you made. Either edit existing stuff in the readme or, for a new feature, add it in a concise way
 
 ### Critical Directives
 
-
-1. **Maximize parallel execution.**  
-   - Default to running multiple subagents **at the same time** whenever tasks can be done independently.  
+1. **Maximize parallel execution.**
+   - Default to running multiple subagents **at the same time** whenever tasks can be done independently.
    - Split work into atomic units so each subagent can execute without waiting for others, unless there’s a dependency.
-   -This applies both for planning (in plan mode or otherwise) AND in execution (actually creating code)
+     -This applies both for planning (in plan mode or otherwise) AND in execution (actually creating code)
 
-2. **Fully brief subagents.**  
-   - Subagents have **no prior context** from this repo or from our conversations.  
+2. **Fully brief subagents.**
+   - Subagents have **no prior context** from this repo or from our conversations.
    - Every subagent prompt must contain:
-     - The current problem or goal  
-     - The relevant tech stack (Vite + React + TypeScript + Supabase + Stripe)  
-     - Any constraints, patterns, or naming conventions to follow  
-     - Expected deliverables (files, diffs, docs, tests, etc.)  
+     - The current problem or goal
+     - The relevant tech stack (Vite + React + TypeScript + Supabase + Stripe)
+     - Any constraints, patterns, or naming conventions to follow
+     - Expected deliverables (files, diffs, docs, tests, etc.)
    - Include just enough context so they can produce correct, repo-compatible code on the first pass. Do not over-engineer this though.
 
-3. **Prioritize efficiency and correctness.**  
-   - If a task involves multiple files or domains (e.g., backend, frontend, tests, docs), route each domain to the correct subagent immediately.  
+3. **Prioritize efficiency and correctness.**
+   - If a task involves multiple files or domains (e.g., backend, frontend, tests, docs), route each domain to the correct subagent immediately.
    - Combine results and only then return the completed task to the user.
 
 4. **Parallelization Protocol (MANDATORY)**
+
 - WHen in "Plan Mode," come up with a very brief summary of how you will use subagents IF you plan to use them in order to maximize efficiency
-- If you decide NOT to use subagnets **justify why they are unnecesary**. 
+- If you decide NOT to use subagnets **justify why they are unnecesary**.
 
 5. When fixing bugs or adding features, use the smartest and most minimalistic approach possible white still maintaining UI/UX, security, and all other important things
 
@@ -54,23 +56,27 @@ This is **DISCOVER 50 AI**, a React-based educational platform designed to teach
 ## Development Commands
 
 ### Core Development
+
 - `pnpm run dev` - Start the Vite development server on port 5173
 - `pnpm run build` - Type check with `tsc -b --noCheck` and build production bundle with Vite
 - `pnpm run preview` - Preview production build locally
 
 ### Code Quality
+
 - `pnpm run typecheck` - Run TypeScript type checking without emitting files
 - `pnpm run lint:fix` - Auto-fix ESLint issues where possible and check remaining ones
 - `pnpm run format` - Format all code with Prettier
 - `pnpm run format:check` - Check if code formatting is correct
 
 ### Utilities
+
 - `pnpm run kill` - Kill process on port 5000 (useful when port is stuck)
 - `pnpm run optimize` - Run Vite optimization
 
 ## Architecture
 
 ### Tech Stack
+
 - **Frontend Framework**: React 19 with TypeScript
 - **Build Tool**: Vite with SWC for fast compilation
 - **Styling**: Tailwind CSS v4 with shadcn/ui components
@@ -84,7 +90,7 @@ This is **DISCOVER 50 AI**, a React-based educational platform designed to teach
    - Pages: home, courses, dashboard, account
    - Auth handled via dialog modal overlay
 
-2. **Offline-First with Cloud Sync**: 
+2. **Offline-First with Cloud Sync**:
    - Local storage for immediate UI updates
    - Supabase sync when authenticated
    - Graceful fallback for network failures
@@ -102,6 +108,7 @@ This is **DISCOVER 50 AI**, a React-based educational platform designed to teach
 ### Database Schema
 
 The Supabase database includes:
+
 - **profiles**: Extended user data with tier, verification status, security features
 - **subscriptions**: Subscription management with billing cycles and grace periods
 - **course_progress**: Overall course tracking
@@ -124,18 +131,21 @@ All tables use Row Level Security (RLS) policies for data isolation.
 ## Code Style Guidelines
 
 ### TypeScript Configuration
+
 - Strict null checks enabled
 - No explicit `any` types (enforced by ESLint)
 - Path alias `@/` maps to `src/` directory
 - Return types required for all functions
 
 ### Component Patterns
+
 - Functional components with explicit return type annotations
 - Props interfaces defined inline or as separate types
 - Event handlers properly typed (e.g., `React.MouseEvent<HTMLButtonElement>`)
 - Use of shadcn/ui components for consistent styling
 
 ### State Management
+
 - AuthContext handles authentication state and user profile
 - AccessibilityContext manages UI preferences
 - Local component state for UI-only concerns
@@ -144,6 +154,7 @@ All tables use Row Level Security (RLS) policies for data isolation.
 ## Testing Approach
 
 Currently no test framework is configured. When implementing tests:
+
 1. Check for testing framework preference with the team
 2. Consider accessibility testing tools for senior-friendly validation
 3. Focus on critical user journeys: auth, subscription, course progress
@@ -163,4 +174,3 @@ Currently no test framework is configured. When implementing tests:
 - `/src/hooks/` - Custom React hooks
 - `/src/lib/` - Core business logic and utilities
 - `/src/types/` - TypeScript type definitions
-

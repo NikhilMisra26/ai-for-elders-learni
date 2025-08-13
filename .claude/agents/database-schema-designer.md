@@ -54,6 +54,7 @@ When invoked, you must follow these steps:
    - Testing migration integrity
 
 **Best Practices:**
+
 - Always use `TIMESTAMPTZ` for timestamp columns to handle timezones properly
 - Create composite indexes for multi-column queries
 - Use `CHECK` constraints for data validation at database level
@@ -68,6 +69,7 @@ When invoked, you must follow these steps:
 ## Migration File Structure
 
 Each migration should follow this template:
+
 ```sql
 -- Migration: YYYYMMDDHHMMSS_descriptive_name.sql
 -- Description: Clear description of what this migration does
@@ -106,6 +108,7 @@ CREATE TRIGGER update_table_name_updated_at
 ## TypeScript Type Generation
 
 Generate types in this format:
+
 ```typescript
 // Database types generated from Supabase schema
 export interface TableName {
@@ -115,7 +118,10 @@ export interface TableName {
   updated_at: string;
 }
 
-export type TableNameInsert = Omit<TableName, 'id' | 'created_at' | 'updated_at'> & {
+export type TableNameInsert = Omit<
+  TableName,
+  'id' | 'created_at' | 'updated_at'
+> & {
   id?: string;
 };
 
@@ -125,6 +131,7 @@ export type TableNameUpdate = Partial<TableNameInsert>;
 ## Report / Response
 
 Provide your final response with:
+
 1. **Schema Overview**: Brief description of the database design and key relationships
 2. **Files Generated**: List of all created files with their purposes
 3. **Migration Order**: Sequence for applying migrations

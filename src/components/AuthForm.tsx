@@ -421,14 +421,18 @@ export function AuthForm({ onClose }: AuthFormProps): ReactElement {
             <Button
               type='submit'
               className='w-full h-12 text-base font-medium'
-              disabled={Boolean(
-                isLoading ||
-                  securityState.isLocked ||
-                  (!isLogin &&
-                    passwordValidation &&
-                    !passwordValidation.isValid) ||
-                  (emailValidation?.isValid ?? true) === false,
-              )}
+              disabled={((): boolean => {
+                if (isLoading) return true;
+                if (securityState.isLocked) return true;
+                if (
+                  !isLogin &&
+                  passwordValidation &&
+                  passwordValidation.isValid === false
+                )
+                  return true;
+                if (emailValidation?.isValid === false) return true;
+                return false;
+              })()}
             >
               {isLoading
                 ? 'Please wait...'

@@ -46,7 +46,7 @@ export function Header({ onAuthClick }: HeaderProps): ReactElement {
   const handleLogout = (): void => {
     // If logout returns a Promise, explicitly ignore it to satisfy linting
     void logout();
-    navigate('/home');
+    void navigate('/home');
     setShowMobileMenu(false);
   };
 
@@ -57,8 +57,8 @@ export function Header({ onAuthClick }: HeaderProps): ReactElement {
           {/* Logo */}
           <div className='flex-shrink-0'>
             <button
-              onClick={async () => navigate('/home')}
-              className='hover:opacity-80 transition-opacity'
+              onClick={() => void navigate('/home')}
+              className='text-xl font-bold text-primary hover:text-primary/80 transition-colors'
             >
               <BrandName variant='short' size='md' />
             </button>
@@ -73,7 +73,7 @@ export function Header({ onAuthClick }: HeaderProps): ReactElement {
             {navItems.map((item) => (
               <button
                 key={item.id}
-                onClick={async () => navigate(item.path)}
+                onClick={() => void navigate(item.path)}
                 className={`text-base font-medium transition-colors hover:text-primary ${
                   currentPage === item.id
                     ? 'text-primary border-b-2 border-primary pb-1'
@@ -186,7 +186,7 @@ export function Header({ onAuthClick }: HeaderProps): ReactElement {
                   <button
                     key={item.id}
                     onClick={() => {
-                      navigate(item.path);
+                      void navigate(item.path);
                       setShowMobileMenu(false);
                     }}
                     className={`block w-full text-left px-3 py-2 rounded-md text-base font-medium transition-colors ${

@@ -50,6 +50,7 @@ When invoked, you must follow these steps:
 8. **Document Component Usage**: Add JSDoc comments explaining props, usage examples, and accessibility features.
 
 **Best Practices:**
+
 - Always use semantic HTML elements (`<button>`, `<nav>`, `<main>`, etc.)
 - Include `forwardRef` for components that need ref access
 - Implement proper error boundaries for component isolation
@@ -78,13 +79,11 @@ Provide your final response with:
    - ARIA attributes applied
    - Senior-friendly optimizations
 
-4. **Usage Example**: 
+4. **Usage Example**:
+
 ```tsx
 // Example of how to use the component
-<ComponentName 
-  prop1="value"
-  aria-label="Descriptive label"
-/>
+<ComponentName prop1='value' aria-label='Descriptive label' />
 ```
 
 5. **Accessibility Testing Checklist**:
