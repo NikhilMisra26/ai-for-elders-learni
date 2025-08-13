@@ -1,4 +1,4 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+import type { VercelRequest } from '@vercel/node';
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
 import {
@@ -7,16 +7,28 @@ import {
   createSecureResponse,
 } from '../lib/security';
 
+import {
+  SECURITY_HEADERS,
+  validateRequest,
+  validatePlan,
+  getPriceIdForPlan,
+  createSecureResponse,
+} from '../lib/security';
+
 // Security: Use environment variables for all sensitive data
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+const stripeSecret = process.env.STRIPE_SECRET_KEY;
+if (!stripeSecret) throw new Error('STRIPE_SECRET_KEY not set');
+const stripe = new Stripe(stripeSecret, {
   apiVersion: '2023-10-16',
   typescript: true,
 });
 
-const supabase = createClient(
-  process.env.VITE_SUPABASE_URL!,
-  process.env.VITE_SUPABASE_ANON_KEY!,
-);
+const supabaseUrl = process.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY;
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error('Supabase environment variables not set');
+}
+const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // Type definitions for request validation
 type CheckoutPlan = 'advanced' | 'expert';
@@ -25,59 +37,8 @@ interface CheckoutSessionRequest {
   plan: CheckoutPlan;
 }
 
-// Security headers for all responses
-const securityHeaders = {
-  'X-Content-Type-Options': 'nosniff',
-  'X-Frame-Options': 'DENY',
-  'X-XSS-Protection': '1; mode=block',
-  'Strict-Transport-Security': 'max-age=31536000; includeSubDomains; preload',
-  'Content-Security-Policy': "default-src 'self'",
-  'Cache-Control': 'no-store, no-cache, must-revalidate, private',
-  'Referrer-Policy': 'strict-origin-when-cross-origin',
-};
-
-// Helper function to send error response with security headers
-const sendError = (
-  res: VercelResponse,
-  statusCode: number,
-  message: string,
-) => {
-  // Set security headers individually
-  Object.entries(securityHeaders).forEach(([key, value]) => {
-    res.setHeader(key, value);
-  });
-
-  return res.status(statusCode).json({
-    error: message,
-    timestamp: new Date().toISOString(),
-  });
-};
-
-// Helper function to send success response with security headers
-const sendSuccess = (res: VercelResponse, data: any) => {
-  // Set security headers individually
-  Object.entries(securityHeaders).forEach(([key, value]) => {
-    res.setHeader(key, value);
-  });
-
-  return res.status(200).json({
-    success: true,
-    ...data,
-    timestamp: new Date().toISOString(),
-  });
-};
-
-// Validate request method
-const validateMethod = (req: VercelRequest, res: VercelResponse): boolean => {
-  if (req.method !== 'POST') {
-    sendError(res, 405, 'Method not allowed');
-    return false;
-  }
-  return true;
-};
-
 // Extract and validate JWT token from Authorization header
-const extractToken = (req: VercelRequest): string | null => {
+function extractToken(req: VercelRequest): string | null {
   const authHeader = req.headers.authorization;
   if (!authHeader || typeof authHeader !== 'string') {
     return null;
@@ -89,28 +50,10 @@ const extractToken = (req: VercelRequest): string | null => {
   }
 
   return parts[1];
-};
-
-// Validate the plan parameter
-const validatePlan = (plan: any): plan is CheckoutPlan => {
-  return plan === 'advanced' || plan === 'expert';
-};
-
-// Map plan to Stripe price ID from environment variables
-const getPriceId = (plan: CheckoutPlan): string => {
-  const priceIds: Record<CheckoutPlan, string> = {
-    advanced: process.env.PRICE_ID_ADVANCED!,
-    expert: process.env.PRICE_ID_EXPERT!,
-  };
-
-  return priceIds[plan];
-};
+}
 
 // Main handler function
-export default async function handler(
-  req: VercelRequest,
-  res: VercelResponse,
-): Promise<VercelResponse> {
+export default async function handler(req: VercelRequest): Promise<Response> {
   try {
     const rateLimitKey =
       (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ||
@@ -134,12 +77,32 @@ export default async function handler(
     // 1. Validate HTTP method (only POST allowed)
     if (!validateMethod(req, res)) {
       return res;
+
+    const { valid, error } = validateRequest(req, {
+      allowedMethods: ['POST'],
+      requireContentType: 'application/json',
+    });
+
+    if (!valid) {
+      const status = error === 'Method not allowed' ? 405 : 400;
+      return createSecureResponse(
+        { error, timestamp: new Date().toISOString() },
+        status,
+        SECURITY_HEADERS,
+      );
+
     }
 
-    // 2. Extract and validate JWT token
     const token = extractToken(req);
     if (!token) {
-      return sendError(res, 401, 'Authentication required');
+      return createSecureResponse(
+        {
+          error: 'Authentication required',
+          timestamp: new Date().toISOString(),
+        },
+        401,
+        SECURITY_HEADERS,
+      );
     }
 
     // 3. Verify JWT with Supabase
@@ -150,27 +113,57 @@ export default async function handler(
 
     if (authError || !user) {
       console.error('Auth verification failed:', authError?.message);
-      return sendError(res, 401, 'Invalid authentication token');
+      return createSecureResponse(
+        {
+          error: 'Invalid authentication token',
+          timestamp: new Date().toISOString(),
+        },
+        401,
+        SECURITY_HEADERS,
+      );
     }
 
     // 4. Parse and validate request body
     let body: CheckoutSessionRequest;
     try {
-      body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
-    } catch (parseError) {
-      return sendError(res, 400, 'Invalid request format');
+      const rawBody: unknown =
+        typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+      body = rawBody as CheckoutSessionRequest;
+    } catch {
+      return createSecureResponse(
+        {
+          error: 'Invalid request format',
+          timestamp: new Date().toISOString(),
+        },
+        400,
+        SECURITY_HEADERS,
+      );
     }
 
     // 5. Validate plan parameter
     if (!body.plan || !validatePlan(body.plan)) {
-      return sendError(res, 400, 'Invalid subscription plan');
+      return createSecureResponse(
+        {
+          error: 'Invalid subscription plan',
+          timestamp: new Date().toISOString(),
+        },
+        400,
+        SECURITY_HEADERS,
+      );
     }
 
     // 6. Get price ID for the selected plan
-    const priceId = getPriceId(body.plan);
+    const priceId = getPriceIdForPlan(body.plan);
     if (!priceId) {
       console.error('Price ID not configured for plan:', body.plan);
-      return sendError(res, 500, 'Service temporarily unavailable');
+      return createSecureResponse(
+        {
+          error: 'Service temporarily unavailable',
+          timestamp: new Date().toISOString(),
+        },
+        500,
+        SECURITY_HEADERS,
+      );
     }
 
     // 7. Get user's current subscription status to prevent duplicate subscriptions
@@ -187,7 +180,14 @@ export default async function handler(
 
     // 8. Check if user already has an active subscription
     if (profile?.tier && profile.tier !== 'free') {
-      return sendError(res, 400, 'Active subscription already exists');
+      return createSecureResponse(
+        {
+          error: 'Active subscription already exists',
+          timestamp: new Date().toISOString(),
+        },
+        400,
+        SECURITY_HEADERS,
+      );
     }
 
     // 9. Create Stripe checkout session
@@ -201,15 +201,19 @@ export default async function handler(
         },
       ],
       customer_email: user.email,
-      customer: profile?.stripe_customer_id || undefined,
+      customer: profile?.stripe_customer_id,
       client_reference_id: user.id,
       metadata: {
         user_id: user.id,
         plan: body.plan,
-        email: user.email || '',
+        email: user.email ?? '',
       },
-      success_url: `${req.headers.origin || process.env.VITE_APP_URL}/dashboard?session_id={CHECKOUT_SESSION_ID}&success=true`,
-      cancel_url: `${req.headers.origin || process.env.VITE_APP_URL}/account?canceled=true`,
+      success_url: `${
+        req.headers.origin ?? process.env.VITE_APP_URL
+      }/dashboard?session_id={CHECKOUT_SESSION_ID}&success=true`,
+      cancel_url: `${
+        req.headers.origin ?? process.env.VITE_APP_URL
+      }/account?canceled=true`,
       allow_promotion_codes: true,
       billing_address_collection: 'required',
       payment_method_collection: 'if_required',
@@ -238,19 +242,30 @@ export default async function handler(
     });
 
     // 11. Return session URL for redirect
-    return sendSuccess(res, {
-      url: session.url,
-      session_id: session.id,
-    });
+    return createSecureResponse(
+      {
+        success: true,
+        url: session.url,
+        session_id: session.id,
+        timestamp: new Date().toISOString(),
+      },
+      200,
+      SECURITY_HEADERS,
+    );
   } catch (error) {
-    // Log error securely (no sensitive data in logs)
     console.error('Checkout session error:', {
       error: error instanceof Error ? error.message : 'Unknown error',
       timestamp: new Date().toISOString(),
     });
 
-    // Return generic error message to prevent information leakage
-    return sendError(res, 500, 'Unable to process request at this time');
+    return createSecureResponse(
+      {
+        error: 'Unable to process request at this time',
+        timestamp: new Date().toISOString(),
+      },
+      500,
+      SECURITY_HEADERS,
+    );
   }
 }
 
