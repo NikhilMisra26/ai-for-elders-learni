@@ -124,7 +124,7 @@ export default async function handler(
       );
       rateLimitResponse.headers.forEach((value, key) =>
         res.setHeader(key, value),
-      );
+      applyHeaders(res, rateLimitResponse.headers);
       return res.status(429).json({
         error: 'Too many requests',
         timestamp: new Date().toISOString(),
