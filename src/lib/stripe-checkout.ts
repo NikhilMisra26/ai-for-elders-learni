@@ -1,6 +1,10 @@
+
 import { z } from 'zod';
 
-export type CheckoutPlan = 'advanced' | 'expert';
+import { supabase } from './supabase';
+import { stripeConfig } from './stripe-config';
+
+export type CheckoutPlan = keyof typeof stripeConfig.prices;
 
 export const checkoutSessionSchema = z.object({
   success: z.boolean(),
@@ -40,6 +44,7 @@ export async function createCheckoutSession(
       body: JSON.stringify({ plan }),
     });
 
+
     const json: unknown = await response.json();
     const parsed = checkoutSessionSchema.safeParse(json);
 
@@ -50,6 +55,7 @@ export async function createCheckoutSession(
     }
 
     const data = parsed.data;
+
 
     if (!response.ok || !data.success) {
       console.error('Checkout session creation failed:', data.error);
@@ -96,7 +102,7 @@ export async function redirectToCheckout(plan: CheckoutPlan): Promise<void> {
  * @returns True if the plan is valid
  */
 export function isValidCheckoutPlan(plan: string): plan is CheckoutPlan {
-  return plan === 'advanced' || plan === 'expert';
+  return plan in stripeConfig.prices;
 }
 
 /**
