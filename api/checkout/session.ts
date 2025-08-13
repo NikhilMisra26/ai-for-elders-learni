@@ -161,7 +161,8 @@ export default async function handler(
     }
 
     const profileResult = await supabase
-      .from<Profile>('profiles')
+    const profileResult: PostgrestSingleResponse<Profile> = await supabase
+      .from('profiles')
       .select('tier, stripe_customer_id')
       .eq('id', user.id)
       .single();
