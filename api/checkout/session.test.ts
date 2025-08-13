@@ -56,6 +56,34 @@ function createMockRes(): VercelResponse & {
   res.json = (payload: unknown) => {
     res.body = payload;
     return res;
+interface MockVercelResponse {
+  body?: unknown;
+  headers: Record<string, string>;
+  statusCode: number;
+  setHeader: (key: string, value: string) => void;
+  status: (code: number) => MockVercelResponse;
+  json: (payload: unknown) => MockVercelResponse;
+}
+
+function createMockRes(): VercelResponse & {
+  body?: unknown;
+  headers: Record<string, string>;
+  statusCode: number;
+} {
+  const res: MockVercelResponse = {
+    headers: {},
+    statusCode: 200,
+    setHeader: (key: string, value: string) => {
+      res.headers[key] = value;
+    },
+    status: (code: number) => {
+      res.statusCode = code;
+      return res;
+    },
+    json: (payload: unknown) => {
+      res.body = payload;
+      return res;
+    },
   };
   return res as VercelResponse & {
     body?: unknown;
