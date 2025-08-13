@@ -85,9 +85,6 @@ export default defineConfig(
 
             // Return undefined for other files (default chunking)
             return undefined;
-
-            // Return undefined for all other modules (default behavior)
-            return undefined;
           },
         },
       },
