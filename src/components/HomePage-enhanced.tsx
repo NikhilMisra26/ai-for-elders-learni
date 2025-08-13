@@ -32,7 +32,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/contexts/AuthContext';
-import { subscriptionPlans, formatPrice } from '@/lib/subscription';
+import { subscriptionPlans, formatPrice } from '@/lib/subscription-plans';
 
 interface HomePageProps {
   onNavigate: (page: string) => void;

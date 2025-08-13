@@ -43,7 +43,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { useAuth } from '@/contexts/AuthContext';
-import { subscriptionPlans, formatPrice } from '@/lib/subscription';
+import { subscriptionPlans, formatPrice } from '@/lib/subscription-plans';
 import { useMetrics } from '@/hooks/useMetrics';
 
 interface HomePageProps {
@@ -58,11 +58,11 @@ export function HomePage({ onAuthClick }: HomePageProps): ReactElement {
 
   // Memoized navigation handlers
   const handleNavigateToDashboard = useCallback(() => {
-    navigate('/dashboard');
+    void navigate('/dashboard');
   }, [navigate]);
 
   const handleNavigateToCourses = useCallback(() => {
-    navigate('/courses');
+    void navigate('/courses');
   }, [navigate]);
 
   const heroFeatures = [

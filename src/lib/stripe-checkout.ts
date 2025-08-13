@@ -45,6 +45,10 @@ export async function createCheckoutSession(
     });
 
 
+    // Parse the response
+    const data = (await response.json()) as CheckoutSessionResponse;
+
+
     const json: unknown = await response.json();
     const parsed = checkoutSessionSchema.safeParse(json);
 
