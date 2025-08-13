@@ -25,7 +25,7 @@ import {
   submitTestimonial,
   hasUserSubmittedTestimonial,
 } from '@/lib/analytics';
-import { useSubscription } from '@/lib/subscription';
+import { useSubscription } from '@/lib/useSubscription';
 
 interface ReviewFormProps {
   onSuccess?: () => void;

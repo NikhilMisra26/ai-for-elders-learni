@@ -47,8 +47,8 @@ export function BrandName({
     WebkitBackgroundClip: 'text',
     WebkitTextFillColor: 'transparent',
     backgroundClip: 'text',
-  display: 'inline-block', // ensure gradient clips properly inside headings
-  color: 'transparent', // ensure non-webkit browsers hide base text color
+    display: 'inline-block', // ensure gradient clips properly inside headings
+    color: 'transparent', // ensure non-webkit browsers hide base text color
   };
 
   if (variant === 'hero') {
@@ -122,7 +122,7 @@ export function BrandName({
       aria-label='Discover 50'
       role='text'
     >
-      <span className="text-black">DISC</span>
+      <span className='text-black'>DISC</span>
       <span
         className='font-bold bg-gradient-to-r from-[#FF9A9E] via-[#FBC2EB] to-[#A18CD1] bg-clip-text text-transparent'
         style={rainbowTextStyle}
@@ -131,8 +131,7 @@ export function BrandName({
       >
         OVER 50
       </span>
-      <span className="text-gray-900 dark:text-white">&nbsp;AI</span>
-
+      <span className='text-gray-900 dark:text-white'>&nbsp;AI</span>
     </span>
   );
 }
