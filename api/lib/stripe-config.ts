@@ -29,7 +29,11 @@ export function getStripeConfig(): StripeConfig {
     secretKey: getEnvVar(`STRIPE_SECRET_KEY_${env}`),
     prices: {
       advanced: getEnvVar(`VITE_PRICE_ID_ADVANCED_${env}`),
-      expert: getEnvVar(`VITE_PRICE_ID_EXPERT_${env}`),
+    publishableKey: getEnvVar(`STRIPE_PUBLISHABLE_KEY_${env}`),
+    secretKey: getEnvVar(`STRIPE_SECRET_KEY_${env}`),
+    prices: {
+      advanced: getEnvVar(`PRICE_ID_ADVANCED_${env}`),
+      expert: getEnvVar(`PRICE_ID_EXPERT_${env}`),
     },
     webhookSecret: getEnvVar(`STRIPE_WEBHOOK_SECRET_${env}`),
   };
