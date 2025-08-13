@@ -1,6 +1,11 @@
 import type { VercelRequest } from '@vercel/node';
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
+import {
+  checkRateLimit,
+  RATE_LIMITS,
+  createSecureResponse,
+} from '../lib/security';
 
 import {
   SECURITY_HEADERS,
@@ -50,6 +55,29 @@ function extractToken(req: VercelRequest): string | null {
 // Main handler function
 export default async function handler(req: VercelRequest): Promise<Response> {
   try {
+    const rateLimitKey =
+      (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ||
+      req.socket.remoteAddress ||
+      'unknown';
+
+    if (!checkRateLimit(rateLimitKey, RATE_LIMITS.CHECKOUT)) {
+      const rateLimitResponse = createSecureResponse(
+        { error: 'Too many requests' },
+        429,
+      );
+      rateLimitResponse.headers.forEach((value, key) =>
+        res.setHeader(key, value),
+      applyHeaders(res, rateLimitResponse.headers);
+      return res.status(429).json({
+        error: 'Too many requests',
+        timestamp: new Date().toISOString(),
+      return res.status(rateLimitResponse.status).json(rateLimitResponse.body);
+    }
+
+    // 1. Validate HTTP method (only POST allowed)
+    if (!validateMethod(req, res)) {
+      return res;
+
     const { valid, error } = validateRequest(req, {
       allowedMethods: ['POST'],
       requireContentType: 'application/json',
@@ -62,6 +90,7 @@ export default async function handler(req: VercelRequest): Promise<Response> {
         status,
         SECURITY_HEADERS,
       );
+
     }
 
     const token = extractToken(req);
