@@ -106,7 +106,32 @@ async function loadHandler() {
   const mod = await import('./session');
   return mod.default;
 }
+function resetMocks() {
+  vi.resetModules();
+  stripeCreateMock.mockReset();
+  getUserMock.mockReset();
+  fromMock.mockReset();
+}
 
+function setupEnv() {
+  process.env.STRIPE_SECRET_KEY = 'sk_test';
+  process.env.PRICE_ID_ADVANCED = 'price_advanced';
+  process.env.PRICE_ID_EXPERT = 'price_expert';
+  process.env.VITE_SUPABASE_URL = 'https://example.supabase.co';
+  process.env.VITE_SUPABASE_ANON_KEY = 'anon';
+  process.env.VITE_APP_URL = 'https://example.com';
+}
+
+async function importHandler() {
+  const mod = await import('./session');
+  return mod.default;
+}
+
+async function loadHandler() {
+  resetMocks();
+  setupEnv();
+  return await importHandler();
+}
 describe('/api/checkout/session', () => {
   afterEach(() => {
     vi.clearAllMocks();
