@@ -2,8 +2,8 @@
 name: code-refactorer
 description: Run PERIODICALLY after feature completion and for optimization. Examples - "optimize React renders", "extract repeated code", "improve imports", "reduce bundle size", "clean up components", "consolidate utilities". Run IN PARALLEL with ts-lint-fixer for type safety, test-suite-writer for regression tests, ui-component-builder when refactoring components.
 tools: Read, Edit, MultiEdit, Glob, Grep
+model: inherit
 color: cyan
-model: sonnet
 ---
 
 # Purpose

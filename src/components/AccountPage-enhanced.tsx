@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { toast } from 'sonner';
 import {
   CreditCard,
@@ -52,6 +52,11 @@ import {
 } from '@/lib/subscription';
 import { useProgress } from '@/lib/progressTracking';
 
+// Commented out unused interface - keeping for potential future use
+// interface AccountPageProps {
+//   onAuthClick: () => void;
+// }
+
 export function AccountPage(): ReactElement {
   const { user } = useAuth();
   const {
@@ -62,6 +67,7 @@ export function AccountPage(): ReactElement {
     upgradeToPaid,
     cancelSubscription,
     reactivateSubscription,
+    // getDaysUntilExpiry, // Commented out - unused for now
   } = useSubscription();
   const { learningStats } = useProgress();
   const { invoices } = useInvoiceHistory();
@@ -92,6 +98,8 @@ export function AccountPage(): ReactElement {
   }
 
   const currentPlan = getCurrentPlan();
+  // Commented out unused variable - keeping for potential future use
+  // const _daysUntilExpiry = getDaysUntilExpiry();
 
   const handleUpgrade = async (
     planId: 'advanced' | 'expert',

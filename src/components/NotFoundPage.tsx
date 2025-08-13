@@ -1,4 +1,4 @@
-import React, { type ReactElement } from 'react';
+import type { ReactElement } from 'react';
 import { House, ArrowLeft, BookOpen } from '@phosphor-icons/react';
 
 import { Button } from '@/components/ui/button';

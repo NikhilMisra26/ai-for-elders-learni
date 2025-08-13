@@ -1,6 +1,6 @@
-# AI for Elders 🧠✨
+# DISCOVER 50 AI 🧠✨
 
-**AI for Elders** is a React-based educational platform designed to teach adults 50+ how to effectively and safely use artificial intelligence. The platform features a multi-tier subscription system, user authentication, progress tracking, and accessibility features optimized for older learners.
+**DISCOVER 50 AI** is a React-based educational platform designed to teach people over 50 how to effectively and safely use artificial intelligence. The platform features a multi-tier subscription system, user authentication, progress tracking, and accessibility features optimized for learners over 50.
 
 ## 🌟 Key Features
 
@@ -24,8 +24,7 @@
 - **Duplicate Prevention**: Users can only submit one review
 
 ### 🎨 **Senior-Friendly Design**
-
-- Large fonts and high contrast design
+- Large fonts and high contrast design for people over 50
 - **Robust Audio narration** with intelligent error handling, smooth state management, and instance isolation
 - Touch-friendly interface with proper target sizes
 - Clear navigation with breadcrumbs
@@ -33,7 +32,8 @@
 - **Error-resilient UI** preventing blank screens from component failures
 - **Comprehensive Error Boundaries** wrapping all critical components (ModulePage, CoursesPage, DashboardPage)
 - **User-friendly 404 page** with clear navigation options and senior-friendly messaging
-- **Senior-optimized error messages** with larger buttons and simplified language
+- **50+ optimized error messages** with larger buttons and simplified language
+- **Custom BrandName Component**: Visually distinctive branding with rainbow gradient "OVER 50" badge, responsive hero variant, and full accessibility support
 
 ### 🔐 **Security & Privacy**
 
@@ -145,7 +145,7 @@ The platform includes comprehensive route protection for future React Router mig
 - **Role-Based Access**: Supports `free`, `advanced`, `expert`, and `admin` roles
 - **Tier Upgrades**: Shows upgrade prompts for insufficient subscription tiers
 - **Accessibility**: Full WCAG compliance with proper ARIA labels and keyboard navigation
-- **Senior-Friendly**: Large touch targets, clear messaging, and simplified UI flows
+- **50+ Friendly**: Large touch targets, clear messaging, and simplified UI flows
 
 ### Usage Examples
 
@@ -219,7 +219,7 @@ For **Netlify** deployments, `_headers` file is configured with equivalent secur
 - **Offline-First**: Local storage with cloud sync when authenticated
 - **Caching**: 5-minute cache on analytics data for performance
 - **Security**: Comprehensive rate limiting and session management
-- **Accessibility**: Designed specifically for users 50+ with accessibility features
+- **Accessibility**: Designed specifically for people over 50 with accessibility features
 - **React Router v7**: Modern client-side routing with lazy loading and protected routes
 - **Performance Optimizations**: Infinite loop prevention in module navigation with ref-based tracking
 - **Production Build Optimization**: Sourcemaps disabled in production, optimized bundle splitting with separate chunks for Supabase, Radix UI, and other large dependencies
@@ -274,4 +274,4 @@ The platform now uses React Router v7 for seamless course and module navigation:
 - **Console Statement Optimization**: Conditionally disabled all console.log/warn/error statements in production builds using `import.meta.env.DEV` checks
 - **Error Handler Integration**: Replaced production console statements with proper errorHandler service calls for centralized logging
 - **Vite Environment Variables**: Fixed `process.env` usage to use `import.meta.env` for proper Vite compatibility
-- **Package Naming**: Updated package.json name from "spark-template" to "ai-for-elders" for proper project identification
+- **Package Naming**: Updated package.json name from "spark-template" to "discover-50-ai" for proper project identification

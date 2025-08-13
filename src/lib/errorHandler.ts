@@ -1,6 +1,6 @@
 // Centralized error handling service for robust production error management
 // This service provides structured error logging, user-friendly error messages,
-// and security-conscious error reporting for the AI for Elders platform
+// and security-conscious error reporting for the DISCOVER 50 AI platform
 
 export interface ErrorContext {
   userId?: string;

@@ -1,10 +1,4 @@
-import React, {
-  useState,
-  useEffect,
-  useRef,
-  useMemo,
-  type ReactElement,
-} from 'react';
+import { useState, useEffect, useRef, useMemo, type ReactElement } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
@@ -220,6 +214,8 @@ export function ModulePage({
         clearTimeout(timer);
       };
     }
+
+    // Return undefined when no cleanup is needed
     return undefined;
   }, [audioState.isPlaying, audioState.isPaused, showAudioControls]);
 
@@ -344,8 +340,12 @@ export function ModulePage({
       setShowAudioControls(false);
     } catch (error) {
       errorHandler.logError(
-        '[ModulePage] Audio stop failed:',
+        '[ModulePage] Audio stop failed',
         error instanceof Error ? error : new Error(String(error)),
+        {
+          component: 'ModulePage',
+          action: 'audio_stop',
+        },
       );
       setShowAudioControls(false);
     }
@@ -704,10 +704,14 @@ export function ModulePage({
                         );
                       } catch (error) {
                         errorHandler.logError(
-                          'Error rendering audio controls:',
+                          'Error rendering audio controls',
                           error instanceof Error
                             ? error
                             : new Error(String(error)),
+                          {
+                            component: 'ModulePage',
+                            action: 'render_audio_controls',
+                          },
                         );
                         return (
                           <div className='text-center p-4 text-muted-foreground'>

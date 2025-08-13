@@ -47,9 +47,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 6. After finishing edits, use pnpm lint:fix
 
+7. It's more important to wirte **Lint and tsc error-free code** to start with than fixing those errors afterwards to ensure efficiency
+
 ## Project Overview
 
-This is **AI for Elders**, a React-based educational platform designed to teach adults 50+ how to effectively and safely use artificial intelligence through structured, accessible courses. The platform features a multi-tier subscription system (Free, Advanced $1.99/month, Expert $4.99/month) with user authentication, progress tracking, and accessibility features optimized for older learners.
+This is **DISCOVER 50 AI**, a React-based educational platform designed to teach people over 50 how to effectively and safely use artificial intelligence through structured, accessible courses. The platform features a multi-tier subscription system (Free, Advanced $1.99/month, Expert $4.99/month) with user authentication, progress tracking, and accessibility features optimized for learners over 50.
 
 ## Development Commands
 
@@ -96,7 +98,7 @@ This is **AI for Elders**, a React-based educational platform designed to teach 
 3. **Accessibility-First Design**:
    - AccessibilityContext manages font size, dark mode, and audio narration
    - Web Speech API integration for text-to-speech
-   - Minimum font sizes and touch targets optimized for seniors
+   - Minimum font sizes and touch targets optimized for people over 50
 
 4. **Security Architecture**:
    - Comprehensive security module (`src/lib/security.ts`) with rate limiting, CSRF protection, XSS prevention
@@ -159,7 +161,7 @@ Currently no test framework is configured. When implementing tests:
 
 ## Important Considerations
 
-1. **Senior-Friendly Design**: All UI decisions should prioritize clarity and ease of use for users 50+
+1. **50+ Friendly Design**: All UI decisions should prioritize clarity and ease of use for people over 50
 2. **Security First**: The platform handles payment information and personal data - security measures are critical
 3. **Progressive Enhancement**: Features should work offline where possible with online sync
 4. **Accessibility Compliance**: Maintain WCAG 2.1 AA standards minimum

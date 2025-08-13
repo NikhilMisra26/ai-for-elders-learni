@@ -1,6 +1,6 @@
 # Production Readiness Plan
 
-This checklist captures the remaining work required to launch **AI for Elders** in production.
+This checklist captures the remaining work required to launch **DISCOVER 50 AI** in production.
 
 ## Environment & Infrastructure
 

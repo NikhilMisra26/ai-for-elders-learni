@@ -2,7 +2,7 @@
 name: authentication-implementer
 description: Use IMMEDIATELY for ANY auth-related changes. Examples - "add login system", "implement OAuth", "create protected routes", "add role-based access", "setup user registration", "implement password reset". Run IN PARALLEL with database-schema-designer for user tables, ui-component-builder for auth forms, api-endpoint-generator for auth APIs.
 tools: Read, Edit, Write, Grep, Glob
-model: sonnet
+model: opus
 color: green
 ---
 

@@ -1,10 +1,4 @@
-import React, {
-  useState,
-  lazy,
-  Suspense,
-  type ReactElement,
-  useEffect,
-} from 'react';
+import { useState, lazy, Suspense, type ReactElement, useEffect } from 'react';
 import {
   BrowserRouter,
   Routes,
