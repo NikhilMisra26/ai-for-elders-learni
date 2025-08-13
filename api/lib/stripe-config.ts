@@ -13,7 +13,7 @@ export interface StripeConfig {
 type StripeEnvironment = 'test' | 'live';
 
 function getStripeEnvironment(): StripeEnvironment {
-  return process.env.VITE_STRIPE_ENVIRONMENT === 'live' ? 'live' : 'test';
+  return process.env.STRIPE_ENVIRONMENT === 'live' ? 'live' : 'test';
 }
 
 function getEnvVar(key: string): string {
