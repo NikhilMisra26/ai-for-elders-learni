@@ -103,7 +103,7 @@ export function AuthProvider({
             lockedUntil: profile.locked_until ?? undefined,
           };
           setUser(mapped);
-        } catch (error) {
+        } catch {
           // First-time user: create profile with race condition protection
           profileCreationInProgress.current.add(authUser.id);
 
@@ -112,7 +112,7 @@ export function AuthProvider({
             const newProfile = await upsertProfile({
               id: authUser.id,
               email,
-              name: authUser.user_metadata?.name ?? '',
+              name: (authUser.user_metadata?.name as string) ?? '',
               tier: 'free',
               verified: !!authUser.email_confirmed_at,
               join_date: new Date().toISOString(),

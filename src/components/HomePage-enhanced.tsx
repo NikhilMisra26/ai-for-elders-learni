@@ -31,11 +31,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/contexts/AuthContext';
-import {
-  useSubscription,
-  subscriptionPlans,
-  formatPrice,
-} from '@/lib/subscription';
+import { subscriptionPlans, formatPrice } from '@/lib/subscription';
 
 interface HomePageProps {
   onNavigate: (page: string) => void;
@@ -47,7 +43,6 @@ export function HomePage({
   onAuthClick,
 }: HomePageProps): ReactElement {
   const { user } = useAuth();
-  const { subscription: _subscription } = useSubscription();
 
   const heroFeatures = [
     {
@@ -382,15 +377,16 @@ export function HomePage({
               >
                 <CardHeader>
                   <div className='flex items-center gap-1 mb-2'>
-                    {[...(Array(testimonial.rating) as unknown[])].map(
-                      (_, i) => (
-                        <Star
-                          key={`star-${testimonial.name}-${i}`}
-                          className='w-5 h-5 text-yellow-500'
-                          weight='fill'
-                        />
-                      ),
-                    )}
+                    {Array.from(
+                      { length: testimonial.rating },
+                      (_, i) => i + 1,
+                    ).map((starNumber) => (
+                      <Star
+                        key={`${testimonial.name.replace(/\s+/g, '')}-star${starNumber}`}
+                        className='w-5 h-5 text-yellow-500'
+                        weight='fill'
+                      />
+                    ))}
                   </div>
                   <div>
                     <CardTitle className='text-lg'>

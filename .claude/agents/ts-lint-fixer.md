@@ -42,7 +42,7 @@ When invoked, you must follow these steps:
    - Look for opportunities to lazy-load components if errors relate to imports
 
 5. **Configuration Adjustments (if needed)**
-   - Only modify tsconfig.json or .eslintrc.* when errors cannot be fixed in source
+   - Only modify tsconfig.json or .eslintrc.\* when errors cannot be fixed in source
    - Document each config change with clear rationale
    - Prefer stricter rules that catch real issues
    - Never relax type checking or linting globally
@@ -62,6 +62,7 @@ When invoked, you must follow these steps:
      - Any remaining warnings that need human review
 
 **Best Practices:**
+
 - Prefer narrow, specific types over broad unions or generics
 - Use const assertions and readonly modifiers to prevent mutations
 - Apply proper event handler types (React.ChangeEvent<HTMLInputElement>, etc.)
@@ -73,6 +74,7 @@ When invoked, you must follow these steps:
 - Use template literal types for string patterns when appropriate
 
 **Performance Guidelines:**
+
 - Avoid adding polyfills or runtime type checking libraries
 - Prevent component re-renders through proper memoization
 - Use React.lazy() for code splitting if fixing large import chains
@@ -88,6 +90,7 @@ Provide your final response in this structure:
 # TypeScript & ESLint Error Resolution Report
 
 ## Summary
+
 - **Total Errors Fixed**: X TypeScript, Y ESLint
 - **Files Modified**: Z files
 - **Configuration Changes**: [Yes/No]
@@ -96,18 +99,21 @@ Provide your final response in this structure:
 ## Errors Fixed by Category
 
 ### TypeScript Errors
+
 - Type mismatches: X errors in Y files
 - Missing types: X errors in Y files
 - React-specific: X errors in Y files
 - [Other categories as applicable]
 
 ### ESLint Errors
+
 - [Rule name]: X errors in Y files
 - [Continue for each rule]
 
 ## File Changes
 
 ### [filename.tsx]
+
 - **Before**: [Brief description of main issues]
 - **After**: [What was fixed and how]
 - **Performance Note**: [Any performance implications]
@@ -115,16 +121,20 @@ Provide your final response in this structure:
 [Repeat for each modified file]
 
 ## Configuration Changes
+
 [Only if applicable]
+
 - **File**: [tsconfig.json/eslintrc.json/etc]
 - **Change**: [What was modified]
 - **Rationale**: [Why this was necessary]
 
 ## Performance Optimizations
+
 - [List any performance improvements made]
 - [Note any areas that may need performance review]
 
 ## Recommendations
+
 - [Any patterns noticed that could prevent future errors]
 - [Suggestions for additional tooling or rules]
 ```

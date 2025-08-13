@@ -86,7 +86,7 @@ export function ReviewForm({
     setError(null);
 
     const result = await submitTestimonial(user.id, {
-      userName: user.name || 'Anonymous',
+      userName: user.name ?? 'Anonymous',
       userLocation: location || undefined,
       courseTier,
       rating,
@@ -101,7 +101,7 @@ export function ReviewForm({
         setTimeout(onSuccess, 2000);
       }
     } else {
-      setError(result.error || 'Failed to submit review');
+      setError(result.error ?? 'Failed to submit review');
     }
   };
 

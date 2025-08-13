@@ -102,7 +102,7 @@ export async function apiCall<T = unknown>(
       };
     }
 
-    const data = await response.json();
+    const data = (await response.json()) as T;
     return { data };
   } catch (error) {
     if (

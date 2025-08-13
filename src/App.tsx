@@ -12,6 +12,7 @@ import {
   Navigate,
   useSearchParams,
   useLocation,
+  useNavigate,
 } from 'react-router-dom';
 import { ErrorBoundary } from 'react-error-boundary';
 
@@ -93,6 +94,7 @@ function PageLoader(): ReactElement {
 function AppContent(): ReactElement {
   const [searchParams, setSearchParams] = useSearchParams();
   const location = useLocation();
+  const navigate = useNavigate();
   const [showSecurityDashboard, setShowSecurityDashboard] = useState(false);
 
   // Check for auth query param
@@ -124,6 +126,20 @@ function AppContent(): ReactElement {
     window.addEventListener('keydown', handleKeyPress);
     return (): void => window.removeEventListener('keydown', handleKeyPress);
   }, []);
+
+  // Navigation handler for NotFoundPage
+  const handleNotFoundNavigate = (page: string): void => {
+    switch (page) {
+      case 'home':
+        void navigate('/home');
+        break;
+      case 'courses':
+        void navigate('/courses');
+        break;
+      default:
+        void navigate('/home');
+    }
+  };
 
   return (
     <div className='min-h-screen bg-background text-foreground'>
@@ -267,7 +283,10 @@ function AppContent(): ReactElement {
               />
 
               {/* 404 - Not Found */}
-              <Route path='*' element={<NotFoundPage />} />
+              <Route
+                path='*'
+                element={<NotFoundPage onNavigate={handleNotFoundNavigate} />}
+              />
             </Routes>
           </Suspense>
         </ErrorBoundary>

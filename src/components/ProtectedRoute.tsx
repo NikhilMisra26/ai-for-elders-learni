@@ -1,5 +1,4 @@
 import type { ReactNode, ReactElement } from 'react';
-import { Navigate, useLocation } from 'react-router-dom';
 import { Lock, Shield, ArrowRight } from '@phosphor-icons/react';
 
 import { useAuth } from '@/contexts/AuthContext';
@@ -19,42 +18,36 @@ interface ProtectedRouteProps {
   requiredRole?: 'free' | 'advanced' | 'expert' | 'admin';
   /** Custom fallback component to render instead of default auth prompt */
   fallback?: ReactNode;
-  /** Redirect path when not authenticated (defaults to '/home') */
-  redirectTo?: string;
+  /** Callback when authentication is required */
+  onAuthRequired?: () => void;
   /** Whether to show upgrade prompt for insufficient tier access */
   showUpgradePrompt?: boolean;
 }
 
 /**
- * ProtectedRoute component for React Router v6/v7
+ * ProtectedRoute component for custom routing system
  *
- * Protects routes based on authentication status and user roles/tiers.
- * Preserves intended destination for redirect after login.
+ * Protects content based on authentication status and user roles/tiers.
  *
  * @example
  * ```tsx
- * <Route path="/dashboard" element={
- *   <ProtectedRoute>
- *     <DashboardPage />
- *   </ProtectedRoute>
- * } />
+ * <ProtectedRoute onAuthRequired={() => setShowAuthDialog(true)}>
+ *   <DashboardPage />
+ * </ProtectedRoute>
  *
- * <Route path="/admin" element={
- *   <ProtectedRoute requiredRole="admin">
- *     <AdminPanel />
- *   </ProtectedRoute>
- * } />
+ * <ProtectedRoute requiredRole="admin" onAuthRequired={() => setShowAuthDialog(true)}>
+ *   <AdminPanel />
+ * </ProtectedRoute>
  * ```
  */
 export function ProtectedRoute({
   children,
   requiredRole,
   fallback,
-  redirectTo = '/home',
+  onAuthRequired,
   showUpgradePrompt = true,
 }: ProtectedRouteProps): ReactElement {
   const { user, isLoading } = useAuth();
-  const location = useLocation();
 
   // Show loading state while authentication is being determined
   if (isLoading) {
@@ -73,18 +66,38 @@ export function ProtectedRoute({
     );
   }
 
-  // Redirect to login if not authenticated
+  // Show auth prompt if not authenticated
   if (!user) {
+    if (onAuthRequired) {
+      onAuthRequired();
+    }
+
     return (
-      <Navigate
-        to={redirectTo}
-        state={{
-          from: location.pathname + location.search,
-          authRequired: true,
-          message: 'Please sign in to access this page',
-        }}
-        replace
-      />
+      <div className='max-w-2xl mx-auto p-6'>
+        <Card>
+          <CardHeader className='text-center'>
+            <div className='flex justify-center mb-4'>
+              <Lock className='h-12 w-12 text-blue-500' aria-hidden='true' />
+            </div>
+            <CardTitle>Authentication Required</CardTitle>
+            <CardDescription>
+              Please sign in to access this page
+            </CardDescription>
+          </CardHeader>
+          <CardContent className='text-center'>
+            <p className='text-muted-foreground mb-6'>
+              You need to be logged in to view this content.
+            </p>
+            <Button
+              onClick={onAuthRequired}
+              className='w-full'
+              aria-label='Sign in to access this page'
+            >
+              Sign In
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
     );
   }
 
@@ -214,7 +227,7 @@ function TierUpgradePrompt({
             <p className='text-muted-foreground mb-6'>{info.description}</p>
 
             <div className='text-left bg-muted/50 rounded-lg p-4 mb-6'>
-              <h4 className='font-medium mb-3'>What you'll get:</h4>
+              <h4 className='font-medium mb-3'>What you&apos;ll get:</h4>
               <ul className='space-y-2' role='list'>
                 {info.features.map((feature) => (
                   <li key={feature} className='flex items-center gap-2'>
@@ -258,8 +271,6 @@ interface AccessDeniedPromptProps {
 function AccessDeniedPrompt({
   requiredRole,
 }: AccessDeniedPromptProps): ReactElement {
-  const location = useLocation();
-
   const handleGoBack = (): void => {
     // Go back in history, or to home if no history
     if (window.history.length > 1) {
@@ -278,7 +289,7 @@ function AccessDeniedPrompt({
           </div>
           <CardTitle>Access Denied</CardTitle>
           <CardDescription>
-            You don't have permission to access this page
+            You don&apos;t have permission to access this page
           </CardDescription>
         </CardHeader>
         <CardContent className='text-center'>

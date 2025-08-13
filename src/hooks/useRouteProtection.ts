@@ -8,7 +8,27 @@ import type { User } from '@/contexts/AuthContext';
  * routing implementation, making it useful for both the current custom routing system
  * and future React Router migration.
  */
-export function useRouteProtection() {
+export function useRouteProtection(): {
+  user: User | null;
+  isLoading: boolean;
+  isAuthenticated: boolean;
+  hasRequiredAccess: (
+    requiredRole?: 'free' | 'advanced' | 'expert' | 'admin',
+  ) => boolean;
+  getRedirectInfo: (currentPath?: string) => {
+    shouldRedirect: boolean;
+    redirectData: {
+      from: string;
+      authRequired: boolean;
+      message: string;
+    };
+  };
+  checkAccess: (
+    requiredRole?: 'free' | 'advanced' | 'expert' | 'admin',
+  ) => AccessCheckResult;
+  canAccessCourse: (courseId: string) => boolean;
+  userTier: 'free' | 'advanced' | 'expert';
+} {
   const { user, isLoading } = useAuth();
 
   /**
@@ -38,10 +58,19 @@ export function useRouteProtection() {
   /**
    * Get redirect information for unauthenticated users
    */
-  const getRedirectInfo = (currentPath?: string) => ({
+  const getRedirectInfo = (
+    currentPath?: string,
+  ): {
+    shouldRedirect: boolean;
+    redirectData: {
+      from: string;
+      authRequired: boolean;
+      message: string;
+    };
+  } => ({
     shouldRedirect: !user && !isLoading,
     redirectData: {
-      from: currentPath || window.location.pathname,
+      from: currentPath ?? window.location.pathname,
       authRequired: true,
       message: 'Please sign in to access this page',
     },
@@ -52,7 +81,7 @@ export function useRouteProtection() {
    */
   const checkAccess = (
     requiredRole?: 'free' | 'advanced' | 'expert' | 'admin',
-  ) => {
+  ): AccessCheckResult => {
     if (isLoading) {
       return {
         status: 'loading' as const,

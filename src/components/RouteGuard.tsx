@@ -103,6 +103,11 @@ export function RouteGuard({
       return <>{fallback}</>;
     }
 
+    // User is guaranteed to be non-null for insufficient_tier status
+    if (!accessCheck.user) {
+      throw new Error('User should not be null for insufficient_tier status');
+    }
+
     return (
       <TierUpgradePrompt
         requiredRole={requiredRole as 'advanced' | 'expert'}
@@ -117,7 +122,7 @@ export function RouteGuard({
       return <>{fallback}</>;
     }
 
-    return <AccessDeniedPrompt requiredRole={requiredRole!} />;
+    return <AccessDeniedPrompt requiredRole={requiredRole ?? 'unknown'} />;
   }
 
   // User is authorized, render children
@@ -254,7 +259,7 @@ function TierUpgradePrompt({
             <p className='text-muted-foreground mb-6'>{info.description}</p>
 
             <div className='text-left bg-muted/50 rounded-lg p-4 mb-6'>
-              <h4 className='font-medium mb-3'>What you'll get:</h4>
+              <h4 className='font-medium mb-3'>What you&apos;ll get:</h4>
               <ul className='space-y-2' role='list'>
                 {info.features.map((feature) => (
                   <li key={feature} className='flex items-center gap-2'>
@@ -307,7 +312,7 @@ function AccessDeniedPrompt({
           </div>
           <CardTitle>Access Denied</CardTitle>
           <CardDescription>
-            You don't have permission to access this content
+            You don&apos;t have permission to access this content
           </CardDescription>
         </CardHeader>
         <CardContent className='text-center'>

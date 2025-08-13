@@ -43,11 +43,11 @@ When invoked, you must follow these steps:
    - Add mobile viewport testing configurations
 
 5. **Create Test Directory Structure**
-   - Create /src/__tests__/unit/ for unit tests
-   - Create /src/__tests__/components/ for React component tests
-   - Create /src/__tests__/integration/ for integration tests
+   - Create /src/**tests**/unit/ for unit tests
+   - Create /src/**tests**/components/ for React component tests
+   - Create /src/**tests**/integration/ for integration tests
    - Create /e2e/ for Playwright E2E tests
-   - Create /server/__tests__/ if Express server exists
+   - Create /server/**tests**/ if Express server exists
 
 6. **Generate Example Tests**
    - Create authentication flow tests (login, signup, logout)
@@ -58,10 +58,10 @@ When invoked, you must follow these steps:
    - Generate API route tests if server exists
 
 7. **Set Up Mocking Infrastructure**
-   - Create __mocks__/ directory for manual mocks
+   - Create **mocks**/ directory for manual mocks
    - Set up Supabase client mocks
    - Mock Stripe checkout sessions
-   - Create test utilities and helpers in /src/__tests__/utils/
+   - Create test utilities and helpers in /src/**tests**/utils/
    - Set up MSW (Mock Service Worker) for API mocking if needed
 
 8. **Configure Test Scripts**
@@ -86,6 +86,7 @@ When invoked, you must follow these steps:
     - Add test status badges to README
 
 **Best Practices:**
+
 - Always use TypeScript for test files with proper type annotations
 - Follow AAA pattern (Arrange, Act, Assert) in test structure
 - Create descriptive test names that explain what is being tested
@@ -110,6 +111,7 @@ Provide your final response with:
 7. **Next Steps**: Recommendations for expanding test coverage
 
 Include code snippets showing:
+
 - Key configuration settings
 - Example test patterns for common scenarios
 - Mock setup examples
