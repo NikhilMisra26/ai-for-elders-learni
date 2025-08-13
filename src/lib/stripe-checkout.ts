@@ -1,15 +1,18 @@
+
+import { z } from 'zod';
+
 import { supabase } from './supabase';
 import { stripeConfig } from './stripe-config';
 
 export type CheckoutPlan = keyof typeof stripeConfig.prices;
 
-interface CheckoutSessionResponse {
-  success: boolean;
-  url?: string;
-  session_id?: string;
-  error?: string;
-  timestamp: string;
-}
+export const checkoutSessionSchema = z.object({
+  success: z.boolean(),
+  url: z.string().url().optional(),
+  session_id: z.string().optional(),
+  error: z.string().optional(),
+  timestamp: z.string(),
+});
 
 /**
  * Creates a Stripe checkout session for subscription upgrade
@@ -21,7 +24,7 @@ export async function createCheckoutSession(
   plan: CheckoutPlan,
 ): Promise<string> {
   try {
-    // Get the current session to obtain the JWT token
+    const { supabase } = await import('./supabase');
     const {
       data: { session },
       error: sessionError,
@@ -41,19 +44,25 @@ export async function createCheckoutSession(
       body: JSON.stringify({ plan }),
     });
 
-    // Parse the response
-    const data = (await response.json()) as unknown as CheckoutSessionResponse;
 
-    // Handle errors from the API
+    const json: unknown = await response.json();
+    const parsed = checkoutSessionSchema.safeParse(json);
+
+    if (!parsed.success) {
+      throw new Error(
+        `Invalid response from payment service: ${parsed.error.message}`,
+      );
+    }
+
+    const data = parsed.data;
+
+
     if (!response.ok || !data.success) {
       console.error('Checkout session creation failed:', data.error);
       throw new Error(data.error ?? 'Failed to create checkout session');
     }
 
-    // Validate the response contains a URL
-    if (!data.url) {
-      throw new Error('Invalid response from payment service');
-    }
+    if (!data.url) throw new Error('Invalid response from payment service');
 
     return data.url;
   } catch (error) {
