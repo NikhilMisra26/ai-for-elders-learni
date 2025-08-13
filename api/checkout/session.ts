@@ -5,7 +5,10 @@ import { createClient } from '@supabase/supabase-js';
 import { stripeConfig, stripeSecretKey } from '../../src/lib/stripe-config';
 
 // Security: Use environment variables for all sensitive data
-const stripe = new Stripe(stripeSecretKey ?? '', {
+if (!stripeSecretKey || typeof stripeSecretKey !== 'string' || stripeSecretKey.trim() === '') {
+  throw new Error('Stripe secret key is missing or invalid. Please set the STRIPE_SECRET_KEY environment variable.');
+}
+const stripe = new Stripe(stripeSecretKey, {
   apiVersion: '2023-10-16',
   typescript: true,
 });
