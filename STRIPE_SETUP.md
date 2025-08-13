@@ -189,35 +189,19 @@ curl https://api.stripe.com/v1/prices \
 
 ### Code Implementation Pattern
 
+The API selects test or live keys based on `VITE_STRIPE_ENVIRONMENT` via
+`api/lib/stripe-config.ts`:
+
 ```typescript
-// src/lib/stripe-config.ts
-const isLive = import.meta.env.VITE_STRIPE_ENVIRONMENT === 'live';
+import { getStripeConfig, getPriceId } from '../lib/stripe-config';
 
-export const stripeConfig = {
-  publishableKey: isLive 
-    ? import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY_LIVE
-    : import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY_TEST,
-  
-  prices: {
-    advanced: isLive 
-      ? import.meta.env.VITE_PRICE_ID_ADVANCED_LIVE
-      : import.meta.env.VITE_PRICE_ID_ADVANCED_TEST,
-    
-    expert: isLive 
-      ? import.meta.env.VITE_PRICE_ID_EXPERT_LIVE
-      : import.meta.env.VITE_PRICE_ID_EXPERT_TEST,
-  }
-};
-
-// Server-side configuration
-export const stripeSecretKey = isLive 
-  ? process.env.STRIPE_SECRET_KEY_LIVE
-  : process.env.STRIPE_SECRET_KEY_TEST;
-
-export const webhookSecret = isLive 
-  ? process.env.STRIPE_WEBHOOK_SECRET_LIVE
-  : process.env.STRIPE_WEBHOOK_SECRET_TEST;
+const { publishableKey, secretKey, webhookSecret } = getStripeConfig();
+const advancedPriceId = getPriceId('advanced');
 ```
+
+Provide both test and live variables (e.g.
+`STRIPE_SECRET_KEY_TEST` and `STRIPE_SECRET_KEY_LIVE`) and switch between
+them by setting `VITE_STRIPE_ENVIRONMENT` to `test` or `live`.
 
 ## Testing Your Setup
 

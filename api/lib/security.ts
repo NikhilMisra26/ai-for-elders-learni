@@ -2,6 +2,8 @@ import type { VercelRequest } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 import Stripe from 'stripe';
 
+import { getPriceId, getStripeConfig } from './stripe-config';
+
 /**
  * Security utilities for Stripe payment integration
  * CRITICAL: These functions handle payment security - review all changes carefully
@@ -160,14 +162,13 @@ export async function validateSupabaseAuth(request: VercelRequest): Promise<{
 export function verifyStripeSignature(
   rawBody: string | Buffer,
   signature: string,
-  webhookSecret: string,
 ): boolean {
   try {
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY_TEST!, {
+    const { secretKey, webhookSecret } = getStripeConfig();
+    const stripe = new Stripe(secretKey, {
       apiVersion: '2023-10-16',
     });
 
-    // This will throw if signature is invalid
     stripe.webhooks.constructEvent(rawBody, signature, webhookSecret);
     return true;
   } catch (error) {
@@ -244,12 +245,11 @@ export function validatePlan(plan: any): plan is 'advanced' | 'expert' {
  * Get price ID for plan from environment variables
  */
 export function getPriceIdForPlan(plan: 'advanced' | 'expert'): string | null {
-  const priceId =
-    plan === 'advanced'
-      ? process.env.PRICE_ID_ADVANCED_TEST
-      : process.env.PRICE_ID_EXPERT_TEST;
-
-  return priceId || null;
+  try {
+    return getPriceId(plan);
+  } catch {
+    return null;
+  }
 }
 
 /**

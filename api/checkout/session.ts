@@ -2,8 +2,12 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
 
+import { getStripeConfig, getPriceId } from '../lib/stripe-config';
+
 // Security: Use environment variables for all sensitive data
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+const stripeConfig = getStripeConfig();
+
+const stripe = new Stripe(stripeConfig.secretKey, {
   apiVersion: '2023-10-16',
   typescript: true,
 });
@@ -89,16 +93,6 @@ const extractToken = (req: VercelRequest): string | null => {
 // Validate the plan parameter
 const validatePlan = (plan: any): plan is CheckoutPlan => {
   return plan === 'advanced' || plan === 'expert';
-};
-
-// Map plan to Stripe price ID from environment variables
-const getPriceId = (plan: CheckoutPlan): string => {
-  const priceIds: Record<CheckoutPlan, string> = {
-    advanced: process.env.PRICE_ID_ADVANCED!,
-    expert: process.env.PRICE_ID_EXPERT!,
-  };
-
-  return priceIds[plan];
 };
 
 // Main handler function
