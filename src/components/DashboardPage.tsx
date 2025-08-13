@@ -34,7 +34,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProgress } from '@/lib/progressTracking';
-import { useSubscription } from '@/lib/useSubscription';
+import { useSubscription } from '@/lib/subscription';
 import { courseData } from '@/lib/courseData';
 
 export function DashboardPage(): ReactElement {

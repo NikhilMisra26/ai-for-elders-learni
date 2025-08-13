@@ -43,10 +43,13 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { useAuth } from '@/contexts/AuthContext';
-import { useSubscription } from '@/lib/useSubscription';
-import { subscriptionPlans, formatPrice } from '@/lib/subscription-plans';
-import { simulatePaymentFlow } from '@/lib/payment-sim';
-import { useInvoiceHistory } from '@/lib/invoice';
+import {
+  useSubscription,
+  subscriptionPlans,
+  formatPrice,
+  simulatePaymentFlow,
+  useInvoiceHistory,
+} from '@/lib/subscription';
 import { useProgress } from '@/lib/progressTracking';
 
 // Commented out unused interface - keeping for potential future use

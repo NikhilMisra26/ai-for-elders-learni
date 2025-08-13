@@ -50,8 +50,6 @@
 - **Free**: Basic AI course with community access
 - **Advanced ($1.99/month)**: Personal assistant course + advanced features
 - **Expert ($4.99/month)**: Cutting-edge AI technologies + custom assistants
-- **Secure Stripe Integration**: PCI-compliant checkout with JWT authentication
-- **Automatic Subscription Management**: Webhook handling for payment updates
 
 ## 🛠️ Tech Stack
 

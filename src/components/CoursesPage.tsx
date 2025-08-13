@@ -32,7 +32,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProgress } from '@/lib/progressTracking';
-import { useSubscription } from '@/lib/useSubscription';
+import { useSubscription } from '@/lib/subscription';
 import type { Course } from '@/lib/courseData';
 import { courseData } from '@/lib/courseData';
 

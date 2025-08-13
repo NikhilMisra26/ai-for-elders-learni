@@ -29,7 +29,7 @@ import { Separator } from '@/components/ui/separator';
 import { AudioControlsErrorBoundary } from '@/components/AudioControlsErrorBoundary';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProgress } from '@/lib/progressTracking';
-import { useSubscription } from '@/lib/useSubscription';
+import { useSubscription } from '@/lib/subscription';
 import {
   useAudioNarration,
   getEstimatedSpeechTime,
