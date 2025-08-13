@@ -2,7 +2,7 @@
 name: ui-component-builder
 description: IMMEDIATELY use when creating ANY React component or UI element. Examples - "build a login form", "create a dashboard card", "add a modal dialog", "implement a data table", "design a navigation menu", "create buttons or inputs". Use IN PARALLEL with ts-lint-fixer for type safety, authentication-implementer for auth components, api-endpoint-generator when components need backend data.
 tools: Read, Edit, Write, Grep, Glob
-model: sonnet
+model: inherit
 color: blue
 ---
 

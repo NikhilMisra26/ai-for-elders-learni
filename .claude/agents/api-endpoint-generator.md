@@ -2,7 +2,7 @@
 name: api-endpoint-generator
 description: ALWAYS use when creating backend routes or API endpoints. Examples - "create user API", "add payment endpoints", "build CRUD operations", "implement webhooks", "create REST API", "add GraphQL endpoint". Run IN PARALLEL with database-schema-designer for schemas, payment-integration-specialist for Stripe APIs, authentication-implementer for auth endpoints.
 tools: Read, Edit, Write, Glob, Grep
-model: sonnet
+model: inherit
 color: cyan
 ---
 

@@ -1,4 +1,4 @@
-import React, { useState, type ReactElement } from 'react';
+import { useState, type ReactElement } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
@@ -18,6 +18,7 @@ import {
   Trophy,
 } from '@phosphor-icons/react';
 
+import { BrandName } from '@/components/BrandName';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -607,8 +608,8 @@ export function CoursesPage({ onAuthClick }: CoursesPageProps): ReactElement {
                 </h3>
                 <p className='text-lg text-muted-foreground mb-6'>
                   Join thousands of adults 50+ who are already mastering AI
-                  technology. Start with our free course and upgrade anytime to
-                  access advanced content.
+                  technology with <BrandName variant='short' />. Start with our
+                  free course and upgrade anytime to access advanced content.
                 </p>
                 <div className='flex items-center justify-center gap-4 mb-6'>
                   <div className='flex items-center gap-2'>

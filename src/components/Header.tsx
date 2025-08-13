@@ -1,8 +1,9 @@
+import React, { useState, type ReactElement } from 'react';
 import { TextAa, Moon, Sun, User, SignOut, List } from '@phosphor-icons/react';
-import { useState, type ReactElement } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
+import { BrandName } from '@/components/BrandName';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAccessibility } from '@/contexts/AccessibilityContext';
 
@@ -57,9 +58,9 @@ export function Header({ onAuthClick }: HeaderProps): ReactElement {
           <div className='flex-shrink-0'>
             <button
               onClick={async () => navigate('/home')}
-              className='text-xl font-bold text-primary hover:text-primary/80 transition-colors'
+              className='hover:opacity-80 transition-opacity'
             >
-              AI for Elders
+              <BrandName variant='short' size='md' />
             </button>
           </div>
 
@@ -281,3 +282,6 @@ export function Header({ onAuthClick }: HeaderProps): ReactElement {
     </header>
   );
 }
+
+// Memoized version for performance optimization
+export const MemoizedHeader = React.memo(Header);

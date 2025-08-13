@@ -1,4 +1,4 @@
-import React, { useState, type ReactElement } from 'react';
+import React, { useState, useCallback, type ReactElement } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Brain,
@@ -23,6 +23,7 @@ import {
 } from '@phosphor-icons/react';
 
 import { ReviewForm } from './ReviewForm';
+import { BrandName } from './BrandName';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -59,6 +60,15 @@ export function HomePage({ onAuthClick }: HomePageProps): ReactElement {
   const { subscription: _subscription } = useSubscription();
   const { stats, testimonials, isLoading } = useMetrics();
   const [showReviewForm, setShowReviewForm] = useState(false);
+
+  // Memoized navigation handlers
+  const handleNavigateToDashboard = useCallback(() => {
+    navigate('/dashboard');
+  }, [navigate]);
+
+  const handleNavigateToCourses = useCallback(() => {
+    navigate('/courses');
+  }, [navigate]);
 
   const heroFeatures = [
     {
@@ -161,81 +171,85 @@ export function HomePage({ onAuthClick }: HomePageProps): ReactElement {
       {/* Hero Section */}
       <section className='py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-primary/10 via-background to-accent/5'>
         <div className='max-w-6xl mx-auto'>
-          <div className='text-center max-w-4xl mx-auto'>
-            <h1
-              id='main-content'
-              className='text-5xl sm:text-6xl font-bold text-foreground mb-6'
-            >
-              Master AI Technology
-            </h1>
-            <p className='text-2xl font-semibold text-primary mb-4'>
-              Designed for Adults 50+
-            </p>
-            <p className='text-xl text-muted-foreground mb-8 max-w-3xl mx-auto leading-relaxed'>
-              Learn to use artificial intelligence safely and confidently with
-              courses designed specifically for your needs. No technical
-              experience required – just curiosity and a willingness to learn.
-            </p>
-
-            {/* Hero Features */}
-            <div className='grid grid-cols-2 md:grid-cols-4 gap-4 mb-8 max-w-3xl mx-auto'>
-              {heroFeatures.map((feature) => (
-                <div
-                  key={feature.text}
-                  className='flex items-center gap-2 text-sm text-muted-foreground'
-                >
-                  {feature.icon}
-                  <span>{feature.text}</span>
-                </div>
-              ))}
+          <div className='grid md:grid-cols-2 gap-8 items-center'>
+            {/* Left side - Brand name in blue box */}
+            <div>
+              <h1 id='main-content'>
+                <BrandName variant='hero' />
+              </h1>
             </div>
 
-            {/* Call to Action */}
-            <div className='flex flex-col sm:flex-row gap-4 justify-center mb-8'>
-              {user ? (
-                <Button
-                  size='lg'
-                  onClick={async () => navigate('/courses')}
-                  className='text-lg px-8 py-6 h-auto'
-                >
-                  Continue Learning
-                  <ArrowRight className='ml-2' />
-                </Button>
-              ) : (
-                <>
+            {/* Right side - Content */}
+            <div>
+              <p className='text-2xl font-semibold text-primary mb-4'>
+                Designed for Adults 50+
+              </p>
+              <p className='text-xl text-muted-foreground mb-8 leading-relaxed'>
+                Learn to use artificial intelligence safely and confidently with
+                courses designed specifically for your needs. No technical
+                experience required – just curiosity and a willingness to learn.
+              </p>
+
+              {/* Hero Features */}
+              <div className='grid grid-cols-2 gap-4 mb-8'>
+                {heroFeatures.map((feature) => (
+                  <div
+                    key={feature.text}
+                    className='flex items-center gap-2 text-sm text-muted-foreground'
+                  >
+                    {feature.icon}
+                    <span>{feature.text}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Call to Action */}
+              <div className='flex flex-col sm:flex-row gap-4'>
+                {user ? (
                   <Button
                     size='lg'
-                    onClick={onAuthClick}
+                    onClick={handleNavigateToCourses}
                     className='text-lg px-8 py-6 h-auto'
                   >
-                    Start Free Course
-                    <Play className='ml-2' />
+                    Continue Learning
+                    <ArrowRight className='ml-2' />
                   </Button>
-                  <Button
-                    size='lg'
-                    variant='outline'
-                    onClick={async () => navigate('/courses')}
-                    className='text-lg px-8 py-6 h-auto'
-                  >
-                    View All Courses
-                    <BookOpen className='ml-2' />
-                  </Button>
-                </>
-              )}
+                ) : (
+                  <>
+                    <Button
+                      size='lg'
+                      onClick={onAuthClick}
+                      className='text-lg px-8 py-6 h-auto'
+                    >
+                      Start Free Course
+                      <Play className='ml-2' />
+                    </Button>
+                    <Button
+                      size='lg'
+                      variant='outline'
+                      onClick={handleNavigateToCourses}
+                      className='text-lg px-8 py-6 h-auto'
+                    >
+                      View All Courses
+                      <BookOpen className='ml-2' />
+                    </Button>
+                  </>
+                )}
+              </div>
             </div>
+          </div>
 
-            {/* Trust Indicators */}
-            <div className='grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto'>
-              {trustIndicators.map((indicator) => (
-                <div
-                  key={indicator.text}
-                  className='flex items-center gap-2 text-sm text-muted-foreground justify-center'
-                >
-                  {indicator.icon}
-                  <span>{indicator.text}</span>
-                </div>
-              ))}
-            </div>
+          {/* Trust Indicators - moved below the grid */}
+          <div className='grid grid-cols-2 md:grid-cols-4 gap-4 mt-12'>
+            {trustIndicators.map((indicator) => (
+              <div
+                key={indicator.text}
+                className='flex items-center gap-2 text-sm text-muted-foreground justify-center'
+              >
+                {indicator.icon}
+                <span>{indicator.text}</span>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -285,9 +299,7 @@ export function HomePage({ onAuthClick }: HomePageProps): ReactElement {
       <section className='py-20 px-4 sm:px-6 lg:px-8'>
         <div className='max-w-6xl mx-auto'>
           <div className='text-center mb-16'>
-            <h2 className='text-4xl font-bold mb-4'>
-              Why Choose AI for Elders?
-            </h2>
+            <h2 className='text-4xl font-bold mb-4'>Why Choose <BrandName variant='short' />?</h2>
             <p className='text-xl text-muted-foreground max-w-3xl mx-auto'>
               We understand the unique needs of adult learners and have designed
               every aspect of our platform with accessibility, safety, and
@@ -544,7 +556,7 @@ export function HomePage({ onAuthClick }: HomePageProps): ReactElement {
               <>
                 <Button
                   size='lg'
-                  onClick={async () => navigate('/dashboard')}
+                  onClick={handleNavigateToDashboard}
                   className='text-lg px-8 py-6 h-auto'
                 >
                   Go to Dashboard
@@ -553,7 +565,7 @@ export function HomePage({ onAuthClick }: HomePageProps): ReactElement {
                 <Button
                   size='lg'
                   variant='outline'
-                  onClick={async () => navigate('/courses')}
+                  onClick={handleNavigateToCourses}
                   className='text-lg px-8 py-6 h-auto'
                 >
                   Browse Courses
@@ -573,7 +585,7 @@ export function HomePage({ onAuthClick }: HomePageProps): ReactElement {
                 <Button
                   size='lg'
                   variant='outline'
-                  onClick={async () => navigate('/courses')}
+                  onClick={handleNavigateToCourses}
                   className='text-lg px-8 py-6 h-auto'
                 >
                   Explore Courses
@@ -604,3 +616,6 @@ export function HomePage({ onAuthClick }: HomePageProps): ReactElement {
     </div>
   );
 }
+
+// Memoized version for performance optimization
+export const MemoizedHomePage = React.memo(HomePage);

@@ -3,7 +3,7 @@
 ## Project Overview
 
 - **Type:** React + TypeScript web app, built with Vite, styled using Tailwind CSS.
-- **Purpose:** Learning platform for elders, with modular course content, user authentication, and accessibility features.
+- **Purpose:** Learning platform for people over 50, with modular course content, user authentication, and accessibility features.
 
 ## Key Architecture & Patterns
 

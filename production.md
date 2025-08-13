@@ -1,6 +1,6 @@
 # Production Readiness Plan
 
-This checklist captures the remaining work required to launch **AI for Elders** in production.
+This checklist captures the remaining work required to launch **DISCOVER 50 AI** in production.
 
 ## Environment & Infrastructure
 - Provision a Supabase project and execute the provided SQL migrations for schemas and testimonials【F:README.md†L68-L86】

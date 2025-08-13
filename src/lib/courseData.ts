@@ -35,7 +35,7 @@ export interface UserProgress {
   timeSpent: number;
 }
 
-export interface UserSubscription {
+export interface UserSubscriptionTier {
   tier: 'free' | 'advanced' | 'expert';
   startDate: string;
   endDate?: string;
@@ -49,9 +49,9 @@ export interface UserSubscription {
 export const courseData: Record<string, Course> = {
   'ai-basics': {
     id: 'ai-basics',
-    title: 'AI Basics for Everyday Life',
+    title: 'DISCOVER BASICS: AI for Everyday Life',
     description:
-      'Learn the fundamentals of AI technology with practical, real-world examples designed specifically for adults 50+.',
+      'Learn the fundamentals of AI technology with practical, real-world examples designed specifically for people over 50.',
     tier: 'free',
     price: 0,
     totalModules: 4,
@@ -277,7 +277,7 @@ Remember: You're in control. AI is there to help you, not to make decisions for 
   },
   'ai-assistant': {
     id: 'ai-assistant',
-    title: 'AI as Your Personal Assistant',
+    title: 'DISCOVER Advanced: Personal AI Assistant',
     description:
       'Learn advanced techniques to make AI work better for you with better prompting, useful tools, and practical applications.',
     tier: 'advanced',
@@ -342,9 +342,9 @@ Remember: You're in control. AI is there to help you, not to make decisions for 
   },
   'advanced-ai': {
     id: 'advanced-ai',
-    title: 'Advanced AI for Active Seniors',
+    title: 'DISCOVER EXPERT: Cutting-Edge AI',
     description:
-      'Master cutting-edge AI technologies including autonomous agents, custom assistants, and the latest developments.',
+      'Master cutting-edge AI technologies including autonomous agents, custom assistants, and the latest developments for people over 50.',
     tier: 'expert',
     price: 4.99,
     totalModules: 4,
@@ -365,7 +365,7 @@ Remember: You're in control. AI is there to help you, not to make decisions for 
         description:
           'Understand AI that can complete multi-step tasks independently and how to use them safely.',
         content:
-          '# Autonomous AI Agents\n\n[Placeholder content for Expert Course Module 1]\n\nThis module will cover:\n- What are autonomous AI agents\n- Multi-step task automation\n- Safety considerations and limitations\n- Practical applications for seniors',
+          '# Autonomous AI Agents\n\n[Placeholder content for Expert Course Module 1]\n\nThis module will cover:\n- What are autonomous AI agents\n- Multi-step task automation\n- Safety considerations and limitations\n- Practical applications for people over 50',
         estimatedTime: 30,
         order: 1,
         tags: ['expert', 'autonomous', 'agents'],
@@ -407,46 +407,46 @@ Remember: You're in control. AI is there to help you, not to make decisions for 
   },
 };
 
-// Helper functions for course management
-export function getCourseById(courseId: string): Course | undefined {
-  return courseData[courseId];
-}
+// Constants for tier ordering
+const TIER_ORDER = { free: 1, advanced: 2, expert: 3 } as const;
 
-export function getModuleById(
+// Helper functions for course management
+export const getCourseById = (courseId: string): Course | undefined => {
+  return courseData[courseId];
+};
+
+export const getModuleById = (
   courseId: string,
   moduleId: string,
-): Module | undefined {
+): Module | undefined => {
   const course = getCourseById(courseId);
   return course?.modules.find((module) => module.id === moduleId);
-}
+};
 
-export function getAvailableCourses(
+export const getAvailableCourses = (
   userTier: 'free' | 'advanced' | 'expert',
-): Course[] {
-  const tierOrder = { free: 1, advanced: 2, expert: 3 };
-  const userLevel = tierOrder[userTier];
+): Course[] => {
+  const userLevel = TIER_ORDER[userTier];
 
   return Object.values(courseData).filter((course) => {
-    const courseLevel = tierOrder[course.tier];
+    const courseLevel = TIER_ORDER[course.tier];
     return courseLevel <= userLevel;
   });
-}
+};
 
-export function isModuleAccessible(
+export const isModuleAccessible = (
   course: Course,
   _module: Module,
   userTier: 'free' | 'advanced' | 'expert',
-): boolean {
+): boolean => {
   if (course.tier === 'free') return true;
+  return TIER_ORDER[userTier] >= TIER_ORDER[course.tier];
+};
 
-  const tierOrder = { free: 1, advanced: 2, expert: 3 };
-  return tierOrder[userTier] >= tierOrder[course.tier];
-}
-
-export function calculateCourseProgress(
+export const calculateCourseProgress = (
   courseId: string,
   completedModules: string[],
-): number {
+): number => {
   const course = getCourseById(courseId);
   if (!course) return 0;
 
@@ -455,12 +455,12 @@ export function calculateCourseProgress(
   ).length;
 
   return Math.round((completed / course.totalModules) * 100);
-}
+};
 
-export function getNextModule(
+export const getNextModule = (
   courseId: string,
   currentModuleId: string,
-): Module | null {
+): Module | null => {
   const course = getCourseById(courseId);
   if (!course) return null;
 
@@ -471,12 +471,12 @@ export function getNextModule(
     return null;
 
   return course.modules[currentIndex + 1];
-}
+};
 
-export function getPreviousModule(
+export const getPreviousModule = (
   courseId: string,
   currentModuleId: string,
-): Module | null {
+): Module | null => {
   const course = getCourseById(courseId);
   if (!course) return null;
 
@@ -486,4 +486,4 @@ export function getPreviousModule(
   if (currentIndex <= 0) return null;
 
   return course.modules[currentIndex - 1];
-}
+};

@@ -1,4 +1,4 @@
-import React, { type ReactElement } from 'react';
+import type { ReactElement } from 'react';
 import {
   Brain,
   Shield,
@@ -21,6 +21,7 @@ import {
 } from '@phosphor-icons/react';
 
 import { Button } from '@/components/ui/button';
+import { BrandName } from '@/components/BrandName';
 import {
   Card,
   CardContent,
@@ -270,7 +271,7 @@ export function HomePage({
         <div className='max-w-6xl mx-auto'>
           <div className='text-center mb-16'>
             <h2 className='text-4xl font-bold mb-4'>
-              Why Choose AI for Elders?
+              Why Choose <BrandName variant='short' />?
             </h2>
             <p className='text-xl text-muted-foreground max-w-3xl mx-auto'>
               We understand the unique needs of adult learners and have designed
