@@ -1,6 +1,19 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node';
+import type { VercelRequest } from '@vercel/node';
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
+import {
+  checkRateLimit,
+  RATE_LIMITS,
+  createSecureResponse,
+} from '../lib/security';
+
+import {
+  SECURITY_HEADERS,
+  validateRequest,
+  validatePlan,
+  getPriceIdForPlan,
+  createSecureResponse,
+} from '../lib/security';
 
 import { stripeConfig, stripeSecretKey } from '../../src/lib/stripe-config';
 
@@ -9,12 +22,18 @@ if (!stripeSecretKey || typeof stripeSecretKey !== 'string' || stripeSecretKey.t
   throw new Error('Stripe secret key is missing or invalid. Please set the STRIPE_SECRET_KEY environment variable.');
 }
 const stripe = new Stripe(stripeSecretKey, {
+
   apiVersion: '2023-10-16',
   typescript: true,
 });
 
-const supabaseUrl = process.env.VITE_SUPABASE_URL ?? '';
-const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY ?? '';
+
+const supabaseUrl = process.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY;
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error('Supabase environment variables not set');
+}
+
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // Type definitions for request validation
@@ -78,8 +97,9 @@ const validateMethod = (req: VercelRequest, res: VercelResponse): boolean => {
   return true;
 };
 
+
 // Extract and validate JWT token from Authorization header
-const extractToken = (req: VercelRequest): string | null => {
+function extractToken(req: VercelRequest): string | null {
   const authHeader = req.headers.authorization;
   if (!authHeader || typeof authHeader !== 'string') {
     return null;
@@ -103,21 +123,58 @@ const getPriceId = (plan: CheckoutPlan): string | undefined => {
   return stripeConfig.prices[plan];
 };
 
+
 // Main handler function
-export default async function handler(
-  req: VercelRequest,
-  res: VercelResponse,
-): Promise<VercelResponse> {
+export default async function handler(req: VercelRequest): Promise<Response> {
   try {
+    const rateLimitKey =
+      (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() ||
+      req.socket.remoteAddress ||
+      'unknown';
+
+    if (!checkRateLimit(rateLimitKey, RATE_LIMITS.CHECKOUT)) {
+      const rateLimitResponse = createSecureResponse(
+        { error: 'Too many requests' },
+        429,
+      );
+      rateLimitResponse.headers.forEach((value, key) =>
+        res.setHeader(key, value),
+      applyHeaders(res, rateLimitResponse.headers);
+      return res.status(429).json({
+        error: 'Too many requests',
+        timestamp: new Date().toISOString(),
+      return res.status(rateLimitResponse.status).json(rateLimitResponse.body);
+    }
+
     // 1. Validate HTTP method (only POST allowed)
     if (!validateMethod(req, res)) {
       return res;
+
+    const { valid, error } = validateRequest(req, {
+      allowedMethods: ['POST'],
+      requireContentType: 'application/json',
+    });
+
+    if (!valid) {
+      const status = error === 'Method not allowed' ? 405 : 400;
+      return createSecureResponse(
+        { error, timestamp: new Date().toISOString() },
+        status,
+        SECURITY_HEADERS,
+      );
+
     }
 
-    // 2. Extract and validate JWT token
     const token = extractToken(req);
     if (!token) {
-      return sendError(res, 401, 'Authentication required');
+      return createSecureResponse(
+        {
+          error: 'Authentication required',
+          timestamp: new Date().toISOString(),
+        },
+        401,
+        SECURITY_HEADERS,
+      );
     }
 
     // 3. Verify JWT with Supabase
@@ -128,30 +185,59 @@ export default async function handler(
 
     if (authError || !user) {
       console.error('Auth verification failed:', authError?.message);
-      return sendError(res, 401, 'Invalid authentication token');
+      return createSecureResponse(
+        {
+          error: 'Invalid authentication token',
+          timestamp: new Date().toISOString(),
+        },
+        401,
+        SECURITY_HEADERS,
+      );
     }
 
     // 4. Parse and validate request body
     let body: CheckoutSessionRequest;
     try {
-      body =
-        typeof req.body === 'string'
-          ? (JSON.parse(req.body) as CheckoutSessionRequest)
-          : (req.body as CheckoutSessionRequest);
+
+      const rawBody: unknown =
+        typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
+      body = rawBody as CheckoutSessionRequest;
     } catch {
-      return sendError(res, 400, 'Invalid request format');
+      return createSecureResponse(
+        {
+          error: 'Invalid request format',
+          timestamp: new Date().toISOString(),
+        },
+        400,
+        SECURITY_HEADERS,
+      );
+
     }
 
     // 5. Validate plan parameter
     if (!body.plan || !validatePlan(body.plan)) {
-      return sendError(res, 400, 'Invalid subscription plan');
+      return createSecureResponse(
+        {
+          error: 'Invalid subscription plan',
+          timestamp: new Date().toISOString(),
+        },
+        400,
+        SECURITY_HEADERS,
+      );
     }
 
     // 6. Get price ID for the selected plan
-    const priceId = getPriceId(body.plan);
+    const priceId = getPriceIdForPlan(body.plan);
     if (!priceId) {
       console.error('Price ID not configured for plan:', body.plan);
-      return sendError(res, 500, 'Service temporarily unavailable');
+      return createSecureResponse(
+        {
+          error: 'Service temporarily unavailable',
+          timestamp: new Date().toISOString(),
+        },
+        500,
+        SECURITY_HEADERS,
+      );
     }
 
     // 7. Get user's current subscription status to prevent duplicate subscriptions
@@ -176,7 +262,14 @@ export default async function handler(
 
     // 8. Check if user already has an active subscription
     if (profile?.tier && profile.tier !== 'free') {
-      return sendError(res, 400, 'Active subscription already exists');
+      return createSecureResponse(
+        {
+          error: 'Active subscription already exists',
+          timestamp: new Date().toISOString(),
+        },
+        400,
+        SECURITY_HEADERS,
+      );
     }
 
     // 9. Create Stripe checkout session
@@ -191,6 +284,7 @@ export default async function handler(
       ],
       customer_email: user.email,
       customer: profile?.stripe_customer_id ?? undefined,
+
       client_reference_id: user.id,
       metadata: {
         user_id: user.id,
@@ -199,6 +293,7 @@ export default async function handler(
       },
       success_url: `${req.headers.origin ?? process.env.VITE_APP_URL}/dashboard?session_id={CHECKOUT_SESSION_ID}&success=true`,
       cancel_url: `${req.headers.origin ?? process.env.VITE_APP_URL}/account?canceled=true`,
+
       allow_promotion_codes: true,
       billing_address_collection: 'required',
       payment_method_collection: 'if_required',
@@ -227,19 +322,30 @@ export default async function handler(
     });
 
     // 11. Return session URL for redirect
-    return sendSuccess(res, {
-      url: session.url,
-      session_id: session.id,
-    });
+    return createSecureResponse(
+      {
+        success: true,
+        url: session.url,
+        session_id: session.id,
+        timestamp: new Date().toISOString(),
+      },
+      200,
+      SECURITY_HEADERS,
+    );
   } catch (error) {
-    // Log error securely (no sensitive data in logs)
     console.error('Checkout session error:', {
       error: error instanceof Error ? error.message : 'Unknown error',
       timestamp: new Date().toISOString(),
     });
 
-    // Return generic error message to prevent information leakage
-    return sendError(res, 500, 'Unable to process request at this time');
+    return createSecureResponse(
+      {
+        error: 'Unable to process request at this time',
+        timestamp: new Date().toISOString(),
+      },
+      500,
+      SECURITY_HEADERS,
+    );
   }
 }
 

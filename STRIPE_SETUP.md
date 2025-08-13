@@ -261,6 +261,7 @@ console.log('Publishable Key:', import.meta.env.VITE_STRIPE_PUBLISHABLE_KEY_TEST
 3. **ALWAYS** use test mode during development
 4. **ALWAYS** validate webhooks with the webhook secret
 5. **REGULARLY** rotate your API keys
+6. Checkout session creation is rate limited to 5 requests per minute per user or IP. Exceeding this returns a `429 Too Many Requests` response.
 
 ## Next Steps
 
