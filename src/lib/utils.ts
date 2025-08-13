@@ -12,7 +12,7 @@ export const cn = (...inputs: ClassValue[]): string => {
 /**
  * Debounce a function call
  */
-export const debounce = <T extends (...args: unknown[]) => unknown>(
+export const debounce = <T extends (...args: any[]) => any>(
   func: T,
   wait: number,
 ): ((...args: Parameters<T>) => void) => {
@@ -27,7 +27,7 @@ export const debounce = <T extends (...args: unknown[]) => unknown>(
 /**
  * Throttle a function call
  */
-export const throttle = <T extends (...args: unknown[]) => unknown>(
+export const throttle = <T extends (...args: any[]) => any>(
   func: T,
   limit: number,
 ): ((...args: Parameters<T>) => void) => {
@@ -90,7 +90,7 @@ export const isDefined = <T>(value: T | null | undefined): value is T => {
  * Deep clone an object (JSON-safe values only)
  */
 export const deepClone = <T>(obj: T): T => {
-  return JSON.parse(JSON.stringify(obj)) as T;
+  return JSON.parse(JSON.stringify(obj));
 };
 
 /**

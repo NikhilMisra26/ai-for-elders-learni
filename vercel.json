@@ -28,13 +28,8 @@
   ],
   "rewrites": [
     {
-      "source": "/((?!api).*)",
+      "source": "/(.*)",
       "destination": "/index.html"
     }
-  ],
-  "functions": {
-    "api/checkout/session.ts": {
-      "maxDuration": 10
-    }
-  }
+  ]
 }

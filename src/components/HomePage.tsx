@@ -43,7 +43,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { useAuth } from '@/contexts/AuthContext';
-import { subscriptionPlans, formatPrice } from '@/lib/subscription-plans';
+import { subscriptionPlans, formatPrice } from '@/lib/subscription';
 import { useMetrics } from '@/hooks/useMetrics';
 
 interface HomePageProps {
@@ -58,11 +58,11 @@ export function HomePage({ onAuthClick }: HomePageProps): ReactElement {
 
   // Memoized navigation handlers
   const handleNavigateToDashboard = useCallback(() => {
-    void navigate('/dashboard');
+    navigate('/dashboard');
   }, [navigate]);
 
   const handleNavigateToCourses = useCallback(() => {
-    void navigate('/courses');
+    navigate('/courses');
   }, [navigate]);
 
   const heroFeatures = [
@@ -294,9 +294,7 @@ export function HomePage({ onAuthClick }: HomePageProps): ReactElement {
       <section className='py-20 px-4 sm:px-6 lg:px-8'>
         <div className='max-w-6xl mx-auto'>
           <div className='text-center mb-16'>
-            <h2 className='text-4xl font-bold mb-4'>
-              Why Choose <BrandName variant='short' />?
-            </h2>
+            <h2 className='text-4xl font-bold mb-4'>Why Choose <BrandName variant='short' />?</h2>
             <p className='text-xl text-muted-foreground max-w-3xl mx-auto'>
               We understand the unique needs of adult learners and have designed
               every aspect of our platform with accessibility, safety, and

@@ -6,10 +6,7 @@
       "WebFetch(domain:webaim.org)",
       "WebFetch(domain:docs.anthropic.com)",
       "Bash(pnpm list:*)",
-      "mcp__ide__getDiagnostics",
-      "mcp__context7__resolve-library-id",
-      "mcp__context7__get-library-docs",
-      "Bash(pnpm run:*)"
+      "mcp__ide__getDiagnostics"
     ],
     "deny": []
   }
