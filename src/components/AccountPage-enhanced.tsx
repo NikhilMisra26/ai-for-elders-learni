@@ -13,10 +13,12 @@ import {
   Fire,
   Clock,
   Phone,
+  Lock,
 } from '@phosphor-icons/react';
 import type { ReactElement } from 'react';
 
 import { AuthForm } from './AuthForm';
+import { PasswordChangeDialog } from './PasswordChangeDialog';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -56,6 +58,7 @@ export function AccountPage(): ReactElement {
   } = useSubscription();
   const { learningStats } = useProgress();
   const { invoices } = useInvoiceHistory();
+
 
   // Start of removed code for subscription removal
   // const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
@@ -575,8 +578,15 @@ export function AccountPage(): ReactElement {
               </CardHeader>
               <CardContent className='space-y-3'>
                 <div className='flex items-center justify-between'>
-                  <span className='text-sm'>Password</span>
-                  <Button variant='outline' size='sm'>
+                  <span className='text-sm flex items-center gap-2'>
+                    <Lock className='w-4 h-4' />
+                    Password
+                  </span>
+                  <Button
+                    variant='outline'
+                    size='sm'
+                    onClick={(): void => setShowPasswordDialog(true)}
+                  >
                     Change
                   </Button>
                 </div>
@@ -692,6 +702,14 @@ export function AccountPage(): ReactElement {
               </Button>
             </div>
           </DialogContent>
+
+        </Dialog>
+
+        {/* Password Change Dialog */}
+        <PasswordChangeDialog
+          open={showPasswordDialog}
+          onOpenChange={setShowPasswordDialog}
+        />
         </Dialog> */}
         {/* End of removed code for subscription removal */}
       </div>

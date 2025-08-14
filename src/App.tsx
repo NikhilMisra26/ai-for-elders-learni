@@ -62,6 +62,11 @@ const ModulePage = lazy(async () =>
     default: module.ModulePage,
   })),
 );
+const ResetPasswordPage = lazy(async () =>
+  import('./components/ResetPasswordPage').then((module) => ({
+    default: module.ResetPasswordPage,
+  })),
+);
 const ReviewForm = lazy(async () =>
   import('./components/ReviewForm').then((module) => ({
     default: module.ReviewForm,
@@ -165,6 +170,16 @@ function AppContent(): ReactElement {
             <Routes>
               {/* Root redirects to home */}
               <Route path='/' element={<Navigate to='/home' replace />} />
+
+              {/* Password reset route */}
+              <Route
+                path='/reset-password'
+                element={
+                  <ErrorBoundary FallbackComponent={ErrorFallback}>
+                    <ResetPasswordPage />
+                  </ErrorBoundary>
+                }
+              />
 
               {/* Main pages */}
               <Route
