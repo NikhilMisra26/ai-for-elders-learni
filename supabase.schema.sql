@@ -1,7 +1,7 @@
 -- ============================================================================
 -- Supabase SQL schema for DISCOVER 50 AI
--- Version: 2.0.0
--- Description: Base schema with enhanced RLS compatibility and performance optimizations
+-- Version: 2.1.0
+-- Description: Enterprise-grade schema with enhanced RLS security and performance optimizations
 -- Run FIRST in the Supabase SQL Editor (fully idempotent)
 -- ============================================================================
 
@@ -55,16 +55,19 @@ DROP POLICY IF EXISTS "profiles_update_own" ON public.profiles;
 CREATE POLICY "profiles_select_own"
   ON public.profiles
   FOR SELECT
+  TO authenticated
   USING (id = (select auth.uid()));
 
 CREATE POLICY "profiles_insert_own"
   ON public.profiles
   FOR INSERT
+  TO authenticated
   WITH CHECK (id = (select auth.uid()));
 
 CREATE POLICY "profiles_update_own"
   ON public.profiles
   FOR UPDATE
+  TO authenticated
   USING (id = (select auth.uid()))
   WITH CHECK (id = (select auth.uid()));
 
@@ -116,20 +119,23 @@ DROP POLICY IF EXISTS "subscriptions_select_own" ON public.subscriptions;
 DROP POLICY IF EXISTS "subscriptions_insert_own" ON public.subscriptions;
 DROP POLICY IF EXISTS "subscriptions_update_own" ON public.subscriptions;
 
--- Create optimized RLS policies (will be enhanced by migration)
+-- Create optimized RLS policies with explicit role targeting
 CREATE POLICY "subscriptions_select_own"
   ON public.subscriptions
   FOR SELECT
+  TO authenticated
   USING (user_id = (select auth.uid()));
 
 CREATE POLICY "subscriptions_insert_own"
   ON public.subscriptions
   FOR INSERT
+  TO authenticated
   WITH CHECK (user_id = (select auth.uid()));
 
 CREATE POLICY "subscriptions_update_own"
   ON public.subscriptions
   FOR UPDATE
+  TO authenticated
   USING (user_id = (select auth.uid()))
   WITH CHECK (user_id = (select auth.uid()));
 
@@ -184,16 +190,18 @@ DROP POLICY IF EXISTS "Users access their invoices" ON public.invoices;
 DROP POLICY IF EXISTS "invoices_select_own" ON public.invoices;
 DROP POLICY IF EXISTS "invoices_insert_system" ON public.invoices;
 
--- Create optimized RLS policies
+-- Create optimized RLS policies with explicit role targeting
 CREATE POLICY "invoices_select_own"
   ON public.invoices
   FOR SELECT
+  TO authenticated
   USING (user_id = (select auth.uid()));
 
 -- Only system can insert invoices (through service role)
 CREATE POLICY "invoices_insert_system"
   ON public.invoices
   FOR INSERT
+  TO authenticated
   WITH CHECK (false);
 
 -- Performance indexes
@@ -249,20 +257,23 @@ DROP POLICY IF EXISTS "course_progress_select_own" ON public.course_progress;
 DROP POLICY IF EXISTS "course_progress_insert_own" ON public.course_progress;
 DROP POLICY IF EXISTS "course_progress_update_own" ON public.course_progress;
 
--- Create optimized RLS policies
+-- Create optimized RLS policies with explicit role targeting
 CREATE POLICY "course_progress_select_own"
   ON public.course_progress
   FOR SELECT
+  TO authenticated
   USING (user_id = (select auth.uid()));
 
 CREATE POLICY "course_progress_insert_own"
   ON public.course_progress
   FOR INSERT
+  TO authenticated
   WITH CHECK (user_id = (select auth.uid()));
 
 CREATE POLICY "course_progress_update_own"
   ON public.course_progress
   FOR UPDATE
+  TO authenticated
   USING (user_id = (select auth.uid()))
   WITH CHECK (user_id = (select auth.uid()));
 
@@ -320,20 +331,23 @@ DROP POLICY IF EXISTS "module_progress_select_own" ON public.module_progress;
 DROP POLICY IF EXISTS "module_progress_insert_own" ON public.module_progress;
 DROP POLICY IF EXISTS "module_progress_update_own" ON public.module_progress;
 
--- Create optimized RLS policies
+-- Create optimized RLS policies with explicit role targeting
 CREATE POLICY "module_progress_select_own"
   ON public.module_progress
   FOR SELECT
+  TO authenticated
   USING (user_id = (select auth.uid()));
 
 CREATE POLICY "module_progress_insert_own"
   ON public.module_progress
   FOR INSERT
+  TO authenticated
   WITH CHECK (user_id = (select auth.uid()));
 
 CREATE POLICY "module_progress_update_own"
   ON public.module_progress
   FOR UPDATE
+  TO authenticated
   USING (user_id = (select auth.uid()))
   WITH CHECK (user_id = (select auth.uid()));
 
@@ -385,11 +399,13 @@ DROP POLICY IF EXISTS "user_activity_insert_own" ON public.user_activity;
 CREATE POLICY "user_activity_select_own"
   ON public.user_activity
   FOR SELECT
+  TO authenticated
   USING (user_id = (select auth.uid()));
 
 CREATE POLICY "user_activity_insert_own"
   ON public.user_activity
   FOR INSERT
+  TO authenticated
   WITH CHECK (user_id = (select auth.uid()));
 
 -- Performance indexes
@@ -456,4 +472,9 @@ CREATE INDEX IF NOT EXISTS idx_user_activity_recent ON public.user_activity (use
 -- This schema is designed to be idempotent and can be run multiple times safely.
 -- After running this base schema, apply any additional migrations in sequence.
 -- All tables include created_at/updated_at columns for audit purposes.
--- RLS policies use (select auth.uid()) for optimal performance per Supabase best practices.
+-- 
+-- SECURITY ENHANCEMENTS (v2.1.0):
+-- - All RLS policies use (select auth.uid()) for optimal performance per Supabase 2025 best practices
+-- - All policies include explicit TO authenticated/anon clauses for role-based security
+-- - UUID generation uses uuid_generate_v4() for compatibility
+-- - Performance-optimized indexes on all foreign keys and common query patterns

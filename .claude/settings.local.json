@@ -9,7 +9,9 @@
       "mcp__ide__getDiagnostics",
       "Bash(pnpm audit:*)",
       "mcp__context7__get-library-docs",
-      "Bash(pnpm run:*)"
+      "Bash(pnpm run:*)",
+      "mcp__context7__resolve-library-id",
+      "mcp__context7__get-library-docs"
     ],
     "deny": []
   }

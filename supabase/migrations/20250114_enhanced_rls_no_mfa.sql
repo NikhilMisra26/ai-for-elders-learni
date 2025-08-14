@@ -1,8 +1,18 @@
 -- Migration: 20250114_enhanced_rls_no_mfa.sql
--- Description: Enhanced Row Level Security policies with rate limiting, security logging, and fraud detection
+-- Description: Enterprise-grade Row Level Security with optimized auth calls, comprehensive rate limiting, 
+--              security logging, fraud detection, and session validation
 -- Author: database-schema-designer
+-- Version: 2.0 - Enhanced for Supabase 2025 with performance optimizations
 -- Run SECOND (after main schema). Idempotent-safe.
 -- Dependencies: Requires main schema (20250114_initial_schema.sql) to be applied first
+-- 
+-- Security Enhancements:
+-- - All auth.uid() calls optimized to (SELECT auth.uid()) for better performance
+-- - Explicit TO authenticated clauses on all RLS policies
+-- - Enhanced session validation and IP-based rate limiting
+-- - Data integrity threat detection
+-- - Comprehensive audit logging for compliance
+-- - Compatible with existing TypeScript security layer (security.ts, breachDetection.ts)
 
 -- ============================================
 -- EXTENSIONS
@@ -54,8 +64,8 @@ DECLARE
     v_request_count INT;
     v_user_id UUID;
 BEGIN
-    -- Get current user ID
-    v_user_id := auth.uid();
+    -- Get current user ID (optimized call)
+    v_user_id := (SELECT auth.uid());
 
     -- If no user context, allow action (RLS will handle auth)
     IF v_user_id IS NULL THEN
@@ -106,7 +116,7 @@ BEGIN
     -- Attempt to log the security action
     INSERT INTO public.security_logs (user_id, action, details, ip_address, user_agent, success, created_at)
     VALUES (
-        auth.uid(),
+        (SELECT auth.uid()),
         p_action,
         p_details,
         NULL,  -- IP address can be captured at edge/middleware
@@ -139,7 +149,7 @@ DECLARE
 BEGIN
     SELECT verified INTO v_verified
     FROM public.profiles
-    WHERE id = auth.uid();
+    WHERE id = (SELECT auth.uid());
 
     RETURN COALESCE(v_verified, FALSE);
 EXCEPTION
@@ -162,7 +172,7 @@ DECLARE
 BEGIN
     SELECT tier INTO v_tier
     FROM public.profiles
-    WHERE id = auth.uid();
+    WHERE id = (SELECT auth.uid());
 
     RETURN COALESCE(v_tier, 'free');
 EXCEPTION
@@ -187,7 +197,7 @@ DECLARE
     v_failed_attempts INT;
     v_user_id UUID;
 BEGIN
-    v_user_id := auth.uid();
+    v_user_id := (SELECT auth.uid());
     
     -- Check for NULL user ID
     IF v_user_id IS NULL THEN
@@ -252,7 +262,7 @@ DECLARE
     v_recent_changes INT;
     v_user_id UUID;
 BEGIN
-    v_user_id := auth.uid();
+    v_user_id := (SELECT auth.uid());
     
     -- Check for NULL user ID
     IF v_user_id IS NULL THEN
@@ -397,7 +407,7 @@ DECLARE
     v_user_level INT;
     v_user_id UUID;
 BEGIN
-    v_user_id := auth.uid();
+    v_user_id := (SELECT auth.uid());
     
     -- Check for NULL user ID
     IF v_user_id IS NULL THEN
@@ -472,6 +482,166 @@ END;
 $$;
 
 -- ============================================
+-- ENHANCED SECURITY FUNCTIONS (moved earlier to satisfy dependency ordering)
+-- ============================================
+-- Additional security functions referenced by policies must be defined BEFORE policies & GRANTs
+
+-- Validate session integrity and detect potential session hijacking
+CREATE OR REPLACE FUNCTION public.validate_session_security()
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+    v_user_id UUID;
+    v_recent_logins INT;
+    v_suspicious_patterns INT;
+BEGIN
+    v_user_id := (SELECT auth.uid());
+    IF v_user_id IS NULL THEN
+        RETURN TRUE; -- RLS will block unauthenticated users where needed
+    END IF;
+
+    SELECT COUNT(*) INTO v_recent_logins
+    FROM public.security_logs
+    WHERE user_id = v_user_id
+      AND action IN ('login', 'session_start')
+      AND created_at > NOW() - INTERVAL '5 minutes';
+
+    IF v_recent_logins > 3 THEN
+        PERFORM log_security_action('session_validation_failed',
+            jsonb_build_object('reason', 'rapid_logins', 'count', v_recent_logins),
+            false);
+        RETURN FALSE;
+    END IF;
+
+    SELECT COUNT(*) INTO v_suspicious_patterns
+    FROM public.security_logs
+    WHERE user_id = v_user_id
+      AND action = 'suspicious_activity_detected'
+      AND created_at > NOW() - INTERVAL '1 hour';
+
+    IF v_suspicious_patterns > 0 THEN
+        PERFORM log_security_action('session_validation_failed',
+            jsonb_build_object('reason', 'suspicious_activity', 'count', v_suspicious_patterns),
+            false);
+        RETURN FALSE;
+    END IF;
+
+    RETURN TRUE;
+EXCEPTION
+    WHEN OTHERS THEN
+        PERFORM log_security_action('session_validation_error',
+            jsonb_build_object('error', SQLERRM),
+            false);
+        RETURN TRUE; -- fail open
+END;
+$$;
+
+-- Enhanced IP-based rate limiting
+CREATE OR REPLACE FUNCTION public.check_ip_rate_limit(
+    p_action TEXT,
+    p_ip_address INET DEFAULT NULL,
+    p_limit_count INT DEFAULT 50,
+    p_window_minutes INT DEFAULT 5
+)
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+    v_request_count INT;
+    v_user_id UUID;
+BEGIN
+    v_user_id := (SELECT auth.uid());
+    IF p_ip_address IS NULL OR v_user_id IS NULL THEN
+        RETURN TRUE;
+    END IF;
+
+    SELECT COUNT(*) INTO v_request_count
+    FROM public.security_logs
+    WHERE ip_address = p_ip_address
+      AND action = p_action
+      AND created_at > NOW() - (p_window_minutes || ' minutes')::interval;
+
+    IF v_request_count >= p_limit_count THEN
+        PERFORM log_security_action('ip_rate_limit_exceeded',
+            jsonb_build_object(
+                'ip_address', p_ip_address::text,
+                'action', p_action,
+                'count', v_request_count,
+                'limit', p_limit_count
+            ),
+            false);
+        RETURN FALSE;
+    END IF;
+
+    RETURN TRUE;
+EXCEPTION
+    WHEN OTHERS THEN
+        RETURN TRUE;
+END;
+$$;
+
+-- Detect & prevent rapid manipulation attempts
+CREATE OR REPLACE FUNCTION public.check_data_integrity_threat(
+    p_table_name TEXT,
+    p_operation TEXT
+)
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+    v_user_id UUID;
+    v_operation_count INT;
+    v_threat_threshold INT;
+BEGIN
+    v_user_id := (SELECT auth.uid());
+    IF v_user_id IS NULL THEN
+        RETURN TRUE;
+    END IF;
+
+    v_threat_threshold := CASE p_operation
+        WHEN 'DELETE' THEN 5
+        WHEN 'UPDATE' THEN 20
+        WHEN 'INSERT' THEN 50
+        ELSE 10
+    END;
+
+    SELECT COUNT(*) INTO v_operation_count
+    FROM public.security_logs
+    WHERE user_id = v_user_id
+      AND action LIKE '%' || lower(p_operation) || '%'
+      AND details->>'table' = p_table_name
+      AND created_at > NOW() - INTERVAL '1 minute';
+
+    IF v_operation_count >= v_threat_threshold THEN
+        PERFORM log_security_action('data_integrity_threat_detected',
+            jsonb_build_object(
+                'table_name', p_table_name,
+                'operation', p_operation,
+                'count', v_operation_count,
+                'threshold', v_threat_threshold
+            ),
+            false);
+        RETURN FALSE;
+    END IF;
+
+    RETURN TRUE;
+EXCEPTION
+    WHEN OTHERS THEN
+        PERFORM log_security_action('data_integrity_check_error',
+            jsonb_build_object('error', SQLERRM, 'table', p_table_name, 'operation', p_operation),
+            false);
+        RETURN TRUE;
+END;
+$$;
+
+-- ============================================
 -- GRANT PERMISSIONS
 -- ============================================
 -- Grant execution permissions to authenticated users only
@@ -494,6 +664,11 @@ GRANT EXECUTE ON FUNCTION public.check_suspicious_activity(TEXT) TO authenticate
 -- Maintenance functions (consider restricting to service role in production)
 GRANT EXECUTE ON FUNCTION public.cleanup_old_security_logs() TO authenticated;
 
+-- Enhanced security functions
+GRANT EXECUTE ON FUNCTION public.validate_session_security() TO authenticated;
+GRANT EXECUTE ON FUNCTION public.check_ip_rate_limit(TEXT, INET, INT, INT) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.check_data_integrity_threat(TEXT, TEXT) TO authenticated;
+
 -- ============================================
 -- GRANULAR RLS POLICIES WITH RATE LIMITING
 -- ============================================
@@ -511,27 +686,32 @@ DROP POLICY IF EXISTS "profiles_update_own" ON public.profiles;
 CREATE POLICY "profiles_select_own"
   ON public.profiles
   FOR SELECT
+  TO authenticated
   USING (
-    auth.uid() = id
+    (SELECT auth.uid()) = id
     AND check_rate_limit('profile_read', 100, 1)
   );
 
 CREATE POLICY "profiles_insert_own"
   ON public.profiles
   FOR INSERT
+  TO authenticated
   WITH CHECK (
-    auth.uid() = id
+    (SELECT auth.uid()) = id
     AND check_rate_limit('profile_create', 2, 60)
   );
 
 CREATE POLICY "profiles_update_own"
   ON public.profiles
   FOR UPDATE
+  TO authenticated
   USING (
-    auth.uid() = id
+    (SELECT auth.uid()) = id
     AND check_rate_limit('profile_update', 60, 1)
+    AND validate_session_security()
+    AND check_data_integrity_threat('profiles', 'UPDATE')
   )
-  WITH CHECK (auth.uid() = id);
+  WITH CHECK ((SELECT auth.uid()) = id);
 
 -- ============================================
 -- SUBSCRIPTIONS TABLE POLICIES
@@ -542,8 +722,9 @@ DROP POLICY IF EXISTS "subscriptions_select_own" ON public.subscriptions;
 CREATE POLICY "subscriptions_select_own"
   ON public.subscriptions
   FOR SELECT
+  TO authenticated
   USING (
-    user_id = auth.uid()
+    user_id = (SELECT auth.uid())
     AND check_rate_limit('subscription_read', 60, 1)
   );
 
@@ -556,8 +737,9 @@ DROP POLICY IF EXISTS "invoices_select_own" ON public.invoices;
 CREATE POLICY "invoices_select_own"
   ON public.invoices
   FOR SELECT
+  TO authenticated
   USING (
-    user_id = auth.uid()
+    user_id = (SELECT auth.uid())
     AND check_rate_limit('invoice_read', 30, 1)
   );
 
@@ -572,31 +754,35 @@ DROP POLICY IF EXISTS "course_progress_update_own" ON public.course_progress;
 CREATE POLICY "course_progress_select_own"
   ON public.course_progress
   FOR SELECT
+  TO authenticated
   USING (
-    user_id = auth.uid()
+    user_id = (SELECT auth.uid())
     AND check_rate_limit('progress_read', 100, 1)
   );
 
 CREATE POLICY "course_progress_insert_own"
   ON public.course_progress
   FOR INSERT
+  TO authenticated
   WITH CHECK (
-    user_id = auth.uid()
+    user_id = (SELECT auth.uid())
     AND check_rate_limit('progress_create', 50, 60)
     AND NOT EXISTS (
       SELECT 1 FROM public.course_progress cp
-      WHERE cp.user_id = auth.uid() AND cp.course_id = course_id
+      WHERE cp.user_id = (SELECT auth.uid()) AND cp.course_id = course_id
     )
   );
 
 CREATE POLICY "course_progress_update_own"
   ON public.course_progress
   FOR UPDATE
+  TO authenticated
   USING (
-    user_id = auth.uid()
+    user_id = (SELECT auth.uid())
     AND check_rate_limit('progress_update', 200, 1)
+    AND validate_session_security()
   )
-  WITH CHECK (user_id = auth.uid());
+  WITH CHECK (user_id = (SELECT auth.uid()));
 
 -- ============================================
 -- MODULE PROGRESS TABLE POLICIES
@@ -609,27 +795,30 @@ DROP POLICY IF EXISTS "module_progress_update_own" ON public.module_progress;
 CREATE POLICY "module_progress_select_own"
   ON public.module_progress
   FOR SELECT
+  TO authenticated
   USING (
-    user_id = auth.uid()
+    user_id = (SELECT auth.uid())
     AND check_rate_limit('module_read', 200, 1)
   );
 
 CREATE POLICY "module_progress_insert_own"
   ON public.module_progress
   FOR INSERT
+  TO authenticated
   WITH CHECK (
-    user_id = auth.uid()
+    user_id = (SELECT auth.uid())
     AND check_rate_limit('module_create', 200, 60)
   );
 
 CREATE POLICY "module_progress_update_own"
   ON public.module_progress
   FOR UPDATE
+  TO authenticated
   USING (
-    user_id = auth.uid()
+    user_id = (SELECT auth.uid())
     AND check_rate_limit('module_update', 200, 1)
   )
-  WITH CHECK (user_id = auth.uid());
+  WITH CHECK (user_id = (SELECT auth.uid()));
 
 -- ============================================
 -- USER ACTIVITY TABLE POLICIES
@@ -640,8 +829,9 @@ DROP POLICY IF EXISTS "user_activity_select_own" ON public.user_activity;
 CREATE POLICY "user_activity_select_own"
   ON public.user_activity
   FOR SELECT
+  TO authenticated
   USING (
-    user_id = auth.uid()
+    user_id = (SELECT auth.uid())
     AND check_rate_limit('activity_read', 100, 1)
   );
 
@@ -654,15 +844,16 @@ DROP POLICY IF EXISTS "security_logs_select_own" ON public.security_logs;
 CREATE POLICY "security_logs_select_own"
   ON public.security_logs
   FOR SELECT
+  TO authenticated
   USING (
-    user_id = auth.uid()
+    user_id = (SELECT auth.uid())
     AND check_rate_limit('security_log_read', 20, 1)
   );
 
 -- ============================================
 -- PERFORMANCE INDEXES
 -- ============================================
--- Additional indexes to optimize common query patterns
+-- Additional indexes to optimize common query patterns and security checks
 
 -- Subscription queries
 CREATE INDEX IF NOT EXISTS idx_subscriptions_user_status ON public.subscriptions(user_id, status);
@@ -673,6 +864,143 @@ CREATE INDEX IF NOT EXISTS idx_invoices_user_date ON public.invoices(user_id, da
 -- Progress tracking queries
 CREATE INDEX IF NOT EXISTS idx_course_progress_user_course ON public.course_progress(user_id, course_id);
 CREATE INDEX IF NOT EXISTS idx_module_progress_user_course_module ON public.module_progress(user_id, course_id, module_id);
+
+-- Enhanced security log indexes for faster threat detection
+CREATE INDEX IF NOT EXISTS idx_security_logs_ip_action_time ON public.security_logs(ip_address, action, created_at DESC) WHERE ip_address IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_security_logs_suspicious_activity ON public.security_logs(user_id, created_at DESC) WHERE action = 'suspicious_activity_detected';
+CREATE INDEX IF NOT EXISTS idx_security_logs_failed_actions ON public.security_logs(user_id, action, created_at DESC) WHERE success = false;
+
+-- ============================================
+-- TYPESCRIPT INTEGRATION HELPERS
+-- ============================================
+-- Functions to support existing TypeScript security layer
+
+-- Get security metrics for the dashboard (supports existing security.ts)
+CREATE OR REPLACE FUNCTION public.get_security_metrics(
+    p_time_window_hours INT DEFAULT 24
+)
+RETURNS TABLE (
+    total_events BIGINT,
+    failed_events BIGINT,
+    unique_users BIGINT,
+    unique_ips BIGINT,
+    top_failed_actions JSONB
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+BEGIN
+    RETURN QUERY
+    WITH metrics AS (
+        SELECT 
+            COUNT(*) as total_events,
+            COUNT(*) FILTER (WHERE success = false) as failed_events,
+            COUNT(DISTINCT user_id) as unique_users,
+            COUNT(DISTINCT ip_address) FILTER (WHERE ip_address IS NOT NULL) as unique_ips
+        FROM public.security_logs
+        WHERE created_at > NOW() - (p_time_window_hours || ' hours')::interval
+    ),
+    failed_actions AS (
+        SELECT jsonb_agg(
+            jsonb_build_object(
+                'action', action,
+                'count', action_count
+            ) ORDER BY action_count DESC
+        ) as top_failed
+        FROM (
+            SELECT action, COUNT(*) as action_count
+            FROM public.security_logs
+            WHERE success = false
+              AND created_at > NOW() - (p_time_window_hours || ' hours')::interval
+            GROUP BY action
+            ORDER BY action_count DESC
+            LIMIT 10
+        ) fa
+    )
+    SELECT 
+        m.total_events,
+        m.failed_events,
+        m.unique_users,
+        m.unique_ips,
+        COALESCE(fa.top_failed, '[]'::jsonb)
+    FROM metrics m
+    CROSS JOIN failed_actions fa;
+END;
+$$;
+
+-- Check if user has any active security alerts (supports existing breachDetection.ts)
+CREATE OR REPLACE FUNCTION public.get_user_security_alerts()
+RETURNS TABLE (
+    alert_type TEXT,
+    alert_count BIGINT,
+    last_occurrence TIMESTAMPTZ,
+    severity TEXT
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+    v_user_id UUID;
+BEGIN
+    v_user_id := (SELECT auth.uid());
+    
+    IF v_user_id IS NULL THEN
+        RETURN;
+    END IF;
+    
+    RETURN QUERY
+    WITH alert_data AS (
+        SELECT 
+            CASE 
+                WHEN action = 'rate_limit_exceeded' THEN 'Rate Limit Violation'
+                WHEN action = 'suspicious_activity_detected' THEN 'Suspicious Activity'
+                WHEN action = 'fraud_signal_detected' THEN 'Fraud Alert'
+                WHEN action = 'session_validation_failed' THEN 'Session Security'
+                WHEN action = 'data_integrity_threat_detected' THEN 'Data Integrity'
+                ELSE 'Security Alert'
+            END as alert_type,
+            COUNT(*) as alert_count,
+            MAX(created_at) as last_occurrence,
+            CASE 
+                WHEN action = 'fraud_signal_detected' THEN 'HIGH'
+                WHEN action = 'data_integrity_threat_detected' THEN 'HIGH'
+                WHEN action = 'suspicious_activity_detected' THEN 'MEDIUM'
+                ELSE 'LOW'
+            END as severity
+        FROM public.security_logs
+        WHERE user_id = v_user_id
+          AND success = false
+          AND created_at > NOW() - INTERVAL '7 days'
+          AND action IN (
+              'rate_limit_exceeded', 
+              'suspicious_activity_detected', 
+              'fraud_signal_detected',
+              'session_validation_failed',
+              'data_integrity_threat_detected'
+          )
+        GROUP BY action
+    )
+    SELECT 
+        ad.alert_type,
+        ad.alert_count,
+        ad.last_occurrence,
+        ad.severity
+    FROM alert_data ad
+    ORDER BY 
+        CASE ad.severity
+            WHEN 'HIGH' THEN 1
+            WHEN 'MEDIUM' THEN 2
+            WHEN 'LOW' THEN 3
+        END,
+        ad.last_occurrence DESC;
+END;
+$$;
+
+-- Grant permissions for integration functions
+GRANT EXECUTE ON FUNCTION public.get_security_metrics(INT) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.get_user_security_alerts() TO authenticated;
 
 -- ============================================
 -- MIGRATION COMPLETION
