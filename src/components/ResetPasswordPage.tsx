@@ -108,7 +108,6 @@ export function ResetPasswordPage(): ReactElement {
       return 'Strong';
     }
     return 'Good';
-  };
 
   const strength = getPasswordStrength(newPassword);
   const strengthColor =
