@@ -1,5 +1,5 @@
 import { useState, type ReactElement, type FormEvent } from 'react';
-import { Eye, EyeSlash, Shield, Warning } from '@phosphor-icons/react';
+import { Eye, EyeSlash, Shield, Warning, Key, X } from '@phosphor-icons/react';
 import { toast } from 'sonner';
 
 import { Button } from '@/components/ui/button';
@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/input-otp';
 import { validatePassword, validateEmail } from '@/lib/security';
 import { errorHandler } from '@/lib/errorHandler';
+import { ForgotPasswordDialog } from '@/components/ForgotPasswordDialog';
 
 interface AuthFormProps {
   onClose: () => void;
@@ -34,6 +35,7 @@ export function AuthForm({ onClose }: AuthFormProps): ReactElement {
   const [showOtpStep, setShowOtpStep] = useState(false);
   const [otp, setOtp] = useState('');
   const [resendCooldown, setResendCooldown] = useState(0);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
   const {
     login,
     register,
@@ -183,7 +185,18 @@ export function AuthForm({ onClose }: AuthFormProps): ReactElement {
   };
 
   return (
-    <Card className='w-full max-w-md mx-auto'>
+    <Card className='w-full max-w-md mx-auto relative'>
+      {/* Close button */}
+      <Button
+        variant='ghost'
+        size='sm'
+        className='absolute top-4 right-4 h-8 w-8 p-0'
+        onClick={onClose}
+        disabled={isLoading}
+        aria-label='Close dialog'
+      >
+        <X className='h-4 w-4' />
+      </Button>
       <CardHeader className='text-center'>
         <div className='flex items-center justify-center gap-2 mb-2'>
           <Shield className='h-6 w-6 text-primary' />
@@ -412,9 +425,18 @@ export function AuthForm({ onClose }: AuthFormProps): ReactElement {
               )}
 
               {isLogin && (
-                <p className='text-sm text-muted-foreground'>
-                  Password must be at least 8 characters
-                </p>
+                <div className='text-right'>
+                  <Button
+                    type='button'
+                    variant='link'
+                    size='sm'
+                    className='text-primary hover:text-primary/80 p-0 h-auto font-normal'
+                    onClick={(): void => setShowForgotPassword(true)}
+                  >
+                    <Key className='w-3 h-3 mr-1' />
+                    Forgot password?
+                  </Button>
+                </div>
               )}
             </div>
 
@@ -473,12 +495,13 @@ export function AuthForm({ onClose }: AuthFormProps): ReactElement {
           </div>
         </div>
 
-        <div className='mt-4 text-center'>
-          <Button variant='ghost' onClick={onClose} disabled={isLoading}>
-            Cancel
-          </Button>
-        </div>
       </CardContent>
+
+      {/* Forgot Password Dialog */}
+      <ForgotPasswordDialog
+        open={showForgotPassword}
+        onOpenChange={setShowForgotPassword}
+      />
     </Card>
   );
 }

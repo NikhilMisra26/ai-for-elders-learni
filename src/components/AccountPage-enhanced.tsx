@@ -19,10 +19,12 @@ import {
   Clock,
   ArrowRight,
   Phone,
+  Lock,
 } from '@phosphor-icons/react';
 import type { ReactElement } from 'react';
 
 import { AuthForm } from './AuthForm';
+import { PasswordChangeDialog } from './PasswordChangeDialog';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -78,6 +80,7 @@ export function AccountPage(): ReactElement {
   );
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
 
   if (!user) {
     return (
@@ -569,8 +572,15 @@ export function AccountPage(): ReactElement {
               </CardHeader>
               <CardContent className='space-y-3'>
                 <div className='flex items-center justify-between'>
-                  <span className='text-sm'>Password</span>
-                  <Button variant='outline' size='sm'>
+                  <span className='text-sm flex items-center gap-2'>
+                    <Lock className='w-4 h-4' />
+                    Password
+                  </span>
+                  <Button
+                    variant='outline'
+                    size='sm'
+                    onClick={(): void => setShowPasswordDialog(true)}
+                  >
                     Change
                   </Button>
                 </div>
@@ -688,6 +698,12 @@ export function AccountPage(): ReactElement {
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* Password Change Dialog */}
+        <PasswordChangeDialog
+          open={showPasswordDialog}
+          onOpenChange={setShowPasswordDialog}
+        />
       </div>
     </div>
   );
