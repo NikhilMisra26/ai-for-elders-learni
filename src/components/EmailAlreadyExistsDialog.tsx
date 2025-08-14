@@ -44,24 +44,13 @@ export function EmailAlreadyExistsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent
-        className='sm:max-w-[475px]'
-        onKeyDown={handleKeyDown}
-        aria-labelledby='email-exists-title'
-        aria-describedby='email-exists-description'
-      >
+      <DialogContent className='sm:max-w-[475px]' onKeyDown={handleKeyDown}>
         <DialogHeader>
-          <DialogTitle
-            id='email-exists-title'
-            className='flex items-center gap-2'
-          >
+          <DialogTitle className='flex items-center gap-2'>
             <UserCircle className='w-5 h-5' weight='duotone' />
             Account May Already Exist
           </DialogTitle>
-          <DialogDescription
-            id='email-exists-description'
-            className='text-base'
-          >
+          <DialogDescription className='text-base'>
             This email address might already be associated with an account. If
             you already have an account, you can sign in or reset your password.
           </DialogDescription>
