@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import { Lock, Eye, EyeSlash } from '@phosphor-icons/react';
+import { Lock, Eye, EyeSlash, Warning } from '@phosphor-icons/react';
 import type { ReactElement } from 'react';
 
+import { normalizeError } from '@/lib/errorNormalization';
 import {
   Dialog,
   DialogContent,
@@ -16,6 +17,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/contexts/AuthContext';
+import { checkPasswordWithWarning } from '@/lib/breachDetection';
 
 interface PasswordChangeDialogProps {
   open: boolean;
@@ -34,6 +36,39 @@ export function PasswordChangeDialog({
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [breachWarning, setBreachWarning] = useState('');
+  const [isCheckingBreach, setIsCheckingBreach] = useState(false);
+
+  // Check for password breaches when new password changes
+  useEffect(() => {
+    if (newPassword && newPassword.length >= 8) {
+      const checkBreach = async (): Promise<void> => {
+        setIsCheckingBreach(true);
+        try {
+          const { warning } = await checkPasswordWithWarning(newPassword);
+          setBreachWarning(warning);
+        } catch (error) {
+          // Silently fail breach check - don't expose error to user
+          normalizeError(error, 'password_breach_check_change');
+          setBreachWarning('');
+        } finally {
+          setIsCheckingBreach(false);
+        }
+      };
+
+      // Debounce the breach check
+      const timer = setTimeout(() => {
+        void checkBreach();
+      }, 500);
+
+      return (): void => {
+        clearTimeout(timer);
+      };
+    }
+
+    setBreachWarning('');
+    return undefined;
+  }, [newPassword]);
 
   const validatePasswords = (): string | null => {
     if (!currentPassword) return 'Current password is required';
@@ -96,7 +131,7 @@ export function PasswordChangeDialog({
       setConfirmPassword('');
       onOpenChange(false);
     } catch (error) {
-      console.error('Password change error:', error);
+      normalizeError(error, 'password_change');
       toast.error('An unexpected error occurred', {
         description: 'Please try again later',
       });
@@ -223,6 +258,29 @@ export function PasswordChangeDialog({
             {newPassword && (
               <p className={`text-sm ${strengthColor}`}>
                 Password strength: {strength}
+              </p>
+            )}
+
+            {/* Password breach warning */}
+            {breachWarning && (
+              <div className='bg-orange-50 border border-orange-200 rounded-lg p-3'>
+                <div className='flex items-start gap-2'>
+                  <Warning className='h-4 w-4 text-orange-600 mt-0.5 flex-shrink-0' />
+                  <div className='flex-1'>
+                    <p className='text-sm text-orange-800 font-medium'>
+                      Security Warning
+                    </p>
+                    <p className='text-sm text-orange-700 mt-1'>
+                      {breachWarning}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {isCheckingBreach && (
+              <p className='text-sm text-muted-foreground'>
+                Checking password security...
               </p>
             )}
           </div>

@@ -1,6 +1,5 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
-import { useKV } from './kv';
 import {
   addInvoice as dbAddInvoice,
   getUserSubscription,
@@ -129,15 +128,12 @@ export function useSubscription(): {
   reactivateSubscription: () => void;
 } {
   const { user } = useAuth();
-  const [subscription, setSubscription] = useKV<UserSubscription>(
-    'user-subscription',
-    {
-      planId: 'free',
-      status: 'active',
-      startDate: new Date().toISOString(),
-      autoRenew: true,
-    },
-  );
+  const [subscription, setSubscription] = useState<UserSubscription>({
+    planId: 'free',
+    status: 'active',
+    startDate: new Date().toISOString(),
+    autoRenew: true,
+  });
 
   // Hydrate from Supabase when logged in
   useEffect(() => {
@@ -180,7 +176,7 @@ export function useSubscription(): {
   }, [user, setSubscription]);
 
   const updateSubscription = (updates: Partial<UserSubscription>): void => {
-    setSubscription((current) => ({
+    setSubscription((current: UserSubscription) => ({
       ...current,
       ...updates,
     }));
@@ -278,7 +274,7 @@ export function useSubscription(): {
     });
     */
     // Added for subscription removal: no-op function
-    console.log('Trial functionality temporarily disabled');
+    // Trial functionality temporarily disabled
     return;
   };
   // End of removed/added code for subscription removal
@@ -309,7 +305,7 @@ export function useSubscription(): {
     });
     */
     // Added for subscription removal: no-op function
-    console.log('Upgrade functionality temporarily disabled');
+    // Upgrade functionality temporarily disabled
     return;
   };
   // End of removed/added code for subscription removal
@@ -368,7 +364,6 @@ export async function simulatePaymentFlow(_planId: string): Promise<{
     // Simulate payment processing delay
     setTimeout((): void => {
       // Use planId for consistent simulation based on plan
-      console.debug(`Simulating payment for plan: ${planId}`);
       // Simulate 95% success rate
       const success = Math.random() > 0.05;
 
@@ -440,7 +435,7 @@ export function useInvoiceHistory(): {
   invoices: Invoice[];
   addInvoice: (planId: 'advanced' | 'expert', amount: number) => void;
 } {
-  const [invoices, setInvoices] = useKV<Invoice[]>('user-invoices', []);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -457,7 +452,7 @@ export function useInvoiceHistory(): {
       status: 'paid',
     };
 
-    setInvoices((current) => [newInvoice, ...current].slice(0, 12)); // Keep last 12 invoices
+    setInvoices((current: Invoice[]) => [newInvoice, ...current].slice(0, 12)); // Keep last 12 invoices
 
     if (user) {
       dbAddInvoice({

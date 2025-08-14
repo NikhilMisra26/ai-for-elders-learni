@@ -3,6 +3,7 @@ import { toast } from 'sonner';
 import { EnvelopeSimple, Key } from '@phosphor-icons/react';
 import type { ReactElement } from 'react';
 
+import { normalizeError, formatErrorMessage } from '@/lib/errorNormalization';
 import {
   Dialog,
   DialogContent,
@@ -71,9 +72,9 @@ export function ForgotPasswordDialog({
         }, 3000);
       }
     } catch (error) {
-      console.error('Password reset error:', error);
-      toast.error('An unexpected error occurred', {
-        description: 'Please try again later',
+      const normalized = normalizeError(error, 'password_reset_request');
+      toast.error('Password reset failed', {
+        description: formatErrorMessage(normalized),
       });
     } finally {
       setIsLoading(false);

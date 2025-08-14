@@ -1,0 +1,213 @@
+name: Security Gates
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    # Run weekly security audit on Sundays at 2 AM UTC
+    - cron: '0 2 * * 0'
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  security-audit:
+    name: Security Audit & Quality Gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Needed for TruffleHog to scan full history
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 8
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Type Check
+        run: pnpm run typecheck
+        env:
+          NODE_ENV: production
+
+      - name: Lint Check
+        run: pnpm run lint
+        env:
+          NODE_ENV: production
+
+      - name: Format Check
+        run: pnpm run format:check
+
+      - name: Security Audit - Dependencies
+        run: |
+          echo "Running security audit..."
+          pnpm audit --audit-level moderate --json > audit-results.json || true
+          
+          # Check if there are any moderate+ vulnerabilities
+          VULN_COUNT=$(cat audit-results.json | jq '.metadata.vulnerabilities.moderate + .metadata.vulnerabilities.high + .metadata.vulnerabilities.critical // 0')
+          
+          if [ "$VULN_COUNT" -gt 0 ]; then
+            echo "❌ Found $VULN_COUNT moderate+ vulnerabilities"
+            cat audit-results.json | jq '.advisories'
+            exit 1
+          else
+            echo "✅ No moderate+ vulnerabilities found"
+          fi
+
+      - name: Secret Scan
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ github.event.repository.default_branch }}
+          head: HEAD
+          extra_args: --debug --only-verified
+
+      - name: Build Application
+        run: pnpm run build
+        env:
+          NODE_ENV: production
+          # Use dummy values for build-time env vars
+          VITE_SUPABASE_URL: https://example.supabase.co
+          VITE_SUPABASE_ANON_KEY: dummy_key_for_build_test
+
+      - name: Bundle Size Check
+        run: |
+          echo "Checking bundle size..."
+          
+          # Get the size of the dist folder in MB
+          BUNDLE_SIZE=$(du -sm dist/ | cut -f1)
+          MAX_SIZE=5 # 5MB limit
+          
+          echo "Bundle size: ${BUNDLE_SIZE}MB (limit: ${MAX_SIZE}MB)"
+          
+          if [ "$BUNDLE_SIZE" -gt "$MAX_SIZE" ]; then
+            echo "❌ Bundle size exceeded limit!"
+            echo "Current: ${BUNDLE_SIZE}MB, Limit: ${MAX_SIZE}MB"
+            
+            # Show largest files for debugging
+            echo "Largest files in bundle:"
+            find dist/ -type f -exec du -h {} + | sort -rh | head -10
+            
+            exit 1
+          else
+            echo "✅ Bundle size within limits"
+          fi
+
+      - name: Dependency License Check
+        run: |
+          echo "Checking dependency licenses..."
+          
+          # Create a simple license checker using pnpm
+          pnpm licenses list --json > licenses.json
+          
+          # Check for problematic licenses (GPL, AGPL, etc.)
+          PROBLEMATIC_LICENSES=$(cat licenses.json | jq -r '.[] | select(.license | test("GPL|AGPL|LGPL|MPL"; "i")) | .name + " (" + .license + ")"' || true)
+          
+          if [ ! -z "$PROBLEMATIC_LICENSES" ]; then
+            echo "⚠️ Found packages with copyleft licenses:"
+            echo "$PROBLEMATIC_LICENSES"
+            echo "Please review these licenses for compatibility"
+            # Don't fail the build for license warnings, just alert
+          else
+            echo "✅ No problematic licenses found"
+          fi
+
+      - name: Environment Variable Security Check
+        run: |
+          echo "Checking for exposed secrets in environment variables..."
+          
+          # Search for potential secrets in code (excluding node_modules and dist)
+          if grep -r --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" \
+             -E "(password|secret|key|token).*=.*['\"][^'\"]{10,}['\"]" \
+             src/ 2>/dev/null; then
+            echo "❌ Potential hardcoded secrets found!"
+            echo "Please use environment variables for sensitive data"
+            exit 1
+          else
+            echo "✅ No hardcoded secrets detected"
+          fi
+
+      - name: Security Report Summary
+        if: always()
+        run: |
+          echo "## Security Gates Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ "${{ job.status }}" == "success" ]; then
+            echo "✅ All security gates passed successfully!" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ One or more security gates failed. Please review the logs above." >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Checks Performed:" >> $GITHUB_STEP_SUMMARY
+          echo "- TypeScript type checking" >> $GITHUB_STEP_SUMMARY
+          echo "- ESLint code quality" >> $GITHUB_STEP_SUMMARY
+          echo "- Code formatting validation" >> $GITHUB_STEP_SUMMARY
+          echo "- Dependency vulnerability audit" >> $GITHUB_STEP_SUMMARY
+          echo "- Secret scanning" >> $GITHUB_STEP_SUMMARY
+          echo "- Bundle size validation" >> $GITHUB_STEP_SUMMARY
+          echo "- License compliance check" >> $GITHUB_STEP_SUMMARY
+          echo "- Environment variable security" >> $GITHUB_STEP_SUMMARY
+
+  # Separate job for dependency updates (only on schedule)
+  dependency-update-check:
+    name: Dependency Update Check
+    runs-on: ubuntu-latest
+    if: github.event_name == 'schedule'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 8
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - name: Check for Updates
+        run: |
+          echo "Checking for dependency updates..."
+          pnpm outdated --format=json > outdated.json || true
+          
+          # Count outdated packages
+          OUTDATED_COUNT=$(cat outdated.json | jq 'length // 0')
+          
+          if [ "$OUTDATED_COUNT" -gt 0 ]; then
+            echo "📦 Found $OUTDATED_COUNT outdated dependencies"
+            echo "Consider updating these packages:"
+            cat outdated.json | jq -r '.[] | "\(.packageName): \(.current) -> \(.wanted)"'
+          else
+            echo "✅ All dependencies are up to date"
+          fi
+
+      - name: Security Advisory Check
+        run: |
+          echo "Checking for security advisories..."
+          pnpm audit --json > security-advisories.json || true
+          
+          ADVISORY_COUNT=$(cat security-advisories.json | jq '.metadata.vulnerabilities.info + .metadata.vulnerabilities.low + .metadata.vulnerabilities.moderate + .metadata.vulnerabilities.high + .metadata.vulnerabilities.critical // 0')
+          
+          if [ "$ADVISORY_COUNT" -gt 0 ]; then
+            echo "🔒 Found $ADVISORY_COUNT security advisories"
+            echo "Run 'pnpm audit fix' to address these issues"
+          else
+            echo "✅ No security advisories found"
+          fi

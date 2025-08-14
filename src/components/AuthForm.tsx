@@ -1,7 +1,8 @@
-import { useState, type ReactElement, type FormEvent } from 'react';
+import { useState, useEffect, type ReactElement, type FormEvent } from 'react';
 import { Eye, EyeSlash, Shield, Warning, Key, X } from '@phosphor-icons/react';
 import { toast } from 'sonner';
 
+import { normalizeError } from '@/lib/errorNormalization';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -21,6 +22,7 @@ import {
 import { validatePassword, validateEmail } from '@/lib/security';
 import { errorHandler } from '@/lib/errorHandler';
 import { ForgotPasswordDialog } from '@/components/ForgotPasswordDialog';
+import { checkPasswordWithWarning } from '@/lib/breachDetection';
 
 interface AuthFormProps {
   onClose: () => void;
@@ -36,6 +38,8 @@ export function AuthForm({ onClose }: AuthFormProps): ReactElement {
   const [otp, setOtp] = useState('');
   const [resendCooldown, setResendCooldown] = useState(0);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [breachWarning, setBreachWarning] = useState('');
+  const [isCheckingBreach, setIsCheckingBreach] = useState(false);
   const {
     login,
     register,
@@ -48,6 +52,37 @@ export function AuthForm({ onClose }: AuthFormProps): ReactElement {
   // Real-time password validation for registration
   const passwordValidation = isLogin ? null : validatePassword(password);
   const emailValidation = email ? validateEmail(email) : null;
+
+  // Check for password breaches when password changes (registration only)
+  useEffect(() => {
+    if (!isLogin && password && password.length >= 8) {
+      const checkBreach = async (): Promise<void> => {
+        setIsCheckingBreach(true);
+        try {
+          const { warning } = await checkPasswordWithWarning(password);
+          setBreachWarning(warning);
+        } catch (error) {
+          // Silently fail breach check - don't expose error to user
+          normalizeError(error, 'password_breach_check');
+          setBreachWarning('');
+        } finally {
+          setIsCheckingBreach(false);
+        }
+      };
+
+      // Debounce the breach check
+      const timer = setTimeout(() => {
+        void checkBreach();
+      }, 500);
+
+      return (): void => {
+        clearTimeout(timer);
+      };
+    }
+
+    setBreachWarning('');
+    return undefined;
+  }, [password, isLogin]);
 
   const getPasswordStrengthColor = (): string => {
     if (!passwordValidation) return '';
@@ -420,6 +455,29 @@ export function AuthForm({ onClose }: AuthFormProps): ReactElement {
                         ))}
                       </ul>
                     </div>
+                  )}
+
+                  {/* Password breach warning */}
+                  {breachWarning && (
+                    <div className='bg-orange-50 border border-orange-200 rounded-lg p-3'>
+                      <div className='flex items-start gap-2'>
+                        <Warning className='h-4 w-4 text-orange-600 mt-0.5 flex-shrink-0' />
+                        <div className='flex-1'>
+                          <p className='text-sm text-orange-800 font-medium'>
+                            Security Warning
+                          </p>
+                          <p className='text-sm text-orange-700 mt-1'>
+                            {breachWarning}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {isCheckingBreach && (
+                    <p className='text-sm text-muted-foreground'>
+                      Checking password security...
+                    </p>
                   )}
                 </div>
               )}

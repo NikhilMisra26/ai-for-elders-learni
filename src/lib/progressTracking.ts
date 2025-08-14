@@ -1,6 +1,5 @@
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 
-import { useKV } from './kv';
 import {
   upsertCourseProgress,
   upsertModuleProgress,
@@ -116,36 +115,24 @@ export interface UseProgressReturn {
 // Main progress tracking hook
 export function useProgress(): UseProgressReturn {
   const { user } = useAuth();
-  const [moduleProgress, setModuleProgress] = useKV<ModuleProgress[]>(
-    'user-module-progress',
-    [],
-  );
-  const [courseProgress, setCourseProgress] = useKV<CourseProgress[]>(
-    'user-course-progress',
-    [],
-  );
-  const [userActivity, setUserActivity] = useKV<UserActivity[]>(
-    'user-activity',
-    [],
-  );
-  const [learningStats, setLearningStats] = useKV<LearningStats>(
-    'user-learning-stats',
-    {
-      totalTimeSpent: 0,
-      modulesCompleted: 0,
-      coursesCompleted: 0,
-      averageRating: 0,
-      streak: {
-        currentStreak: 0,
-        longestStreak: 0,
-        lastLearningDate: '',
-        startDate: new Date().toISOString(),
-      },
-      favoriteTopics: [],
-      weeklyGoal: 120, // 2 hours per week default
-      weeklyProgress: 0,
+  const [moduleProgress, setModuleProgress] = useState<ModuleProgress[]>([]);
+  const [courseProgress, setCourseProgress] = useState<CourseProgress[]>([]);
+  const [userActivity, setUserActivity] = useState<UserActivity[]>([]);
+  const [learningStats, setLearningStats] = useState<LearningStats>({
+    totalTimeSpent: 0,
+    modulesCompleted: 0,
+    coursesCompleted: 0,
+    averageRating: 0,
+    streak: {
+      currentStreak: 0,
+      longestStreak: 0,
+      lastLearningDate: '',
+      startDate: new Date().toISOString(),
     },
-  );
+    favoriteTopics: [],
+    weeklyGoal: 120, // 2 hours per week default
+    weeklyProgress: 0,
+  });
 
   // Get progress for a specific course
   const getCourseProgress = (courseId: string): CourseProgress | null => {

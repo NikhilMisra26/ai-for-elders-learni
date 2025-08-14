@@ -157,9 +157,7 @@ function AppContent(): ReactElement {
         <ErrorBoundary
           FallbackComponent={ErrorFallback}
           onError={(error) => {
-            if (import.meta.env.DEV) {
-              console.error('Application error:', error);
-            }
+            // Error logging handled internally by errorHandler
             errorHandler.logError('Application boundary error', error, {
               component: 'App',
               action: 'error_boundary',

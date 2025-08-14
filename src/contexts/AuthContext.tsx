@@ -2,7 +2,6 @@ import type { ReactNode, ReactElement } from 'react';
 import { createContext, useContext, useState, useEffect, useRef } from 'react';
 import type { VerifyOtpParams } from '@supabase/supabase-js';
 
-import { useKV } from '@/lib/kv';
 import { supabase } from '@/lib/supabaseClient';
 import { upsertProfile, getProfile, updateProfile } from '@/lib/db';
 import {
@@ -12,6 +11,7 @@ import {
   SecurityLogger,
   sanitizeInput,
 } from '@/lib/security';
+import { normalizeError, formatErrorMessage } from '@/lib/errorNormalization';
 
 export interface User {
   id: string;
@@ -66,7 +66,7 @@ export function AuthProvider({
 }: {
   children: ReactNode;
 }): ReactElement {
-  const [user, setUser] = useKV<User | null>('current-user', null);
+  const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [rateLimiter] = useState(() => new RateLimiter());
   const [securityState, setSecurityState] = useState<SecurityState>({
@@ -80,6 +80,27 @@ export function AuthProvider({
 
   // Initialize Supabase auth listener and hydrate user profile
   useEffect(() => {
+    // Clean up any sensitive data from localStorage on mount
+    if (typeof window !== 'undefined' && window.localStorage) {
+      // Remove any legacy sensitive data keys
+      const sensitiveKeys = [
+        'current-user',
+        'user-subscription',
+        'user-invoices',
+        'user-module-progress',
+        'user-course-progress',
+        'user-activity',
+        'user-learning-stats',
+      ];
+      sensitiveKeys.forEach((key) => {
+        try {
+          window.localStorage.removeItem(key);
+        } catch {
+          // Ignore errors during cleanup
+        }
+      });
+    }
+
     const init = async (): Promise<void> => {
       const { data } = await supabase.auth.getSession();
       const authUser = data.session?.user;
@@ -257,18 +278,16 @@ export function AuthProvider({
       setIsLoading(false);
       return { success: true };
     } catch (error) {
+      const normalized = normalizeError(error, 'user_registration');
       SecurityLogger.log(
         'registration_error',
-        { email, error: error instanceof Error ? error.message : 'unknown' },
+        { email, errorCode: normalized.code, requestId: normalized.requestId },
         'error',
       );
       setIsLoading(false);
       return {
         success: false,
-        error:
-          error instanceof Error && error.message
-            ? error.message
-            : 'Registration failed. Please try again.',
+        error: formatErrorMessage(normalized),
       };
     }
   };
@@ -302,12 +321,12 @@ export function AuthProvider({
 
       setIsLoading(false);
       return { success: true };
-    } catch (e) {
+    } catch (error) {
+      const normalized = normalizeError(error, 'verify_signup_otp');
       setIsLoading(false);
       return {
         success: false,
-        error:
-          e instanceof Error && e.message ? e.message : 'Failed to verify code',
+        error: formatErrorMessage(normalized),
       };
     }
   };
@@ -324,11 +343,11 @@ export function AuthProvider({
       });
       if (error) return { success: false, error: error.message };
       return { success: true };
-    } catch (e) {
+    } catch (error) {
+      const normalized = normalizeError(error, 'resend_signup_otp');
       return {
         success: false,
-        error:
-          e instanceof Error && e.message ? e.message : 'Failed to resend code',
+        error: formatErrorMessage(normalized),
       };
     }
   };
@@ -400,11 +419,13 @@ export function AuthProvider({
           locked_until: null,
         });
       } catch (err) {
+        const normalized = normalizeError(err, 'profile_update_login');
         SecurityLogger.log(
           'profile_update_failed',
           {
             userId: signInData.user.id,
-            error: err instanceof Error ? err.message : String(err),
+            errorCode: normalized.code,
+            requestId: normalized.requestId,
           },
           'error',
         );
@@ -434,13 +455,14 @@ export function AuthProvider({
       setIsLoading(false);
       return { success: true };
     } catch (error) {
+      const normalized = normalizeError(error, 'user_login');
       SecurityLogger.log(
         'login_error',
-        { email, error: error instanceof Error ? error.message : 'unknown' },
+        { email, errorCode: normalized.code, requestId: normalized.requestId },
         'error',
       );
       setIsLoading(false);
-      return { success: false, error: 'Login failed. Please try again.' };
+      return { success: false, error: formatErrorMessage(normalized) };
     }
   };
 
@@ -508,7 +530,11 @@ export function AuthProvider({
       });
     } else if (user && tier !== 'free') {
       // Log attempt to set non-free tier
-      console.log('Only free tier is currently available');
+      SecurityLogger.log(
+        'tier_change_attempt',
+        { userId: user.id, attemptedTier: tier },
+        'info',
+      );
     }
   };
   // End of removed/added code for subscription removal

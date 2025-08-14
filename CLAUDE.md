@@ -1,9 +1,10 @@
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-**Before writing or editing any code**:
+## MOST IMPORANT STEP
+**Before writing or editing any code. MANDATORY STEP!!! DO NOT SKIP!!**:
 
-1. Decide if multiple subagents can run in parallel for this task.
+1. Decide if **multiple subagents can run in parallel** for this task.
 2. If YES — list exactly which subagents will be used, their goals, and spawn them now.
 3. If NO — write a one-line justification for why parallelization is unnecessary.
 4. Always give each subagent a **full standalone brief**:
@@ -12,7 +13,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
    - Tech stack (Vite + React + TS + Supabase + Stripe)
    - Constraints/patterns/naming conventions
    - Deliverables (files, diffs, docs, tests)
-5. Default to parallelization unless strict dependencies force sequential work.
+5. **Default to parallelization unless strict dependencies force sequential work.**
 
 ## Important
 
@@ -20,34 +21,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Critical Directives
 
-1. **Maximize parallel execution.**
-   - Default to running multiple subagents **at the same time** whenever tasks can be done independently.
-   - Split work into atomic units so each subagent can execute without waiting for others, unless there’s a dependency.
-     -This applies both for planning (in plan mode or otherwise) AND in execution (actually creating code)
+1. It's more important to wirte **Lint and tsc error-free code** to start with than fixing those errors afterwards to ensure efficiency. Please **review the @eslint.config.mjs before writing code** to ensure you write good code first and do not waste tokens later.
 
-2. **Fully brief subagents.**
-   - Subagents have **no prior context** from this repo or from our conversations.
-   - Every subagent prompt must contain:
-     - The current problem or goal
-     - The relevant tech stack (Vite + React + TypeScript + Supabase + Stripe)
-     - Any constraints, patterns, or naming conventions to follow
-     - Expected deliverables (files, diffs, docs, tests, etc.)
-   - Include just enough context so they can produce correct, repo-compatible code on the first pass. Do not over-engineer this though.
+2. When fixing bugs or adding features, use the smartest and most minimalistic approach possible white still maintaining UI/UX, security, and all other important things
 
-3. **Prioritize efficiency and correctness.**
-   - If a task involves multiple files or domains (e.g., backend, frontend, tests, docs), route each domain to the correct subagent immediately.
-   - Combine results and only then return the completed task to the user.
+2. After finishing edits, use pnpm lint:fix
 
-4. **Parallelization Protocol (MANDATORY)**
-
-- WHen in "Plan Mode," come up with a very brief summary of how you will use subagents IF you plan to use them in order to maximize efficiency
-- If you decide NOT to use subagnets **justify why they are unnecesary**.
-
-5. When fixing bugs or adding features, use the smartest and most minimalistic approach possible white still maintaining UI/UX, security, and all other important things
-
-6. After finishing edits, use pnpm lint:fix
-
-7. It's more important to wirte **Lint and tsc error-free code** to start with than fixing those errors afterwards to ensure efficiency
 
 ## Project Overview
 

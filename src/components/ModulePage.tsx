@@ -186,9 +186,7 @@ export function ModulePage({
         }
         setShowAudioControls(false);
       } catch (error) {
-        if (import.meta.env.DEV) {
-          console.error('Error cleaning up audio on unmount:', error);
-        }
+        // Silent cleanup error - no user-facing action needed
         errorHandler.logError(
           'Audio cleanup failed on unmount',
           error instanceof Error ? error : new Error(String(error)),
@@ -318,9 +316,7 @@ export function ModulePage({
         audioControls.play();
       }
     } catch (error) {
-      if (import.meta.env.DEV) {
-        console.error('[ModulePage] Audio play failed:', error);
-      }
+      // Error already logged by errorHandler
       errorHandler.logError(
         'Audio playback failed',
         error instanceof Error ? error : new Error(String(error)),

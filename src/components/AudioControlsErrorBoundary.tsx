@@ -1,6 +1,7 @@
 import React, { Component, type ReactNode } from 'react';
 import { Warning, X } from '@phosphor-icons/react';
 
+import { normalizeReactError } from '@/lib/errorNormalization';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 
@@ -25,9 +26,9 @@ export class AudioControlsErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
-    if (import.meta.env.DEV) {
-      console.error('Audio controls error:', error, errorInfo);
-    }
+    // Normalize error for security
+    normalizeReactError(error, errorInfo);
+
     // Log to error handler service instead of console in production
     import('@/lib/errorHandler')
       .then(({ errorHandler }) => {
@@ -41,11 +42,9 @@ export class AudioControlsErrorBoundary extends Component<Props, State> {
           },
         );
       })
-      .catch((importError) => {
+      .catch(() => {
         // Silently fail if error handler module cannot be loaded
-        if (import.meta.env.DEV) {
-          console.warn('Failed to load error handler module:', importError);
-        }
+        // This is already caught, no need to expose details
       });
     this.props.onError?.();
   }
