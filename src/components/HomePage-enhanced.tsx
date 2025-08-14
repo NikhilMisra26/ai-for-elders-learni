@@ -316,9 +316,10 @@ export function HomePage({
                 className={`relative ${plan.popular ? 'ring-2 ring-primary' : ''}`}
               >
                 {plan.popular && (
-                  <Badge className='absolute -top-3 left-1/2 transform -translate-x-1/2'>
-                    Most Popular
-                  </Badge>
+                  /* <Badge className='absolute -top-3 left-1/2 transform -translate-x-1/2'>
+                     Most Popular
+                   </Badge> */
+                  <Badge className='absolute -top-3 left-1/2 transform -translate-x-1/2' />
                 )}
                 <CardHeader className='text-center'>
                   <CardTitle className='text-2xl'>{plan.name}</CardTitle>

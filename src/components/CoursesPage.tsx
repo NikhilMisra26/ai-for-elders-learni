@@ -353,11 +353,13 @@ export function CoursesPage({ onAuthClick }: CoursesPageProps): ReactElement {
                         >
                           {course.tier.toUpperCase()}
                         </Badge>
-                        {course.price > 0 && (
+                        {/* Start of removed code for subscription removal */}
+                        {/* {course.price > 0 && (
                           <Badge variant='outline' className='text-sm'>
                             ${course.price.toFixed(2)}/month
                           </Badge>
-                        )}
+                        )} */}
+                        {/* End of removed code for subscription removal */}
                         {isRecommended && (
                           <Badge
                             variant='outline'
@@ -464,6 +466,28 @@ export function CoursesPage({ onAuthClick }: CoursesPageProps): ReactElement {
                       )}
                     </div>
                   ) : (
+                    /* Start of removed/added code for subscription removal */
+                    <div className='mb-6 p-4 bg-muted/30 rounded-lg'>
+                      <div className='flex items-center justify-between'>
+                        <div>
+                          <p className='font-medium mb-1'>Coming Soon</p>
+                          <p className='text-sm text-muted-foreground'>
+                            {course.tier === 'advanced' ? 'Advanced' : 'Expert'}{' '}
+                            courses will be available in the future.
+                          </p>
+                        </div>
+                        <Button
+                          disabled
+                          variant='outline'
+                          className='flex items-center gap-2'
+                        >
+                          <Shield className='h-4 w-4' />
+                          Coming Soon
+                        </Button>
+                      </div>
+                    </div>
+                    /* End of removed/added code for subscription removal */
+                    /* Removed for subscription removal - original subscription required section
                     <div className='mb-6 p-4 bg-muted/30 rounded-lg'>
                       <div className='flex items-center justify-between'>
                         <div>
@@ -486,6 +510,7 @@ export function CoursesPage({ onAuthClick }: CoursesPageProps): ReactElement {
                         </Button>
                       </div>
                     </div>
+                    */
                   )}
 
                   {/* Module List */}

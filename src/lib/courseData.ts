@@ -408,7 +408,8 @@ Remember: You're in control. AI is there to help you, not to make decisions for 
 };
 
 // Constants for tier ordering
-const TIER_ORDER = { free: 1, advanced: 2, expert: 3 } as const;
+// @ts-expect-error - Tier ordering may be used when subscriptions are re-enabled
+const _TIER_ORDER = { free: 1, advanced: 2, expert: 3 } as const;
 
 // Helper functions for course management
 export const getCourseById = (courseId: string): Course | undefined => {
@@ -423,25 +424,41 @@ export const getModuleById = (
   return course?.modules.find((module) => module.id === moduleId);
 };
 
+// Start of removed/added code for subscription removal
 export const getAvailableCourses = (
-  userTier: 'free' | 'advanced' | 'expert',
+  _userTier: 'free' | 'advanced' | 'expert',
 ): Course[] => {
+  // Removed for subscription removal: original tier-based filtering
+  /*
   const userLevel = TIER_ORDER[userTier];
 
   return Object.values(courseData).filter((course) => {
     const courseLevel = TIER_ORDER[course.tier];
     return courseLevel <= userLevel;
   });
+  */
+  // Added for subscription removal: only return free courses
+  return Object.values(courseData).filter((course) => {
+    return course.tier === 'free';
+  });
 };
+// End of removed/added code for subscription removal
 
+// Start of removed/added code for subscription removal
 export const isModuleAccessible = (
   course: Course,
   _module: Module,
-  userTier: 'free' | 'advanced' | 'expert',
+  _userTier: 'free' | 'advanced' | 'expert',
 ): boolean => {
+  // Removed for subscription removal: original tier-based access logic
+  /*
   if (course.tier === 'free') return true;
   return TIER_ORDER[userTier] >= TIER_ORDER[course.tier];
+  */
+  // Added for subscription removal: only allow access to free courses
+  return course.tier === 'free';
 };
+// End of removed/added code for subscription removal
 
 export const calculateCourseProgress = (
   courseId: string,

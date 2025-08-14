@@ -2,22 +2,16 @@ import { useState } from 'react';
 import { toast } from 'sonner';
 import {
   CreditCard,
-  CheckCircle,
   User,
   EnvelopeSimple,
-  Crown,
   Star,
   Gear,
   Download,
-  Warning,
   Shield,
-  X,
   ChartBar,
   Trophy,
   Fire,
-  Gift,
   Clock,
-  ArrowRight,
   Phone,
   Lock,
 } from '@phosphor-icons/react';
@@ -37,19 +31,10 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
 import { useAuth } from '@/contexts/AuthContext';
 import {
   useSubscription,
-  subscriptionPlans,
   formatPrice,
-  simulatePaymentFlow,
   useInvoiceHistory,
 } from '@/lib/subscription';
 import { useProgress } from '@/lib/progressTracking';
@@ -65,8 +50,8 @@ export function AccountPage(): ReactElement {
     subscription,
     getCurrentPlan,
     // canAccessTier,
-    startTrial,
-    upgradeToPaid,
+    startTrial: _startTrial,
+    upgradeToPaid: _upgradeToPaid,
     cancelSubscription,
     reactivateSubscription,
     // getDaysUntilExpiry, // Commented out - unused for now
@@ -74,13 +59,21 @@ export function AccountPage(): ReactElement {
   const { learningStats } = useProgress();
   const { invoices } = useInvoiceHistory();
 
-  const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState<'advanced' | 'expert'>(
-    'advanced',
-  );
-  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
-  const [showCancelDialog, setShowCancelDialog] = useState(false);
-  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+
+  // Start of removed code for subscription removal
+  // const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
+  // const [selectedPlan, setSelectedPlan] = useState<'advanced' | 'expert'>(
+  //   'advanced',
+  // );
+  // const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  // const [showCancelDialog, setShowCancelDialog] = useState(false);
+  // End of removed code for subscription removal
+
+  // Added for subscription removal - keeping state variables but unused
+  const [_showUpgradeDialog] = useState(false);
+  const [_selectedPlan] = useState<'advanced' | 'expert'>('advanced');
+  const [_isProcessingPayment] = useState(false);
+  const [_showCancelDialog, setShowCancelDialog] = useState(false);
 
   if (!user) {
     return (
@@ -100,51 +93,65 @@ export function AccountPage(): ReactElement {
     );
   }
 
-  const currentPlan = getCurrentPlan();
+  // @ts-expect-error - Plan data may be used for display in the future
+  const _currentPlan = getCurrentPlan();
   // Commented out unused variable - keeping for potential future use
   // const _daysUntilExpiry = getDaysUntilExpiry();
 
-  const handleUpgrade = async (
-    planId: 'advanced' | 'expert',
+  // Start of removed code for subscription removal
+  // const handleUpgrade = async (
+  //   planId: 'advanced' | 'expert',
+  // ): Promise<void> => {
+  //   setIsProcessingPayment(true);
+
+  //   try {
+  //     if (subscription.status === 'trial' || subscription.planId === 'free') {
+  //       // Start trial for new users
+  //       startTrial(planId);
+  //       toast.success(
+  //         `🎉 ${planId === 'advanced' ? '7' : '14'}-day free trial started!`,
+  //         {
+  //           description: 'You now have access to all premium content',
+  //         },
+  //       );
+  //     } else {
+  //       // Simulate payment for existing users
+  //       const result = await simulatePaymentFlow(planId);
+
+  //       if (result.success && result.paymentMethod) {
+  //         upgradeToPaid(planId, result.paymentMethod);
+  //         toast.success('Subscription upgraded successfully!', {
+  //           description: 'You now have access to all premium content',
+  //         });
+  //       } else {
+  //         toast.error('Payment failed', {
+  //           description: result.error ?? 'Please try again',
+  //         });
+  //       }
+  //     }
+  //   } catch {
+  //     toast.error('Upgrade failed', {
+  //       description: 'Please try again or contact support',
+  //     });
+  //   } finally {
+  //     setIsProcessingPayment(false);
+  //     setShowUpgradeDialog(false);
+  //   }
+  // };
+  // End of removed code for subscription removal
+
+  // Added for subscription removal - placeholder function
+  // @ts-expect-error - Handlers may be used when subscriptions are re-enabled
+  const _handleUpgrade = async (
+    _planId: 'advanced' | 'expert',
   ): Promise<void> => {
-    setIsProcessingPayment(true);
-
-    try {
-      if (subscription.status === 'trial' || subscription.planId === 'free') {
-        // Start trial for new users
-        startTrial(planId);
-        toast.success(
-          `🎉 ${planId === 'advanced' ? '7' : '14'}-day free trial started!`,
-          {
-            description: 'You now have access to all premium content',
-          },
-        );
-      } else {
-        // Simulate payment for existing users
-        const result = await simulatePaymentFlow(planId);
-
-        if (result.success && result.paymentMethod) {
-          upgradeToPaid(planId, result.paymentMethod);
-          toast.success('Subscription upgraded successfully!', {
-            description: 'You now have access to all premium content',
-          });
-        } else {
-          toast.error('Payment failed', {
-            description: result.error ?? 'Please try again',
-          });
-        }
-      }
-    } catch {
-      toast.error('Upgrade failed', {
-        description: 'Please try again or contact support',
-      });
-    } finally {
-      setIsProcessingPayment(false);
-      setShowUpgradeDialog(false);
-    }
+    toast.info('Coming Soon', {
+      description: 'Premium subscriptions will be available in the future',
+    });
   };
 
-  const handleCancelSubscription = (): void => {
+  // @ts-expect-error - Handlers may be used when subscriptions are re-enabled
+  const _handleCancelSubscription = (): void => {
     if (subscription.planId === 'free') return;
 
     cancelSubscription();
@@ -155,7 +162,8 @@ export function AccountPage(): ReactElement {
     setShowCancelDialog(false);
   };
 
-  const handleReactivate = (): void => {
+  // @ts-expect-error - Handlers may be used when subscriptions are re-enabled
+  const _handleReactivate = (): void => {
     reactivateSubscription();
     toast.success('Subscription reactivated!', {
       description: 'Your subscription will continue as normal',
@@ -228,8 +236,8 @@ export function AccountPage(): ReactElement {
               </CardContent>
             </Card>
 
-            {/* Subscription Management */}
-            <Card>
+            {/* Start of removed code for subscription removal - Subscription Management */}
+            {/* <Card>
               <CardHeader>
                 <CardTitle className='flex items-center gap-2'>
                   <CreditCard className='w-5 h-5' />
@@ -240,7 +248,6 @@ export function AccountPage(): ReactElement {
                 </CardDescription>
               </CardHeader>
               <CardContent className='space-y-6'>
-                {/* Current Plan */}
                 <div className='p-4 bg-muted/30 rounded-lg'>
                   <div className='flex items-center justify-between mb-4'>
                     <div>
@@ -272,7 +279,6 @@ export function AccountPage(): ReactElement {
                     </div>
                   </div>
 
-                  {/* Trial Information */}
                   {subscription.status === 'trial' &&
                     subscription.trialEndDate && (
                       <div className='p-3 bg-blue-50 border border-blue-200 rounded-md mb-4'>
@@ -289,7 +295,6 @@ export function AccountPage(): ReactElement {
                       </div>
                     )}
 
-                  {/* Cancellation Notice */}
                   {subscription.cancelAtPeriodEnd && (
                     <div className='p-3 bg-yellow-50 border border-yellow-200 rounded-md mb-4'>
                       <div className='flex items-center gap-2 text-yellow-800'>
@@ -314,7 +319,6 @@ export function AccountPage(): ReactElement {
                     </div>
                   )}
 
-                  {/* Plan Features */}
                   <div>
                     <h4 className='font-medium mb-3'>What&apos;s included:</h4>
                     <ul className='space-y-2'>
@@ -330,7 +334,6 @@ export function AccountPage(): ReactElement {
                     </ul>
                   </div>
 
-                  {/* Action Buttons */}
                   <div className='flex gap-3 mt-6'>
                     {subscription.planId === 'free' ? (
                       <Button onClick={() => setShowUpgradeDialog(true)}>
@@ -363,7 +366,6 @@ export function AccountPage(): ReactElement {
                   </div>
                 </div>
 
-                {/* Next Billing */}
                 {subscription.nextBillingDate &&
                   subscription.status === 'active' && (
                     <div className='p-3 border rounded-md'>
@@ -390,8 +392,10 @@ export function AccountPage(): ReactElement {
                     </div>
                   )}
               </CardContent>
-            </Card>
+            </Card> */}
+            {/* End of removed code for subscription removal */}
 
+           
             {/* Learning Statistics */}
             <Card>
               <CardHeader>
@@ -522,7 +526,8 @@ export function AccountPage(): ReactElement {
                   <Trophy className='w-4 h-4 mr-2' />
                   Browse Courses
                 </Button>
-                {subscription.planId === 'free' && (
+                {/* Start of removed code for subscription removal */}
+                {/* {subscription.planId === 'free' && (
                   <Button
                     className='w-full justify-start'
                     onClick={() => setShowUpgradeDialog(true)}
@@ -530,7 +535,8 @@ export function AccountPage(): ReactElement {
                     <Crown className='w-4 h-4 mr-2' />
                     Upgrade Plan
                   </Button>
-                )}
+                )} */}
+                {/* End of removed code for subscription removal */}
               </CardContent>
             </Card>
 
@@ -599,8 +605,8 @@ export function AccountPage(): ReactElement {
           </div>
         </div>
 
-        {/* Upgrade Dialog */}
-        <Dialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog}>
+        {/* Start of removed code for subscription removal - Upgrade and Cancel Dialogs */}
+        {/* <Dialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog}>
           <DialogContent className='max-w-2xl'>
             <DialogHeader>
               <DialogTitle>Upgrade Your Learning Experience</DialogTitle>
@@ -672,7 +678,6 @@ export function AccountPage(): ReactElement {
           </DialogContent>
         </Dialog>
 
-        {/* Cancel Subscription Dialog */}
         <Dialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
           <DialogContent>
             <DialogHeader>
@@ -697,6 +702,7 @@ export function AccountPage(): ReactElement {
               </Button>
             </div>
           </DialogContent>
+
         </Dialog>
 
         {/* Password Change Dialog */}
@@ -704,6 +710,8 @@ export function AccountPage(): ReactElement {
           open={showPasswordDialog}
           onOpenChange={setShowPasswordDialog}
         />
+        </Dialog> */}
+        {/* End of removed code for subscription removal */}
       </div>
     </div>
   );
