@@ -1,5 +1,6 @@
 import type { ReactNode, ReactElement } from 'react';
 import { Lock, Shield, ArrowRight } from '@phosphor-icons/react';
+import { toast } from 'sonner';
 
 import { useAuth } from '@/contexts/AuthContext';
 import type { User } from '@/contexts/AuthContext';
@@ -164,12 +165,14 @@ function TierUpgradePrompt({
   requiredRole,
   currentUser,
 }: TierUpgradePromptProps): ReactElement {
-  const { updateTier } = useAuth();
+  const { updateTier: _updateTier } = useAuth();
 
+  // Start of removed/added code for subscription removal
   const tierInfo = {
     advanced: {
       name: 'Advanced',
-      price: '$1.99/month',
+      // price: '$1.99/month', // Removed for subscription removal
+      price: 'Coming Soon', // Added for subscription removal
       description: 'Access AI tools and prompt engineering techniques',
       features: [
         'Better Prompting Techniques',
@@ -180,7 +183,8 @@ function TierUpgradePrompt({
     },
     expert: {
       name: 'Expert',
-      price: '$4.99/month',
+      // price: '$4.99/month', // Removed for subscription removal
+      price: 'Coming Soon', // Added for subscription removal
       description: 'Master cutting-edge AI technologies',
       features: [
         'Autonomous AI Agents',
@@ -190,13 +194,18 @@ function TierUpgradePrompt({
       ],
     },
   };
+  // End of removed/added code for subscription removal
 
   const info = tierInfo[requiredRole];
 
   const handleUpgrade = (): void => {
+    // Start of removed/added code for subscription removal
     // In a real app, this would open a payment modal
     // For demo purposes, we'll simulate the upgrade
-    updateTier(requiredRole);
+    // updateTier(requiredRole); // Removed for subscription removal
+    // Added for subscription removal - show coming soon message
+    toast.info('Tier upgrades coming soon!');
+    // End of removed/added code for subscription removal
   };
 
   return (
@@ -241,6 +250,7 @@ function TierUpgradePrompt({
               </ul>
             </div>
 
+            {/* Start of removed/added code for subscription removal */}
             <Button
               onClick={handleUpgrade}
               size='lg'
@@ -248,12 +258,20 @@ function TierUpgradePrompt({
               aria-label={`Upgrade to ${info.name} tier for ${info.price}`}
             >
               <Shield className='h-4 w-4 mr-2' aria-hidden='true' />
-              Upgrade to {info.name} - {info.price}
+              {/* Upgrade to {info.name} - {info.price} */}
+              {/* Removed for subscription removal - replaced with Coming Soon */}
+              {info.name} - Coming Soon
             </Button>
 
-            <p className='text-xs text-muted-foreground mt-4'>
+            {/* <p className='text-xs text-muted-foreground mt-4'>
               * This is a demo. No actual payment will be processed.
+            </p> */}
+            {/* Removed for subscription removal */}
+            <p className='text-xs text-muted-foreground mt-4'>
+              * Tier upgrades will be available soon.
             </p>
+            {/* Added for subscription removal */}
+            {/* End of removed/added code for subscription removal */}
           </div>
         </CardContent>
       </Card>
