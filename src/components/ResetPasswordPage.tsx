@@ -104,7 +104,7 @@ export function ResetPasswordPage(): ReactElement {
       /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/.test(
         password,
       )
-    ) {
+    if (isStrongPassword(password)) {
       return 'Strong';
     }
     return 'Good';
