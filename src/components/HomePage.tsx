@@ -43,7 +43,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { useAuth } from '@/contexts/AuthContext';
-import { subscriptionPlans, formatPrice } from '@/lib/subscription';
+import { subscriptionPlans } from '@/lib/subscription';
 import { useMetrics } from '@/hooks/useMetrics';
 
 interface HomePageProps {
@@ -58,11 +58,11 @@ export function HomePage({ onAuthClick }: HomePageProps): ReactElement {
 
   // Memoized navigation handlers
   const handleNavigateToDashboard = useCallback(() => {
-    navigate('/dashboard');
+    void navigate('/dashboard');
   }, [navigate]);
 
   const handleNavigateToCourses = useCallback(() => {
-    navigate('/courses');
+    void navigate('/courses');
   }, [navigate]);
 
   const heroFeatures = [
@@ -294,7 +294,9 @@ export function HomePage({ onAuthClick }: HomePageProps): ReactElement {
       <section className='py-20 px-4 sm:px-6 lg:px-8'>
         <div className='max-w-6xl mx-auto'>
           <div className='text-center mb-16'>
-            <h2 className='text-4xl font-bold mb-4'>Why Choose <BrandName variant='short' />?</h2>
+            <h2 className='text-4xl font-bold mb-4'>
+              Why Choose <BrandName variant='short' />?
+            </h2>
             <p className='text-xl text-muted-foreground max-w-3xl mx-auto'>
               We understand the unique needs of adult learners and have designed
               every aspect of our platform with accessibility, safety, and
@@ -343,25 +345,59 @@ export function HomePage({ onAuthClick }: HomePageProps): ReactElement {
                 className={`relative ${plan.popular ? 'ring-2 ring-primary' : ''}`}
               >
                 {plan.popular && (
-                  <Badge className='absolute -top-3 left-1/2 transform -translate-x-1/2'>
-                    Most Popular
+             /*     <Badge className='absolute -top-3 left-1/2 transform -translate-x-1/2'>
+                   Most Popular
+                  </Badge> */
+                   <Badge className='absolute -top-3 left-1/2 transform -translate-x-1/2'>
                   </Badge>
                 )}
                 <CardHeader className='text-center'>
                   <CardTitle className='text-2xl'>{plan.name}</CardTitle>
-                  <div className='text-4xl font-bold text-primary'>
+                  {/* Start of removed code for subscription removal */}
+                  {/* <div className='text-4xl font-bold text-primary'>
                     {formatPrice(plan.price)}
                     {plan.price > 0 && (
                       <span className='text-lg text-muted-foreground'>
                         /month
                       </span>
                     )}
+                  </div> */}
+                  {/* End of removed code for subscription removal */}
+                  {/* Start of added code for subscription removal */}
+                  <div className='text-4xl font-bold text-primary'>
+                    {plan.id === 'free' ? 'Free' : 'Coming Soon'}
                   </div>
+                  {/* End of added code for subscription removal */}
                   <CardDescription className='text-base'>
                     {plan.description}
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
+                  {/* Start of removed/added code for subscription removal */}
+                  <ul className='space-y-3 mb-6'>
+                    {plan.features.map((feature) => (
+                      <li key={feature} className='flex items-start gap-3'>
+                        <CheckCircle className='w-5 h-5 text-green-500 flex-shrink-0 mt-0.5' />
+                        <span className='text-sm'>{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <Button
+                    className='w-full'
+                    variant={plan.id === 'free' ? 'default' : 'secondary'}
+                    disabled={plan.id !== 'free'}
+                    onClick={
+                      plan.id === 'free'
+                        ? user
+                          ? (): void => void navigate('/account')
+                          : onAuthClick
+                        : undefined
+                    }
+                  >
+                    {plan.ctaText}
+                  </Button>
+                  {/* End of removed/added code for subscription removal */}
+                  {/* Removed for subscription removal - original features list and button
                   <ul className='space-y-3 mb-6'>
                     {plan.features.map((feature) => (
                       <li key={feature} className='flex items-start gap-3'>
@@ -379,6 +415,7 @@ export function HomePage({ onAuthClick }: HomePageProps): ReactElement {
                   >
                     {plan.ctaText}
                   </Button>
+                  */}
                 </CardContent>
               </Card>
             ))}
