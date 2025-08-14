@@ -152,7 +152,7 @@ export function PasswordChangeDialog({
         </DialogHeader>
 
         <div className='space-y-4 py-4'>
-          <div className='space-y-2' >
+          <div className='space-y-2'>
             <Label htmlFor='current-password' className='text-orange-600'>Current Password</Label>
             <div className='relative'>
               <Input
