@@ -127,7 +127,6 @@ export function PasswordChangeDialog({
     }
     return 'Good';
   import { getPasswordStrength } from '@/utils/passwordUtils';
-
   const strength = getPasswordStrength(newPassword);
   const strengthColor =
     strength === 'Strong'
