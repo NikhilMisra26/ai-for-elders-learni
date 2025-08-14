@@ -27,7 +27,9 @@ export class AudioControlsErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
     // Normalize error for security
-    normalizeReactError(error, errorInfo);
+    normalizeReactError(error, {
+      componentStack: errorInfo.componentStack ?? 'Unknown component stack',
+    });
 
     // Log to error handler service instead of console in production
     import('@/lib/errorHandler')

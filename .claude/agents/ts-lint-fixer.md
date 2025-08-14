@@ -52,15 +52,6 @@ When invoked, you must follow these steps:
    - Run `pnpm run lint:fix` to verify ESLint compliance
    - Quick scan for any performance regressions introduced
 
-7. **Report Generation**
-   - Create REPORT.md with:
-     - Executive summary of errors fixed
-     - Before/after error counts by category
-     - List of files modified with brief change descriptions
-     - Configuration changes (if any) with justifications
-     - Performance considerations and optimizations made
-     - Any remaining warnings that need human review
-
 **Best Practices:**
 
 - Prefer narrow, specific types over broad unions or generics

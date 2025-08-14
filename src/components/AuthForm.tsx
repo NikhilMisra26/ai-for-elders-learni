@@ -22,6 +22,7 @@ import {
 import { validatePassword, validateEmail } from '@/lib/security';
 import { errorHandler } from '@/lib/errorHandler';
 import { ForgotPasswordDialog } from '@/components/ForgotPasswordDialog';
+import { EmailAlreadyExistsDialog } from '@/components/EmailAlreadyExistsDialog';
 import { checkPasswordWithWarning } from '@/lib/breachDetection';
 
 interface AuthFormProps {
@@ -38,6 +39,8 @@ export function AuthForm({ onClose }: AuthFormProps): ReactElement {
   const [otp, setOtp] = useState('');
   const [resendCooldown, setResendCooldown] = useState(0);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [showDuplicateEmailDialog, setShowDuplicateEmailDialog] =
+    useState(false);
   const [breachWarning, setBreachWarning] = useState('');
   const [isCheckingBreach, setIsCheckingBreach] = useState(false);
   const {
@@ -130,6 +133,9 @@ export function AuthForm({ onClose }: AuthFormProps): ReactElement {
     try {
       if (isLogin) {
         const result = await login(email, password);
+        // Clear password immediately after use for security
+        setPassword('');
+
         if (result.success) {
           toast.success('Welcome back!');
           onClose();
@@ -138,6 +144,10 @@ export function AuthForm({ onClose }: AuthFormProps): ReactElement {
         }
       } else {
         const result = await register(email, password, name);
+
+        // Clear password immediately after use for security
+        setPassword('');
+
         if (result.success) {
           setShowOtpStep(true);
           setOtp('');
@@ -155,6 +165,12 @@ export function AuthForm({ onClose }: AuthFormProps): ReactElement {
               return s - 1;
             });
           }, 1000);
+        } else if (result.isDuplicate) {
+          // Handle duplicate email case
+          setShowDuplicateEmailDialog(true);
+          // Clear sensitive data but keep email for convenience
+          setName('');
+          // Keep email for user convenience when switching to sign in
         } else {
           toast.error(result.error ?? 'Registration failed');
         }
@@ -217,6 +233,23 @@ export function AuthForm({ onClose }: AuthFormProps): ReactElement {
     } else {
       toast.error(res.error ?? 'Could not resend code');
     }
+  };
+
+  const handleDuplicateEmailForgotPassword = (): void => {
+    setShowDuplicateEmailDialog(false);
+    setShowForgotPassword(true);
+  };
+
+  const handleDuplicateEmailReturnToSignIn = (): void => {
+    setShowDuplicateEmailDialog(false);
+    setIsLogin(true);
+    // Reset form but keep email for user convenience
+    setName('');
+    setPassword('');
+    setOtp('');
+    setShowOtpStep(false);
+    setBreachWarning('');
+    setIsCheckingBreach(false);
   };
 
   return (
@@ -291,8 +324,7 @@ export function AuthForm({ onClose }: AuthFormProps): ReactElement {
                 </InputOTPGroup>
               </InputOTP>
               <p className='text-sm text-muted-foreground'>
-                This code expires shortly. If you didn’t request it, you can
-                safely ignore and delete this email.
+                This code expires shortly.
               </p>
             </div>
             <Button
@@ -558,6 +590,14 @@ export function AuthForm({ onClose }: AuthFormProps): ReactElement {
       <ForgotPasswordDialog
         open={showForgotPassword}
         onOpenChange={setShowForgotPassword}
+      />
+
+      {/* Email Already Exists Dialog */}
+      <EmailAlreadyExistsDialog
+        open={showDuplicateEmailDialog}
+        onOpenChange={setShowDuplicateEmailDialog}
+        onForgotPassword={handleDuplicateEmailForgotPassword}
+        onReturnToSignIn={handleDuplicateEmailReturnToSignIn}
       />
     </Card>
   );

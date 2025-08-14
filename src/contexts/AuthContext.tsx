@@ -43,7 +43,7 @@ interface AuthContextType {
     email: string,
     password: string,
     name: string,
-  ) => Promise<{ success: boolean; error?: string }>;
+  ) => Promise<{ success: boolean; error?: string; isDuplicate?: boolean }>;
   verifySignupOtp: (
     email: string,
     token: string,
@@ -208,7 +208,7 @@ export function AuthProvider({
     email: string,
     password: string,
     name: string,
-  ): Promise<{ success: boolean; error?: string }> => {
+  ): Promise<{ success: boolean; error?: string; isDuplicate?: boolean }> => {
     setIsLoading(true);
 
     try {
@@ -225,7 +225,11 @@ export function AuthProvider({
           'warning',
         );
         setIsLoading(false);
-        return { success: false, error: emailValidation.errors[0] };
+        return {
+          success: false,
+          error: emailValidation.errors[0],
+          isDuplicate: false,
+        };
       }
 
       // Validate password
@@ -237,7 +241,11 @@ export function AuthProvider({
           'warning',
         );
         setIsLoading(false);
-        return { success: false, error: passwordValidation.errors[0] };
+        return {
+          success: false,
+          error: passwordValidation.errors[0],
+          isDuplicate: false,
+        };
       }
 
       // Register user with Supabase auth
@@ -250,11 +258,37 @@ export function AuthProvider({
             typeof window !== 'undefined' ? window.location.origin : undefined,
         },
       });
+
+      // Check for duplicate email indicators
+      // Supabase doesn't return an error for duplicate emails (security feature)
+      // But we can detect it through certain response patterns
+      const isDuplicateEmail =
+        authRes?.user &&
+        (!authRes.user.identities || authRes.user.identities.length === 0) &&
+        !authRes.session; // Duplicate emails won't create a session
+
       if (error || !authRes.user) {
         setIsLoading(false);
         return {
           success: false,
           error: error?.message ?? 'Registration failed',
+          isDuplicate: false,
+        };
+      }
+
+      // If we detected a duplicate email, return a specific response
+      if (isDuplicateEmail) {
+        SecurityLogger.log(
+          'registration_duplicate_detected',
+          { email: sanitizedEmail },
+          'info',
+        );
+        setIsLoading(false);
+        return {
+          success: false,
+          error:
+            'An account with this email may already exist. Please try logging in or use a different email.',
+          isDuplicate: true,
         };
       }
 
@@ -276,7 +310,7 @@ export function AuthProvider({
       });
 
       setIsLoading(false);
-      return { success: true };
+      return { success: true, isDuplicate: false };
     } catch (error) {
       const normalized = normalizeError(error, 'user_registration');
       SecurityLogger.log(
@@ -288,6 +322,7 @@ export function AuthProvider({
       return {
         success: false,
         error: formatErrorMessage(normalized),
+        isDuplicate: false,
       };
     }
   };
@@ -360,6 +395,18 @@ export function AuthProvider({
 
     try {
       const sanitizedEmail = sanitizeInput(email.toLowerCase());
+
+      // Added: client-side validation guard to prevent unnecessary auth calls (which produced 400 errors in console)
+      const emailCheck = validateEmail(sanitizedEmail);
+      if (!emailCheck.isValid) {
+        setIsLoading(false);
+        return { success: false, error: emailCheck.errors[0] };
+      }
+      if (!password || password.length === 0) {
+        // Do not treat as a failed attempt for rate limiting – just return a validation error
+        setIsLoading(false);
+        return { success: false, error: 'Please enter your password.' };
+      }
 
       // Check rate limiting
       const rateLimitCheck = rateLimiter.isRateLimited(sanitizedEmail);
