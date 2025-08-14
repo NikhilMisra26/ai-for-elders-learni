@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
 import {
-  CreditCard,
   User,
   EnvelopeSimple,
   Star,
@@ -18,7 +17,6 @@ import {
 import type { ReactElement } from 'react';
 
 import { AuthForm } from './AuthForm';
-import { PasswordChangeDialog } from './PasswordChangeDialog';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -58,7 +56,6 @@ export function AccountPage(): ReactElement {
   } = useSubscription();
   const { learningStats } = useProgress();
   const { invoices } = useInvoiceHistory();
-
 
   // Start of removed code for subscription removal
   // const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
@@ -395,7 +392,6 @@ export function AccountPage(): ReactElement {
             </Card> */}
             {/* End of removed code for subscription removal */}
 
-           
             {/* Learning Statistics */}
             <Card>
               <CardHeader>
@@ -585,7 +581,13 @@ export function AccountPage(): ReactElement {
                   <Button
                     variant='outline'
                     size='sm'
-                    onClick={(): void => setShowPasswordDialog(true)}
+                    onClick={(): void => {
+                      // Password change functionality would go here
+                      toast.info('Coming Soon', {
+                        description:
+                          'Password change feature will be available soon',
+                      });
+                    }}
                   >
                     Change
                   </Button>
@@ -706,11 +708,10 @@ export function AccountPage(): ReactElement {
         </Dialog>
 
         {/* Password Change Dialog */}
-        <PasswordChangeDialog
+        {/* <PasswordChangeDialog
           open={showPasswordDialog}
           onOpenChange={setShowPasswordDialog}
-        />
-        </Dialog> */}
+        /> */}
         {/* End of removed code for subscription removal */}
       </div>
     </div>

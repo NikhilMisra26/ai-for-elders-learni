@@ -494,7 +494,6 @@ export function AuthForm({ onClose }: AuthFormProps): ReactElement {
             </div>
           </div>
         </div>
-
       </CardContent>
 
       {/* Forgot Password Dialog */}

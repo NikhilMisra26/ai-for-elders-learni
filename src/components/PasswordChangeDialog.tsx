@@ -126,7 +126,8 @@ export function PasswordChangeDialog({
       return 'Strong';
     }
     return 'Good';
-  import { getPasswordStrength } from '@/utils/passwordUtils';
+  };
+
   const strength = getPasswordStrength(newPassword);
   const strengthColor =
     strength === 'Strong'
@@ -152,7 +153,9 @@ export function PasswordChangeDialog({
 
         <div className='space-y-4 py-4'>
           <div className='space-y-2'>
-            <Label htmlFor='current-password' className='text-orange-600'>Current Password</Label>
+            <Label htmlFor='current-password' className='text-orange-600'>
+              Current Password
+            </Label>
             <div className='relative'>
               <Input
                 id='current-password'
@@ -187,7 +190,9 @@ export function PasswordChangeDialog({
           </div>
 
           <div className='space-y-2 text-orange-600'>
-            <Label htmlFor='new-password' className='text-orange-600'>New Password</Label>
+            <Label htmlFor='new-password' className='text-orange-600'>
+              New Password
+            </Label>
             <div className='relative'>
               <Input
                 id='new-password'
@@ -223,7 +228,9 @@ export function PasswordChangeDialog({
           </div>
 
           <div className='space-y-2'>
-            <Label htmlFor='confirm-password' className='text-orange-600'>Confirm New Password</Label>
+            <Label htmlFor='confirm-password' className='text-orange-600'>
+              Confirm New Password
+            </Label>
             <div className='relative'>
               <Input
                 id='confirm-password'
