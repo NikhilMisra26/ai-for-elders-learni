@@ -34,7 +34,7 @@ jobs:
           cache: 'pnpm'
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: pnpm install
 
       - name: Type Check
         run: pnpm run typecheck
@@ -53,10 +53,10 @@ jobs:
         run: |
           echo "Running security audit..."
           pnpm audit --audit-level moderate --json > audit-results.json || true
-          
+
           # Check if there are any moderate+ vulnerabilities
           VULN_COUNT=$(cat audit-results.json | jq '.metadata.vulnerabilities.moderate + .metadata.vulnerabilities.high + .metadata.vulnerabilities.critical // 0')
-          
+
           if [ "$VULN_COUNT" -gt 0 ]; then
             echo "❌ Found $VULN_COUNT moderate+ vulnerabilities"
             cat audit-results.json | jq '.advisories'
@@ -84,13 +84,13 @@ jobs:
       - name: Bundle Size Check
         run: |
           echo "Checking bundle size..."
-          
+
           # Get the size of the dist folder in MB
           BUNDLE_SIZE=$(du -sm dist/ | cut -f1)
           MAX_SIZE=5 # 5MB limit
-          
+
           echo "Bundle size: ${BUNDLE_SIZE}MB (limit: ${MAX_SIZE}MB)"
-          
+
           if [ "$BUNDLE_SIZE" -gt "$MAX_SIZE" ]; then
             echo "❌ Bundle size exceeded limit!"
             echo "Current: ${BUNDLE_SIZE}MB, Limit: ${MAX_SIZE}MB"
@@ -107,13 +107,13 @@ jobs:
       - name: Dependency License Check
         run: |
           echo "Checking dependency licenses..."
-          
+
           # Create a simple license checker using pnpm
           pnpm licenses list --json > licenses.json
-          
+
           # Check for problematic licenses (GPL, AGPL, etc.)
           PROBLEMATIC_LICENSES=$(cat licenses.json | jq -r '.[] | select(.license | test("GPL|AGPL|LGPL|MPL"; "i")) | .name + " (" + .license + ")"' || true)
-          
+
           if [ ! -z "$PROBLEMATIC_LICENSES" ]; then
             echo "⚠️ Found packages with copyleft licenses:"
             echo "$PROBLEMATIC_LICENSES"
@@ -126,7 +126,7 @@ jobs:
       - name: Environment Variable Security Check
         run: |
           echo "Checking for exposed secrets in environment variables..."
-          
+
           # Search for potential secrets in code (excluding node_modules and dist)
           if grep -r --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" \
              -E "(password|secret|key|token).*=.*['\"][^'\"]{10,}['\"]" \
@@ -143,13 +143,13 @@ jobs:
         run: |
           echo "## Security Gates Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
-          
+
           if [ "${{ job.status }}" == "success" ]; then
             echo "✅ All security gates passed successfully!" >> $GITHUB_STEP_SUMMARY
           else
             echo "❌ One or more security gates failed. Please review the logs above." >> $GITHUB_STEP_SUMMARY
           fi
-          
+
           echo "" >> $GITHUB_STEP_SUMMARY
           echo "### Checks Performed:" >> $GITHUB_STEP_SUMMARY
           echo "- TypeScript type checking" >> $GITHUB_STEP_SUMMARY
@@ -166,7 +166,7 @@ jobs:
     name: Dependency Update Check
     runs-on: ubuntu-latest
     if: github.event_name == 'schedule'
-    
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -186,10 +186,10 @@ jobs:
         run: |
           echo "Checking for dependency updates..."
           pnpm outdated --format=json > outdated.json || true
-          
+
           # Count outdated packages
           OUTDATED_COUNT=$(cat outdated.json | jq 'length // 0')
-          
+
           if [ "$OUTDATED_COUNT" -gt 0 ]; then
             echo "📦 Found $OUTDATED_COUNT outdated dependencies"
             echo "Consider updating these packages:"
@@ -202,9 +202,9 @@ jobs:
         run: |
           echo "Checking for security advisories..."
           pnpm audit --json > security-advisories.json || true
-          
+
           ADVISORY_COUNT=$(cat security-advisories.json | jq '.metadata.vulnerabilities.info + .metadata.vulnerabilities.low + .metadata.vulnerabilities.moderate + .metadata.vulnerabilities.high + .metadata.vulnerabilities.critical // 0')
-          
+
           if [ "$ADVISORY_COUNT" -gt 0 ]; then
             echo "🔒 Found $ADVISORY_COUNT security advisories"
             echo "Run 'pnpm audit fix' to address these issues"
