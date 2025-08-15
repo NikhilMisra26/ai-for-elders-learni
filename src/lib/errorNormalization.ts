@@ -230,7 +230,12 @@ function sanitizeErrorDetails(error: unknown): Record<string, unknown> {
     }
   } else {
     sanitized.type = typeof error;
-    sanitized.value = String(error).substring(0, 200);
+        sanitized[key] = typeof value === 'string' ? sanitizeStringValue(value) : value;
+      }
+    }
+  } else {
+    sanitized.type = typeof error;
+    sanitized.value = sanitizeStringValue(String(error));
   }
 
   return sanitized;
