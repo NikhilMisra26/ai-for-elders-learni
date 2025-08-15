@@ -108,7 +108,7 @@ export function ModulePage({
     moduleProgress?.rating ?? 0,
   );
   const [comment, setComment] = useState('');
-  const [startTime] = useState(Date.now());
+  const [startTime, setStartTime] = useState(Date.now());
   const [showOutline, setShowOutline] = useState(false);
 
   // Track the last module that was set to prevent redundant calls
@@ -149,6 +149,14 @@ export function ModulePage({
       }
     };
   }, [courseId, moduleId, course, module, setCurrentModule]);
+
+  // Reset startTime and timeSpent when navigating to new module
+  useEffect(() => {
+    if (moduleId) {
+      setStartTime(Date.now());
+      setTimeSpent(0);
+    }
+  }, [moduleId]);
 
   // Track time spent
   useEffect(() => {
@@ -553,7 +561,19 @@ export function ModulePage({
             <AudioControlsErrorBoundary
               onError={() => {
                 setShowAudioControls(false);
-                audioControls.stop();
+                try {
+                  audioControls.stop();
+                } catch (error) {
+                  // Silent cleanup error - audio already errored
+                  errorHandler.logError(
+                    'Audio cleanup failed in error boundary',
+                    error instanceof Error ? error : new Error(String(error)),
+                    {
+                      component: 'ModulePage',
+                      action: 'audio_error_boundary_cleanup',
+                    },
+                  );
+                }
               }}
             >
               <Card>

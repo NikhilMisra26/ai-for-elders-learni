@@ -1,4 +1,4 @@
-import React, { useState, useCallback, type ReactElement } from 'react';
+import React, { useState, useCallback, useMemo, type ReactElement } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Brain,
@@ -50,7 +50,7 @@ interface HomePageProps {
   onAuthClick: () => void;
 }
 
-export function HomePage({ onAuthClick }: HomePageProps): ReactElement {
+function HomePageComponent({ onAuthClick }: HomePageProps): ReactElement {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { stats, testimonials, isLoading } = useMetrics();
@@ -65,63 +65,69 @@ export function HomePage({ onAuthClick }: HomePageProps): ReactElement {
     void navigate('/courses');
   }, [navigate]);
 
-  const heroFeatures = [
-    {
-      icon: <SpeakerHigh className='w-5 h-5' />,
-      text: 'Audio narration for all content',
-    },
-    {
-      icon: <Eye className='w-5 h-5' />,
-      text: 'Large fonts & high contrast design',
-    },
-    {
-      icon: <Shield className='w-5 h-5' />,
-      text: 'Privacy-focused learning',
-    },
-    {
-      icon: <Clock className='w-5 h-5' />,
-      text: 'Learn at your own pace',
-    },
-  ];
+  const heroFeatures = useMemo(
+    () => [
+      {
+        icon: <SpeakerHigh className='w-5 h-5' />,
+        text: 'Audio narration for all content',
+      },
+      {
+        icon: <Eye className='w-5 h-5' />,
+        text: 'Large fonts & high contrast design',
+      },
+      {
+        icon: <Shield className='w-5 h-5' />,
+        text: 'Privacy-focused learning',
+      },
+      {
+        icon: <Clock className='w-5 h-5' />,
+        text: 'Learn at your own pace',
+      },
+    ],
+    [],
+  );
 
-  const features = [
-    {
-      icon: <Brain className='w-8 h-8 text-primary' />,
-      title: 'Senior-Friendly Design',
-      description:
-        'Large fonts, clear navigation, and audio narration make learning AI accessible and enjoyable for everyone.',
-    },
-    {
-      icon: <Shield className='w-8 h-8 text-primary' />,
-      title: 'Safety-First Approach',
-      description:
-        'Learn to use AI tools safely with comprehensive guidance on privacy, security, and avoiding common pitfalls.',
-    },
-    {
-      icon: <Heart className='w-8 h-8 text-primary' />,
-      title: 'Practical Applications',
-      description:
-        'Focus on real-world uses like health management, family communication, financial planning, and daily organization.',
-    },
-    {
-      icon: <Users className='w-8 h-8 text-primary' />,
-      title: 'Supportive Community',
-      description:
-        "Join a community of learners sharing experiences, tips, and supporting each other's AI learning journey.",
-    },
-    {
-      icon: <Sparkle className='w-8 h-8 text-primary' />,
-      title: 'Expert-Designed Content',
-      description:
-        'Courses created by AI experts specifically for adults 50+, with clear explanations and practical examples.',
-    },
-    {
-      icon: <Trophy className='w-8 h-8 text-primary' />,
-      title: 'Progress Tracking',
-      description:
-        'Visual progress indicators, achievement badges, and personalized learning paths keep you motivated.',
-    },
-  ];
+  const features = useMemo(
+    () => [
+      {
+        icon: <Brain className='w-8 h-8 text-primary' />,
+        title: 'Senior-Friendly Design',
+        description:
+          'Large fonts, clear navigation, and audio narration make learning AI accessible and enjoyable for everyone.',
+      },
+      {
+        icon: <Shield className='w-8 h-8 text-primary' />,
+        title: 'Safety-First Approach',
+        description:
+          'Learn to use AI tools safely with comprehensive guidance on privacy, security, and avoiding common pitfalls.',
+      },
+      {
+        icon: <Heart className='w-8 h-8 text-primary' />,
+        title: 'Practical Applications',
+        description:
+          'Focus on real-world uses like health management, family communication, financial planning, and daily organization.',
+      },
+      {
+        icon: <Users className='w-8 h-8 text-primary' />,
+        title: 'Supportive Community',
+        description:
+          "Join a community of learners sharing experiences, tips, and supporting each other's AI learning journey.",
+      },
+      {
+        icon: <Sparkle className='w-8 h-8 text-primary' />,
+        title: 'Expert-Designed Content',
+        description:
+          'Courses created by AI experts specifically for adults 50+, with clear explanations and practical examples.',
+      },
+      {
+        icon: <Trophy className='w-8 h-8 text-primary' />,
+        title: 'Progress Tracking',
+        description:
+          'Visual progress indicators, achievement badges, and personalized learning paths keep you motivated.',
+      },
+    ],
+    [],
+  );
 
   // Format course tier for display
   const formatCourseTier = (tier: string): string => {
@@ -137,24 +143,27 @@ export function HomePage({ onAuthClick }: HomePageProps): ReactElement {
     }
   };
 
-  const trustIndicators = [
-    {
-      icon: <Shield className='w-5 h-5' />,
-      text: 'No credit card required for free course',
-    },
-    {
-      icon: <CreditCard className='w-5 h-5' />,
-      text: 'Cancel anytime, no hidden fees',
-    },
-    {
-      icon: <Phone className='w-5 h-5' />,
-      text: 'Email & phone support available',
-    },
-    {
-      icon: <Globe className='w-5 h-5' />,
-      text: 'Trusted by learners worldwide',
-    },
-  ];
+  const trustIndicators = useMemo(
+    () => [
+      {
+        icon: <Shield className='w-5 h-5' />,
+        text: 'No credit card required for free course',
+      },
+      {
+        icon: <CreditCard className='w-5 h-5' />,
+        text: 'Cancel anytime, no hidden fees',
+      },
+      {
+        icon: <Phone className='w-5 h-5' />,
+        text: 'Email & phone support available',
+      },
+      {
+        icon: <Globe className='w-5 h-5' />,
+        text: 'Trusted by learners worldwide',
+      },
+    ],
+    [],
+  );
 
   return (
     <div className='min-h-screen'>
@@ -646,5 +655,6 @@ export function HomePage({ onAuthClick }: HomePageProps): ReactElement {
   );
 }
 
-// Memoized version for performance optimization
-export const MemoizedHomePage = React.memo(HomePage);
+// Memoized export for performance optimization
+export const HomePage = React.memo(HomePageComponent);
+export const MemoizedHomePage = HomePage; // Backward compatibility

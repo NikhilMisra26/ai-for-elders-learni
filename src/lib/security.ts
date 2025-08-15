@@ -3,6 +3,8 @@
  * Provides password validation, rate limiting, and input sanitization
  */
 
+import DOMPurify from 'dompurify';
+
 export interface SecurityConfig {
   maxLoginAttempts: number;
   lockoutDuration: number; // in minutes
@@ -204,12 +206,83 @@ export class RateLimiter {
 
 /**
  * Input sanitization to prevent XSS and injection attacks
+ * Use for form inputs and user-generated content
  */
 export function sanitizeInput(input: string): string {
   return input
     .trim()
     .replace(/[<>"']/g, '') // Remove potentially dangerous characters
     .slice(0, 1000); // Limit length
+}
+
+/**
+ * HTML sanitization to prevent XSS attacks when rendering HTML content
+ * Use when displaying any HTML content that may contain user input
+ */
+export function sanitizeHtml(html: string): string {
+  // Configure DOMPurify for maximum security
+  const clean = DOMPurify.sanitize(html, {
+    ALLOWED_TAGS: [
+      'h1',
+      'h2',
+      'h3',
+      'h4',
+      'h5',
+      'h6',
+      'p',
+      'br',
+      'strong',
+      'em',
+      'u',
+      's',
+      'ul',
+      'ol',
+      'li',
+      'blockquote',
+      'code',
+      'pre',
+      'a',
+      'img',
+      'div',
+      'span',
+      'table',
+      'thead',
+      'tbody',
+      'tr',
+      'td',
+      'th',
+    ],
+    ALLOWED_ATTR: ['href', 'src', 'alt', 'title', 'class', 'id', 'style'],
+    ALLOW_DATA_ATTR: false,
+    ALLOW_UNKNOWN_PROTOCOLS: false,
+    SAFE_FOR_TEMPLATES: true,
+    WHOLE_DOCUMENT: false,
+    RETURN_DOM: false,
+    RETURN_DOM_FRAGMENT: false,
+    FORCE_BODY: true,
+    SANITIZE_DOM: true,
+    KEEP_CONTENT: true,
+    IN_PLACE: false,
+  });
+
+  return clean;
+}
+
+/**
+ * Escape HTML entities for safe display
+ * Use for displaying plain text that should not be interpreted as HTML
+ */
+export function escapeHtml(text: string): string {
+  const map: Record<string, string> = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#x27;',
+    '/': '&#x2F;',
+  };
+
+  return text.replace(/[&<>"'/]/g, (char) => map[char] ?? char);
 }
 
 /**

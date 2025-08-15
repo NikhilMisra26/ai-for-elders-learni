@@ -44,10 +44,10 @@ export function EmailAlreadyExistsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className='sm:max-w-[475px]' onKeyDown={handleKeyDown}>
+      <DialogContent className='sm:max-w-[475px] text-orange-600' onKeyDown={handleKeyDown}>
         <DialogHeader>
           <DialogTitle className='flex items-center gap-2'>
-            <UserCircle className='w-5 h-5' weight='duotone' />
+            <UserCircle className='w-5 h-5 text-orange-600' weight='duotone' />
             Account May Already Exist
           </DialogTitle>
           <DialogDescription className='text-base'>

@@ -338,9 +338,15 @@ export function PasswordChangeDialog({
           <Button
             type='button'
             onClick={(): void => void handlePasswordChange()}
-            disabled={isLoading}
+            disabled={isLoading || isCheckingBreach || !!breachWarning}
           >
-            {isLoading ? 'Changing...' : 'Change Password'}
+            {isLoading
+              ? 'Changing...'
+              : isCheckingBreach
+                ? 'Checking security...'
+                : breachWarning
+                  ? 'Choose a different password'
+                  : 'Change Password'}
           </Button>
         </DialogFooter>
       </DialogContent>

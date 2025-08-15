@@ -1,4 +1,4 @@
-import { useState, useEffect, type ReactElement, type FormEvent } from 'react';
+import React, { useState, useEffect, useCallback, useMemo, type ReactElement, type FormEvent } from 'react';
 import { Eye, EyeSlash, Shield, Warning, Key, X } from '@phosphor-icons/react';
 import { toast } from 'sonner';
 
@@ -29,7 +29,7 @@ interface AuthFormProps {
   onClose: () => void;
 }
 
-export function AuthForm({ onClose }: AuthFormProps): ReactElement {
+function AuthFormComponent({ onClose }: AuthFormProps): ReactElement {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -602,3 +602,6 @@ export function AuthForm({ onClose }: AuthFormProps): ReactElement {
     </Card>
   );
 }
+
+// Memoized export for performance optimization
+export const AuthForm = React.memo(AuthFormComponent);

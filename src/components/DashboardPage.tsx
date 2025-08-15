@@ -1,4 +1,4 @@
-import { useState, type ReactElement } from 'react';
+import React, { useState, useMemo, useCallback, type ReactElement } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   BookOpen,
@@ -37,7 +37,7 @@ import { useProgress } from '@/lib/progressTracking';
 import { useSubscription } from '@/lib/subscription';
 import { courseData } from '@/lib/courseData';
 
-export function DashboardPage(): ReactElement {
+function DashboardPageComponent(): ReactElement {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { subscription, getCurrentPlan } = useSubscription();
@@ -611,9 +611,9 @@ export function DashboardPage(): ReactElement {
                 </p>
               </CardContent>
             </Card>
-
-            {/* Subscription Reminder */}
-            {subscription.planId === 'free' && (
+            {/* Start of commented out code for subscription removal */}
+            { /* Subscription Reminder */ }
+            { /* {subscription.planId === 'free' && (  
               <Card className='border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5'>
                 <CardHeader>
                   <CardTitle className='flex items-center gap-2'>
@@ -635,10 +635,14 @@ export function DashboardPage(): ReactElement {
                   </Button>
                 </CardContent>
               </Card>
-            )}
+            )} */}
+            {/* End of commented out code for subscription removal */}
           </div>
         </div>
       </div>
     </div>
   );
 }
+
+// Memoized export for performance optimization
+export const DashboardPage = React.memo(DashboardPageComponent);

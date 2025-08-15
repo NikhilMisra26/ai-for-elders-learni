@@ -26,8 +26,8 @@ export class AudioControlsErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
-    // Normalize error for security
-    normalizeReactError(error, {
+    // Normalize error for security and capture metadata
+    const normalized = normalizeReactError(error, {
       componentStack: errorInfo.componentStack ?? 'Unknown component stack',
     });
 
@@ -40,7 +40,11 @@ export class AudioControlsErrorBoundary extends Component<Props, State> {
           {
             component: 'AudioControlsErrorBoundary',
             action: 'component_did_catch',
-            metadata: { errorInfo },
+            metadata: {
+              errorInfo,
+              requestId: normalized.requestId,
+              code: normalized.code,
+            },
           },
         );
       })

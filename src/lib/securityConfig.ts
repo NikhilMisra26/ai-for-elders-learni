@@ -72,6 +72,18 @@ export const SECURITY_HEADERS = {
 };
 
 /**
+ * Normalize URL to origin (protocol + host + port)
+ */
+function normalizeUrlToOrigin(url: string): string | undefined {
+  try {
+    const parsed = new URL(url);
+    return parsed.origin;
+  } catch {
+    return undefined;
+  }
+}
+
+/**
  * Allowed origins for CORS
  * Strict allowlist of trusted domains
  */
@@ -80,23 +92,26 @@ export const ALLOWED_ORIGINS = [
   'http://localhost:5173',
   'http://127.0.0.1:5173',
   // Production (will be replaced with actual domain)
-  (() => {
-    const appUrl = import.meta.env.VITE_APP_URL;
+  ((): string | undefined => {
+    const appUrl = import.meta.env.VITE_APP_URL as string | undefined;
     if (!appUrl) {
-      console.warn(
-        '[securityConfig] Warning: VITE_APP_URL is not set in environment variables. ' +
-        'Production origin will not be included in ALLOWED_ORIGINS.'
-      );
+      if (import.meta.env.PROD) {
+        console.warn(
+          '[securityConfig] Warning: VITE_APP_URL is not set in production environment. ' +
+            'CORS validation may fail for production origin.',
+        );
+      }
       return undefined;
     }
-    return appUrl;
+    // Normalize URL to origin only
+    return normalizeUrlToOrigin(appUrl);
   })(),
   // Supabase
   'https://kboefdqxbsdkmnmjosjx.supabase.co',
   // Stripe
   'https://checkout.stripe.com',
   'https://js.stripe.com',
-].filter(Boolean); // Remove undefined values
+].filter((origin): origin is string => Boolean(origin)); // Type-safe filter
 
 /**
  * CORS configuration
@@ -297,12 +312,21 @@ export function validateCSRFToken(token: string, storedToken: string): boolean {
 
 /**
  * Sanitize HTML content to prevent XSS
+ * @deprecated Use escapeHtml or sanitizeHtml from @/lib/security instead
  */
 export function sanitizeHTML(html: string): string {
-  // Create a temporary element to parse HTML
-  const temp = document.createElement('div');
-  temp.textContent = html;
-  return temp.innerHTML;
+  // This function now escapes HTML entities for safety
+  // Use escapeHtml from @/lib/security for new code
+  const map: Record<string, string> = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#x27;',
+    '/': '&#x2F;',
+  };
+
+  return html.replace(/[&<>"'/]/g, (char) => map[char] ?? char);
 }
 
 /**

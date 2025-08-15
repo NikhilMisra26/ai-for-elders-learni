@@ -176,27 +176,27 @@ export function useSubscription(): {
   }, [user, setSubscription]);
 
   const updateSubscription = (updates: Partial<UserSubscription>): void => {
-    setSubscription((current: UserSubscription) => ({
-      ...current,
-      ...updates,
-    }));
+    // Compute next state once to avoid race condition
+    const nextState: UserSubscription = { ...subscription, ...updates };
+
+    // Update local state
+    setSubscription(nextState);
 
     // Persist if logged in
     if (user) {
-      const base: UserSubscription = { ...subscription, ...updates };
       upsertSubscription({
         user_id: user.id,
-        plan_id: base.planId,
-        status: base.status,
-        start_date: base.startDate,
-        end_date: base.endDate ?? null,
-        next_billing_date: base.nextBillingDate ?? null,
-        trial_end_date: base.trialEndDate ?? null,
-        grace_period_end: base.gracePeriodEnd ?? null,
-        payment_brand: base.paymentMethod?.brand ?? null,
-        payment_last4: base.paymentMethod?.last4 ?? null,
-        cancel_at_period_end: base.cancelAtPeriodEnd ?? false,
-        auto_renew: base.autoRenew,
+        plan_id: nextState.planId,
+        status: nextState.status,
+        start_date: nextState.startDate,
+        end_date: nextState.endDate ?? null,
+        next_billing_date: nextState.nextBillingDate ?? null,
+        trial_end_date: nextState.trialEndDate ?? null,
+        grace_period_end: nextState.gracePeriodEnd ?? null,
+        payment_brand: nextState.paymentMethod?.brand ?? null,
+        payment_last4: nextState.paymentMethod?.last4 ?? null,
+        cancel_at_period_end: nextState.cancelAtPeriodEnd ?? false,
+        auto_renew: nextState.autoRenew,
       }).catch((error) => {
         // Log both to security logger and error handler for comprehensive tracking
         SecurityLogger.log('upsertSubscription failed', { error }, 'error');
@@ -206,8 +206,8 @@ export function useSubscription(): {
           {
             userId: user.id,
             metadata: {
-              planId: base.planId,
-              status: base.status,
+              planId: nextState.planId,
+              status: nextState.status,
               operation: 'upsert_subscription',
             },
           },

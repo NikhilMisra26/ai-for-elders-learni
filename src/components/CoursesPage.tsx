@@ -1,4 +1,4 @@
-import { useState, type ReactElement } from 'react';
+import React, { useState, useMemo, useCallback, type ReactElement } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
@@ -40,7 +40,7 @@ interface CoursesPageProps {
   onAuthClick: () => void;
 }
 
-export function CoursesPage({ onAuthClick }: CoursesPageProps): ReactElement {
+function CoursesPageComponent({ onAuthClick }: CoursesPageProps): ReactElement {
   const { user } = useAuth();
   const { subscription, canAccessTier } = useSubscription();
   const { getCourseProgress, startCourse, getDashboardSummary } = useProgress();
@@ -55,15 +55,20 @@ export function CoursesPage({ onAuthClick }: CoursesPageProps): ReactElement {
   // const availableCourses = getAvailableCourses(subscription.planId);
 
   // Filter courses based on search and filter
-  const filteredCourses = Object.values(courseData).filter((course) => {
-    const matchesSearch =
-      course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      course.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesFilter = filterTier === 'all' || course.tier === filterTier;
-    return matchesSearch && matchesFilter;
-  });
+  const filteredCourses = useMemo(
+    () =>
+      Object.values(courseData).filter((course) => {
+        const matchesSearch =
+          course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          course.description.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesFilter = filterTier === 'all' || course.tier === filterTier;
+        return matchesSearch && matchesFilter;
+      }),
+    [searchQuery, filterTier],
+  );
 
-  const handleStartCourse = (courseId: string, course: Course): void => {
+  const handleStartCourse = useCallback(
+    (courseId: string, course: Course): void => {
     if (!user) {
       onAuthClick();
       return;
@@ -94,8 +99,10 @@ export function CoursesPage({ onAuthClick }: CoursesPageProps): ReactElement {
         routePath = '/courses/basic';
     }
 
-    void navigate(routePath);
-  };
+      void navigate(routePath);
+    },
+    [user, onAuthClick, canAccessTier, startCourse, navigate],
+  );
 
   const getCourseCompletionData = (
     course: Course,
@@ -675,3 +682,6 @@ export function CoursesPage({ onAuthClick }: CoursesPageProps): ReactElement {
     </div>
   );
 }
+
+// Memoized export for performance optimization
+export const CoursesPage = React.memo(CoursesPageComponent);

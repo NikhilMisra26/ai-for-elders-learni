@@ -96,6 +96,185 @@ export const deepClone = <T>(obj: T): T => {
 /**
  * Generate a unique ID
  */
-export const generateId = (): string => {
-  return `${Date.now()}-${Math.random().toString(36).slice(2, 11)}`;
+export const generateId = (prefix = 'id'): string => {
+  return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
+};
+
+/**
+ * Format currency for display
+ */
+export const formatCurrency = (amount: number, currency = 'USD'): string => {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency,
+  }).format(amount);
+};
+
+/**
+ * Check if value is empty (null, undefined, empty string, empty array/object)
+ */
+export const isEmpty = (value: unknown): boolean => {
+  if (value == null) return true;
+  if (typeof value === 'string') return value.trim().length === 0;
+  if (Array.isArray(value)) return value.length === 0;
+  if (typeof value === 'object') return Object.keys(value).length === 0;
+  return false;
+};
+
+/**
+ * Get initials from name
+ */
+export const getInitials = (name: string): string => {
+  return name
+    .split(' ')
+    .map((word) => word[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+};
+
+/**
+ * Parse query string to object
+ */
+export const parseQueryString = (
+  queryString: string,
+): Record<string, string> => {
+  const params = new URLSearchParams(queryString);
+  const result: Record<string, string> = {};
+  params.forEach((value, key) => {
+    result[key] = value;
+  });
+  return result;
+};
+
+/**
+ * Build query string from object
+ */
+export const buildQueryString = (
+  params: Record<string, string | number | boolean>,
+): string => {
+  const searchParams = new URLSearchParams();
+  Object.entries(params).forEach(([key, value]) => {
+    if (value !== undefined && value !== null) {
+      searchParams.set(key, String(value));
+    }
+  });
+  return searchParams.toString();
+};
+
+/**
+ * Retry async operation with exponential backoff
+ */
+export const retry = async <T>(
+  fn: () => Promise<T>,
+  maxAttempts = 3,
+  delay = 1000,
+): Promise<T> => {
+  let lastError: Error | undefined;
+
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error as Error;
+      if (attempt < maxAttempts - 1) {
+        await sleep(delay * Math.pow(2, attempt));
+      }
+    }
+  }
+
+  throw lastError;
+};
+
+/**
+ * Check if code is running in browser
+ */
+export const isBrowser = (): boolean => {
+  return typeof window !== 'undefined' && typeof document !== 'undefined';
+};
+
+/**
+ * Check if code is running on mobile device
+ */
+export const isMobileDevice = (): boolean => {
+  if (!isBrowser()) return false;
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+    navigator.userAgent,
+  );
+};
+
+/**
+ * Get safe local storage (handles SSR and errors)
+ */
+export const safeLocalStorage = {
+  getItem: (key: string): string | null => {
+    if (!isBrowser()) return null;
+    try {
+      return localStorage.getItem(key);
+    } catch {
+      return null;
+    }
+  },
+  setItem: (key: string, value: string): void => {
+    if (!isBrowser()) return;
+    try {
+      localStorage.setItem(key, value);
+    } catch {
+      // Silently fail
+    }
+  },
+  removeItem: (key: string): void => {
+    if (!isBrowser()) return;
+    try {
+      localStorage.removeItem(key);
+    } catch {
+      // Silently fail
+    }
+  },
+  clear: (): void => {
+    if (!isBrowser()) return;
+    try {
+      localStorage.clear();
+    } catch {
+      // Silently fail
+    }
+  },
+};
+
+/**
+ * Get safe session storage (handles SSR and errors)
+ */
+export const safeSessionStorage = {
+  getItem: (key: string): string | null => {
+    if (!isBrowser()) return null;
+    try {
+      return sessionStorage.getItem(key);
+    } catch {
+      return null;
+    }
+  },
+  setItem: (key: string, value: string): void => {
+    if (!isBrowser()) return;
+    try {
+      sessionStorage.setItem(key, value);
+    } catch {
+      // Silently fail
+    }
+  },
+  removeItem: (key: string): void => {
+    if (!isBrowser()) return;
+    try {
+      sessionStorage.removeItem(key);
+    } catch {
+      // Silently fail
+    }
+  },
+  clear: (): void => {
+    if (!isBrowser()) return;
+    try {
+      sessionStorage.clear();
+    } catch {
+      // Silently fail
+    }
+  },
 };

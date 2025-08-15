@@ -1,4 +1,4 @@
-import type { ReactElement } from 'react';
+import React, { useCallback, type ReactElement } from 'react';
 import { House, ArrowLeft, BookOpen } from '@phosphor-icons/react';
 
 import { Button } from '@/components/ui/button';
@@ -8,18 +8,18 @@ interface NotFoundPageProps {
   onNavigate: (page: string) => void;
 }
 
-export function NotFoundPage({ onNavigate }: NotFoundPageProps): ReactElement {
-  const handleGoHome = (): void => {
+function NotFoundPageComponent({ onNavigate }: NotFoundPageProps): ReactElement {
+  const handleGoHome = useCallback((): void => {
     onNavigate('home');
-  };
+  }, [onNavigate]);
 
-  const handleGoBack = (): void => {
+  const handleGoBack = useCallback((): void => {
     window.history.back();
-  };
+  }, []);
 
-  const handleViewCourses = (): void => {
+  const handleViewCourses = useCallback((): void => {
     onNavigate('courses');
-  };
+  }, [onNavigate]);
 
   return (
     <div className='min-h-[80vh] bg-background flex items-center justify-center p-4'>
@@ -93,3 +93,6 @@ export function NotFoundPage({ onNavigate }: NotFoundPageProps): ReactElement {
     </div>
   );
 }
+
+// Memoized export for performance optimization
+export const NotFoundPage = React.memo(NotFoundPageComponent);

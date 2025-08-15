@@ -106,8 +106,9 @@ export function ResetPasswordPage(): ReactElement {
       });
 
       if (error) {
+        const normalized = normalizeError(error, 'password_reset');
         toast.error('Failed to reset password', {
-          description: error.message ?? 'Please try again',
+          description: formatErrorMessage(normalized),
         });
         setIsLoading(false);
         return;
@@ -311,9 +312,21 @@ export function ResetPasswordPage(): ReactElement {
             <Button
               className='w-full'
               onClick={(): void => void handlePasswordReset()}
-              disabled={isLoading || !newPassword || !confirmPassword}
+              disabled={
+                isLoading ||
+                !newPassword ||
+                !confirmPassword ||
+                isCheckingBreach ||
+                !!breachWarning
+              }
             >
-              {isLoading ? 'Resetting...' : 'Reset Password'}
+              {isLoading
+                ? 'Resetting...'
+                : isCheckingBreach
+                  ? 'Checking security...'
+                  : breachWarning
+                    ? 'Choose a different password'
+                    : 'Reset Password'}
             </Button>
 
             <div className='text-center'>

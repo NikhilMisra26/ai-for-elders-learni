@@ -1,9 +1,12 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 
 import {
   upsertCourseProgress,
   upsertModuleProgress,
   addUserActivity as dbAddActivity,
+  getCourseProgressRows,
+  getModuleProgressRows,
+  listUserActivity,
 } from './db';
 import type { Course, Module } from './courseData';
 import { courseData } from './courseData';
@@ -134,6 +137,173 @@ export function useProgress(): UseProgressReturn {
     weeklyProgress: 0,
   });
 
+  // Hydrate progress data from Supabase when user is logged in
+  useEffect(() => {
+    if (!user) return;
+    void (async (): Promise<void> => {
+      try {
+        // Fetch all progress data in parallel
+        const [courseRows, moduleRows, activityRows] = await Promise.all([
+          getCourseProgressRows(user.id),
+          getModuleProgressRows(user.id),
+          listUserActivity(user.id, 50),
+        ]);
+
+        // Convert and set course progress
+        if (courseRows.length > 0) {
+          const coursesProgress: CourseProgress[] = courseRows.map((row) => ({
+            courseId: row.course_id,
+            startedAt: row.started_at,
+            lastAccessedAt: row.last_accessed_at,
+            completedModules: row.completed_modules,
+            currentModuleId: row.current_module_id ?? undefined,
+            totalTimeSpent: row.total_time_spent,
+            completionPercentage: row.completion_percentage,
+            completed: row.completed,
+            completedAt: row.completed_at ?? undefined,
+          }));
+          setCourseProgress(coursesProgress);
+        }
+
+        // Convert and set module progress
+        if (moduleRows.length > 0) {
+          const modulesProgress: ModuleProgress[] = moduleRows.map((row) => ({
+            moduleId: row.module_id,
+            courseId: row.course_id,
+            completedAt: row.completed_at,
+            timeSpent: row.time_spent,
+            rating: row.rating ?? undefined,
+            attempts: row.attempts,
+            notes: row.notes ?? undefined,
+          }));
+          setModuleProgress(modulesProgress);
+        }
+
+        // Convert and set user activity
+        if (activityRows.length > 0) {
+          const activities: UserActivity[] = activityRows.map((row) => ({
+            id: row.id,
+            type: row.type as UserActivity['type'],
+            title: row.title,
+            description: row.description ?? '',
+            timestamp: row.timestamp,
+            courseId: row.course_id ?? undefined,
+            moduleId: row.module_id ?? undefined,
+            metadata: row.metadata ?? undefined,
+          }));
+          setUserActivity(activities);
+        }
+
+        // Calculate and set learning stats based on hydrated data
+        if (moduleRows.length > 0) {
+          const totalTimeSpent = moduleRows.reduce(
+            (sum, row) => sum + row.time_spent,
+            0,
+          );
+          const modulesCompleted = moduleRows.length;
+          const coursesCompleted = courseRows.filter(
+            (row) => row.completed,
+          ).length;
+
+          // Calculate average rating
+          const ratedModules = moduleRows.filter((row) => row.rating !== null);
+          const averageRating =
+            ratedModules.length > 0
+              ? ratedModules.reduce((sum, row) => sum + (row.rating ?? 0), 0) /
+                ratedModules.length
+              : 0;
+
+          // Calculate streak
+          const sortedCompletions = moduleRows
+            .map((row) => row.completed_at)
+            .sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
+
+          let currentStreak = 0;
+          let longestStreak = 0;
+          const lastLearningDate =
+            sortedCompletions[0] ?? new Date().toISOString();
+
+          if (sortedCompletions.length > 0) {
+            const uniqueDays = Array.from(
+              new Set(
+                sortedCompletions.map(
+                  (date) => new Date(date).toISOString().split('T')[0],
+                ),
+              ),
+            ).sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
+
+            let streak = 0;
+            const today = new Date().toISOString().split('T')[0];
+
+            for (let i = 0; i < uniqueDays.length; i++) {
+              const daysDiff = Math.floor(
+                (new Date(today).getTime() -
+                  new Date(uniqueDays[i]).getTime()) /
+                  (1000 * 60 * 60 * 24),
+              );
+
+              if (daysDiff === i) {
+                streak++;
+              } else {
+                break;
+              }
+            }
+            currentStreak = streak;
+            longestStreak = Math.max(streak, longestStreak);
+          }
+
+          // Calculate weekly progress
+          const weekStart = new Date();
+          weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+          weekStart.setHours(0, 0, 0, 0);
+
+          const weeklyProgress = moduleRows
+            .filter((row) => new Date(row.completed_at) >= weekStart)
+            .reduce((sum, row) => sum + row.time_spent, 0);
+
+          // Extract favorite topics from course data
+          const favoriteTopics: string[] = [];
+          moduleRows.forEach((row) => {
+            const course = courseData[row.course_id];
+            const module = course?.modules.find((m) => m.id === row.module_id);
+            if (module?.tags) {
+              module.tags.forEach((tag) => {
+                if (!favoriteTopics.includes(tag)) {
+                  favoriteTopics.push(tag);
+                }
+              });
+            }
+          });
+
+          setLearningStats((current) => ({
+            ...current,
+            totalTimeSpent,
+            modulesCompleted,
+            coursesCompleted,
+            averageRating,
+            streak: {
+              currentStreak,
+              longestStreak,
+              lastLearningDate,
+              startDate: current.streak.startDate,
+            },
+            favoriteTopics: favoriteTopics.slice(0, 10),
+            weeklyProgress,
+          }));
+        }
+      } catch (error) {
+        errorHandler.handleDatabaseError(
+          'fetch progress data',
+          error instanceof Error ? error : new Error(String(error)),
+          {
+            userId: user.id,
+            component: 'progressTracking',
+          },
+        );
+      }
+    })();
+  }, [user]);
+
   // Get progress for a specific course
   const getCourseProgress = (courseId: string): CourseProgress | null => {
     return courseProgress.find((cp) => cp.courseId === courseId) ?? null;
@@ -204,6 +374,13 @@ export function useProgress(): UseProgressReturn {
 
     // Persist module progress
     if (user) {
+      const existingProgress = moduleProgress.find(
+        (mp) => mp.courseId === courseId && mp.moduleId === moduleId,
+      );
+      const attemptsCount = existingProgress
+        ? existingProgress.attempts + 1
+        : 1;
+
       upsertModuleProgress({
         user_id: user.id,
         module_id: moduleId,
@@ -211,7 +388,7 @@ export function useProgress(): UseProgressReturn {
         completed_at: new Date().toISOString(),
         time_spent: timeSpent,
         rating: rating ?? null,
-        attempts: 1,
+        attempts: attemptsCount,
         notes: null,
       }).catch((error) => {
         errorHandler.handleDatabaseError(

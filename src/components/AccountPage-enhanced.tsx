@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { toast } from 'sonner';
 import {
   User,
@@ -42,7 +42,7 @@ import { useProgress } from '@/lib/progressTracking';
 //   onAuthClick: () => void;
 // }
 
-export function AccountPage(): ReactElement {
+function AccountPageComponent(): ReactElement {
   const { user } = useAuth();
   const {
     subscription,
@@ -717,3 +717,6 @@ export function AccountPage(): ReactElement {
     </div>
   );
 }
+
+// Memoized export for performance optimization
+export const AccountPage = React.memo(AccountPageComponent);

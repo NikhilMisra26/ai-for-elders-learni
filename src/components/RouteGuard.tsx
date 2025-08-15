@@ -146,7 +146,10 @@ function AuthRequiredPrompt({
     if (onAuthRequired) {
       onAuthRequired();
     } else {
-      // Fallback: No callback provided - silent warning
+      // Fallback: No callback provided - show warning toast
+      toast.warning('Authentication handler not configured', {
+        description: 'Please contact support if this issue persists',
+      });
     }
   };
 
