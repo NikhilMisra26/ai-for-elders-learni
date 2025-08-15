@@ -72,13 +72,26 @@ class ErrorHandlerService {
   }
 
   private readonly consoleHandler: ErrorHandler = (report: ErrorReport): void => {
-    const logLevel =
-      report.level === 'error' ? 'error' : report.level === 'warning' ? 'warn' : 'info';
-    console[logLevel](`[ErrorHandler] ${report.message}`, {
-      id: report.id,
-      context: report.context,
-      originalError: report.originalError,
-    });
+    // Only log to console in development mode
+    if (!this.isProduction) {
+      const message = `[ErrorHandler] ${report.message}`;
+      const data = {
+        id: report.id,
+        context: report.context,
+        originalError: report.originalError,
+      };
+
+      if (report.level === 'error') {
+        // eslint-disable-next-line no-console
+        console.error(message, data);
+      } else if (report.level === 'warning') {
+        // eslint-disable-next-line no-console
+        console.warn(message, data);
+      } else {
+        // eslint-disable-next-line no-console
+        console.info(message, data);
+      }
+    }
   };
 
   private handleGlobalError(event: ErrorEvent): void {
@@ -149,8 +162,9 @@ class ErrorHandlerService {
       try {
         handler(report);
       } catch (handlerError) {
-        // Prevent infinite loops - log handler errors to console only
-        if (import.meta.env.DEV) {
+        // Prevent infinite loops - log handler errors in development only
+        if (!this.isProduction) {
+          // eslint-disable-next-line no-console
           console.error('Error handler failed:', handlerError);
         }
       }

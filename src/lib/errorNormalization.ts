@@ -292,14 +292,19 @@ export function normalizeError(
     'error',
   );
 
-  // Log to console only in development
+  // Log detailed error in development only
   if (import.meta.env.DEV) {
-    console.group(`[Error ${reqId}]`);
-    console.error('Context:', context);
-    console.error('Code:', errorCode);
-    console.error('Original:', error);
-    console.error('Sanitized:', sanitizedDetails);
-    console.groupEnd();
+    SecurityLogger.log(
+      'error_detailed_debug',
+      {
+        requestId: reqId,
+        context,
+        errorCode,
+        originalError: sanitizedDetails,
+        message: errorMessage,
+      },
+      'info',
+    );
   }
 
   // Return normalized error with safe user-facing message
@@ -331,7 +336,14 @@ export function normalizeReactError(
 
   // Log component stack in development
   if (import.meta.env.DEV) {
-    console.error('Component Stack:', errorInfo.componentStack);
+    SecurityLogger.log(
+      'react_component_stack_debug',
+      {
+        requestId: normalized.requestId,
+        componentStack: errorInfo.componentStack,
+      },
+      'info',
+    );
   }
 
   SecurityLogger.log(

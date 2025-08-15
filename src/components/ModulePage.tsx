@@ -590,9 +590,6 @@ export function ModulePage({ courseType: propCourseType }: ModulePageProps): Rea
                                   try {
                                     audioControls.setRate(newRate);
                                   } catch (error) {
-                                    if (import.meta.env.DEV) {
-                                      console.error('Failed to set audio rate:', error);
-                                    }
                                     errorHandler.logError(
                                       'Failed to set audio rate',
                                       error instanceof Error ? error : new Error(String(error)),
@@ -620,9 +617,6 @@ export function ModulePage({ courseType: propCourseType }: ModulePageProps): Rea
                                   try {
                                     audioControls.setVolume(newVolume);
                                   } catch (error) {
-                                    if (import.meta.env.DEV) {
-                                      console.error('Failed to set audio volume:', error);
-                                    }
                                     errorHandler.logError(
                                       'Failed to set audio volume',
                                       error instanceof Error ? error : new Error(String(error)),

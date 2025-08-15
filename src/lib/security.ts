@@ -297,13 +297,7 @@ export class SessionManager {
    * @deprecated Use Supabase Auth instead
    * Sessions should be managed by Supabase with secure httpOnly cookies
    */
-  static createSession(userId: string): string {
-    if (import.meta.env.DEV) {
-      console.warn(
-        'SessionManager.createSession is deprecated. Use Supabase Auth for secure session management.',
-        { userId },
-      );
-    }
+  static createSession(_userId: string): string {
     // Return a dummy token - actual session is managed by Supabase
     return 'supabase-managed-session';
   }
@@ -316,11 +310,6 @@ export class SessionManager {
     token: string;
     createdAt: number;
   } | null {
-    if (import.meta.env.DEV) {
-      console.warn(
-        'SessionManager.getSession is deprecated. Use supabase.auth.getSession() for secure session retrieval.',
-      );
-    }
     return null;
   }
 
@@ -328,22 +317,13 @@ export class SessionManager {
    * @deprecated Use supabase.auth.signOut() instead
    */
   static clearSession(): void {
-    if (import.meta.env.DEV) {
-      console.warn(
-        'SessionManager.clearSession is deprecated. Use supabase.auth.signOut() for secure session clearing.',
-      );
-    }
+    // Deprecated - use supabase.auth.signOut() instead
   }
 
   /**
    * @deprecated Use supabase.auth.getSession() instead
    */
   static isSessionValid(): boolean {
-    if (import.meta.env.DEV) {
-      console.warn(
-        'SessionManager.isSessionValid is deprecated. Use supabase.auth.getSession() to check session validity.',
-      );
-    }
     return false;
   }
 
@@ -351,11 +331,7 @@ export class SessionManager {
    * @deprecated Session extension is handled automatically by Supabase
    */
   static extendSession(): void {
-    if (import.meta.env.DEV) {
-      console.warn(
-        'SessionManager.extendSession is deprecated. Supabase automatically handles session refresh.',
-      );
-    }
+    // Deprecated - Supabase automatically handles session refresh
   }
 }
 
@@ -413,11 +389,7 @@ export class SecurityLogger {
     }
 
     // In a real app, this would send to a secure logging service
-    if (severity === 'error') {
-      if (import.meta.env.DEV) {
-        console.warn(`Security Event [${severity.toUpperCase()}]: ${event}`, details);
-      }
-    }
+    // Error-level security events are logged internally for development monitoring
   }
 
   private static sanitizeLogData(data: Record<string, unknown>): Record<string, unknown> {

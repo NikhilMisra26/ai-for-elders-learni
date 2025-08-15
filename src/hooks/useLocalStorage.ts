@@ -1,6 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 
 import { safeLocalStorage } from '@/lib/utils';
+import { errorHandler } from '@/lib/errorHandler';
 
 /**
  * Hook for managing localStorage with React state
@@ -32,7 +33,11 @@ export function useLocalStorage<T>(
           return valueToStore;
         });
       } catch (error) {
-        console.error(`Error saving to localStorage key "${key}":`, error);
+        errorHandler.handleStorageError(
+          `setItem key "${key}"`,
+          error instanceof Error ? error : new Error(String(error)),
+          { metadata: { key } },
+        );
       }
     },
     [key],
@@ -44,7 +49,11 @@ export function useLocalStorage<T>(
       safeLocalStorage.removeItem(key);
       setStoredValue(initialValue);
     } catch (error) {
-      console.error(`Error removing localStorage key "${key}":`, error);
+      errorHandler.handleStorageError(
+        `removeItem key "${key}"`,
+        error instanceof Error ? error : new Error(String(error)),
+        { metadata: { key } },
+      );
     }
   }, [key, initialValue]);
 

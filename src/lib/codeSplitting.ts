@@ -81,8 +81,8 @@ export function smartPrefetch(currentRoute: string): void {
  */
 export function analyzeBundleSize(): void {
   if (import.meta.env.DEV) {
-    // Log module sizes
-    const modules = import.meta.glob('@/components/*.tsx');
-    console.log('Available modules:', Object.keys(modules));
+    // Bundle analysis functionality can be added here in development
+    // Example: Module count available via import.meta.glob('@/components/*.tsx')
+    return;
   }
 }

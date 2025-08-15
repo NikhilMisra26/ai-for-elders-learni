@@ -3,6 +3,8 @@
  * Defines security headers, policies, and configurations for the application
  */
 
+import { logWarning } from '@/lib/errorHandler';
+
 /**
  * Content Security Policy directives
  * Helps prevent XSS attacks by specifying allowed content sources
@@ -96,9 +98,9 @@ export const ALLOWED_ORIGINS = [
     const appUrl = import.meta.env.VITE_APP_URL as string | undefined;
     if (!appUrl) {
       if (import.meta.env.PROD) {
-        console.warn(
-          '[securityConfig] Warning: VITE_APP_URL is not set in production environment. ' +
-            'CORS validation may fail for production origin.',
+        logWarning(
+          'VITE_APP_URL is not set in production environment. CORS validation may fail for production origin.',
+          { component: 'securityConfig', action: 'ALLOWED_ORIGINS_INIT' },
         );
       }
       return undefined;
@@ -338,9 +340,10 @@ export function hasSQLInjectionPattern(input: string): boolean {
 export function initializeSecurity(): void {
   // Check for secure context
   if (!isSecureContext() && import.meta.env.PROD) {
-    if (import.meta.env.DEV) {
-      console.warn('Application is not running in a secure context (HTTPS)');
-    }
+    logWarning('Application is not running in a secure context (HTTPS)', {
+      component: 'securityConfig',
+      action: 'SECURITY_INITIALIZATION',
+    });
   }
 
   // Set up CSP meta tag if not set by server

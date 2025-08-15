@@ -106,7 +106,7 @@ export class PerformanceTimer {
     this.marks.set(name, performance.now());
   }
 
-  measure(name: string, startMark: string, endMark?: string): number | null {
+  measure(_name: string, startMark: string, endMark?: string): number | null {
     const start = this.marks.get(startMark);
     if (!start) return null;
 
@@ -114,9 +114,7 @@ export class PerformanceTimer {
     if (!end) return null;
 
     const duration = end - start;
-    if (import.meta.env.DEV) {
-      console.log(`[Performance] ${name}: ${duration.toFixed(2)}ms`);
-    }
+    // Performance measurements are tracked internally, logging removed to comply with production linting
     return duration;
   }
 

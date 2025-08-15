@@ -38,9 +38,7 @@ function getApiUrl(): string | undefined {
     new URL(url);
     return url.endsWith('/') ? url.slice(0, -1) : url;
   } catch {
-    if (import.meta.env.DEV) {
-      console.warn('Invalid VITE_API_URL format:', url);
-    }
+    // Invalid URL format - return undefined for graceful fallback
     return undefined;
   }
 }
