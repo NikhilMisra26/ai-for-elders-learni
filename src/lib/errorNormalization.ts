@@ -201,6 +201,13 @@ function extractErrorCode(message: string): ErrorCode {
 }
 
 /**
+ * Sanitize string values by truncating long content
+ */
+function sanitizeStringValue(value: string): string {
+  return value.substring(0, 200);
+}
+
+/**
  * Sanitize error details to remove sensitive information
  */
 function sanitizeErrorDetails(error: unknown): Record<string, unknown> {
@@ -226,11 +233,6 @@ function sanitizeErrorDetails(error: unknown): Record<string, unknown> {
 
       if (!isSensitive) {
         sanitized[key] = typeof value === 'string' ? value.substring(0, 200) : value;
-      }
-    }
-  } else {
-    sanitized.type = typeof error;
-        sanitized[key] = typeof value === 'string' ? sanitizeStringValue(value) : value;
       }
     }
   } else {
