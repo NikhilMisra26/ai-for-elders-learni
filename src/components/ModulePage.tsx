@@ -477,11 +477,11 @@ export function ModulePage({ courseType: propCourseType }: ModulePageProps): Rea
 
             {/* Quick Actions */}
             <div className='flex items-center gap-2'>
-              <Button variant='outline' size='sm' onClick={handlePrint}>
+              <Button variant='default' size='sm' onClick={handlePrint}>
                 <Printer className='w-4 h-4 mr-2' />
                 Print
               </Button>
-              <Button variant='outline' size='sm' onClick={() => setShowOutline(!showOutline)}>
+              <Button variant='default' size='sm' onClick={() => setShowOutline(!showOutline)}>
                 <List className='w-4 h-4 mr-2' />
                 Outline
               </Button>

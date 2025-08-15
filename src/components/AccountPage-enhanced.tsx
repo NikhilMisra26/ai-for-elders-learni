@@ -462,7 +462,7 @@ function AccountPageComponent(): ReactElement {
               </CardHeader>
               <CardContent className='space-y-3'>
                 <Button
-                  variant='outline'
+                  variant='default'
                   className='w-full justify-start'
                   onClick={() => handleNavigation('dashboard')}
                 >
@@ -470,7 +470,7 @@ function AccountPageComponent(): ReactElement {
                   View Dashboard
                 </Button>
                 <Button
-                  variant='outline'
+                  variant='default'
                   className='w-full justify-start'
                   onClick={() => handleNavigation('courses')}
                 >
@@ -504,7 +504,7 @@ function AccountPageComponent(): ReactElement {
                   Need help with your account or have questions about our courses?
                 </p>
                 <div className='space-y-2'>
-                  <Button variant='outline' size='sm' className='w-full'>
+                  <Button variant='default' size='sm' className='w-full'>
                     <EnvelopeSimple className='w-4 h-4 mr-2' />
                     Email Support
                   </Button>
@@ -533,7 +533,7 @@ function AccountPageComponent(): ReactElement {
                     Password
                   </span>
                   <Button
-                    variant='outline'
+                    variant='default'
                     size='sm'
                     onClick={(): void => {
                       // Password change functionality would go here
@@ -543,12 +543,6 @@ function AccountPageComponent(): ReactElement {
                     }}
                   >
                     Change
-                  </Button>
-                </div>
-                <div className='flex items-center justify-between'>
-                  <span className='text-sm'>Email</span>
-                  <Button variant='outline' size='sm'>
-                    Update
                   </Button>
                 </div>
                 <Separator />
