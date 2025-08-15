@@ -44,7 +44,17 @@ class ErrorHandlerService {
   }
 
   private generateErrorId(): string {
-    return `err_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+      return `err_${crypto.randomUUID()}`;
+    }
+    if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
+      const bytes = new Uint8Array(16);
+      crypto.getRandomValues(bytes);
+      const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+      return `err_${hex}`;
+    }
+    // Last-resort fallback (non-crypto environments)
+    return `err_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
   }
 
   private sanitizeError(error: Error): { message: string; stack?: string } {
@@ -69,6 +79,27 @@ class ErrorHandlerService {
     });
 
     return { message, stack };
+  }
+
+  private redactSensitiveInContext(context?: ErrorContext): ErrorContext | undefined {
+    if (!context) return context;
+    const clone: ErrorContext = { ...context };
+    const redactKeys =
+      /(password|pass|pwd|token|secret|api[_-]?key|auth[_-]?token|access[_-]?token)/i;
+
+    const redact = (obj: unknown): unknown => {
+      if (!obj || typeof obj !== 'object') return obj;
+      if (Array.isArray(obj)) return obj.map(redact);
+      const out: Record<string, unknown> = {};
+      for (const [k, v] of Object.entries(obj as Record<string, unknown>)) {
+        out[k] = redactKeys.test(k) ? '[REDACTED]' : redact(v);
+      }
+      return out;
+    };
+
+    return clone.metadata
+      ? { ...clone, metadata: redact(clone.metadata) as Record<string, unknown> }
+      : clone;
   }
 
   private readonly consoleHandler: ErrorHandler = (report: ErrorReport): void => {
@@ -151,7 +182,7 @@ class ErrorHandlerService {
       level,
       message,
       originalError: error,
-      context,
+      context: this.redactSensitiveInContext(context),
       userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'unknown',
       url: typeof window !== 'undefined' ? window.location.href : 'unknown',
       stackTrace: sanitizedError?.stack,

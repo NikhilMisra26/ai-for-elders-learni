@@ -697,10 +697,8 @@ BEGIN
     RETURN true;
   END IF;
   
-  -- Check for common SQL injection patterns (case-insensitive)
-  IF p_input ~* '\b(union|select|insert|update|delete|drop|create|alter|exec|execute|script|javascript|vbscript|onload|onerror|onclick)\b' THEN
-    RETURN false;
-  END IF;
+  -- Removed overly broad SQL keyword pattern check; rely on parameterized queries for SQL injection prevention
+  -- The previous pattern blocked legitimate words in user content
   
   -- Check for SQL comment patterns
   IF p_input ~ '(/\*|\*/|--|#)' THEN

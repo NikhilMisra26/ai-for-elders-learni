@@ -93,7 +93,7 @@ export async function getUserSubscription(userId: string): Promise<SubscriptionR
     .limit(1);
   if (error) throw error;
   if (!data) return undefined;
-  return (data[0] as SubscriptionRow | undefined) ?? undefined;
+  return data[0];
 }
 
 export async function upsertSubscription(

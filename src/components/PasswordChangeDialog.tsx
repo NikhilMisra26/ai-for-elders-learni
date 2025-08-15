@@ -152,7 +152,7 @@ export function PasswordChangeDialog({
     if (!password) return '';
     if (password.length < 8) return 'Weak';
     if (password.length < 12) return 'Fair';
-    if (/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/.test(password)) {
+    if (/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]+$/.test(password)) {
       return 'Strong';
     }
     return 'Good';

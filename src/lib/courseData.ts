@@ -406,8 +406,7 @@ Remember: You're in control. AI is there to help you, not to make decisions for 
 };
 
 // Constants for tier ordering
-// @ts-expect-error - Tier ordering may be used when subscriptions are re-enabled
-const _TIER_ORDER = { free: 1, advanced: 2, expert: 3 } as const;
+export const TIER_ORDER = { free: 1, advanced: 2, expert: 3 } as const;
 
 // Helper functions for course management
 export const getCourseById = (courseId: string): Course | undefined => {

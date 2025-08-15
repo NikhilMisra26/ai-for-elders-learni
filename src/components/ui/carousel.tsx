@@ -50,10 +50,14 @@ function Carousel({
   children,
   ...props
 }: ComponentProps<'div'> & CarouselProps): ReactElement {
+  // Compute orientation that respects opts.axis
+  const computedOrientation: 'horizontal' | 'vertical' =
+    orientation ?? (opts?.axis === 'y' ? 'vertical' : 'horizontal');
+
   const [carouselRef, api] = useEmblaCarousel(
     {
       ...opts,
-      axis: orientation === 'horizontal' ? 'x' : 'y',
+      axis: computedOrientation === 'horizontal' ? 'x' : 'y',
     },
     plugins,
   );
@@ -115,7 +119,7 @@ function Carousel({
         carouselRef,
         api: api,
         opts,
-        orientation: orientation || (opts?.axis === 'y' ? 'vertical' : 'horizontal'),
+        orientation: computedOrientation,
         scrollPrev,
         scrollNext,
         canScrollPrev,

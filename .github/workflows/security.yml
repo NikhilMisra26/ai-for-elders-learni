@@ -55,7 +55,15 @@ jobs:
           pnpm audit --audit-level moderate --json > audit-results.json || true
 
           # Check if there are any moderate+ vulnerabilities
-          VULN_COUNT=$(cat audit-results.json | jq '.metadata.vulnerabilities.moderate + .metadata.vulnerabilities.high + .metadata.vulnerabilities.critical // 0')
+          VULN_COUNT=$(
+            jq -r '
+              if .metadata and .metadata.vulnerabilities then
+                (.metadata.vulnerabilities.moderate + .metadata.vulnerabilities.high + .metadata.vulnerabilities.critical)
+              elif .vulnerabilities then
+                ([ .vulnerabilities[]? | select(.severity=="moderate" or .severity=="high" or .severity=="critical") ] | length)
+              else 0 end
+            ' audit-results.json
+          )
 
           if [ "$VULN_COUNT" -gt 0 ]; then
             echo "❌ Found $VULN_COUNT moderate+ vulnerabilities"
@@ -66,7 +74,7 @@ jobs:
           fi
 
       - name: Secret Scan
-        uses: trufflesecurity/trufflehog@main
+        uses: trufflesecurity/trufflehog@v3
         with:
           path: ./
           base: ${{ github.event.repository.default_branch }}
@@ -129,7 +137,7 @@ jobs:
 
           # Search for potential secrets in code (excluding node_modules and dist)
           if grep -r --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" \
-             -E "(password|secret|key|token).*=.*['\"][^'\"]{10,}['\"]" \
+             -E "(password|secret|api[_-]?key|private[_-]?key|token|access[_-]?token).*=.*['\"][^'\"]{10,}['\"]" \
              src/ 2>/dev/null; then
             echo "❌ Potential hardcoded secrets found!"
             echo "Please use environment variables for sensitive data"

@@ -13,12 +13,12 @@ export const CSP_DIRECTIVES = {
   'default-src': ["'self'"],
   'script-src': [
     "'self'",
-    "'unsafe-inline'", // Required for React development
+    ...(process.env.NODE_ENV !== 'production' ? ["'unsafe-inline'"] : []), // Only in development
     'https://cdn.jsdelivr.net', // For third-party libraries if needed
   ],
   'style-src': [
     "'self'",
-    "'unsafe-inline'", // Required for inline styles
+    ...(process.env.NODE_ENV !== 'production' ? ["'unsafe-inline'"] : []), // Only in development
   ],
   'img-src': [
     "'self'",
@@ -357,17 +357,8 @@ export function initializeSecurity(): void {
     }
   }
 
-  // Disable right-click in production (optional)
-  if (import.meta.env.PROD) {
-    document.addEventListener('contextmenu', (e) => {
-      const target = e.target as HTMLElement;
-      // Allow right-click on input fields
-      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') {
-        return;
-      }
-      e.preventDefault();
-    });
-  }
+  // Right-click disabled removed for accessibility
+  // Users with assistive technologies need context menu access
 
   // Set up beforeunload handler for unsaved changes
   window.addEventListener('beforeunload', (e) => {
