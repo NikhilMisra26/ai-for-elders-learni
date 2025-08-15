@@ -20,7 +20,8 @@
       "Bash(gh pr view:*)",
       "WebFetch(domain:github.com)",
       "WebFetch(domain:api.github.com)",
-      "Bash(gh pr list:*)"
+      "Bash(gh pr list:*)",
+      "Bash(grep:*)"
     ],
     "deny": []
   }

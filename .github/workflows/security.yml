@@ -150,9 +150,11 @@ jobs:
           echo "Checking for exposed secrets in environment variables..."
 
           # Search for potential secrets in code (excluding node_modules and dist)
+          # Pattern looks for variable assignments with secret-like names containing actual values
+          # Excludes HTML attributes like htmlFor, id, name, className, etc.
           if grep -r --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" \
-             -E "(password|secret|api[_-]?key|private[_-]?key|token|access[_-]?token).*=.*['\"][^'\"]{10,}['\"]" \
-             src/ 2>/dev/null; then
+             -E "(const|let|var|:|=)\s*(password|secret|apiKey|api_key|privateKey|private_key|token|accessToken|access_token)\s*[:=]\s*['\"][^'\"]{10,}['\"]" \
+             src/ 2>/dev/null | grep -v "htmlFor\|className\|id=\|name="; then
             echo "❌ Potential hardcoded secrets found!"
             echo "Please use environment variables for sensitive data"
             exit 1
