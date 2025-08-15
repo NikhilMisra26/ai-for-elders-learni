@@ -711,7 +711,9 @@ BEGIN
   END IF;
   
   -- Check for hex/binary injection
-  IF p_input ~* '(0x[0-9a-f]+|\\x[0-9a-f]+)' THEN
+  -- Check for hex/binary injection, but allow common legitimate hex patterns (e.g., CSS color codes like #ff00ff)
+  -- Only block hex patterns not preceded by '#' or word characters (to avoid false positives)
+  IF p_input ~* '(^|[^#\w])(0x[0-9a-f]+|\\x[0-9a-f]+)' THEN
     RETURN false;
   END IF;
   
