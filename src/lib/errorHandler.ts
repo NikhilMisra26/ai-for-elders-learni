@@ -35,10 +35,7 @@ class ErrorHandlerService {
 
     // Handle uncaught errors globally
     if (typeof window !== 'undefined') {
-      window.addEventListener(
-        'error',
-        this.handleGlobalError.bind(this) as EventListener,
-      );
+      window.addEventListener('error', this.handleGlobalError.bind(this) as EventListener);
       window.addEventListener(
         'unhandledrejection',
         this.handleUnhandledRejection.bind(this) as EventListener,
@@ -47,7 +44,17 @@ class ErrorHandlerService {
   }
 
   private generateErrorId(): string {
-    return `err_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+      return `err_${crypto.randomUUID()}`;
+    }
+    if (typeof crypto !== 'undefined' && typeof crypto.getRandomValues === 'function') {
+      const bytes = new Uint8Array(16);
+      crypto.getRandomValues(bytes);
+      const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+      return `err_${hex}`;
+    }
+    // Last-resort fallback (non-crypto environments)
+    return `err_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
   }
 
   private sanitizeError(error: Error): { message: string; stack?: string } {
@@ -74,28 +81,54 @@ class ErrorHandlerService {
     return { message, stack };
   }
 
-  private readonly consoleHandler: ErrorHandler = (
-    report: ErrorReport,
-  ): void => {
-    const logLevel =
-      report.level === 'error'
-        ? 'error'
-        : report.level === 'warning'
-          ? 'warn'
-          : 'info';
-    console[logLevel](`[ErrorHandler] ${report.message}`, {
-      id: report.id,
-      context: report.context,
-      originalError: report.originalError,
-    });
+  private redactSensitiveInContext(context?: ErrorContext): ErrorContext | undefined {
+    if (!context) return context;
+    const clone: ErrorContext = { ...context };
+    const redactKeys =
+      /(password|pass|pwd|token|secret|api[_-]?key|auth[_-]?token|access[_-]?token)/i;
+
+    const redact = (obj: unknown): unknown => {
+      if (!obj || typeof obj !== 'object') return obj;
+      if (Array.isArray(obj)) return obj.map(redact);
+      const out: Record<string, unknown> = {};
+      for (const [k, v] of Object.entries(obj as Record<string, unknown>)) {
+        out[k] = redactKeys.test(k) ? '[REDACTED]' : redact(v);
+      }
+      return out;
+    };
+
+    return clone.metadata
+      ? { ...clone, metadata: redact(clone.metadata) as Record<string, unknown> }
+      : clone;
+  }
+
+  private readonly consoleHandler: ErrorHandler = (report: ErrorReport): void => {
+    // Only log to console in development mode
+    if (!this.isProduction) {
+      const message = `[ErrorHandler] ${report.message}`;
+      const data = {
+        id: report.id,
+        context: report.context,
+        originalError: report.originalError,
+      };
+
+      if (report.level === 'error') {
+        // eslint-disable-next-line no-console
+        console.error(message, data);
+      } else if (report.level === 'warning') {
+        // eslint-disable-next-line no-console
+        console.warn(message, data);
+      } else {
+        // eslint-disable-next-line no-console
+        console.info(message, data);
+      }
+    }
   };
 
   private handleGlobalError(event: ErrorEvent): void {
     this.logError(
       'Global JavaScript error',
-      event.error instanceof Error
-        ? event.error
-        : new Error(String(event.error)),
+      event.error instanceof Error ? event.error : new Error(String(event.error)),
       {
         component: 'window',
         action: 'global_error',
@@ -111,9 +144,7 @@ class ErrorHandlerService {
   private handleUnhandledRejection(event: PromiseRejectionEvent): void {
     this.logError(
       'Unhandled Promise rejection',
-      event.reason instanceof Error
-        ? event.reason
-        : new Error(String(event.reason)),
+      event.reason instanceof Error ? event.reason : new Error(String(event.reason)),
       {
         component: 'window',
         action: 'unhandled_rejection',
@@ -151,9 +182,8 @@ class ErrorHandlerService {
       level,
       message,
       originalError: error,
-      context,
-      userAgent:
-        typeof navigator !== 'undefined' ? navigator.userAgent : 'unknown',
+      context: this.redactSensitiveInContext(context),
+      userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'unknown',
       url: typeof window !== 'undefined' ? window.location.href : 'unknown',
       stackTrace: sanitizedError?.stack,
     };
@@ -163,8 +193,9 @@ class ErrorHandlerService {
       try {
         handler(report);
       } catch (handlerError) {
-        // Prevent infinite loops - log handler errors to console only
-        if (import.meta.env.DEV) {
+        // Prevent infinite loops - log handler errors in development only
+        if (!this.isProduction) {
+          // eslint-disable-next-line no-console
           console.error('Error handler failed:', handlerError);
         }
       }
@@ -256,10 +287,7 @@ class ErrorHandlerService {
       "We're having trouble connecting right now. Please check your internet connection.",
     ];
 
-    return (
-      fallback ??
-      genericMessages[Math.floor(Math.random() * genericMessages.length)]
-    );
+    return fallback ?? genericMessages[Math.floor(Math.random() * genericMessages.length)];
   }
 
   // Check if we're in a development environment
@@ -280,11 +308,7 @@ class ErrorHandlerService {
 export const errorHandler = new ErrorHandlerService();
 
 // Convenience functions for common error patterns
-export function logError(
-  message: string,
-  error?: Error,
-  context?: ErrorContext,
-): string {
+export function logError(message: string, error?: Error, context?: ErrorContext): string {
   return errorHandler.logError(message, error, context);
 }
 

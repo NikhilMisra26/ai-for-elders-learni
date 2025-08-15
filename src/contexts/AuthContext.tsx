@@ -2,7 +2,6 @@ import type { ReactNode, ReactElement } from 'react';
 import { createContext, useContext, useState, useEffect, useRef } from 'react';
 import type { VerifyOtpParams } from '@supabase/supabase-js';
 
-import { useKV } from '@/lib/kv';
 import { supabase } from '@/lib/supabaseClient';
 import { upsertProfile, getProfile, updateProfile } from '@/lib/db';
 import {
@@ -12,6 +11,7 @@ import {
   SecurityLogger,
   sanitizeInput,
 } from '@/lib/security';
+import { normalizeError, formatErrorMessage } from '@/lib/errorNormalization';
 
 export interface User {
   id: string;
@@ -35,22 +35,14 @@ interface SecurityState {
 
 interface AuthContextType {
   user: User | null;
-  login: (
-    email: string,
-    password: string,
-  ) => Promise<{ success: boolean; error?: string }>;
+  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   register: (
     email: string,
     password: string,
     name: string,
-  ) => Promise<{ success: boolean; error?: string }>;
-  verifySignupOtp: (
-    email: string,
-    token: string,
-  ) => Promise<{ success: boolean; error?: string }>;
-  resendSignupOtp: (
-    email: string,
-  ) => Promise<{ success: boolean; error?: string }>;
+  ) => Promise<{ success: boolean; error?: string; isDuplicate?: boolean }>;
+  verifySignupOtp: (email: string, token: string) => Promise<{ success: boolean; error?: string }>;
+  resendSignupOtp: (email: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   isLoading: boolean;
   // Removed for subscription removal: updateTier: (tier: 'free' | 'advanced' | 'expert') => void;
@@ -61,12 +53,8 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({
-  children,
-}: {
-  children: ReactNode;
-}): ReactElement {
-  const [user, setUser] = useKV<User | null>('current-user', null);
+export function AuthProvider({ children }: { children: ReactNode }): ReactElement {
+  const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [rateLimiter] = useState(() => new RateLimiter());
   const [securityState, setSecurityState] = useState<SecurityState>({
@@ -80,6 +68,27 @@ export function AuthProvider({
 
   // Initialize Supabase auth listener and hydrate user profile
   useEffect(() => {
+    // Clean up any sensitive data from localStorage on mount
+    if (typeof window !== 'undefined' && window.localStorage) {
+      // Remove any legacy sensitive data keys
+      const sensitiveKeys = [
+        'current-user',
+        'user-subscription',
+        'user-invoices',
+        'user-module-progress',
+        'user-course-progress',
+        'user-activity',
+        'user-learning-stats',
+      ];
+      sensitiveKeys.forEach((key) => {
+        try {
+          window.localStorage.removeItem(key);
+        } catch {
+          // Ignore errors during cleanup
+        }
+      });
+    }
+
     const init = async (): Promise<void> => {
       const { data } = await supabase.auth.getSession();
       const authUser = data.session?.user;
@@ -169,11 +178,7 @@ export function AuthProvider({
     // Set up auth state change listener
     const { data: listener } = supabase.auth.onAuthStateChange((event) => {
       // Only re-init on actual auth state changes, not on token refresh
-      if (
-        event === 'SIGNED_IN' ||
-        event === 'SIGNED_OUT' ||
-        event === 'USER_UPDATED'
-      ) {
+      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'USER_UPDATED') {
         void init();
       }
     });
@@ -187,7 +192,7 @@ export function AuthProvider({
     email: string,
     password: string,
     name: string,
-  ): Promise<{ success: boolean; error?: string }> => {
+  ): Promise<{ success: boolean; error?: string; isDuplicate?: boolean }> => {
     setIsLoading(true);
 
     try {
@@ -204,7 +209,11 @@ export function AuthProvider({
           'warning',
         );
         setIsLoading(false);
-        return { success: false, error: emailValidation.errors[0] };
+        return {
+          success: false,
+          error: emailValidation.errors[0],
+          isDuplicate: false,
+        };
       }
 
       // Validate password
@@ -216,7 +225,11 @@ export function AuthProvider({
           'warning',
         );
         setIsLoading(false);
-        return { success: false, error: passwordValidation.errors[0] };
+        return {
+          success: false,
+          error: passwordValidation.errors[0],
+          isDuplicate: false,
+        };
       }
 
       // Register user with Supabase auth
@@ -225,15 +238,36 @@ export function AuthProvider({
         password,
         options: {
           data: { name: sanitizedName },
-          emailRedirectTo:
-            typeof window !== 'undefined' ? window.location.origin : undefined,
+          emailRedirectTo: typeof window !== 'undefined' ? window.location.origin : undefined,
         },
       });
+
+      // Check for duplicate email indicators
+      // Supabase doesn't return an error for duplicate emails (security feature)
+      // But we can detect it through certain response patterns
+      const isDuplicateEmail =
+        authRes?.user &&
+        (!authRes.user.identities || authRes.user.identities.length === 0) &&
+        !authRes.session; // Duplicate emails won't create a session
+
       if (error || !authRes.user) {
         setIsLoading(false);
         return {
           success: false,
           error: error?.message ?? 'Registration failed',
+          isDuplicate: false,
+        };
+      }
+
+      // If we detected a duplicate email, return a specific response
+      if (isDuplicateEmail) {
+        SecurityLogger.log('registration_duplicate_detected', { email: sanitizedEmail }, 'info');
+        setIsLoading(false);
+        return {
+          success: false,
+          error:
+            'An account with this email may already exist. Please try logging in or use a different email.',
+          isDuplicate: true,
         };
       }
 
@@ -255,20 +289,19 @@ export function AuthProvider({
       });
 
       setIsLoading(false);
-      return { success: true };
+      return { success: true, isDuplicate: false };
     } catch (error) {
+      const normalized = normalizeError(error, 'user_registration');
       SecurityLogger.log(
         'registration_error',
-        { email, error: error instanceof Error ? error.message : 'unknown' },
+        { email, errorCode: normalized.code, requestId: normalized.requestId },
         'error',
       );
       setIsLoading(false);
       return {
         success: false,
-        error:
-          error instanceof Error && error.message
-            ? error.message
-            : 'Registration failed. Please try again.',
+        error: formatErrorMessage(normalized),
+        isDuplicate: false,
       };
     }
   };
@@ -302,20 +335,18 @@ export function AuthProvider({
 
       setIsLoading(false);
       return { success: true };
-    } catch (e) {
+    } catch (error) {
+      const normalized = normalizeError(error, 'verify_signup_otp');
       setIsLoading(false);
       return {
         success: false,
-        error:
-          e instanceof Error && e.message ? e.message : 'Failed to verify code',
+        error: formatErrorMessage(normalized),
       };
     }
   };
 
   // Resend signup OTP email
-  const resendSignupOtp = async (
-    email: string,
-  ): Promise<{ success: boolean; error?: string }> => {
+  const resendSignupOtp = async (email: string): Promise<{ success: boolean; error?: string }> => {
     try {
       const sanitizedEmail = sanitizeInput(email.toLowerCase());
       const { error } = await supabase.auth.resend({
@@ -324,11 +355,11 @@ export function AuthProvider({
       });
       if (error) return { success: false, error: error.message };
       return { success: true };
-    } catch (e) {
+    } catch (error) {
+      const normalized = normalizeError(error, 'resend_signup_otp');
       return {
         success: false,
-        error:
-          e instanceof Error && e.message ? e.message : 'Failed to resend code',
+        error: formatErrorMessage(normalized),
       };
     }
   };
@@ -341,6 +372,18 @@ export function AuthProvider({
 
     try {
       const sanitizedEmail = sanitizeInput(email.toLowerCase());
+
+      // Added: client-side validation guard to prevent unnecessary auth calls (which produced 400 errors in console)
+      const emailCheck = validateEmail(sanitizedEmail);
+      if (!emailCheck.isValid) {
+        setIsLoading(false);
+        return { success: false, error: emailCheck.errors[0] };
+      }
+      if (!password || password.length === 0) {
+        // Do not treat as a failed attempt for rate limiting – just return a validation error
+        setIsLoading(false);
+        return { success: false, error: 'Please enter your password.' };
+      }
 
       // Check rate limiting
       const rateLimitCheck = rateLimiter.isRateLimited(sanitizedEmail);
@@ -363,11 +406,10 @@ export function AuthProvider({
       }
 
       // Attempt Supabase sign-in
-      const { data: signInData, error: signInError } =
-        await supabase.auth.signInWithPassword({
-          email: sanitizedEmail,
-          password,
-        });
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+        email: sanitizedEmail,
+        password,
+      });
 
       if (signInError || !signInData.user) {
         rateLimiter.recordFailedAttempt(sanitizedEmail);
@@ -400,11 +442,13 @@ export function AuthProvider({
           locked_until: null,
         });
       } catch (err) {
+        const normalized = normalizeError(err, 'profile_update_login');
         SecurityLogger.log(
           'profile_update_failed',
           {
             userId: signInData.user.id,
-            error: err instanceof Error ? err.message : String(err),
+            errorCode: normalized.code,
+            requestId: normalized.requestId,
           },
           'error',
         );
@@ -434,13 +478,14 @@ export function AuthProvider({
       setIsLoading(false);
       return { success: true };
     } catch (error) {
+      const normalized = normalizeError(error, 'user_login');
       SecurityLogger.log(
         'login_error',
-        { email, error: error instanceof Error ? error.message : 'unknown' },
+        { email, errorCode: normalized.code, requestId: normalized.requestId },
         'error',
       );
       setIsLoading(false);
-      return { success: false, error: 'Login failed. Please try again.' };
+      return { success: false, error: formatErrorMessage(normalized) };
     }
   };
 
@@ -508,7 +553,7 @@ export function AuthProvider({
       });
     } else if (user && tier !== 'free') {
       // Log attempt to set non-free tier
-      console.log('Only free tier is currently available');
+      SecurityLogger.log('tier_change_attempt', { userId: user.id, attemptedTier: tier }, 'info');
     }
   };
   // End of removed/added code for subscription removal

@@ -1,14 +1,7 @@
 'use client';
 
 import type { CSSProperties, ComponentProps, ReactElement } from 'react';
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { Slot } from '@radix-ui/react-slot';
 import type { VariantProps } from 'class-variance-authority';
 import { cva } from 'class-variance-authority';
@@ -27,12 +20,7 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet';
 import { Skeleton } from '@/components/ui/skeleton';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 
 const SIDEBAR_COOKIE_NAME = 'sidebar_state';
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7;
@@ -91,8 +79,10 @@ function SidebarProvider({
         _setOpen(openState);
       }
 
-      // This sets the cookie to keep the sidebar state.
-      document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`;
+      // This sets the cookie to keep the sidebar state with secure flags
+      const isProduction = window.location.protocol === 'https:';
+      const secureFlag = isProduction ? '; Secure' : '';
+      document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}; SameSite=Strict${secureFlag}`;
     },
     [setOpenProp, open],
   );
@@ -105,10 +95,7 @@ function SidebarProvider({
   // Adds a keyboard shortcut to toggle the sidebar.
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent): void => {
-      if (
-        event.key === SIDEBAR_KEYBOARD_SHORTCUT &&
-        (event.metaKey || event.ctrlKey)
-      ) {
+      if (event.key === SIDEBAR_KEYBOARD_SHORTCUT && (event.metaKey || event.ctrlKey)) {
         event.preventDefault();
         toggleSidebar();
       }
@@ -288,10 +275,7 @@ function SidebarTrigger({
   );
 }
 
-function SidebarRail({
-  className,
-  ...props
-}: ComponentProps<'button'>): ReactElement {
+function SidebarRail({ className, ...props }: ComponentProps<'button'>): ReactElement {
   const { toggleSidebar } = useSidebar();
 
   return (
@@ -316,10 +300,7 @@ function SidebarRail({
   );
 }
 
-function SidebarInset({
-  className,
-  ...props
-}: ComponentProps<'main'>): ReactElement {
+function SidebarInset({ className, ...props }: ComponentProps<'main'>): ReactElement {
   return (
     <main
       data-slot='sidebar-inset'
@@ -333,10 +314,7 @@ function SidebarInset({
   );
 }
 
-function SidebarInput({
-  className,
-  ...props
-}: ComponentProps<typeof Input>): ReactElement {
+function SidebarInput({ className, ...props }: ComponentProps<typeof Input>): ReactElement {
   return (
     <Input
       data-slot='sidebar-input'
@@ -347,10 +325,7 @@ function SidebarInput({
   );
 }
 
-function SidebarHeader({
-  className,
-  ...props
-}: ComponentProps<'div'>): ReactElement {
+function SidebarHeader({ className, ...props }: ComponentProps<'div'>): ReactElement {
   return (
     <div
       data-slot='sidebar-header'
@@ -361,10 +336,7 @@ function SidebarHeader({
   );
 }
 
-function SidebarFooter({
-  className,
-  ...props
-}: ComponentProps<'div'>): ReactElement {
+function SidebarFooter({ className, ...props }: ComponentProps<'div'>): ReactElement {
   return (
     <div
       data-slot='sidebar-footer'
@@ -375,10 +347,7 @@ function SidebarFooter({
   );
 }
 
-function SidebarSeparator({
-  className,
-  ...props
-}: ComponentProps<typeof Separator>): ReactElement {
+function SidebarSeparator({ className, ...props }: ComponentProps<typeof Separator>): ReactElement {
   return (
     <Separator
       data-slot='sidebar-separator'
@@ -389,10 +358,7 @@ function SidebarSeparator({
   );
 }
 
-function SidebarContent({
-  className,
-  ...props
-}: ComponentProps<'div'>): ReactElement {
+function SidebarContent({ className, ...props }: ComponentProps<'div'>): ReactElement {
   return (
     <div
       data-slot='sidebar-content'
@@ -406,10 +372,7 @@ function SidebarContent({
   );
 }
 
-function SidebarGroup({
-  className,
-  ...props
-}: ComponentProps<'div'>): ReactElement {
+function SidebarGroup({ className, ...props }: ComponentProps<'div'>): ReactElement {
   return (
     <div
       data-slot='sidebar-group'
@@ -464,10 +427,7 @@ function SidebarGroupAction({
   );
 }
 
-function SidebarGroupContent({
-  className,
-  ...props
-}: ComponentProps<'div'>): ReactElement {
+function SidebarGroupContent({ className, ...props }: ComponentProps<'div'>): ReactElement {
   return (
     <div
       data-slot='sidebar-group-content'
@@ -478,10 +438,7 @@ function SidebarGroupContent({
   );
 }
 
-function SidebarMenu({
-  className,
-  ...props
-}: ComponentProps<'ul'>): ReactElement {
+function SidebarMenu({ className, ...props }: ComponentProps<'ul'>): ReactElement {
   return (
     <ul
       data-slot='sidebar-menu'
@@ -492,10 +449,7 @@ function SidebarMenu({
   );
 }
 
-function SidebarMenuItem({
-  className,
-  ...props
-}: ComponentProps<'li'>): ReactElement {
+function SidebarMenuItem({ className, ...props }: ComponentProps<'li'>): ReactElement {
   return (
     <li
       data-slot='sidebar-menu-item'
@@ -610,10 +564,7 @@ function SidebarMenuAction({
   );
 }
 
-function SidebarMenuBadge({
-  className,
-  ...props
-}: ComponentProps<'div'>): ReactElement {
+function SidebarMenuBadge({ className, ...props }: ComponentProps<'div'>): ReactElement {
   return (
     <div
       data-slot='sidebar-menu-badge'
@@ -651,12 +602,7 @@ function SidebarMenuSkeleton({
       className={cn('flex h-8 items-center gap-2 rounded-md px-2', className)}
       {...props}
     >
-      {showIcon && (
-        <Skeleton
-          className='size-4 rounded-md'
-          data-sidebar='menu-skeleton-icon'
-        />
-      )}
+      {showIcon && <Skeleton className='size-4 rounded-md' data-sidebar='menu-skeleton-icon' />}
       <Skeleton
         className='h-4 max-w-(--skeleton-width) flex-1'
         data-sidebar='menu-skeleton-text'
@@ -670,10 +616,7 @@ function SidebarMenuSkeleton({
   );
 }
 
-function SidebarMenuSub({
-  className,
-  ...props
-}: ComponentProps<'ul'>): ReactElement {
+function SidebarMenuSub({ className, ...props }: ComponentProps<'ul'>): ReactElement {
   return (
     <ul
       data-slot='sidebar-menu-sub'
@@ -688,10 +631,7 @@ function SidebarMenuSub({
   );
 }
 
-function SidebarMenuSubItem({
-  className,
-  ...props
-}: ComponentProps<'li'>): ReactElement {
+function SidebarMenuSubItem({ className, ...props }: ComponentProps<'li'>): ReactElement {
   return (
     <li
       data-slot='sidebar-menu-sub-item'

@@ -1,4 +1,4 @@
-import type { ReactElement } from 'react';
+import React, { useCallback, type ReactElement } from 'react';
 import { House, ArrowLeft, BookOpen } from '@phosphor-icons/react';
 
 import { Button } from '@/components/ui/button';
@@ -8,18 +8,18 @@ interface NotFoundPageProps {
   onNavigate: (page: string) => void;
 }
 
-export function NotFoundPage({ onNavigate }: NotFoundPageProps): ReactElement {
-  const handleGoHome = (): void => {
+function NotFoundPageComponent({ onNavigate }: NotFoundPageProps): ReactElement {
+  const handleGoHome = useCallback((): void => {
     onNavigate('home');
-  };
+  }, [onNavigate]);
 
-  const handleGoBack = (): void => {
+  const handleGoBack = useCallback((): void => {
     window.history.back();
-  };
+  }, []);
 
-  const handleViewCourses = (): void => {
+  const handleViewCourses = useCallback((): void => {
     onNavigate('courses');
-  };
+  }, [onNavigate]);
 
   return (
     <div className='min-h-[80vh] bg-background flex items-center justify-center p-4'>
@@ -27,9 +27,7 @@ export function NotFoundPage({ onNavigate }: NotFoundPageProps): ReactElement {
         <Card className='text-center'>
           <CardHeader className='pb-4'>
             <div className='mx-auto mb-4 w-24 h-24 bg-muted rounded-full flex items-center justify-center'>
-              <span className='text-4xl font-bold text-muted-foreground'>
-                404
-              </span>
+              <span className='text-4xl font-bold text-muted-foreground'>404</span>
             </div>
             <CardTitle className='text-2xl font-semibold text-foreground mb-2'>
               Page Not Found
@@ -38,12 +36,11 @@ export function NotFoundPage({ onNavigate }: NotFoundPageProps): ReactElement {
           <CardContent className='space-y-6'>
             <div className='text-lg text-muted-foreground max-w-lg mx-auto leading-relaxed'>
               <p className='mb-4'>
-                We&apos;re sorry, but we couldn&apos;t find the page you&apos;re
-                looking for.
+                We&apos;re sorry, but we couldn&apos;t find the page you&apos;re looking for.
               </p>
               <p>
-                This might happen if you clicked on an old link or typed the web
-                address incorrectly.
+                This might happen if you clicked on an old link or typed the web address
+                incorrectly.
               </p>
             </div>
 
@@ -83,8 +80,7 @@ export function NotFoundPage({ onNavigate }: NotFoundPageProps): ReactElement {
 
             <div className='pt-4 border-t border-border'>
               <p className='text-sm text-muted-foreground'>
-                Need help? Contact our support team if you continue to have
-                problems.
+                Need help? Contact our support team if you continue to have problems.
               </p>
             </div>
           </CardContent>
@@ -93,3 +89,6 @@ export function NotFoundPage({ onNavigate }: NotFoundPageProps): ReactElement {
     </div>
   );
 }
+
+// Memoized export for performance optimization
+export const NotFoundPage = React.memo(NotFoundPageComponent);

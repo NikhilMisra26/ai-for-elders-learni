@@ -3,6 +3,7 @@ import { toast } from 'sonner';
 import { EnvelopeSimple, Key } from '@phosphor-icons/react';
 import type { ReactElement } from 'react';
 
+import { normalizeError, formatErrorMessage } from '@/lib/errorNormalization';
 import {
   Dialog,
   DialogContent,
@@ -56,8 +57,7 @@ export function ForgotPasswordDialog({
       if (error) {
         // Don't expose whether email exists for security
         toast.error('Failed to send reset email', {
-          description:
-            'If an account exists with this email, you will receive a reset link',
+          description: 'If an account exists with this email, you will receive a reset link',
         });
       } else {
         setEmailSent(true);
@@ -71,9 +71,9 @@ export function ForgotPasswordDialog({
         }, 3000);
       }
     } catch (error) {
-      console.error('Password reset error:', error);
-      toast.error('An unexpected error occurred', {
-        description: 'Please try again later',
+      const normalized = normalizeError(error, 'password_reset_request');
+      toast.error('Password reset failed', {
+        description: formatErrorMessage(normalized),
       });
     } finally {
       setIsLoading(false);
@@ -95,7 +95,14 @@ export function ForgotPasswordDialog({
   };
 
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
+    <Dialog
+      open={open}
+      onOpenChange={(newOpen) => {
+        if (!newOpen && !isLoading) {
+          handleClose();
+        }
+      }}
+    >
       <DialogContent className='sm:max-w-[425px]'>
         <DialogHeader>
           <DialogTitle className='flex items-center gap-2'>
@@ -103,8 +110,7 @@ export function ForgotPasswordDialog({
             Reset Password
           </DialogTitle>
           <DialogDescription>
-            Enter your email address and we&apos;ll send you a link to reset
-            your password
+            Enter your email address and we&apos;ll send you a link to reset your password
           </DialogDescription>
         </DialogHeader>
 
@@ -135,12 +141,7 @@ export function ForgotPasswordDialog({
             </div>
 
             <DialogFooter>
-              <Button
-                type='button'
-                variant='outline'
-                onClick={handleClose}
-                disabled={isLoading}
-              >
+              <Button type='button' variant='outline' onClick={handleClose} disabled={isLoading}>
                 Cancel
               </Button>
               <Button
@@ -164,8 +165,7 @@ export function ForgotPasswordDialog({
               </p>
               <p className='font-medium'>{email}</p>
               <p className='text-sm text-muted-foreground mt-4'>
-                Please check your email and follow the instructions to reset
-                your password.
+                Please check your email and follow the instructions to reset your password.
               </p>
               <p className='text-xs text-muted-foreground mt-2'>
                 Didn&apos;t receive the email? Check your spam folder.

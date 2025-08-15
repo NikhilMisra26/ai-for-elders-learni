@@ -4,21 +4,15 @@ import { Check, CaretDown, CaretUp } from '@phosphor-icons/react';
 
 import { cn } from '@/lib/utils';
 
-function Select({
-  ...props
-}: ComponentProps<typeof SelectPrimitive.Root>): ReactElement {
+function Select({ ...props }: ComponentProps<typeof SelectPrimitive.Root>): ReactElement {
   return <SelectPrimitive.Root data-slot='select' {...props} />;
 }
 
-function SelectGroup({
-  ...props
-}: ComponentProps<typeof SelectPrimitive.Group>): ReactElement {
+function SelectGroup({ ...props }: ComponentProps<typeof SelectPrimitive.Group>): ReactElement {
   return <SelectPrimitive.Group data-slot='select-group' {...props} />;
 }
 
-function SelectValue({
-  ...props
-}: ComponentProps<typeof SelectPrimitive.Value>): ReactElement {
+function SelectValue({ ...props }: ComponentProps<typeof SelectPrimitive.Value>): ReactElement {
   return <SelectPrimitive.Value data-slot='select-value' {...props} />;
 }
 
@@ -140,10 +134,7 @@ function SelectScrollUpButton({
   return (
     <SelectPrimitive.ScrollUpButton
       data-slot='select-scroll-up-button'
-      className={cn(
-        'flex cursor-default items-center justify-center py-1',
-        className,
-      )}
+      className={cn('flex cursor-default items-center justify-center py-1', className)}
       {...props}
     >
       <CaretUp className='size-4' />
@@ -158,10 +149,7 @@ function SelectScrollDownButton({
   return (
     <SelectPrimitive.ScrollDownButton
       data-slot='select-scroll-down-button'
-      className={cn(
-        'flex cursor-default items-center justify-center py-1',
-        className,
-      )}
+      className={cn('flex cursor-default items-center justify-center py-1', className)}
       {...props}
     >
       <CaretDown className='size-4' />

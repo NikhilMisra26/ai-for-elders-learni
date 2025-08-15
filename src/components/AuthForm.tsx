@@ -1,32 +1,25 @@
-import { useState, type ReactElement, type FormEvent } from 'react';
+import React, { useState, useEffect, type ReactElement, type FormEvent } from 'react';
 import { Eye, EyeSlash, Shield, Warning, Key, X } from '@phosphor-icons/react';
 import { toast } from 'sonner';
 
+import { normalizeError } from '@/lib/errorNormalization';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/contexts/AuthContext';
-import {
-  InputOTP,
-  InputOTPGroup,
-  InputOTPSlot,
-} from '@/components/ui/input-otp';
+import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
 import { validatePassword, validateEmail } from '@/lib/security';
 import { errorHandler } from '@/lib/errorHandler';
 import { ForgotPasswordDialog } from '@/components/ForgotPasswordDialog';
+import { EmailAlreadyExistsDialog } from '@/components/EmailAlreadyExistsDialog';
+import { checkPasswordWithWarning } from '@/lib/breachDetection';
 
 interface AuthFormProps {
   onClose: () => void;
 }
 
-export function AuthForm({ onClose }: AuthFormProps): ReactElement {
+function AuthFormComponent({ onClose }: AuthFormProps): ReactElement {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -36,18 +29,45 @@ export function AuthForm({ onClose }: AuthFormProps): ReactElement {
   const [otp, setOtp] = useState('');
   const [resendCooldown, setResendCooldown] = useState(0);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
-  const {
-    login,
-    register,
-    verifySignupOtp,
-    resendSignupOtp,
-    isLoading,
-    securityState,
-  } = useAuth();
+  const [showDuplicateEmailDialog, setShowDuplicateEmailDialog] = useState(false);
+  const [breachWarning, setBreachWarning] = useState('');
+  const [isCheckingBreach, setIsCheckingBreach] = useState(false);
+  const { login, register, verifySignupOtp, resendSignupOtp, isLoading, securityState } = useAuth();
 
   // Real-time password validation for registration
   const passwordValidation = isLogin ? null : validatePassword(password);
   const emailValidation = email ? validateEmail(email) : null;
+
+  // Check for password breaches when password changes (registration only)
+  useEffect(() => {
+    if (!isLogin && password && password.length >= 8) {
+      const checkBreach = async (): Promise<void> => {
+        setIsCheckingBreach(true);
+        try {
+          const { warning } = await checkPasswordWithWarning(password);
+          setBreachWarning(warning);
+        } catch (error) {
+          // Silently fail breach check - don't expose error to user
+          normalizeError(error, 'password_breach_check');
+          setBreachWarning('');
+        } finally {
+          setIsCheckingBreach(false);
+        }
+      };
+
+      // Debounce the breach check
+      const timer = setTimeout(() => {
+        void checkBreach();
+      }, 500);
+
+      return (): void => {
+        clearTimeout(timer);
+      };
+    }
+
+    setBreachWarning('');
+    return undefined;
+  }, [password, isLogin]);
 
   const getPasswordStrengthColor = (): string => {
     if (!passwordValidation) return '';
@@ -86,15 +106,16 @@ export function AuthForm({ onClose }: AuthFormProps): ReactElement {
 
     // Check rate limiting
     if (securityState.isLocked) {
-      toast.error(
-        `Account temporarily locked. Try again in ${securityState.lockoutTime} minutes.`,
-      );
+      toast.error(`Account temporarily locked. Try again in ${securityState.lockoutTime} minutes.`);
       return;
     }
 
     try {
       if (isLogin) {
         const result = await login(email, password);
+        // Clear password immediately after use for security
+        setPassword('');
+
         if (result.success) {
           toast.success('Welcome back!');
           onClose();
@@ -103,13 +124,15 @@ export function AuthForm({ onClose }: AuthFormProps): ReactElement {
         }
       } else {
         const result = await register(email, password, name);
+
+        // Clear password immediately after use for security
+        setPassword('');
+
         if (result.success) {
           setShowOtpStep(true);
           setOtp('');
           setResendCooldown(30);
-          toast.success(
-            'We sent a 6‑digit code to your email. Enter it below to verify.',
-          );
+          toast.success('We sent a 6‑digit code to your email. Enter it below to verify.');
           // start cooldown timer
           const interval = setInterval(() => {
             setResendCooldown((s) => {
@@ -120,6 +143,12 @@ export function AuthForm({ onClose }: AuthFormProps): ReactElement {
               return s - 1;
             });
           }, 1000);
+        } else if (result.isDuplicate) {
+          // Handle duplicate email case
+          setShowDuplicateEmailDialog(true);
+          // Clear sensitive data but keep email for convenience
+          setName('');
+          // Keep email for user convenience when switching to sign in
         } else {
           toast.error(result.error ?? 'Registration failed');
         }
@@ -134,9 +163,7 @@ export function AuthForm({ onClose }: AuthFormProps): ReactElement {
             email,
             hasName: !!name,
             emailValid: emailValidation?.isValid ?? false,
-            passwordValid: !isLogin
-              ? (passwordValidation?.isValid ?? false)
-              : true,
+            passwordValid: !isLogin ? (passwordValidation?.isValid ?? false) : true,
           },
         },
       );
@@ -184,6 +211,23 @@ export function AuthForm({ onClose }: AuthFormProps): ReactElement {
     }
   };
 
+  const handleDuplicateEmailForgotPassword = (): void => {
+    setShowDuplicateEmailDialog(false);
+    setShowForgotPassword(true);
+  };
+
+  const handleDuplicateEmailReturnToSignIn = (): void => {
+    setShowDuplicateEmailDialog(false);
+    setIsLogin(true);
+    // Reset form but keep email for user convenience
+    setName('');
+    setPassword('');
+    setOtp('');
+    setShowOtpStep(false);
+    setBreachWarning('');
+    setIsCheckingBreach(false);
+  };
+
   return (
     <Card className='w-full max-w-md mx-auto relative'>
       {/* Close button */}
@@ -200,9 +244,7 @@ export function AuthForm({ onClose }: AuthFormProps): ReactElement {
       <CardHeader className='text-center'>
         <div className='flex items-center justify-center gap-2 mb-2'>
           <Shield className='h-6 w-6 text-primary' />
-          <CardTitle className='text-2xl'>
-            {isLogin ? 'Welcome Back' : 'Create Account'}
-          </CardTitle>
+          <CardTitle className='text-2xl'>{isLogin ? 'Welcome Back' : 'Create Account'}</CardTitle>
         </div>
         <CardDescription>
           {showOtpStep
@@ -218,25 +260,22 @@ export function AuthForm({ onClose }: AuthFormProps): ReactElement {
             <div className='flex items-center gap-2 text-red-700'>
               <Warning className='h-4 w-4' />
               <span className='text-sm font-medium'>
-                Account temporarily locked ({securityState.lockoutTime}m
-                remaining)
+                Account temporarily locked ({securityState.lockoutTime}m remaining)
               </span>
             </div>
           </div>
         )}
 
-        {isLogin &&
-          securityState.remainingAttempts < 5 &&
-          !securityState.isLocked && (
-            <div className='bg-yellow-50 border border-yellow-200 rounded-lg p-3 mt-3'>
-              <div className='flex items-center gap-2 text-yellow-700'>
-                <Warning className='h-4 w-4' />
-                <span className='text-sm'>
-                  {securityState.remainingAttempts} login attempts remaining
-                </span>
-              </div>
+        {isLogin && securityState.remainingAttempts < 5 && !securityState.isLocked && (
+          <div className='bg-yellow-50 border border-yellow-200 rounded-lg p-3 mt-3'>
+            <div className='flex items-center gap-2 text-yellow-700'>
+              <Warning className='h-4 w-4' />
+              <span className='text-sm'>
+                {securityState.remainingAttempts} login attempts remaining
+              </span>
             </div>
-          )}
+          </div>
+        )}
       </CardHeader>
       <CardContent>
         {showOtpStep ? (
@@ -255,10 +294,7 @@ export function AuthForm({ onClose }: AuthFormProps): ReactElement {
                   ))}
                 </InputOTPGroup>
               </InputOTP>
-              <p className='text-sm text-muted-foreground'>
-                This code expires shortly. If you didn’t request it, you can
-                safely ignore and delete this email.
-              </p>
+              <p className='text-sm text-muted-foreground'>This code expires shortly.</p>
             </div>
             <Button
               type='submit'
@@ -274,9 +310,7 @@ export function AuthForm({ onClose }: AuthFormProps): ReactElement {
                 onClick={() => void handleResend()}
                 disabled={isLoading || resendCooldown > 0}
               >
-                {resendCooldown > 0
-                  ? `Resend code in ${resendCooldown}s`
-                  : 'Resend code'}
+                {resendCooldown > 0 ? `Resend code in ${resendCooldown}s` : 'Resend code'}
               </Button>
             </div>
             <div className='text-center'>
@@ -318,19 +352,13 @@ export function AuthForm({ onClose }: AuthFormProps): ReactElement {
                 placeholder='Enter your email'
                 required
                 className={`h-12 text-base ${
-                  emailValidation && !emailValidation.isValid
-                    ? 'border-red-300'
-                    : ''
+                  emailValidation && !emailValidation.isValid ? 'border-red-300' : ''
                 }`}
                 maxLength={254}
                 aria-describedby={
-                  emailValidation && !emailValidation.isValid
-                    ? 'email-error'
-                    : undefined
+                  emailValidation && !emailValidation.isValid ? 'email-error' : undefined
                 }
-                aria-invalid={
-                  emailValidation && !emailValidation.isValid ? true : undefined
-                }
+                aria-invalid={emailValidation && !emailValidation.isValid ? true : undefined}
               />
               {emailValidation && !emailValidation.isValid && (
                 <p id='email-error' className='text-sm text-red-600'>
@@ -347,31 +375,21 @@ export function AuthForm({ onClose }: AuthFormProps): ReactElement {
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder={
-                    isLogin ? 'Enter your password' : 'Create a strong password'
-                  }
+                  placeholder={isLogin ? 'Enter your password' : 'Create a strong password'}
                   required
                   className={`h-12 text-base pr-12 ${
-                    !isLogin &&
-                    passwordValidation &&
-                    !passwordValidation.isValid
+                    !isLogin && passwordValidation && !passwordValidation.isValid
                       ? 'border-red-300'
                       : ''
                   }`}
                   maxLength={128}
                   aria-describedby={
-                    !isLogin &&
-                    passwordValidation &&
-                    !passwordValidation.isValid
+                    !isLogin && passwordValidation && !passwordValidation.isValid
                       ? 'password-error'
                       : undefined
                   }
                   aria-invalid={
-                    !isLogin &&
-                    passwordValidation &&
-                    !passwordValidation.isValid
-                      ? true
-                      : undefined
+                    !isLogin && passwordValidation && !passwordValidation.isValid ? true : undefined
                   }
                 />
                 <Button
@@ -382,23 +400,15 @@ export function AuthForm({ onClose }: AuthFormProps): ReactElement {
                   className='absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 p-0'
                   aria-label={showPassword ? 'Hide password' : 'Show password'}
                 >
-                  {showPassword ? (
-                    <EyeSlash weight='regular' />
-                  ) : (
-                    <Eye weight='regular' />
-                  )}
+                  {showPassword ? <EyeSlash weight='regular' /> : <Eye weight='regular' />}
                 </Button>
               </div>
 
               {!isLogin && password && (
                 <div className='space-y-2'>
                   <div className='flex items-center gap-2'>
-                    <span className='text-sm text-muted-foreground'>
-                      Password strength:
-                    </span>
-                    <span
-                      className={`text-sm font-medium ${getPasswordStrengthColor()}`}
-                    >
+                    <span className='text-sm text-muted-foreground'>Password strength:</span>
+                    <span className={`text-sm font-medium ${getPasswordStrengthColor()}`}>
                       {passwordValidation?.strength
                         ? passwordValidation.strength.charAt(0).toUpperCase() +
                           passwordValidation.strength.slice(1)
@@ -420,6 +430,23 @@ export function AuthForm({ onClose }: AuthFormProps): ReactElement {
                         ))}
                       </ul>
                     </div>
+                  )}
+
+                  {/* Password breach warning */}
+                  {breachWarning && (
+                    <div className='bg-orange-50 border border-orange-200 rounded-lg p-3'>
+                      <div className='flex items-start gap-2'>
+                        <Warning className='h-4 w-4 text-orange-600 mt-0.5 flex-shrink-0' />
+                        <div className='flex-1'>
+                          <p className='text-sm text-orange-800 font-medium'>Security Warning</p>
+                          <p className='text-sm text-orange-700 mt-1'>{breachWarning}</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {isCheckingBreach && (
+                    <p className='text-sm text-muted-foreground'>Checking password security...</p>
                   )}
                 </div>
               )}
@@ -446,11 +473,7 @@ export function AuthForm({ onClose }: AuthFormProps): ReactElement {
               disabled={((): boolean => {
                 if (isLoading) return true;
                 if (securityState.isLocked) return true;
-                if (
-                  !isLogin &&
-                  passwordValidation &&
-                  passwordValidation.isValid === false
-                )
+                if (!isLogin && passwordValidation && passwordValidation.isValid === false)
                   return true;
                 if (emailValidation?.isValid === false) return true;
                 return false;
@@ -487,21 +510,25 @@ export function AuthForm({ onClose }: AuthFormProps): ReactElement {
             <Shield className='h-4 w-4 text-blue-600 mt-0.5' />
             <div className='text-sm text-blue-800'>
               <p className='font-medium mb-1'>Your security matters</p>
-              <p>
-                We protect your information with industry-standard security
-                measures.
-              </p>
+              <p>We protect your information with industry-standard security measures.</p>
             </div>
           </div>
         </div>
-
       </CardContent>
 
       {/* Forgot Password Dialog */}
-      <ForgotPasswordDialog
-        open={showForgotPassword}
-        onOpenChange={setShowForgotPassword}
+      <ForgotPasswordDialog open={showForgotPassword} onOpenChange={setShowForgotPassword} />
+
+      {/* Email Already Exists Dialog */}
+      <EmailAlreadyExistsDialog
+        open={showDuplicateEmailDialog}
+        onOpenChange={setShowDuplicateEmailDialog}
+        onForgotPassword={handleDuplicateEmailForgotPassword}
+        onReturnToSignIn={handleDuplicateEmailReturnToSignIn}
       />
     </Card>
   );
 }
+
+// Memoized export for performance optimization
+export const AuthForm = React.memo(AuthFormComponent);

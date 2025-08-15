@@ -24,6 +24,7 @@
 - **Duplicate Prevention**: Users can only submit one review
 
 ### 🎨 **Senior-Friendly Design**
+
 - Large fonts and high contrast design for people over 50
 - **Robust Audio narration** with intelligent error handling, smooth state management, and instance isolation
 - Touch-friendly interface with proper target sizes
@@ -70,11 +71,16 @@
 ### Development Commands
 
 ```bash
-pnpm run dev          # Start development server
-pnpm run build        # Build for production
-pnpm run typecheck    # Run TypeScript checking
-pnpm run lint:fix     # Fix linting issues
-pnpm run format       # Format code with Prettier
+pnpm run dev             # Start development server
+pnpm run build           # Build for production
+pnpm run typecheck       # Run TypeScript checking
+pnpm run lint:fix        # Fix linting issues
+pnpm run format          # Format code with Prettier
+
+# Security Commands
+pnpm run security:audit  # Run dependency vulnerability audit
+pnpm run security:check  # Full security check (typecheck + lint + audit)
+pnpm run security:full   # Complete check including format validation
 ```
 
 ## 🗄️ Database Setup
@@ -267,7 +273,35 @@ The platform now uses React Router v7 for seamless course and module navigation:
   - **Better error handling**: Graceful handling of 'interrupted' errors and proper cleanup on component unmount
   - **Pause/Resume intelligence**: Improved logic to resume paused speech instead of restarting unnecessarily
 
-## 🔧 Code Quality Improvements
+## 🔧 Code Quality & Security Improvements
+
+### CI/CD Security Gates
+
+The project now includes comprehensive security automation via GitHub Actions:
+
+#### **Security Workflow** (`.github/workflows/security.yml`)
+
+- **Dependency Auditing**: Automated vulnerability scanning with `pnpm audit`
+- **Type Safety**: TypeScript type checking on every commit
+- **Code Quality**: ESLint and Prettier validation
+- **Secret Scanning**: TruffleHog integration for credential detection
+- **Bundle Size Monitoring**: 5MB limit enforcement with detailed analysis
+- **License Compliance**: Automated license checking for legal compliance
+- **Environment Variable Security**: Detection of hardcoded secrets in code
+
+#### **Automated Triggers**
+
+- ✅ Every push to main branch
+- ✅ All pull requests
+- ✅ Weekly scheduled dependency audits
+- ✅ Manual workflow dispatch for on-demand checks
+
+#### **Security Thresholds**
+
+- **Vulnerabilities**: Zero tolerance for moderate+ severity issues
+- **Bundle Size**: Maximum 5MB production bundle
+- **Secrets**: No hardcoded credentials or API keys allowed
+- **Type Safety**: Strict TypeScript checking required
 
 ### Production-Ready Console Statements
 

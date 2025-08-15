@@ -22,13 +22,7 @@ import {
 
 import { Button } from '@/components/ui/button';
 import { BrandName } from '@/components/BrandName';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/contexts/AuthContext';
@@ -39,10 +33,7 @@ interface HomePageProps {
   onAuthClick: () => void;
 }
 
-export function HomePage({
-  onNavigate,
-  onAuthClick,
-}: HomePageProps): ReactElement {
+export function HomePage({ onNavigate, onAuthClick }: HomePageProps): ReactElement {
   const { user } = useAuth();
 
   const heroFeatures = [
@@ -167,19 +158,14 @@ export function HomePage({
       <section className='py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-primary/10 via-background to-accent/5'>
         <div className='max-w-6xl mx-auto'>
           <div className='text-center max-w-4xl mx-auto'>
-            <h1
-              id='main-content'
-              className='text-5xl sm:text-6xl font-bold text-foreground mb-6'
-            >
+            <h1 id='main-content' className='text-5xl sm:text-6xl font-bold text-foreground mb-6'>
               Master AI Technology
             </h1>
-            <p className='text-2xl font-semibold text-primary mb-4'>
-              Designed for Adults 50+
-            </p>
+            <p className='text-2xl font-semibold text-primary mb-4'>Designed for Adults 50+</p>
             <p className='text-xl text-muted-foreground mb-8 max-w-3xl mx-auto leading-relaxed'>
-              Learn to use artificial intelligence safely and confidently with
-              courses designed specifically for your needs. No technical
-              experience required – just curiosity and a willingness to learn.
+              Learn to use artificial intelligence safely and confidently with courses designed
+              specifically for your needs. No technical experience required – just curiosity and a
+              willingness to learn.
             </p>
 
             {/* Hero Features */}
@@ -208,11 +194,7 @@ export function HomePage({
                 </Button>
               ) : (
                 <>
-                  <Button
-                    size='lg'
-                    onClick={onAuthClick}
-                    className='text-lg px-8 py-6 h-auto'
-                  >
+                  <Button size='lg' onClick={onAuthClick} className='text-lg px-8 py-6 h-auto'>
                     Start Free Course
                     <Play className='ml-2' />
                   </Button>
@@ -251,9 +233,7 @@ export function HomePage({
           <div className='grid grid-cols-2 md:grid-cols-4 gap-8 text-center'>
             {stats.map((stat) => (
               <div key={stat.label}>
-                <div className='text-3xl font-bold text-primary mb-2'>
-                  {stat.number}
-                </div>
+                <div className='text-3xl font-bold text-primary mb-2'>{stat.number}</div>
                 <div className='text-muted-foreground'>{stat.label}</div>
               </div>
             ))}
@@ -269,9 +249,8 @@ export function HomePage({
               Why Choose <BrandName variant='short' />?
             </h2>
             <p className='text-xl text-muted-foreground max-w-3xl mx-auto'>
-              We understand the unique needs of adult learners and have designed
-              every aspect of our platform with accessibility, safety, and
-              practical application in mind.
+              We understand the unique needs of adult learners and have designed every aspect of our
+              platform with accessibility, safety, and practical application in mind.
             </p>
           </div>
 
@@ -285,9 +264,7 @@ export function HomePage({
                   <CardTitle className='text-xl'>{feature.title}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className='text-muted-foreground leading-relaxed'>
-                    {feature.description}
-                  </p>
+                  <p className='text-muted-foreground leading-relaxed'>{feature.description}</p>
                 </CardContent>
               </Card>
             ))}
@@ -299,13 +276,10 @@ export function HomePage({
       <section className='py-20 px-4 sm:px-6 lg:px-8 bg-muted/20'>
         <div className='max-w-6xl mx-auto'>
           <div className='text-center mb-16'>
-            <h2 className='text-4xl font-bold mb-4'>
-              Choose Your Learning Path
-            </h2>
+            <h2 className='text-4xl font-bold mb-4'>Choose Your Learning Path</h2>
             <p className='text-xl text-muted-foreground max-w-3xl mx-auto'>
-              Start with our free course and upgrade anytime to access advanced
-              content. All plans include our senior-friendly design and
-              dedicated support.
+              Start with our free course and upgrade anytime to access advanced content. All plans
+              include our senior-friendly design and dedicated support.
             </p>
           </div>
 
@@ -326,14 +300,10 @@ export function HomePage({
                   <div className='text-4xl font-bold text-primary'>
                     {formatPrice(plan.price)}
                     {plan.price > 0 && (
-                      <span className='text-lg text-muted-foreground'>
-                        /month
-                      </span>
+                      <span className='text-lg text-muted-foreground'>/month</span>
                     )}
                   </div>
-                  <CardDescription className='text-base'>
-                    {plan.description}
-                  </CardDescription>
+                  <CardDescription className='text-base'>{plan.description}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <ul className='space-y-3 mb-6'>
@@ -347,9 +317,7 @@ export function HomePage({
                   <Button
                     className='w-full'
                     variant={plan.popular ? 'default' : 'outline'}
-                    onClick={
-                      user ? (): void => onNavigate('account') : onAuthClick
-                    }
+                    onClick={user ? (): void => onNavigate('account') : onAuthClick}
                   >
                     {plan.ctaText}
                   </Button>
@@ -366,34 +334,27 @@ export function HomePage({
           <div className='text-center mb-16'>
             <h2 className='text-4xl font-bold mb-4'>What Our Learners Say</h2>
             <p className='text-xl text-muted-foreground'>
-              Join thousands of adults who are successfully learning AI with our
-              courses
+              Join thousands of adults who are successfully learning AI with our courses
             </p>
           </div>
 
           <div className='grid md:grid-cols-3 gap-8'>
             {testimonials.map((testimonial) => (
-              <Card
-                key={`${testimonial.name}-${testimonial.location}`}
-                className='h-full'
-              >
+              <Card key={`${testimonial.name}-${testimonial.location}`} className='h-full'>
                 <CardHeader>
                   <div className='flex items-center gap-1 mb-2'>
-                    {Array.from(
-                      { length: testimonial.rating },
-                      (_, i) => i + 1,
-                    ).map((starNumber) => (
-                      <Star
-                        key={`${testimonial.name.replace(/\s+/g, '')}-star${starNumber}`}
-                        className='w-5 h-5 text-yellow-500'
-                        weight='fill'
-                      />
-                    ))}
+                    {Array.from({ length: testimonial.rating }, (_, i) => i + 1).map(
+                      (starNumber) => (
+                        <Star
+                          key={`${testimonial.name.replace(/\s+/g, '')}-star${starNumber}`}
+                          className='w-5 h-5 text-yellow-500'
+                          weight='fill'
+                        />
+                      ),
+                    )}
                   </div>
                   <div>
-                    <CardTitle className='text-lg'>
-                      {testimonial.name}
-                    </CardTitle>
+                    <CardTitle className='text-lg'>{testimonial.name}</CardTitle>
                     <CardDescription>{testimonial.location}</CardDescription>
                     <Badge variant='secondary' className='mt-2'>
                       {testimonial.course}
@@ -414,13 +375,10 @@ export function HomePage({
       {/* Final CTA Section */}
       <section className='py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-primary/10 to-accent/10'>
         <div className='max-w-4xl mx-auto text-center'>
-          <h2 className='text-4xl font-bold mb-4'>
-            Ready to Start Your AI Journey?
-          </h2>
+          <h2 className='text-4xl font-bold mb-4'>Ready to Start Your AI Journey?</h2>
           <p className='text-xl text-muted-foreground mb-8'>
-            Join our community of lifelong learners and discover how AI can
-            enhance your daily life. Start with our free course today – no
-            technical experience required.
+            Join our community of lifelong learners and discover how AI can enhance your daily life.
+            Start with our free course today – no technical experience required.
           </p>
 
           <div className='flex flex-col sm:flex-row gap-4 justify-center'>
@@ -446,11 +404,7 @@ export function HomePage({
               </>
             ) : (
               <>
-                <Button
-                  size='lg'
-                  onClick={onAuthClick}
-                  className='text-lg px-8 py-6 h-auto'
-                >
+                <Button size='lg' onClick={onAuthClick} className='text-lg px-8 py-6 h-auto'>
                   Start Learning Free
                   <ArrowRight className='ml-2' />
                 </Button>

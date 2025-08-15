@@ -58,7 +58,7 @@ When invoked, you must follow these steps:
 
 8. **Implement Advanced Features**
    - Magic link authentication option
-   - Multi-factor authentication setup
+   - MFA authentication setup
    - Social OAuth provider configuration
    - Session timeout and refresh logic
    - Remember me functionality

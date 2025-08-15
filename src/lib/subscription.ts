@@ -1,11 +1,6 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
-import { useKV } from './kv';
-import {
-  addInvoice as dbAddInvoice,
-  getUserSubscription,
-  upsertSubscription,
-} from './db';
+import { addInvoice as dbAddInvoice, getUserSubscription, upsertSubscription } from './db';
 import { SecurityLogger } from './security';
 import { errorHandler } from './errorHandler';
 
@@ -121,23 +116,17 @@ export function useSubscription(): {
   isInGracePeriod: () => boolean;
   getDaysUntilExpiry: () => number | null;
   startTrial: (planId: 'advanced' | 'expert') => void;
-  upgradeToPaid: (
-    planId: 'advanced' | 'expert',
-    paymentMethod?: PaymentMethod,
-  ) => void;
+  upgradeToPaid: (planId: 'advanced' | 'expert', paymentMethod?: PaymentMethod) => void;
   cancelSubscription: (immediate?: boolean) => void;
   reactivateSubscription: () => void;
 } {
   const { user } = useAuth();
-  const [subscription, setSubscription] = useKV<UserSubscription>(
-    'user-subscription',
-    {
-      planId: 'free',
-      status: 'active',
-      startDate: new Date().toISOString(),
-      autoRenew: true,
-    },
-  );
+  const [subscription, setSubscription] = useState<UserSubscription>({
+    planId: 'free',
+    status: 'active',
+    startDate: new Date().toISOString(),
+    autoRenew: true,
+  });
 
   // Hydrate from Supabase when logged in
   useEffect(() => {
@@ -180,27 +169,27 @@ export function useSubscription(): {
   }, [user, setSubscription]);
 
   const updateSubscription = (updates: Partial<UserSubscription>): void => {
-    setSubscription((current) => ({
-      ...current,
-      ...updates,
-    }));
+    // Compute next state once to avoid race condition
+    const nextState: UserSubscription = { ...subscription, ...updates };
+
+    // Update local state
+    setSubscription(nextState);
 
     // Persist if logged in
     if (user) {
-      const base: UserSubscription = { ...subscription, ...updates };
       upsertSubscription({
         user_id: user.id,
-        plan_id: base.planId,
-        status: base.status,
-        start_date: base.startDate,
-        end_date: base.endDate ?? null,
-        next_billing_date: base.nextBillingDate ?? null,
-        trial_end_date: base.trialEndDate ?? null,
-        grace_period_end: base.gracePeriodEnd ?? null,
-        payment_brand: base.paymentMethod?.brand ?? null,
-        payment_last4: base.paymentMethod?.last4 ?? null,
-        cancel_at_period_end: base.cancelAtPeriodEnd ?? false,
-        auto_renew: base.autoRenew,
+        plan_id: nextState.planId,
+        status: nextState.status,
+        start_date: nextState.startDate,
+        end_date: nextState.endDate ?? null,
+        next_billing_date: nextState.nextBillingDate ?? null,
+        trial_end_date: nextState.trialEndDate ?? null,
+        grace_period_end: nextState.gracePeriodEnd ?? null,
+        payment_brand: nextState.paymentMethod?.brand ?? null,
+        payment_last4: nextState.paymentMethod?.last4 ?? null,
+        cancel_at_period_end: nextState.cancelAtPeriodEnd ?? false,
+        auto_renew: nextState.autoRenew,
       }).catch((error) => {
         // Log both to security logger and error handler for comprehensive tracking
         SecurityLogger.log('upsertSubscription failed', { error }, 'error');
@@ -210,8 +199,8 @@ export function useSubscription(): {
           {
             userId: user.id,
             metadata: {
-              planId: base.planId,
-              status: base.status,
+              planId: nextState.planId,
+              status: nextState.status,
               operation: 'upsert_subscription',
             },
           },
@@ -222,8 +211,7 @@ export function useSubscription(): {
 
   const getCurrentPlan = (): SubscriptionPlan => {
     return (
-      subscriptionPlans.find((plan) => plan.id === subscription.planId) ??
-      subscriptionPlans[0]
+      subscriptionPlans.find((plan) => plan.id === subscription.planId) ?? subscriptionPlans[0]
     );
   };
 
@@ -278,17 +266,14 @@ export function useSubscription(): {
     });
     */
     // Added for subscription removal: no-op function
-    console.log('Trial functionality temporarily disabled');
+    // Trial functionality temporarily disabled
     return;
   };
   // End of removed/added code for subscription removal
 
   // Start of removed/added code for subscription removal
   // Removed for subscription removal: upgradeToPaid function implementation
-  const upgradeToPaid = (
-    _planId: 'advanced' | 'expert',
-    _paymentMethod?: PaymentMethod,
-  ): void => {
+  const upgradeToPaid = (_planId: 'advanced' | 'expert', _paymentMethod?: PaymentMethod): void => {
     /*
     const nextBillingDate = new Date();
     nextBillingDate.setMonth(nextBillingDate.getMonth() + 1);
@@ -309,7 +294,7 @@ export function useSubscription(): {
     });
     */
     // Added for subscription removal: no-op function
-    console.log('Upgrade functionality temporarily disabled');
+    // Upgrade functionality temporarily disabled
     return;
   };
   // End of removed/added code for subscription removal
@@ -368,7 +353,6 @@ export async function simulatePaymentFlow(_planId: string): Promise<{
     // Simulate payment processing delay
     setTimeout((): void => {
       // Use planId for consistent simulation based on plan
-      console.debug(`Simulating payment for plan: ${planId}`);
       // Simulate 95% success rate
       const success = Math.random() > 0.05;
 
@@ -395,8 +379,7 @@ export async function simulatePaymentFlow(_planId: string): Promise<{
   // Added for subscription removal: return failure immediately
   return Promise.resolve({
     success: false,
-    error:
-      'Payment functionality is currently disabled. Only free tier is available.',
+    error: 'Payment functionality is currently disabled. Only free tier is available.',
   });
 }
 // End of removed/added code for subscription removal
@@ -409,9 +392,7 @@ export function formatBillingPeriod(period: 'month' | 'year'): string {
   return period === 'month' ? '/month' : '/year';
 }
 
-export function getPlanFeatures(
-  planId: 'free' | 'advanced' | 'expert',
-): string[] {
+export function getPlanFeatures(planId: 'free' | 'advanced' | 'expert'): string[] {
   const plan = subscriptionPlans.find((p) => p.id === planId);
   return plan?.features ?? [];
 }
@@ -419,10 +400,8 @@ export function getPlanFeatures(
 export function getUpgradeRecommendation(
   currentPlan: 'free' | 'advanced' | 'expert',
 ): SubscriptionPlan | null {
-  if (currentPlan === 'free')
-    return subscriptionPlans.find((p) => p.id === 'advanced') ?? null;
-  if (currentPlan === 'advanced')
-    return subscriptionPlans.find((p) => p.id === 'expert') ?? null;
+  if (currentPlan === 'free') return subscriptionPlans.find((p) => p.id === 'advanced') ?? null;
+  if (currentPlan === 'advanced') return subscriptionPlans.find((p) => p.id === 'expert') ?? null;
   return null;
 }
 
@@ -440,7 +419,7 @@ export function useInvoiceHistory(): {
   invoices: Invoice[];
   addInvoice: (planId: 'advanced' | 'expert', amount: number) => void;
 } {
-  const [invoices, setInvoices] = useKV<Invoice[]>('user-invoices', []);
+  const [invoices, setInvoices] = useState<Invoice[]>([]);
   const { user } = useAuth();
 
   useEffect(() => {
@@ -457,7 +436,7 @@ export function useInvoiceHistory(): {
       status: 'paid',
     };
 
-    setInvoices((current) => [newInvoice, ...current].slice(0, 12)); // Keep last 12 invoices
+    setInvoices((current: Invoice[]) => [newInvoice, ...current].slice(0, 12)); // Keep last 12 invoices
 
     if (user) {
       dbAddInvoice({

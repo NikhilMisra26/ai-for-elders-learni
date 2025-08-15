@@ -188,36 +188,28 @@ Provide these test cards for development:
 ### Webhook Signature Verification
 
 ```typescript
-app.post(
-  '/webhook',
-  express.raw({ type: 'application/json' }),
-  async (req, res) => {
-    const sig = req.headers['stripe-signature'];
-    let event;
+app.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
+  const sig = req.headers['stripe-signature'];
+  let event;
 
-    try {
-      event = stripe.webhooks.constructEvent(
-        req.body,
-        sig,
-        process.env.STRIPE_WEBHOOK_SECRET,
-      );
-    } catch (err) {
-      console.error('Webhook signature verification failed:', err);
-      return res.status(400).send(`Webhook Error: ${err.message}`);
-    }
+  try {
+    event = stripe.webhooks.constructEvent(req.body, sig, process.env.STRIPE_WEBHOOK_SECRET);
+  } catch (err) {
+    console.error('Webhook signature verification failed:', err);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
 
-    // Handle the event
-    switch (event.type) {
-      case 'checkout.session.completed':
-        // Handle successful payment
-        break;
-      default:
-        console.log(`Unhandled event type ${event.type}`);
-    }
+  // Handle the event
+  switch (event.type) {
+    case 'checkout.session.completed':
+      // Handle successful payment
+      break;
+    default:
+      console.log(`Unhandled event type ${event.type}`);
+  }
 
-    res.json({ received: true });
-  },
-);
+  res.json({ received: true });
+});
 ```
 
 ### Checkout Session Creation

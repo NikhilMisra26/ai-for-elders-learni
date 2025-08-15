@@ -36,20 +36,13 @@ import {
   announceToScreenReader,
 } from '@/lib/audioNarration';
 import { errorHandler } from '@/lib/errorHandler';
-import {
-  getCourseById,
-  getModuleById,
-  getNextModule,
-  getPreviousModule,
-} from '@/lib/courseData';
+import { getCourseById, getModuleById, getNextModule, getPreviousModule } from '@/lib/courseData';
 
 interface ModulePageProps {
   courseType?: 'basic' | 'advanced' | 'expert';
 }
 
-export function ModulePage({
-  courseType: propCourseType,
-}: ModulePageProps): ReactElement {
+export function ModulePage({ courseType: propCourseType }: ModulePageProps): ReactElement {
   const { courseType: paramCourseType, moduleId: paramModuleId } = useParams<{
     courseType: string;
     moduleId: string;
@@ -80,8 +73,7 @@ export function ModulePage({
   } as const;
 
   // Determine course type and module ID from props or URL params
-  const courseType = (propCourseType ??
-    paramCourseType) as keyof typeof courseTypeToId;
+  const courseType = (propCourseType ?? paramCourseType) as keyof typeof courseTypeToId;
   const courseId = courseTypeToId[courseType];
   const moduleId = paramModuleId ?? null;
 
@@ -89,13 +81,9 @@ export function ModulePage({
   const course = getCourseById(courseId);
   const module = moduleId ? getModuleById(courseId, moduleId) : null;
   const nextModule = moduleId ? getNextModule(courseId, moduleId) : null;
-  const previousModule = moduleId
-    ? getPreviousModule(courseId, moduleId)
-    : null;
+  const previousModule = moduleId ? getPreviousModule(courseId, moduleId) : null;
   const courseProgress = getCourseProgress(courseId);
-  const moduleProgress = moduleId
-    ? getModuleProgress(courseId, moduleId)
-    : null;
+  const moduleProgress = moduleId ? getModuleProgress(courseId, moduleId) : null;
 
   // Audio narration state - memoize content to prevent hook recreation
   const moduleContent = useMemo(() => module?.content ?? '', [module?.content]);
@@ -104,11 +92,9 @@ export function ModulePage({
 
   // Module interaction state
   const [timeSpent, setTimeSpent] = useState(0);
-  const [currentRating, setCurrentRating] = useState(
-    moduleProgress?.rating ?? 0,
-  );
+  const [currentRating, setCurrentRating] = useState(moduleProgress?.rating ?? 0);
   const [comment, setComment] = useState('');
-  const [startTime] = useState(Date.now());
+  const [startTime, setStartTime] = useState(Date.now());
   const [showOutline, setShowOutline] = useState(false);
 
   // Track the last module that was set to prevent redundant calls
@@ -150,6 +136,14 @@ export function ModulePage({
     };
   }, [courseId, moduleId, course, module, setCurrentModule]);
 
+  // Reset startTime and timeSpent when navigating to new module
+  useEffect(() => {
+    if (moduleId) {
+      setStartTime(Date.now());
+      setTimeSpent(0);
+    }
+  }, [moduleId]);
+
   // Track time spent
   useEffect(() => {
     if (!moduleId) return undefined;
@@ -186,9 +180,7 @@ export function ModulePage({
         }
         setShowAudioControls(false);
       } catch (error) {
-        if (import.meta.env.DEV) {
-          console.error('Error cleaning up audio on unmount:', error);
-        }
+        // Silent cleanup error - no user-facing action needed
         errorHandler.logError(
           'Audio cleanup failed on unmount',
           error instanceof Error ? error : new Error(String(error)),
@@ -246,10 +238,7 @@ export function ModulePage({
     void navigate(`/courses/${courseType}`);
   };
 
-  const handleNavigateToModule = (
-    targetCourseId: string,
-    targetModuleId: string,
-  ): void => {
+  const handleNavigateToModule = (targetCourseId: string, targetModuleId: string): void => {
     // Map course ID back to course type
     const idToCourseType = {
       'ai-basics': 'basic',
@@ -257,8 +246,7 @@ export function ModulePage({
       'advanced-ai': 'expert',
     } as const;
 
-    const targetCourseType =
-      idToCourseType[targetCourseId as keyof typeof idToCourseType];
+    const targetCourseType = idToCourseType[targetCourseId as keyof typeof idToCourseType];
     if (targetCourseType) {
       void navigate(`/courses/${targetCourseType}/module/${targetModuleId}`);
     }
@@ -270,9 +258,7 @@ export function ModulePage({
         <Card className='max-w-md'>
           <CardContent className='p-6 text-center'>
             <h2 className='text-xl font-semibold mb-2'>Module Not Found</h2>
-            <p className='text-muted-foreground mb-4'>
-              The requested module could not be found.
-            </p>
+            <p className='text-muted-foreground mb-4'>The requested module could not be found.</p>
             <Button onClick={handleBackToCourses}>Back to Courses</Button>
           </CardContent>
         </Card>
@@ -287,12 +273,7 @@ export function ModulePage({
 
   const handleMarkComplete = (): void => {
     const finalTimeSpent = Math.max(timeSpent, 1); // At least 1 minute
-    completeModule(
-      courseId,
-      moduleId,
-      finalTimeSpent,
-      currentRating || undefined,
-    );
+    completeModule(courseId, moduleId, finalTimeSpent, currentRating || undefined);
     toast.success('Module completed! 🎉', {
       description: 'Great job! Your progress has been saved.',
     });
@@ -318,9 +299,7 @@ export function ModulePage({
         audioControls.play();
       }
     } catch (error) {
-      if (import.meta.env.DEV) {
-        console.error('[ModulePage] Audio play failed:', error);
-      }
+      // Error already logged by errorHandler
       errorHandler.logError(
         'Audio playback failed',
         error instanceof Error ? error : new Error(String(error)),
@@ -393,11 +372,7 @@ export function ModulePage({
     return (
       <div className='min-h-screen bg-background'>
         <div className='max-w-4xl mx-auto p-6'>
-          <Button
-            variant='outline'
-            onClick={handleBackToCourses}
-            className='mb-6'
-          >
+          <Button variant='outline' onClick={handleBackToCourses} className='mb-6'>
             <ArrowLeft className='mr-2' />
             Back to Courses
           </Button>
@@ -416,9 +391,7 @@ export function ModulePage({
 
               <div className='bg-muted/50 rounded-lg p-6 mb-6'>
                 <h2 className='text-xl font-semibold mb-2'>{module.title}</h2>
-                <p className='text-muted-foreground mb-4'>
-                  {module.description}
-                </p>
+                <p className='text-muted-foreground mb-4'>{module.description}</p>
                 <div className='flex items-center justify-center gap-4 text-sm'>
                   <span className='flex items-center gap-1'>
                     <Clock className='w-4 h-4' />
@@ -445,9 +418,7 @@ export function ModulePage({
 
   const currentModuleIndex = course.modules.findIndex((m) => m.id === moduleId);
   const progressPercentage = courseProgress
-    ? Math.round(
-        (courseProgress.completedModules.length / course.totalModules) * 100,
-      )
+    ? Math.round((courseProgress.completedModules.length / course.totalModules) * 100)
     : 0;
 
   return (
@@ -460,11 +431,7 @@ export function ModulePage({
       <div className='max-w-6xl mx-auto p-6'>
         {/* Header Navigation */}
         <div className='mb-6'>
-          <Button
-            variant='outline'
-            onClick={handleBackToCourse}
-            className='mb-4'
-          >
+          <Button variant='outline' onClick={handleBackToCourse} className='mb-4'>
             <ArrowLeft className='mr-2' />
             Back to Course
           </Button>
@@ -473,10 +440,7 @@ export function ModulePage({
           <nav aria-label='Breadcrumb' className='mb-4'>
             <ol className='flex items-center space-x-2 text-sm text-muted-foreground'>
               <li>
-                <button
-                  onClick={handleBackToCourse}
-                  className='hover:text-foreground'
-                >
+                <button onClick={handleBackToCourse} className='hover:text-foreground'>
                   {course.title}
                 </button>
               </li>
@@ -491,9 +455,7 @@ export function ModulePage({
           <div className='flex items-start justify-between flex-wrap gap-4'>
             <div className='flex-1'>
               <div className='flex items-center gap-3 mb-2'>
-                <Badge
-                  variant={course.tier === 'free' ? 'secondary' : 'default'}
-                >
+                <Badge variant={course.tier === 'free' ? 'secondary' : 'default'}>
                   {course.tier.toUpperCase()}
                 </Badge>
                 <span className='flex items-center gap-1 text-muted-foreground'>
@@ -501,10 +463,7 @@ export function ModulePage({
                   {module.estimatedTime} min
                 </span>
                 {isCompleted && (
-                  <Badge
-                    variant='outline'
-                    className='text-green-700 border-green-700'
-                  >
+                  <Badge variant='outline' className='text-green-700 border-green-700'>
                     <CheckCircle className='w-3 h-3 mr-1' />
                     Completed
                   </Badge>
@@ -513,9 +472,7 @@ export function ModulePage({
               <h1 id='main-content' className='text-3xl font-bold mb-2'>
                 {module.title}
               </h1>
-              <p className='text-lg text-muted-foreground'>
-                {module.description}
-              </p>
+              <p className='text-lg text-muted-foreground'>{module.description}</p>
             </div>
 
             {/* Quick Actions */}
@@ -524,11 +481,7 @@ export function ModulePage({
                 <Printer className='w-4 h-4 mr-2' />
                 Print
               </Button>
-              <Button
-                variant='outline'
-                size='sm'
-                onClick={() => setShowOutline(!showOutline)}
-              >
+              <Button variant='outline' size='sm' onClick={() => setShowOutline(!showOutline)}>
                 <List className='w-4 h-4 mr-2' />
                 Outline
               </Button>
@@ -545,8 +498,7 @@ export function ModulePage({
                 <div className='flex items-center justify-between mb-2'>
                   <span className='text-sm font-medium'>Course Progress</span>
                   <span className='text-sm text-muted-foreground'>
-                    {courseProgress?.completedModules.length ?? 0} of{' '}
-                    {course.totalModules} modules
+                    {courseProgress?.completedModules.length ?? 0} of {course.totalModules} modules
                   </span>
                 </div>
                 <Progress value={progressPercentage} className='h-2' />
@@ -557,7 +509,19 @@ export function ModulePage({
             <AudioControlsErrorBoundary
               onError={() => {
                 setShowAudioControls(false);
-                audioControls.stop();
+                try {
+                  audioControls.stop();
+                } catch (error) {
+                  // Silent cleanup error - audio already errored
+                  errorHandler.logError(
+                    'Audio cleanup failed in error boundary',
+                    error instanceof Error ? error : new Error(String(error)),
+                    {
+                      component: 'ModulePage',
+                      action: 'audio_error_boundary_cleanup',
+                    },
+                  );
+                }
               }}
             >
               <Card>
@@ -573,29 +537,17 @@ export function ModulePage({
                           variant='outline'
                           size='sm'
                           onClick={handleAudioPlay}
-                          aria-label={
-                            audioState.isPlaying
-                              ? 'Pause narration'
-                              : 'Play narration'
-                          }
+                          aria-label={audioState.isPlaying ? 'Pause narration' : 'Play narration'}
                         >
                           {audioState.isPlaying ? (
                             <Pause className='w-4 h-4' />
                           ) : (
                             <Play className='w-4 h-4' />
                           )}
-                          {audioState.isPlaying
-                            ? 'Pause'
-                            : audioState.isPaused
-                              ? 'Resume'
-                              : 'Play'}
+                          {audioState.isPlaying ? 'Pause' : audioState.isPaused ? 'Resume' : 'Play'}
                         </Button>
                         {audioState.isPlaying && (
-                          <Button
-                            variant='outline'
-                            size='sm'
-                            onClick={handleAudioStop}
-                          >
+                          <Button variant='outline' size='sm' onClick={handleAudioStop}>
                             <Stop className='w-4 h-4' />
                           </Button>
                         )}
@@ -618,13 +570,11 @@ export function ModulePage({
                       try {
                         // Ensure values are properly initialized
                         const rate =
-                          typeof audioState.rate === 'number' &&
-                          !isNaN(audioState.rate)
+                          typeof audioState.rate === 'number' && !isNaN(audioState.rate)
                             ? audioState.rate
                             : 1;
                         const volume =
-                          typeof audioState.volume === 'number' &&
-                          !isNaN(audioState.volume)
+                          typeof audioState.volume === 'number' && !isNaN(audioState.volume)
                             ? audioState.volume
                             : 1;
 
@@ -640,17 +590,9 @@ export function ModulePage({
                                   try {
                                     audioControls.setRate(newRate);
                                   } catch (error) {
-                                    if (import.meta.env.DEV) {
-                                      console.error(
-                                        'Failed to set audio rate:',
-                                        error,
-                                      );
-                                    }
                                     errorHandler.logError(
                                       'Failed to set audio rate',
-                                      error instanceof Error
-                                        ? error
-                                        : new Error(String(error)),
+                                      error instanceof Error ? error : new Error(String(error)),
                                       {
                                         component: 'ModulePage',
                                         action: 'set_audio_rate',
@@ -675,17 +617,9 @@ export function ModulePage({
                                   try {
                                     audioControls.setVolume(newVolume);
                                   } catch (error) {
-                                    if (import.meta.env.DEV) {
-                                      console.error(
-                                        'Failed to set audio volume:',
-                                        error,
-                                      );
-                                    }
                                     errorHandler.logError(
                                       'Failed to set audio volume',
-                                      error instanceof Error
-                                        ? error
-                                        : new Error(String(error)),
+                                      error instanceof Error ? error : new Error(String(error)),
                                       {
                                         component: 'ModulePage',
                                         action: 'set_audio_volume',
@@ -705,9 +639,7 @@ export function ModulePage({
                       } catch (error) {
                         errorHandler.logError(
                           'Error rendering audio controls',
-                          error instanceof Error
-                            ? error
-                            : new Error(String(error)),
+                          error instanceof Error ? error : new Error(String(error)),
                           {
                             component: 'ModulePage',
                             action: 'render_audio_controls',
@@ -777,20 +709,14 @@ export function ModulePage({
                     {previousModule && (
                       <Button
                         variant='outline'
-                        onClick={() =>
-                          handleNavigateToModule(courseId, previousModule.id)
-                        }
+                        onClick={() => handleNavigateToModule(courseId, previousModule.id)}
                       >
                         <ArrowLeft className='w-4 h-4 mr-2' />
                         Previous
                       </Button>
                     )}
                     {nextModule && (
-                      <Button
-                        onClick={() =>
-                          handleNavigateToModule(courseId, nextModule.id)
-                        }
-                      >
+                      <Button onClick={() => handleNavigateToModule(courseId, nextModule.id)}>
                         Next
                         <ArrowRight className='w-4 h-4 ml-2' />
                       </Button>
@@ -890,23 +816,16 @@ export function ModulePage({
                       return (
                         <li key={mod.id}>
                           <button
-                            onClick={() =>
-                              handleNavigateToModule(courseId, mod.id)
-                            }
+                            onClick={() => handleNavigateToModule(courseId, mod.id)}
                             className={`w-full text-left p-3 rounded-lg transition-colors ${
-                              isCurrent
-                                ? 'bg-primary text-primary-foreground'
-                                : 'hover:bg-muted'
+                              isCurrent ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'
                             }`}
                             aria-current={isCurrent ? 'page' : undefined}
                           >
                             <div className='flex items-start gap-2'>
                               <div className='mt-1'>
                                 {modCompleted ? (
-                                  <CheckCircle
-                                    className='w-4 h-4 text-green-600'
-                                    weight='fill'
-                                  />
+                                  <CheckCircle className='w-4 h-4 text-green-600' weight='fill' />
                                 ) : (
                                   <div className='w-4 h-4 rounded-full border-2 border-muted-foreground' />
                                 )}
@@ -971,10 +890,7 @@ export function ModulePage({
                         <div className='flex justify-between'>
                           <span>Your rating</span>
                           <div className='flex items-center gap-1'>
-                            <StarFour
-                              className='w-3 h-3 text-yellow-500'
-                              weight='fill'
-                            />
+                            <StarFour className='w-3 h-3 text-yellow-500' weight='fill' />
                             <span>{moduleProgress.rating}/5</span>
                           </div>
                         </div>

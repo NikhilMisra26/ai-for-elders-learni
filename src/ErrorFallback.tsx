@@ -5,10 +5,7 @@ import type { ReactElement } from 'react';
 import { Button } from './components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from './components/ui/card';
 
-export const ErrorFallback = ({
-  error,
-  resetErrorBoundary,
-}: FallbackProps): ReactElement => {
+export const ErrorFallback = ({ error, resetErrorBoundary }: FallbackProps): ReactElement => {
   // When encountering an error in the development mode, rethrow it and don't display the boundary.
   // The parent UI will take care of showing a more helpful dialog.
   if (import.meta.env.DEV) throw error;
@@ -32,12 +29,11 @@ export const ErrorFallback = ({
           <CardContent className='space-y-6'>
             <div className='text-lg text-muted-foreground max-w-lg mx-auto leading-relaxed'>
               <p className='mb-4'>
-                We&apos;re sorry, but something unexpected happened while
-                loading this page.
+                We&apos;re sorry, but something unexpected happened while loading this page.
               </p>
               <p>
-                This is usually a temporary issue. Please try refreshing the
-                page or going back to the home page.
+                This is usually a temporary issue. Please try refreshing the page or going back to
+                the home page.
               </p>
             </div>
 
@@ -78,8 +74,7 @@ export const ErrorFallback = ({
 
             <div className='pt-4 border-t border-border'>
               <p className='text-sm text-muted-foreground'>
-                If this problem continues, please contact our support team for
-                assistance.
+                If this problem continues, please contact our support team for assistance.
               </p>
             </div>
           </CardContent>

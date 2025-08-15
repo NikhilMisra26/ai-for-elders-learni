@@ -20,30 +20,22 @@ function Menubar({
   );
 }
 
-function MenubarMenu({
-  ...props
-}: ComponentProps<typeof MenubarPrimitive.Menu>): ReactElement {
+function MenubarMenu({ ...props }: ComponentProps<typeof MenubarPrimitive.Menu>): ReactElement {
   return <MenubarPrimitive.Menu data-slot='menubar-menu' {...props} />;
 }
 
-function MenubarGroup({
-  ...props
-}: ComponentProps<typeof MenubarPrimitive.Group>): ReactElement {
+function MenubarGroup({ ...props }: ComponentProps<typeof MenubarPrimitive.Group>): ReactElement {
   return <MenubarPrimitive.Group data-slot='menubar-group' {...props} />;
 }
 
-function MenubarPortal({
-  ...props
-}: ComponentProps<typeof MenubarPrimitive.Portal>): ReactElement {
+function MenubarPortal({ ...props }: ComponentProps<typeof MenubarPrimitive.Portal>): ReactElement {
   return <MenubarPrimitive.Portal data-slot='menubar-portal' {...props} />;
 }
 
 function MenubarRadioGroup({
   ...props
 }: ComponentProps<typeof MenubarPrimitive.RadioGroup>): ReactElement {
-  return (
-    <MenubarPrimitive.RadioGroup data-slot='menubar-radio-group' {...props} />
-  );
+  return <MenubarPrimitive.RadioGroup data-slot='menubar-radio-group' {...props} />;
 }
 
 function MenubarTrigger({
@@ -170,10 +162,7 @@ function MenubarLabel({
     <MenubarPrimitive.Label
       data-slot='menubar-label'
       data-inset={inset}
-      className={cn(
-        'px-2 py-1.5 text-sm font-medium data-[inset]:pl-8',
-        className,
-      )}
+      className={cn('px-2 py-1.5 text-sm font-medium data-[inset]:pl-8', className)}
       {...props}
     />
   );
@@ -192,25 +181,17 @@ function MenubarSeparator({
   );
 }
 
-function MenubarShortcut({
-  className,
-  ...props
-}: ComponentProps<'span'>): ReactElement {
+function MenubarShortcut({ className, ...props }: ComponentProps<'span'>): ReactElement {
   return (
     <span
       data-slot='menubar-shortcut'
-      className={cn(
-        'text-muted-foreground ml-auto text-xs tracking-widest',
-        className,
-      )}
+      className={cn('text-muted-foreground ml-auto text-xs tracking-widest', className)}
       {...props}
     />
   );
 }
 
-function MenubarSub({
-  ...props
-}: ComponentProps<typeof MenubarPrimitive.Sub>): ReactElement {
+function MenubarSub({ ...props }: ComponentProps<typeof MenubarPrimitive.Sub>): ReactElement {
   return <MenubarPrimitive.Sub data-slot='menubar-sub' {...props} />;
 }
 

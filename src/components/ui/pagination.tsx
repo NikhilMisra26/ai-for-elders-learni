@@ -5,10 +5,7 @@ import { cn } from '@/lib/utils';
 import type { Button } from '@/components/ui/button';
 import { buttonVariants } from '@/components/ui/button';
 
-function Pagination({
-  className,
-  ...props
-}: ComponentProps<'nav'>): ReactElement {
+function Pagination({ className, ...props }: ComponentProps<'nav'>): ReactElement {
   return (
     <nav
       role='navigation'
@@ -20,10 +17,7 @@ function Pagination({
   );
 }
 
-function PaginationContent({
-  className,
-  ...props
-}: ComponentProps<'ul'>): ReactElement {
+function PaginationContent({ className, ...props }: ComponentProps<'ul'>): ReactElement {
   return (
     <ul
       data-slot='pagination-content'
@@ -99,10 +93,7 @@ function PaginationNext({
   );
 }
 
-function PaginationEllipsis({
-  className,
-  ...props
-}: ComponentProps<'span'>): ReactElement {
+function PaginationEllipsis({ className, ...props }: ComponentProps<'span'>): ReactElement {
   return (
     <span
       aria-hidden

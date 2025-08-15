@@ -1,26 +1,16 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import {
-  Lock,
-  Eye,
-  EyeSlash,
-  CheckCircle,
-  XCircle,
-} from '@phosphor-icons/react';
+import { Lock, Eye, EyeSlash, CheckCircle, XCircle, Warning } from '@phosphor-icons/react';
 import type { ReactElement } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { normalizeError, formatErrorMessage } from '@/lib/errorNormalization';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { supabase } from '@/lib/supabaseClient';
+import { checkPasswordWithWarning } from '@/lib/breachDetection';
 
 export function ResetPasswordPage(): ReactElement {
   const navigate = useNavigate();
@@ -30,6 +20,8 @@ export function ResetPasswordPage(): ReactElement {
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isValidToken, setIsValidToken] = useState(true);
+  const [breachWarning, setBreachWarning] = useState('');
+  const [isCheckingBreach, setIsCheckingBreach] = useState(false);
 
   useEffect(() => {
     // Check if we have a valid session from the reset link
@@ -46,6 +38,37 @@ export function ResetPasswordPage(): ReactElement {
 
     void checkSession();
   }, []);
+
+  // Check for password breaches when new password changes
+  useEffect(() => {
+    if (newPassword && newPassword.length >= 8) {
+      const checkBreach = async (): Promise<void> => {
+        setIsCheckingBreach(true);
+        try {
+          const { warning } = await checkPasswordWithWarning(newPassword);
+          setBreachWarning(warning);
+        } catch (error) {
+          // Silently fail breach check - don't expose error to user
+          normalizeError(error, 'password_breach_check_reset');
+          setBreachWarning('');
+        } finally {
+          setIsCheckingBreach(false);
+        }
+      };
+
+      // Debounce the breach check
+      const timer = setTimeout(() => {
+        void checkBreach();
+      }, 500);
+
+      return (): void => {
+        clearTimeout(timer);
+      };
+    }
+
+    setBreachWarning('');
+    return undefined;
+  }, [newPassword]);
 
   const validatePasswords = (): string | null => {
     if (!newPassword) return 'New password is required';
@@ -70,8 +93,9 @@ export function ResetPasswordPage(): ReactElement {
       });
 
       if (error) {
+        const normalized = normalizeError(error, 'password_reset');
         toast.error('Failed to reset password', {
-          description: error.message ?? 'Please try again',
+          description: formatErrorMessage(normalized),
         });
         setIsLoading(false);
         return;
@@ -87,9 +111,9 @@ export function ResetPasswordPage(): ReactElement {
         void navigate('/');
       }, 2000);
     } catch (error) {
-      console.error('Password reset error:', error);
-      toast.error('An unexpected error occurred', {
-        description: 'Please try again later',
+      const normalized = normalizeError(error, 'password_reset_confirm');
+      toast.error('Password reset failed', {
+        description: formatErrorMessage(normalized),
       });
     } finally {
       setIsLoading(false);
@@ -100,14 +124,11 @@ export function ResetPasswordPage(): ReactElement {
     if (!password) return '';
     if (password.length < 8) return 'Weak';
     if (password.length < 12) return 'Fair';
-    if (
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/.test(
-        password,
-      )
-    if (isStrongPassword(password)) {
+    if (/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/.test(password)) {
       return 'Strong';
     }
     return 'Good';
+  };
 
   const strength = getPasswordStrength(newPassword);
   const strengthColor =
@@ -129,8 +150,7 @@ export function ResetPasswordPage(): ReactElement {
             </div>
             <CardTitle>Invalid Reset Link</CardTitle>
             <CardDescription className='mt-2'>
-              This password reset link is invalid or has expired. Please request
-              a new one.
+              This password reset link is invalid or has expired. Please request a new one.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -156,9 +176,7 @@ export function ResetPasswordPage(): ReactElement {
             <Lock className='h-6 w-6 text-primary' />
           </div>
           <CardTitle>Reset Your Password</CardTitle>
-          <CardDescription>
-            Choose a new secure password for your account
-          </CardDescription>
+          <CardDescription>Choose a new secure password for your account</CardDescription>
         </CardHeader>
 
         <CardContent>
@@ -184,21 +202,30 @@ export function ResetPasswordPage(): ReactElement {
                   className='absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent'
                   onClick={(): void => setShowNewPassword(!showNewPassword)}
                   disabled={isLoading}
-                  aria-label={
-                    showNewPassword ? 'Hide password' : 'Show password'
-                  }
+                  aria-label={showNewPassword ? 'Hide password' : 'Show password'}
                 >
-                  {showNewPassword ? (
-                    <EyeSlash className='h-4 w-4' />
-                  ) : (
-                    <Eye className='h-4 w-4' />
-                  )}
+                  {showNewPassword ? <EyeSlash className='h-4 w-4' /> : <Eye className='h-4 w-4' />}
                 </Button>
               </div>
               {newPassword && (
-                <p className={`text-sm ${strengthColor}`}>
-                  Password strength: {strength}
-                </p>
+                <p className={`text-sm ${strengthColor}`}>Password strength: {strength}</p>
+              )}
+
+              {/* Password breach warning */}
+              {breachWarning && (
+                <div className='bg-orange-50 border border-orange-200 rounded-lg p-3'>
+                  <div className='flex items-start gap-2'>
+                    <Warning className='h-4 w-4 text-orange-600 mt-0.5 flex-shrink-0' />
+                    <div className='flex-1'>
+                      <p className='text-sm text-orange-800 font-medium'>Security Warning</p>
+                      <p className='text-sm text-orange-700 mt-1'>{breachWarning}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {isCheckingBreach && (
+                <p className='text-sm text-muted-foreground'>Checking password security...</p>
               )}
             </div>
 
@@ -220,13 +247,9 @@ export function ResetPasswordPage(): ReactElement {
                   variant='ghost'
                   size='sm'
                   className='absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent'
-                  onClick={(): void =>
-                    setShowConfirmPassword(!showConfirmPassword)
-                  }
+                  onClick={(): void => setShowConfirmPassword(!showConfirmPassword)}
                   disabled={isLoading}
-                  aria-label={
-                    showConfirmPassword ? 'Hide password' : 'Show password'
-                  }
+                  aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
                 >
                   {showConfirmPassword ? (
                     <EyeSlash className='h-4 w-4' />
@@ -238,22 +261,28 @@ export function ResetPasswordPage(): ReactElement {
               {confirmPassword && confirmPassword !== newPassword && (
                 <p className='text-sm text-red-600'>Passwords do not match</p>
               )}
-              {confirmPassword &&
-                confirmPassword === newPassword &&
-                newPassword.length >= 8 && (
-                  <p className='text-sm text-green-600 flex items-center gap-1'>
-                    <CheckCircle className='w-4 h-4' />
-                    Passwords match
-                  </p>
-                )}
+              {confirmPassword && confirmPassword === newPassword && newPassword.length >= 8 && (
+                <p className='text-sm text-green-600 flex items-center gap-1'>
+                  <CheckCircle className='w-4 h-4' />
+                  Passwords match
+                </p>
+              )}
             </div>
 
             <Button
               className='w-full'
               onClick={(): void => void handlePasswordReset()}
-              disabled={isLoading || !newPassword || !confirmPassword}
+              disabled={
+                isLoading || !newPassword || !confirmPassword || isCheckingBreach || !!breachWarning
+              }
             >
-              {isLoading ? 'Resetting...' : 'Reset Password'}
+              {isLoading
+                ? 'Resetting...'
+                : isCheckingBreach
+                  ? 'Checking security...'
+                  : breachWarning
+                    ? 'Choose a different password'
+                    : 'Reset Password'}
             </Button>
 
             <div className='text-center'>

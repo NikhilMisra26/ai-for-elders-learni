@@ -10,21 +10,13 @@ interface SecurityDashboardProps {
   onClose: () => void;
 }
 
-export function SecurityDashboard({
-  onClose,
-}: SecurityDashboardProps): ReactElement {
-  const [logs, setLogs] = useState<ReturnType<typeof SecurityLogger.getLogs>>(
-    [],
-  );
-  const [filter, setFilter] = useState<'all' | 'info' | 'warning' | 'error'>(
-    'all',
-  );
+export function SecurityDashboard({ onClose }: SecurityDashboardProps): ReactElement {
+  const [logs, setLogs] = useState<ReturnType<typeof SecurityLogger.getLogs>>([]);
+  const [filter, setFilter] = useState<'all' | 'info' | 'warning' | 'error'>('all');
 
   const loadLogs = useMemo(
     (): (() => void) => () => {
-      const allLogs = SecurityLogger.getLogs(
-        filter === 'all' ? undefined : filter,
-      );
+      const allLogs = SecurityLogger.getLogs(filter === 'all' ? undefined : filter);
       setLogs(allLogs.slice(-50).reverse()); // Show last 50 logs, newest first
     },
     [filter],
@@ -63,10 +55,7 @@ export function SecurityDashboard({
     return new Date(timestamp).toLocaleString();
   };
 
-  const getEventDescription = (
-    event: string,
-    details: Record<string, unknown>,
-  ): string => {
+  const getEventDescription = (event: string, details: Record<string, unknown>): string => {
     switch (event) {
       case 'user_registered':
         return `New user registration: ${String(details.email)}`;
@@ -113,21 +102,15 @@ export function SecurityDashboard({
           {/* Stats */}
           <div className='flex gap-4 mt-4'>
             <div className='text-center'>
-              <div className='text-2xl font-bold text-blue-600'>
-                {stats.info || 0}
-              </div>
+              <div className='text-2xl font-bold text-blue-600'>{stats.info || 0}</div>
               <div className='text-sm text-muted-foreground'>Info</div>
             </div>
             <div className='text-center'>
-              <div className='text-2xl font-bold text-yellow-600'>
-                {stats.warning || 0}
-              </div>
+              <div className='text-2xl font-bold text-yellow-600'>{stats.warning || 0}</div>
               <div className='text-sm text-muted-foreground'>Warnings</div>
             </div>
             <div className='text-center'>
-              <div className='text-2xl font-bold text-red-600'>
-                {stats.error || 0}
-              </div>
+              <div className='text-2xl font-bold text-red-600'>{stats.error || 0}</div>
               <div className='text-sm text-muted-foreground'>Errors</div>
             </div>
           </div>
@@ -138,25 +121,17 @@ export function SecurityDashboard({
           <div className='p-4 border-b bg-muted/50'>
             <div className='flex items-center gap-2'>
               <span className='text-sm font-medium'>Filter:</span>
-              {(['all', 'info', 'warning', 'error'] as const).map(
-                (filterOption) => (
-                  <Button
-                    key={filterOption}
-                    variant={filter === filterOption ? 'default' : 'ghost'}
-                    size='sm'
-                    onClick={() => setFilter(filterOption)}
-                  >
-                    {filterOption.charAt(0).toUpperCase() +
-                      filterOption.slice(1)}
-                  </Button>
-                ),
-              )}
-              <Button
-                variant='ghost'
-                size='sm'
-                onClick={loadLogs}
-                className='ml-auto'
-              >
+              {(['all', 'info', 'warning', 'error'] as const).map((filterOption) => (
+                <Button
+                  key={filterOption}
+                  variant={filter === filterOption ? 'default' : 'ghost'}
+                  size='sm'
+                  onClick={() => setFilter(filterOption)}
+                >
+                  {filterOption.charAt(0).toUpperCase() + filterOption.slice(1)}
+                </Button>
+              ))}
+              <Button variant='ghost' size='sm' onClick={loadLogs} className='ml-auto'>
                 <ArrowClockwise className='h-4 w-4 mr-1' />
                 Refresh
               </Button>
@@ -166,9 +141,7 @@ export function SecurityDashboard({
           {/* Logs List */}
           <div className='max-h-96 overflow-y-auto'>
             {logs.length === 0 ? (
-              <div className='p-8 text-center text-muted-foreground'>
-                No security events found
-              </div>
+              <div className='p-8 text-center text-muted-foreground'>No security events found</div>
             ) : (
               <div className='space-y-1'>
                 {logs.map((log) => (

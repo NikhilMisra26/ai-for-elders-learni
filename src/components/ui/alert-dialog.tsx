@@ -6,26 +6,20 @@ import * as AlertDialogPrimitive from '@radix-ui/react-alert-dialog';
 import { cn } from '@/lib/utils';
 import { buttonVariants } from '@/components/ui/button';
 
-function AlertDialog({
-  ...props
-}: ComponentProps<typeof AlertDialogPrimitive.Root>): ReactElement {
+function AlertDialog({ ...props }: ComponentProps<typeof AlertDialogPrimitive.Root>): ReactElement {
   return <AlertDialogPrimitive.Root data-slot='alert-dialog' {...props} />;
 }
 
 function AlertDialogTrigger({
   ...props
 }: ComponentProps<typeof AlertDialogPrimitive.Trigger>): ReactElement {
-  return (
-    <AlertDialogPrimitive.Trigger data-slot='alert-dialog-trigger' {...props} />
-  );
+  return <AlertDialogPrimitive.Trigger data-slot='alert-dialog-trigger' {...props} />;
 }
 
 function AlertDialogPortal({
   ...props
 }: ComponentProps<typeof AlertDialogPrimitive.Portal>): ReactElement {
-  return (
-    <AlertDialogPrimitive.Portal data-slot='alert-dialog-portal' {...props} />
-  );
+  return <AlertDialogPrimitive.Portal data-slot='alert-dialog-portal' {...props} />;
 }
 
 function AlertDialogOverlay({
@@ -63,10 +57,7 @@ function AlertDialogContent({
   );
 }
 
-function AlertDialogHeader({
-  className,
-  ...props
-}: ComponentProps<'div'>): ReactElement {
+function AlertDialogHeader({ className, ...props }: ComponentProps<'div'>): ReactElement {
   return (
     <div
       data-slot='alert-dialog-header'
@@ -76,17 +67,11 @@ function AlertDialogHeader({
   );
 }
 
-function AlertDialogFooter({
-  className,
-  ...props
-}: ComponentProps<'div'>): ReactElement {
+function AlertDialogFooter({ className, ...props }: ComponentProps<'div'>): ReactElement {
   return (
     <div
       data-slot='alert-dialog-footer'
-      className={cn(
-        'flex flex-col-reverse gap-2 sm:flex-row sm:justify-end',
-        className,
-      )}
+      className={cn('flex flex-col-reverse gap-2 sm:flex-row sm:justify-end', className)}
       {...props}
     />
   );
@@ -122,12 +107,7 @@ function AlertDialogAction({
   className,
   ...props
 }: ComponentProps<typeof AlertDialogPrimitive.Action>): ReactElement {
-  return (
-    <AlertDialogPrimitive.Action
-      className={cn(buttonVariants(), className)}
-      {...props}
-    />
-  );
+  return <AlertDialogPrimitive.Action className={cn(buttonVariants(), className)} {...props} />;
 }
 
 function AlertDialogCancel({

@@ -1,16 +1,8 @@
 'use client';
 
 import type { ComponentProps, KeyboardEvent, ReactElement } from 'react';
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useState,
-} from 'react';
-import useEmblaCarousel, {
-  type UseEmblaCarouselType,
-} from 'embla-carousel-react';
+import { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import useEmblaCarousel, { type UseEmblaCarouselType } from 'embla-carousel-react';
 import { ArrowLeft, ArrowRight } from '@phosphor-icons/react';
 
 import { cn } from '@/lib/utils';
@@ -58,10 +50,14 @@ function Carousel({
   children,
   ...props
 }: ComponentProps<'div'> & CarouselProps): ReactElement {
+  // Compute orientation that respects opts.axis
+  const computedOrientation: 'horizontal' | 'vertical' =
+    orientation ?? (opts?.axis === 'y' ? 'vertical' : 'horizontal');
+
   const [carouselRef, api] = useEmblaCarousel(
     {
       ...opts,
-      axis: orientation === 'horizontal' ? 'x' : 'y',
+      axis: computedOrientation === 'horizontal' ? 'x' : 'y',
     },
     plugins,
   );
@@ -123,8 +119,7 @@ function Carousel({
         carouselRef,
         api: api,
         opts,
-        orientation:
-          orientation || (opts?.axis === 'y' ? 'vertical' : 'horizontal'),
+        orientation: computedOrientation,
         scrollPrev,
         scrollNext,
         canScrollPrev,
@@ -145,34 +140,20 @@ function Carousel({
   );
 }
 
-function CarouselContent({
-  className,
-  ...props
-}: ComponentProps<'div'>): ReactElement {
+function CarouselContent({ className, ...props }: ComponentProps<'div'>): ReactElement {
   const { carouselRef, orientation } = useCarousel();
 
   return (
-    <div
-      ref={carouselRef}
-      className='overflow-hidden'
-      data-slot='carousel-content'
-    >
+    <div ref={carouselRef} className='overflow-hidden' data-slot='carousel-content'>
       <div
-        className={cn(
-          'flex',
-          orientation === 'horizontal' ? '-ml-4' : '-mt-4 flex-col',
-          className,
-        )}
+        className={cn('flex', orientation === 'horizontal' ? '-ml-4' : '-mt-4 flex-col', className)}
         {...props}
       />
     </div>
   );
 }
 
-function CarouselItem({
-  className,
-  ...props
-}: ComponentProps<'div'>): ReactElement {
+function CarouselItem({ className, ...props }: ComponentProps<'div'>): ReactElement {
   const { orientation } = useCarousel();
 
   return (

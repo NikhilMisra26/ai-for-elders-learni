@@ -1,7 +1,6 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { toast } from 'sonner';
 import {
-  CreditCard,
   User,
   EnvelopeSimple,
   Star,
@@ -18,25 +17,14 @@ import {
 import type { ReactElement } from 'react';
 
 import { AuthForm } from './AuthForm';
-import { PasswordChangeDialog } from './PasswordChangeDialog';
 
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/contexts/AuthContext';
-import {
-  useSubscription,
-  formatPrice,
-  useInvoiceHistory,
-} from '@/lib/subscription';
+import { useSubscription, formatPrice, useInvoiceHistory } from '@/lib/subscription';
 import { useProgress } from '@/lib/progressTracking';
 
 // Commented out unused interface - keeping for potential future use
@@ -44,7 +32,7 @@ import { useProgress } from '@/lib/progressTracking';
 //   onAuthClick: () => void;
 // }
 
-export function AccountPage(): ReactElement {
+function AccountPageComponent(): ReactElement {
   const { user } = useAuth();
   const {
     subscription,
@@ -58,7 +46,6 @@ export function AccountPage(): ReactElement {
   } = useSubscription();
   const { learningStats } = useProgress();
   const { invoices } = useInvoiceHistory();
-
 
   // Start of removed code for subscription removal
   // const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
@@ -81,9 +68,7 @@ export function AccountPage(): ReactElement {
         <Card className='max-w-md'>
           <CardHeader>
             <CardTitle>Sign In Required</CardTitle>
-            <CardDescription>
-              Please sign in to view your account information
-            </CardDescription>
+            <CardDescription>Please sign in to view your account information</CardDescription>
           </CardHeader>
           <CardContent>
             <AuthForm onClose={() => handleNavigation('home')} />
@@ -142,9 +127,7 @@ export function AccountPage(): ReactElement {
 
   // Added for subscription removal - placeholder function
   // @ts-expect-error - Handlers may be used when subscriptions are re-enabled
-  const _handleUpgrade = async (
-    _planId: 'advanced' | 'expert',
-  ): Promise<void> => {
+  const _handleUpgrade = async (_planId: 'advanced' | 'expert'): Promise<void> => {
     toast.info('Coming Soon', {
       description: 'Premium subscriptions will be available in the future',
     });
@@ -156,8 +139,7 @@ export function AccountPage(): ReactElement {
 
     cancelSubscription();
     toast.success('Subscription cancelled', {
-      description:
-        'You will retain access until your current billing period ends',
+      description: 'You will retain access until your current billing period ends',
     });
     setShowCancelDialog(false);
   };
@@ -202,15 +184,11 @@ export function AccountPage(): ReactElement {
               <CardContent className='space-y-4'>
                 <div className='grid grid-cols-2 gap-4'>
                   <div>
-                    <Label className='text-sm font-medium text-muted-foreground'>
-                      Name
-                    </Label>
+                    <Label className='text-sm font-medium text-muted-foreground'>Name</Label>
                     <p className='text-lg'>{user.name}</p>
                   </div>
                   <div>
-                    <Label className='text-sm font-medium text-muted-foreground'>
-                      Email
-                    </Label>
+                    <Label className='text-sm font-medium text-muted-foreground'>Email</Label>
                     <p className='text-lg'>{user.email}</p>
                   </div>
                 </div>
@@ -222,9 +200,7 @@ export function AccountPage(): ReactElement {
                     <Label className='text-sm font-medium text-muted-foreground'>
                       Member Since
                     </Label>
-                    <p className='text-lg'>
-                      {new Date(user.joinDate).toLocaleDateString()}
-                    </p>
+                    <p className='text-lg'>{new Date(user.joinDate).toLocaleDateString()}</p>
                   </div>
                   <div>
                     <Label className='text-sm font-medium text-muted-foreground'>
@@ -395,7 +371,6 @@ export function AccountPage(): ReactElement {
             </Card> */}
             {/* End of removed code for subscription removal */}
 
-           
             {/* Learning Statistics */}
             <Card>
               <CardHeader>
@@ -403,47 +378,33 @@ export function AccountPage(): ReactElement {
                   <ChartBar className='w-5 h-5' />
                   Learning Statistics
                 </CardTitle>
-                <CardDescription>
-                  Your learning progress and achievements
-                </CardDescription>
+                <CardDescription>Your learning progress and achievements</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className='grid grid-cols-2 md:grid-cols-4 gap-6'>
                   <div className='text-center'>
                     <Trophy className='w-8 h-8 mx-auto mb-2 text-yellow-500' />
-                    <div className='text-2xl font-bold'>
-                      {learningStats.modulesCompleted}
-                    </div>
-                    <div className='text-sm text-muted-foreground'>
-                      Modules Completed
-                    </div>
+                    <div className='text-2xl font-bold'>{learningStats.modulesCompleted}</div>
+                    <div className='text-sm text-muted-foreground'>Modules Completed</div>
                   </div>
                   <div className='text-center'>
                     <Clock className='w-8 h-8 mx-auto mb-2 text-blue-500' />
                     <div className='text-2xl font-bold'>
                       {Math.round(learningStats.totalTimeSpent / 60)}h
                     </div>
-                    <div className='text-sm text-muted-foreground'>
-                      Hours Learned
-                    </div>
+                    <div className='text-sm text-muted-foreground'>Hours Learned</div>
                   </div>
                   <div className='text-center'>
                     <Fire className='w-8 h-8 mx-auto mb-2 text-orange-500' />
-                    <div className='text-2xl font-bold'>
-                      {learningStats.streak.currentStreak}
-                    </div>
-                    <div className='text-sm text-muted-foreground'>
-                      Day Streak
-                    </div>
+                    <div className='text-2xl font-bold'>{learningStats.streak.currentStreak}</div>
+                    <div className='text-sm text-muted-foreground'>Day Streak</div>
                   </div>
                   <div className='text-center'>
                     <Star className='w-8 h-8 mx-auto mb-2 text-purple-500' />
                     <div className='text-2xl font-bold'>
                       {learningStats.averageRating.toFixed(1)}
                     </div>
-                    <div className='text-sm text-muted-foreground'>
-                      Avg Rating
-                    </div>
+                    <div className='text-sm text-muted-foreground'>Avg Rating</div>
                   </div>
                 </div>
               </CardContent>
@@ -457,9 +418,7 @@ export function AccountPage(): ReactElement {
                     <Download className='w-5 h-5' />
                     Billing History
                   </CardTitle>
-                  <CardDescription>
-                    Download your past invoices and receipts
-                  </CardDescription>
+                  <CardDescription>Download your past invoices and receipts</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className='space-y-3'>
@@ -475,18 +434,10 @@ export function AccountPage(): ReactElement {
                           </p>
                         </div>
                         <div className='flex items-center gap-3'>
-                          <Badge
-                            variant={
-                              invoice.status === 'paid'
-                                ? 'secondary'
-                                : 'destructive'
-                            }
-                          >
+                          <Badge variant={invoice.status === 'paid' ? 'secondary' : 'destructive'}>
                             {invoice.status}
                           </Badge>
-                          <span className='font-medium'>
-                            {formatPrice(invoice.amount)}
-                          </span>
+                          <span className='font-medium'>{formatPrice(invoice.amount)}</span>
                           <Button size='sm' variant='outline'>
                             <Download className='w-4 h-4' />
                           </Button>
@@ -550,8 +501,7 @@ export function AccountPage(): ReactElement {
               </CardHeader>
               <CardContent className='space-y-4'>
                 <p className='text-sm text-muted-foreground'>
-                  Need help with your account or have questions about our
-                  courses?
+                  Need help with your account or have questions about our courses?
                 </p>
                 <div className='space-y-2'>
                   <Button variant='outline' size='sm' className='w-full'>
@@ -585,7 +535,12 @@ export function AccountPage(): ReactElement {
                   <Button
                     variant='outline'
                     size='sm'
-                    onClick={(): void => setShowPasswordDialog(true)}
+                    onClick={(): void => {
+                      // Password change functionality would go here
+                      toast.info('Coming Soon', {
+                        description: 'Password change feature will be available soon',
+                      });
+                    }}
                   >
                     Change
                   </Button>
@@ -706,13 +661,15 @@ export function AccountPage(): ReactElement {
         </Dialog>
 
         {/* Password Change Dialog */}
-        <PasswordChangeDialog
+        {/* <PasswordChangeDialog
           open={showPasswordDialog}
           onOpenChange={setShowPasswordDialog}
-        />
-        </Dialog> */}
+        /> */}
         {/* End of removed code for subscription removal */}
       </div>
     </div>
   );
 }
+
+// Memoized export for performance optimization
+export const AccountPage = React.memo(AccountPageComponent);

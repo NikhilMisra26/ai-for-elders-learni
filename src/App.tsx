@@ -143,11 +143,7 @@ function AppContent(): ReactElement {
   return (
     <div className='min-h-screen bg-background text-foreground'>
       {/* Skip navigation for accessibility */}
-      <a
-        href='#main-content'
-        className='skip-nav'
-        aria-label='Skip to main content'
-      >
+      <a href='#main-content' className='skip-nav' aria-label='Skip to main content'>
         Skip to main content
       </a>
 
@@ -157,9 +153,7 @@ function AppContent(): ReactElement {
         <ErrorBoundary
           FallbackComponent={ErrorFallback}
           onError={(error) => {
-            if (import.meta.env.DEV) {
-              console.error('Application error:', error);
-            }
+            // Error logging handled internally by errorHandler
             errorHandler.logError('Application boundary error', error, {
               component: 'App',
               action: 'error_boundary',
@@ -254,10 +248,7 @@ function AppContent(): ReactElement {
                   </ProtectedRoute>
                 }
               />
-              <Route
-                path='/progress'
-                element={<Navigate to='/dashboard' replace />}
-              />
+              <Route path='/progress' element={<Navigate to='/dashboard' replace />} />
 
               {/* Account section */}
               <Route
@@ -268,10 +259,7 @@ function AppContent(): ReactElement {
                   </ProtectedRoute>
                 }
               />
-              <Route
-                path='/profile'
-                element={<Navigate to='/account' replace />}
-              />
+              <Route path='/profile' element={<Navigate to='/account' replace />} />
               <Route
                 path='/settings'
                 element={
@@ -292,10 +280,7 @@ function AppContent(): ReactElement {
               />
 
               {/* 404 - Not Found */}
-              <Route
-                path='*'
-                element={<NotFoundPage onNavigate={handleNotFoundNavigate} />}
-              />
+              <Route path='*' element={<NotFoundPage onNavigate={handleNotFoundNavigate} />} />
             </Routes>
           </Suspense>
         </ErrorBoundary>
@@ -311,9 +296,7 @@ function AppContent(): ReactElement {
         <DialogContent className='sm:max-w-md'>
           <VisuallyHidden>
             <DialogTitle>Authentication</DialogTitle>
-            <DialogDescription>
-              Sign in or create an account to continue
-            </DialogDescription>
+            <DialogDescription>Sign in or create an account to continue</DialogDescription>
           </VisuallyHidden>
           <Suspense fallback={<PageLoader />}>
             <AuthForm onClose={handleAuthClose} />

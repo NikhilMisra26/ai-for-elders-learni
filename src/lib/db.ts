@@ -26,29 +26,28 @@ export async function upsertProfile(profile: Profile): Promise<Profile> {
     name: profile.name ? sanitizeInput(profile.name) : undefined,
   };
 
-  const { data, error }: { data: Profile | null; error: unknown } =
-    await supabase
-      .from('profiles')
-      .upsert(sanitized, { onConflict: 'id' })
-      .select()
-      .single();
+  const { data, error }: { data: Profile | null; error: unknown } = await supabase
+    .from('profiles')
+    .upsert(sanitized, { onConflict: 'id' })
+    .select()
+    .single();
   if (error) throw error;
   if (!data) throw new Error('Failed to upsert profile');
   return data;
 }
 
 export async function getProfile(id: string): Promise<Profile> {
-  const { data, error }: { data: Profile | null; error: unknown } =
-    await supabase.from('profiles').select('*').eq('id', id).single();
+  const { data, error }: { data: Profile | null; error: unknown } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', id)
+    .single();
   if (error) throw error;
   if (!data) throw new Error('Profile not found');
   return data;
 }
 
-export async function updateProfile(
-  id: string,
-  updates: Partial<Profile>,
-): Promise<Profile> {
+export async function updateProfile(id: string, updates: Partial<Profile>): Promise<Profile> {
   const sanitized: Partial<Profile> = { ...updates };
 
   if (updates.email) {
@@ -58,13 +57,12 @@ export async function updateProfile(
   }
 
   if (updates.name) sanitized.name = sanitizeInput(updates.name);
-  const { data, error }: { data: Profile | null; error: unknown } =
-    await supabase
-      .from('profiles')
-      .update(sanitized)
-      .eq('id', id)
-      .select()
-      .single();
+  const { data, error }: { data: Profile | null; error: unknown } = await supabase
+    .from('profiles')
+    .update(sanitized)
+    .eq('id', id)
+    .select()
+    .single();
   if (error) throw error;
   if (!data) throw new Error('Failed to update profile');
   return data;
@@ -86,26 +84,26 @@ export interface SubscriptionRow {
   auto_renew: boolean;
 }
 
-export async function getUserSubscription(
-  userId: string,
-): Promise<SubscriptionRow | undefined> {
-  const { data, error }: { data: SubscriptionRow[] | null; error: unknown } =
-    await supabase
-      .from('subscriptions')
-      .select('*')
-      .eq('user_id', userId)
-      .order('start_date', { ascending: false })
-      .limit(1);
+export async function getUserSubscription(userId: string): Promise<SubscriptionRow | undefined> {
+  const { data, error }: { data: SubscriptionRow[] | null; error: unknown } = await supabase
+    .from('subscriptions')
+    .select('*')
+    .eq('user_id', userId)
+    .order('start_date', { ascending: false })
+    .limit(1);
   if (error) throw error;
   if (!data) return undefined;
-  return (data[0] as SubscriptionRow | undefined) ?? undefined;
+  return data[0];
 }
 
 export async function upsertSubscription(
   row: Omit<SubscriptionRow, 'id'> & { id?: string },
 ): Promise<SubscriptionRow> {
-  const { data, error }: { data: SubscriptionRow | null; error: unknown } =
-    await supabase.from('subscriptions').upsert(row).select().single();
+  const { data, error }: { data: SubscriptionRow | null; error: unknown } = await supabase
+    .from('subscriptions')
+    .upsert(row)
+    .select()
+    .single();
   if (error) throw error;
   return data as SubscriptionRow;
 }
@@ -121,22 +119,22 @@ export interface InvoiceRow {
 }
 
 export async function listInvoices(userId: string): Promise<InvoiceRow[]> {
-  const { data, error }: { data: InvoiceRow[] | null; error: unknown } =
-    await supabase
-      .from('invoices')
-      .select('*')
-      .eq('user_id', userId)
-      .order('date', { ascending: false })
-      .limit(50);
+  const { data, error }: { data: InvoiceRow[] | null; error: unknown } = await supabase
+    .from('invoices')
+    .select('*')
+    .eq('user_id', userId)
+    .order('date', { ascending: false })
+    .limit(50);
   if (error) throw error;
   return (data as InvoiceRow[]) ?? [];
 }
 
-export async function addInvoice(
-  row: Omit<InvoiceRow, 'id'>,
-): Promise<InvoiceRow> {
-  const { data, error }: { data: InvoiceRow | null; error: unknown } =
-    await supabase.from('invoices').insert([row]).select().single();
+export async function addInvoice(row: Omit<InvoiceRow, 'id'>): Promise<InvoiceRow> {
+  const { data, error }: { data: InvoiceRow | null; error: unknown } = await supabase
+    .from('invoices')
+    .insert([row])
+    .select()
+    .single();
   if (error) throw error;
   return data as InvoiceRow;
 }
@@ -155,11 +153,11 @@ export interface CourseProgressRow {
   completed_at?: string | null;
 }
 
-export async function getCourseProgressRows(
-  userId: string,
-): Promise<CourseProgressRow[]> {
-  const { data, error }: { data: CourseProgressRow[] | null; error: unknown } =
-    await supabase.from('course_progress').select('*').eq('user_id', userId);
+export async function getCourseProgressRows(userId: string): Promise<CourseProgressRow[]> {
+  const { data, error }: { data: CourseProgressRow[] | null; error: unknown } = await supabase
+    .from('course_progress')
+    .select('*')
+    .eq('user_id', userId);
   if (error) throw error;
   return (data as CourseProgressRow[]) ?? [];
 }
@@ -167,8 +165,11 @@ export async function getCourseProgressRows(
 export async function upsertCourseProgress(
   row: Omit<CourseProgressRow, 'id'> & { id?: string },
 ): Promise<CourseProgressRow> {
-  const { data, error }: { data: CourseProgressRow | null; error: unknown } =
-    await supabase.from('course_progress').upsert(row).select().single();
+  const { data, error }: { data: CourseProgressRow | null; error: unknown } = await supabase
+    .from('course_progress')
+    .upsert(row)
+    .select()
+    .single();
   if (error) throw error;
   return data as CourseProgressRow;
 }
@@ -185,11 +186,11 @@ export interface ModuleProgressRow {
   notes?: string | null;
 }
 
-export async function getModuleProgressRows(
-  userId: string,
-): Promise<ModuleProgressRow[]> {
-  const { data, error }: { data: ModuleProgressRow[] | null; error: unknown } =
-    await supabase.from('module_progress').select('*').eq('user_id', userId);
+export async function getModuleProgressRows(userId: string): Promise<ModuleProgressRow[]> {
+  const { data, error }: { data: ModuleProgressRow[] | null; error: unknown } = await supabase
+    .from('module_progress')
+    .select('*')
+    .eq('user_id', userId);
   if (error) throw error;
   return data ?? [];
 }
@@ -197,8 +198,11 @@ export async function getModuleProgressRows(
 export async function upsertModuleProgress(
   row: Omit<ModuleProgressRow, 'id'> & { id?: string },
 ): Promise<ModuleProgressRow> {
-  const { data, error }: { data: ModuleProgressRow | null; error: unknown } =
-    await supabase.from('module_progress').upsert(row).select().single();
+  const { data, error }: { data: ModuleProgressRow | null; error: unknown } = await supabase
+    .from('module_progress')
+    .upsert(row)
+    .select()
+    .single();
   if (error) throw error;
   if (!data) throw new Error('Failed to upsert module progress');
   return data;
@@ -216,27 +220,24 @@ export interface UserActivityRow {
   metadata?: Record<string, unknown> | null;
 }
 
-export async function addUserActivity(
-  row: Omit<UserActivityRow, 'id'>,
-): Promise<UserActivityRow> {
-  const { data, error }: { data: UserActivityRow | null; error: unknown } =
-    await supabase.from('user_activity').insert(row).select().single();
+export async function addUserActivity(row: Omit<UserActivityRow, 'id'>): Promise<UserActivityRow> {
+  const { data, error }: { data: UserActivityRow | null; error: unknown } = await supabase
+    .from('user_activity')
+    .insert(row)
+    .select()
+    .single();
   if (error) throw error;
   if (!data) throw new Error('Failed to add user activity');
   return data;
 }
 
-export async function listUserActivity(
-  userId: string,
-  limit = 50,
-): Promise<UserActivityRow[]> {
-  const { data, error }: { data: UserActivityRow[] | null; error: unknown } =
-    await supabase
-      .from('user_activity')
-      .select('*')
-      .eq('user_id', userId)
-      .order('timestamp', { ascending: false })
-      .limit(limit);
+export async function listUserActivity(userId: string, limit = 50): Promise<UserActivityRow[]> {
+  const { data, error }: { data: UserActivityRow[] | null; error: unknown } = await supabase
+    .from('user_activity')
+    .select('*')
+    .eq('user_id', userId)
+    .order('timestamp', { ascending: false })
+    .limit(limit);
   if (error) throw error;
   return data ?? [];
 }

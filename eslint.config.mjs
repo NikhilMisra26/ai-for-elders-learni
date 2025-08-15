@@ -23,7 +23,6 @@ export default [
       '*.min.js',
       '*.bundle.js',
       '*.bundle.js.map',
-      'src/screens/onboarding/', // legacy unused screens excluded from project
     ],
   },
   {

@@ -4,10 +4,7 @@ import { cn } from '@/lib/utils';
 
 function Table({ className, ...props }: ComponentProps<'table'>): ReactElement {
   return (
-    <div
-      data-slot='table-container'
-      className='relative w-full overflow-x-auto'
-    >
+    <div data-slot='table-container' className='relative w-full overflow-x-auto'>
       <table
         data-slot='table'
         className={cn('w-full caption-bottom text-sm', className)}
@@ -17,23 +14,11 @@ function Table({ className, ...props }: ComponentProps<'table'>): ReactElement {
   );
 }
 
-function TableHeader({
-  className,
-  ...props
-}: ComponentProps<'thead'>): ReactElement {
-  return (
-    <thead
-      data-slot='table-header'
-      className={cn('[&_tr]:border-b', className)}
-      {...props}
-    />
-  );
+function TableHeader({ className, ...props }: ComponentProps<'thead'>): ReactElement {
+  return <thead data-slot='table-header' className={cn('[&_tr]:border-b', className)} {...props} />;
 }
 
-function TableBody({
-  className,
-  ...props
-}: ComponentProps<'tbody'>): ReactElement {
+function TableBody({ className, ...props }: ComponentProps<'tbody'>): ReactElement {
   return (
     <tbody
       data-slot='table-body'
@@ -43,17 +28,11 @@ function TableBody({
   );
 }
 
-function TableFooter({
-  className,
-  ...props
-}: ComponentProps<'tfoot'>): ReactElement {
+function TableFooter({ className, ...props }: ComponentProps<'tfoot'>): ReactElement {
   return (
     <tfoot
       data-slot='table-footer'
-      className={cn(
-        'bg-muted/50 border-t font-medium [&>tr]:last:border-b-0',
-        className,
-      )}
+      className={cn('bg-muted/50 border-t font-medium [&>tr]:last:border-b-0', className)}
       {...props}
     />
   );
@@ -72,10 +51,7 @@ function TableRow({ className, ...props }: ComponentProps<'tr'>): ReactElement {
   );
 }
 
-function TableHead({
-  className,
-  ...props
-}: ComponentProps<'th'>): ReactElement {
+function TableHead({ className, ...props }: ComponentProps<'th'>): ReactElement {
   return (
     <th
       data-slot='table-head'
@@ -88,10 +64,7 @@ function TableHead({
   );
 }
 
-function TableCell({
-  className,
-  ...props
-}: ComponentProps<'td'>): ReactElement {
+function TableCell({ className, ...props }: ComponentProps<'td'>): ReactElement {
   return (
     <td
       data-slot='table-cell'
@@ -104,10 +77,7 @@ function TableCell({
   );
 }
 
-function TableCaption({
-  className,
-  ...props
-}: ComponentProps<'caption'>): ReactElement {
+function TableCaption({ className, ...props }: ComponentProps<'caption'>): ReactElement {
   return (
     <caption
       data-slot='table-caption'
@@ -117,13 +87,4 @@ function TableCaption({
   );
 }
 
-export {
-  Table,
-  TableHeader,
-  TableBody,
-  TableFooter,
-  TableHead,
-  TableRow,
-  TableCell,
-  TableCaption,
-};
+export { Table, TableHeader, TableBody, TableFooter, TableHead, TableRow, TableCell, TableCaption };

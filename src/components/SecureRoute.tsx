@@ -3,13 +3,7 @@ import { Lock, Shield, ArrowRight } from '@phosphor-icons/react';
 import { toast } from 'sonner';
 
 import { useAuth } from '@/contexts/AuthContext';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
 interface SecureRouteProps {
@@ -45,9 +39,7 @@ export function SecureRoute({
               <Lock className='h-12 w-12 text-muted-foreground' />
             </div>
             <CardTitle>Authentication Required</CardTitle>
-            <CardDescription>
-              Please sign in to access this content
-            </CardDescription>
+            <CardDescription>Please sign in to access this content</CardDescription>
           </CardHeader>
           <CardContent className='text-center'>
             <Button onClick={onAuthRequired} size='lg'>
@@ -72,9 +64,7 @@ export function SecureRoute({
       // Only show upgrade prompt for paid tiers
       const paidTier = requiredTier === 'free' ? undefined : requiredTier;
       if (paidTier) {
-        return (
-          <TierUpgradePrompt requiredTier={paidTier} userTier={user.tier} />
-        );
+        return <TierUpgradePrompt requiredTier={paidTier} userTier={user.tier} />;
       }
     }
   }
@@ -87,10 +77,7 @@ interface TierUpgradePromptProps {
   userTier: 'free' | 'advanced' | 'expert';
 }
 
-function TierUpgradePrompt({
-  requiredTier,
-  userTier,
-}: TierUpgradePromptProps): ReactElement {
+function TierUpgradePrompt({ requiredTier, userTier }: TierUpgradePromptProps): ReactElement {
   const { updateTier: _updateTier } = useAuth();
 
   // Start of removed/added code for subscription removal
@@ -144,16 +131,12 @@ function TierUpgradePrompt({
             <Lock className='h-12 w-12 text-yellow-500' />
           </div>
           <CardTitle>Upgrade Required</CardTitle>
-          <CardDescription>
-            This content requires the {info.name} tier
-          </CardDescription>
+          <CardDescription>This content requires the {info.name} tier</CardDescription>
         </CardHeader>
         <CardContent>
           <div className='text-center mb-6'>
             <div className='inline-flex items-center gap-2 bg-muted px-3 py-1 rounded-full text-sm mb-4'>
-              <span>
-                Current: {userTier.charAt(0).toUpperCase() + userTier.slice(1)}
-              </span>
+              <span>Current: {userTier.charAt(0).toUpperCase() + userTier.slice(1)}</span>
               <ArrowRight className='h-3 w-3' />
               <span className='font-medium'>{info.name}</span>
             </div>
@@ -208,9 +191,7 @@ export function usePermissions(): {
 } {
   const { user } = useAuth();
 
-  const hasAccess = (
-    requiredTier?: 'free' | 'advanced' | 'expert',
-  ): boolean => {
+  const hasAccess = (requiredTier?: 'free' | 'advanced' | 'expert'): boolean => {
     if (!user) return false;
     if (!requiredTier) return true;
 

@@ -118,10 +118,7 @@ export interface TableName {
   updated_at: string;
 }
 
-export type TableNameInsert = Omit<
-  TableName,
-  'id' | 'created_at' | 'updated_at'
-> & {
+export type TableNameInsert = Omit<TableName, 'id' | 'created_at' | 'updated_at'> & {
   id?: string;
 };
 

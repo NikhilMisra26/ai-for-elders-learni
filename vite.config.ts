@@ -13,6 +13,17 @@ export default defineConfig(
       },
     },
     server: {
+      // Strict CORS configuration for development server
+      cors: {
+        origin: [
+          'http://localhost:5173',
+          'https://kboefdqxbsdkmnmjosjx.supabase.co',
+          'https://checkout.stripe.com',
+        ],
+        credentials: true,
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+        allowedHeaders: ['Content-Type', 'Authorization'],
+      },
       // Security headers for development server
       headers: {
         'X-Frame-Options': 'DENY',
@@ -20,7 +31,7 @@ export default defineConfig(
         'Referrer-Policy': 'strict-origin-when-cross-origin',
         'Permissions-Policy':
           'camera=(), microphone=(), geolocation=(), payment=(self https://checkout.stripe.com)',
-        // Note: CSP is handled by meta tags in HTML due to Vite's dynamic imports in dev
+        // Note: CSP is handled by platform deployment configs in production (vercel.json/netlify.toml)
       },
     },
     preview: {
@@ -31,7 +42,7 @@ export default defineConfig(
         'Referrer-Policy': 'strict-origin-when-cross-origin',
         'Permissions-Policy':
           'camera=(), microphone=(), geolocation=(), payment=(self https://checkout.stripe.com)',
-        // Note: CSP is handled by meta tags in HTML
+        // Note: CSP is handled by platform deployment configs in production (vercel.json/netlify.toml)
       },
     },
     build: {
@@ -43,18 +54,12 @@ export default defineConfig(
           // Optimized chunking strategy for better caching
           manualChunks: (id): string | undefined => {
             // Core React libraries
-            if (
-              id.includes('node_modules/react') ||
-              id.includes('node_modules/react-dom')
-            ) {
+            if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) {
               return 'react-vendor';
             }
 
             // Supabase client - separate chunk for authentication/database
-            if (
-              id.includes('node_modules/@supabase') ||
-              id.includes('src/lib/supabaseClient')
-            ) {
+            if (id.includes('node_modules/@supabase') || id.includes('src/lib/supabaseClient')) {
               return 'supabase';
             }
 

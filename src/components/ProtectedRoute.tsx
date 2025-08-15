@@ -4,13 +4,7 @@ import { toast } from 'sonner';
 
 import { useAuth } from '@/contexts/AuthContext';
 import type { User } from '@/contexts/AuthContext';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
 interface ProtectedRouteProps {
@@ -81,9 +75,7 @@ export function ProtectedRoute({
               <Lock className='h-12 w-12 text-blue-500' aria-hidden='true' />
             </div>
             <CardTitle>Authentication Required</CardTitle>
-            <CardDescription>
-              Please sign in to access this page
-            </CardDescription>
+            <CardDescription>Please sign in to access this page</CardDescription>
           </CardHeader>
           <CardContent className='text-center'>
             <p className='text-muted-foreground mb-6'>
@@ -161,10 +153,7 @@ interface TierUpgradePromptProps {
   currentUser: User;
 }
 
-function TierUpgradePrompt({
-  requiredRole,
-  currentUser,
-}: TierUpgradePromptProps): ReactElement {
+function TierUpgradePrompt({ requiredRole, currentUser }: TierUpgradePromptProps): ReactElement {
   const { updateTier: _updateTier } = useAuth();
 
   // Start of removed/added code for subscription removal
@@ -216,17 +205,13 @@ function TierUpgradePrompt({
             <Lock className='h-12 w-12 text-yellow-500' aria-hidden='true' />
           </div>
           <CardTitle>Upgrade Required</CardTitle>
-          <CardDescription>
-            This content requires the {info.name} tier
-          </CardDescription>
+          <CardDescription>This content requires the {info.name} tier</CardDescription>
         </CardHeader>
         <CardContent>
           <div className='text-center mb-6'>
             <div className='inline-flex items-center gap-2 bg-muted px-3 py-1 rounded-full text-sm mb-4'>
               <span>
-                Current:{' '}
-                {currentUser.tier.charAt(0).toUpperCase() +
-                  currentUser.tier.slice(1)}
+                Current: {currentUser.tier.charAt(0).toUpperCase() + currentUser.tier.slice(1)}
               </span>
               <ArrowRight className='h-3 w-3' aria-hidden='true' />
               <span className='font-medium'>{info.name}</span>
@@ -286,9 +271,7 @@ interface AccessDeniedPromptProps {
   requiredRole: string;
 }
 
-function AccessDeniedPrompt({
-  requiredRole,
-}: AccessDeniedPromptProps): ReactElement {
+function AccessDeniedPrompt({ requiredRole }: AccessDeniedPromptProps): ReactElement {
   // Commented out unused location - keeping for potential future use
   // const location = useLocation();
 
@@ -309,27 +292,18 @@ function AccessDeniedPrompt({
             <Lock className='h-12 w-12 text-red-500' aria-hidden='true' />
           </div>
           <CardTitle>Access Denied</CardTitle>
-          <CardDescription>
-            You don&apos;t have permission to access this page
-          </CardDescription>
+          <CardDescription>You don&apos;t have permission to access this page</CardDescription>
         </CardHeader>
         <CardContent className='text-center'>
           <p className='text-muted-foreground mb-6'>
-            This page requires {requiredRole} access. Please contact your
-            administrator if you believe this is an error.
+            This page requires {requiredRole} access. Please contact your administrator if you
+            believe this is an error.
           </p>
           <div className='flex flex-col sm:flex-row gap-3 justify-center'>
-            <Button
-              onClick={handleGoBack}
-              variant='outline'
-              aria-label='Go back to previous page'
-            >
+            <Button onClick={handleGoBack} variant='outline' aria-label='Go back to previous page'>
               Go Back
             </Button>
-            <Button
-              onClick={() => (window.location.href = '/home')}
-              aria-label='Go to home page'
-            >
+            <Button onClick={() => (window.location.href = '/home')} aria-label='Go to home page'>
               Go to Home
             </Button>
           </div>
@@ -358,16 +332,12 @@ function AccessDeniedPrompt({
 export function usePermissions(): {
   isAuthenticated: boolean;
   userTier: 'free' | 'advanced' | 'expert';
-  hasAccess: (
-    requiredRole?: 'free' | 'advanced' | 'expert' | 'admin',
-  ) => boolean;
+  hasAccess: (requiredRole?: 'free' | 'advanced' | 'expert' | 'admin') => boolean;
   canAccessCourse: (courseId: string) => boolean;
 } {
   const { user, isLoading } = useAuth();
 
-  const hasAccess = (
-    requiredRole?: 'free' | 'advanced' | 'expert' | 'admin',
-  ): boolean => {
+  const hasAccess = (requiredRole?: 'free' | 'advanced' | 'expert' | 'admin'): boolean => {
     if (isLoading || !user) return false;
     if (!requiredRole) return true;
 

@@ -13,13 +13,8 @@ interface HeaderProps {
 
 export function Header({ onAuthClick }: HeaderProps): ReactElement {
   const { user, logout } = useAuth();
-  const {
-    fontSize,
-    isDarkMode,
-    increaseFontSize,
-    decreaseFontSize,
-    toggleDarkMode,
-  } = useAccessibility();
+  const { fontSize, isDarkMode, increaseFontSize, decreaseFontSize, toggleDarkMode } =
+    useAccessibility();
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
@@ -123,16 +118,10 @@ export function Header({ onAuthClick }: HeaderProps): ReactElement {
               variant='ghost'
               size='sm'
               onClick={toggleDarkMode}
-              aria-label={
-                isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'
-              }
+              aria-label={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
               className='h-8 w-8 p-0'
             >
-              {isDarkMode ? (
-                <Sun weight='regular' />
-              ) : (
-                <Moon weight='regular' />
-              )}
+              {isDarkMode ? <Sun weight='regular' /> : <Moon weight='regular' />}
             </Button>
 
             {/* User Menu */}
@@ -177,11 +166,7 @@ export function Header({ onAuthClick }: HeaderProps): ReactElement {
           <div className='md:hidden border-t border-border bg-background'>
             <div className='px-4 py-4 space-y-3'>
               {/* Mobile Navigation */}
-              <nav
-                className='space-y-2'
-                role='navigation'
-                aria-label='Mobile navigation'
-              >
+              <nav className='space-y-2' role='navigation' aria-label='Mobile navigation'>
                 {navItems.map((item) => (
                   <button
                     key={item.id}
@@ -235,11 +220,7 @@ export function Header({ onAuthClick }: HeaderProps): ReactElement {
                     onClick={toggleDarkMode}
                     className='flex items-center gap-2'
                   >
-                    {isDarkMode ? (
-                      <Sun weight='regular' />
-                    ) : (
-                      <Moon weight='regular' />
-                    )}
+                    {isDarkMode ? <Sun weight='regular' /> : <Moon weight='regular' />}
                     {isDarkMode ? 'Light' : 'Dark'}
                   </Button>
                 </div>

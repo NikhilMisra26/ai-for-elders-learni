@@ -1,4 +1,4 @@
-import { useState, type ReactElement } from 'react';
+import React, { useState, type ReactElement } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   BookOpen,
@@ -11,7 +11,6 @@ import {
   Fire,
   Target,
   Users,
-  Gift,
   Gear,
   BookmarkSimple,
   Play,
@@ -22,13 +21,7 @@ import { AuthForm } from './AuthForm';
 
 import { BrandName } from '@/components/BrandName';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
@@ -37,16 +30,12 @@ import { useProgress } from '@/lib/progressTracking';
 import { useSubscription } from '@/lib/subscription';
 import { courseData } from '@/lib/courseData';
 
-export function DashboardPage(): ReactElement {
+function DashboardPageComponent(): ReactElement {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { subscription, getCurrentPlan } = useSubscription();
-  const {
-    getDashboardSummary,
-    getLearningRecommendations,
-    learningStats,
-    setWeeklyGoal,
-  } = useProgress();
+  const { getDashboardSummary, getLearningRecommendations, learningStats, setWeeklyGoal } =
+    useProgress();
 
   const [showGoalSetting, setShowGoalSetting] = useState(false);
 
@@ -57,9 +46,7 @@ export function DashboardPage(): ReactElement {
         <Card className='max-w-md'>
           <CardHeader>
             <CardTitle>Sign In Required</CardTitle>
-            <CardDescription>
-              Please sign in to view your learning dashboard
-            </CardDescription>
+            <CardDescription>Please sign in to view your learning dashboard</CardDescription>
           </CardHeader>
           <CardContent>
             <AuthForm onClose={() => void navigate('/home')} />
@@ -86,10 +73,7 @@ export function DashboardPage(): ReactElement {
   // Calculate weekly progress percentage
   const weeklyProgressPercentage =
     learningStats.weeklyGoal > 0
-      ? Math.min(
-          (learningStats.weeklyProgress / learningStats.weeklyGoal) * 100,
-          100,
-        )
+      ? Math.min((learningStats.weeklyProgress / learningStats.weeklyGoal) * 100, 100)
       : 0;
 
   // Commented out unused function - keeping for potential future use
@@ -122,8 +106,7 @@ export function DashboardPage(): ReactElement {
             {getGreeting()}, {user.name}! 👋
           </h1>
           <p className='text-xl text-muted-foreground'>
-            Ready to continue your AI learning journey with{' '}
-            <BrandName variant='short' /> today?
+            Ready to continue your AI learning journey with <BrandName variant='short' /> today?
           </p>
         </div>
 
@@ -132,21 +115,15 @@ export function DashboardPage(): ReactElement {
           <Card className='text-center'>
             <CardContent className='p-4'>
               <Trophy className='w-8 h-8 mx-auto mb-2 text-yellow-500' />
-              <div className='text-2xl font-bold'>
-                {dashboardSummary.completedModules}
-              </div>
-              <div className='text-sm text-muted-foreground'>
-                Modules Completed
-              </div>
+              <div className='text-2xl font-bold'>{dashboardSummary.completedModules}</div>
+              <div className='text-sm text-muted-foreground'>Modules Completed</div>
             </CardContent>
           </Card>
 
           <Card className='text-center'>
             <CardContent className='p-4'>
               <Fire className='w-8 h-8 mx-auto mb-2 text-orange-500' />
-              <div className='text-2xl font-bold'>
-                {dashboardSummary.currentStreak}
-              </div>
+              <div className='text-2xl font-bold'>{dashboardSummary.currentStreak}</div>
               <div className='text-sm text-muted-foreground'>Day Streak</div>
             </CardContent>
           </Card>
@@ -164,9 +141,7 @@ export function DashboardPage(): ReactElement {
           <Card className='text-center'>
             <CardContent className='p-4'>
               <Star className='w-8 h-8 mx-auto mb-2 text-purple-500' />
-              <div className='text-2xl font-bold capitalize'>
-                {subscription.planId}
-              </div>
+              <div className='text-2xl font-bold capitalize'>{subscription.planId}</div>
               <div className='text-sm text-muted-foreground'>Plan</div>
             </CardContent>
           </Card>
@@ -192,16 +167,12 @@ export function DashboardPage(): ReactElement {
                         {recommendations.continueModule.module.title}
                       </h3>
                       <p className='text-muted-foreground'>
-                        {
-                          courseData[recommendations.continueModule.courseId]
-                            ?.title
-                        }
+                        {courseData[recommendations.continueModule.courseId]?.title}
                       </p>
                       <div className='flex items-center gap-2 mt-2'>
                         <Clock className='w-4 h-4' />
                         <span className='text-sm text-muted-foreground'>
-                          {recommendations.continueModule.module.estimatedTime}{' '}
-                          min
+                          {recommendations.continueModule.module.estimatedTime} min
                         </span>
                       </div>
                     </div>
@@ -240,9 +211,7 @@ export function DashboardPage(): ReactElement {
                       <div className='flex items-center gap-4'>
                         <Badge
                           variant={
-                            recommendations.startCourse.tier === 'free'
-                              ? 'secondary'
-                              : 'default'
+                            recommendations.startCourse.tier === 'free' ? 'secondary' : 'default'
                           }
                         >
                           {recommendations.startCourse.tier.toUpperCase()}
@@ -272,16 +241,14 @@ export function DashboardPage(): ReactElement {
                   <Target className='w-5 h-5' />
                   Weekly Learning Goal
                 </CardTitle>
-                <CardDescription>
-                  Track your weekly learning progress
-                </CardDescription>
+                <CardDescription>Track your weekly learning progress</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className='space-y-4'>
                   <div className='flex items-center justify-between'>
                     <span className='text-sm font-medium'>
-                      {Math.round(learningStats.weeklyProgress)} /{' '}
-                      {learningStats.weeklyGoal} minutes
+                      {Math.round(learningStats.weeklyProgress)} / {learningStats.weeklyGoal}{' '}
+                      minutes
                     </span>
                     <span className='text-sm text-muted-foreground'>
                       {Math.round(weeklyProgressPercentage)}%
@@ -305,18 +272,12 @@ export function DashboardPage(): ReactElement {
 
                   {showGoalSetting && (
                     <div className='pt-4 border-t'>
-                      <label className='text-sm font-medium'>
-                        Weekly Goal (minutes)
-                      </label>
+                      <label className='text-sm font-medium'>Weekly Goal (minutes)</label>
                       <div className='flex gap-2 mt-2'>
                         {[60, 120, 180, 240].map((minutes) => (
                           <Button
                             key={minutes}
-                            variant={
-                              learningStats.weeklyGoal === minutes
-                                ? 'default'
-                                : 'outline'
-                            }
+                            variant={learningStats.weeklyGoal === minutes ? 'default' : 'outline'}
                             size='sm'
                             onClick={() => setWeeklyGoal(minutes)}
                           >
@@ -334,9 +295,7 @@ export function DashboardPage(): ReactElement {
             <Card>
               <CardHeader>
                 <CardTitle>Your Courses</CardTitle>
-                <CardDescription>
-                  Track your progress across all available courses
-                </CardDescription>
+                <CardDescription>Track your progress across all available courses</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className='space-y-6'>
@@ -344,9 +303,7 @@ export function DashboardPage(): ReactElement {
                     .filter((course) => {
                       // Show courses user has access to
                       const tierOrder = { free: 1, advanced: 2, expert: 3 };
-                      return (
-                        tierOrder[subscription.planId] >= tierOrder[course.tier]
-                      );
+                      return tierOrder[subscription.planId] >= tierOrder[course.tier];
                     })
                     .map((course) => {
                       const completedModules = course.modules.filter(
@@ -363,13 +320,7 @@ export function DashboardPage(): ReactElement {
                           <div className='flex items-center justify-between'>
                             <div className='flex items-center gap-2'>
                               <h3 className='font-medium'>{course.title}</h3>
-                              <Badge
-                                variant={
-                                  course.tier === 'free'
-                                    ? 'secondary'
-                                    : 'default'
-                                }
-                              >
+                              <Badge variant={course.tier === 'free' ? 'secondary' : 'default'}>
                                 {course.tier.toUpperCase()}
                               </Badge>
                             </div>
@@ -377,10 +328,7 @@ export function DashboardPage(): ReactElement {
                               {completedModules}/{course.totalModules} modules
                             </span>
                           </div>
-                          <Progress
-                            value={progressPercentage}
-                            className='h-2'
-                          />
+                          <Progress value={progressPercentage} className='h-2' />
                           <div className='flex justify-between text-xs text-muted-foreground'>
                             <span>{progressPercentage}% complete</span>
                             <span>~{course.estimatedTotalTime} min total</span>
@@ -409,9 +357,7 @@ export function DashboardPage(): ReactElement {
                     <Clock className='w-5 h-5' />
                     Recent Activity
                   </CardTitle>
-                  <CardDescription>
-                    Your latest learning milestones
-                  </CardDescription>
+                  <CardDescription>Your latest learning milestones</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className='space-y-3'>
@@ -435,12 +381,8 @@ export function DashboardPage(): ReactElement {
                           )}
                         </div>
                         <div className='flex-1'>
-                          <p className='font-medium text-sm'>
-                            {activity.title}
-                          </p>
-                          <p className='text-xs text-muted-foreground'>
-                            {activity.description}
-                          </p>
+                          <p className='font-medium text-sm'>{activity.title}</p>
+                          <p className='text-xs text-muted-foreground'>{activity.description}</p>
                           <p className='text-xs text-muted-foreground mt-1'>
                             {new Date(activity.timestamp).toLocaleDateString()}
                           </p>
@@ -465,23 +407,13 @@ export function DashboardPage(): ReactElement {
               </CardHeader>
               <CardContent className='space-y-4'>
                 <div>
-                  <div className='text-sm font-medium text-muted-foreground'>
-                    Subscription
-                  </div>
+                  <div className='text-sm font-medium text-muted-foreground'>Subscription</div>
                   <div className='flex items-center justify-between'>
-                    <Badge
-                      variant={
-                        subscription.planId === 'free' ? 'secondary' : 'default'
-                      }
-                    >
+                    <Badge variant={subscription.planId === 'free' ? 'secondary' : 'default'}>
                       {currentPlan.name}
                     </Badge>
                     {subscription.planId === 'free' && (
-                      <Button
-                        size='sm'
-                        variant='outline'
-                        onClick={() => void navigate('/account')}
-                      >
+                      <Button size='sm' variant='outline' onClick={() => void navigate('/account')}>
                         Upgrade
                       </Button>
                     )}
@@ -490,14 +422,10 @@ export function DashboardPage(): ReactElement {
 
                 {subscription.planId !== 'free' && (
                   <div>
-                    <div className='text-sm font-medium text-muted-foreground'>
-                      Next Billing
-                    </div>
+                    <div className='text-sm font-medium text-muted-foreground'>Next Billing</div>
                     <div className='text-sm'>
                       {subscription.nextBillingDate
-                        ? new Date(
-                            subscription.nextBillingDate,
-                          ).toLocaleDateString()
+                        ? new Date(subscription.nextBillingDate).toLocaleDateString()
                         : 'N/A'}
                     </div>
                   </div>
@@ -506,12 +434,8 @@ export function DashboardPage(): ReactElement {
                 <Separator />
 
                 <div>
-                  <div className='text-sm font-medium text-muted-foreground'>
-                    Member Since
-                  </div>
-                  <div className='text-sm'>
-                    {new Date(user.joinDate).toLocaleDateString()}
-                  </div>
+                  <div className='text-sm font-medium text-muted-foreground'>Member Since</div>
+                  <div className='text-sm'>{new Date(user.joinDate).toLocaleDateString()}</div>
                 </div>
 
                 <Button
@@ -539,17 +463,13 @@ export function DashboardPage(): ReactElement {
                     <div className='text-2xl font-bold'>
                       {Math.round(learningStats.totalTimeSpent / 60)}
                     </div>
-                    <div className='text-xs text-muted-foreground'>
-                      Hours Learned
-                    </div>
+                    <div className='text-xs text-muted-foreground'>Hours Learned</div>
                   </div>
                   <div className='text-center'>
                     <div className='text-2xl font-bold'>
                       {learningStats.averageRating.toFixed(1)}
                     </div>
-                    <div className='text-xs text-muted-foreground'>
-                      Avg Rating
-                    </div>
+                    <div className='text-xs text-muted-foreground'>Avg Rating</div>
                   </div>
                 </div>
 
@@ -559,9 +479,7 @@ export function DashboardPage(): ReactElement {
                   <div className='text-sm font-medium mb-2'>Current Streak</div>
                   <div className='flex items-center gap-2'>
                     <Fire className='w-5 h-5 text-orange-500' />
-                    <span className='font-semibold'>
-                      {learningStats.streak.currentStreak} days
-                    </span>
+                    <span className='font-semibold'>{learningStats.streak.currentStreak} days</span>
                   </div>
                   <div className='text-xs text-muted-foreground mt-1'>
                     Longest: {learningStats.streak.longestStreak} days
@@ -572,21 +490,13 @@ export function DashboardPage(): ReactElement {
                   <>
                     <Separator />
                     <div>
-                      <div className='text-sm font-medium mb-2'>
-                        Favorite Topics
-                      </div>
+                      <div className='text-sm font-medium mb-2'>Favorite Topics</div>
                       <div className='flex flex-wrap gap-1'>
-                        {learningStats.favoriteTopics
-                          .slice(0, 3)
-                          .map((topic) => (
-                            <Badge
-                              key={topic}
-                              variant='secondary'
-                              className='text-xs'
-                            >
-                              {topic}
-                            </Badge>
-                          ))}
+                        {learningStats.favoriteTopics.slice(0, 3).map((topic) => (
+                          <Badge key={topic} variant='secondary' className='text-xs'>
+                            {topic}
+                          </Badge>
+                        ))}
                       </div>
                     </div>
                   </>
@@ -604,16 +514,15 @@ export function DashboardPage(): ReactElement {
               </CardHeader>
               <CardContent>
                 <p className='text-sm text-muted-foreground'>
-                  🎯 <strong>Pro tip:</strong> Try to complete at least one
-                  module every few days to maintain your learning momentum.
-                  Remember, you can always re-visit modules to reinforce your
-                  understanding!
+                  🎯 <strong>Pro tip:</strong> Try to complete at least one module every few days to
+                  maintain your learning momentum. Remember, you can always re-visit modules to
+                  reinforce your understanding!
                 </p>
               </CardContent>
             </Card>
-
+            {/* Start of commented out code for subscription removal */}
             {/* Subscription Reminder */}
-            {subscription.planId === 'free' && (
+            {/* {subscription.planId === 'free' && (  
               <Card className='border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5'>
                 <CardHeader>
                   <CardTitle className='flex items-center gap-2'>
@@ -635,10 +544,15 @@ export function DashboardPage(): ReactElement {
                   </Button>
                 </CardContent>
               </Card>
-            )}
+            )} */}
+
+            {/* End of commented out code for subscription removal */}
           </div>
         </div>
       </div>
     </div>
   );
 }
+
+// Memoized export for performance optimization
+export const DashboardPage = React.memo(DashboardPageComponent);

@@ -3,6 +3,8 @@
  * Provides password validation, rate limiting, and input sanitization
  */
 
+import DOMPurify from 'dompurify';
+
 export interface SecurityConfig {
   maxLoginAttempts: number;
   lockoutDuration: number; // in minutes
@@ -35,35 +37,20 @@ export function validatePassword(
   const errors: string[] = [];
 
   if (password.length < config.passwordMinLength) {
-    errors.push(
-      `Password must be at least ${config.passwordMinLength} characters long`,
-    );
+    errors.push(`Password must be at least ${config.passwordMinLength} characters long`);
   }
 
   if (config.passwordRequireNumber && !/\d/.test(password)) {
     errors.push('Password must contain at least one number');
   }
 
-  if (
-    config.passwordRequireSpecialChar &&
-    !/[!@#$%^&*(),.?":{}|<>]/.test(password)
-  ) {
-    errors.push(
-      'Password must contain at least one special character (!@#$%^&*)',
-    );
+  if (config.passwordRequireSpecialChar && !/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+    errors.push('Password must contain at least one special character (!@#$%^&*)');
   }
 
   // Check for common weak patterns
-  const commonPasswords = [
-    'password',
-    '12345678',
-    'qwerty',
-    'abc123',
-    'password123',
-  ];
-  if (
-    commonPasswords.some((common) => password.toLowerCase().includes(common))
-  ) {
+  const commonPasswords = ['password', '12345678', 'qwerty', 'abc123', 'password123'];
+  if (commonPasswords.some((common) => password.toLowerCase().includes(common))) {
     errors.push('Password is too common. Please choose a more unique password');
   }
 
@@ -204,12 +191,83 @@ export class RateLimiter {
 
 /**
  * Input sanitization to prevent XSS and injection attacks
+ * Use for form inputs and user-generated content
  */
 export function sanitizeInput(input: string): string {
   return input
     .trim()
     .replace(/[<>"']/g, '') // Remove potentially dangerous characters
     .slice(0, 1000); // Limit length
+}
+
+/**
+ * HTML sanitization to prevent XSS attacks when rendering HTML content
+ * Use when displaying any HTML content that may contain user input
+ */
+export function sanitizeHtml(html: string): string {
+  // Configure DOMPurify for maximum security
+  const clean = DOMPurify.sanitize(html, {
+    ALLOWED_TAGS: [
+      'h1',
+      'h2',
+      'h3',
+      'h4',
+      'h5',
+      'h6',
+      'p',
+      'br',
+      'strong',
+      'em',
+      'u',
+      's',
+      'ul',
+      'ol',
+      'li',
+      'blockquote',
+      'code',
+      'pre',
+      'a',
+      'img',
+      'div',
+      'span',
+      'table',
+      'thead',
+      'tbody',
+      'tr',
+      'td',
+      'th',
+    ],
+    ALLOWED_ATTR: ['href', 'src', 'alt', 'title', 'class', 'id', 'style'],
+    ALLOW_DATA_ATTR: false,
+    ALLOW_UNKNOWN_PROTOCOLS: false,
+    SAFE_FOR_TEMPLATES: true,
+    WHOLE_DOCUMENT: false,
+    RETURN_DOM: false,
+    RETURN_DOM_FRAGMENT: false,
+    FORCE_BODY: true,
+    SANITIZE_DOM: true,
+    KEEP_CONTENT: true,
+    IN_PLACE: false,
+  });
+
+  return clean;
+}
+
+/**
+ * Escape HTML entities for safe display
+ * Use for displaying plain text that should not be interpreted as HTML
+ */
+export function escapeHtml(text: string): string {
+  const map: Record<string, string> = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#x27;',
+    '/': '&#x2F;',
+  };
+
+  return text.replace(/[&<>"'/]/g, (char) => map[char] ?? char);
 }
 
 /**
@@ -226,9 +284,7 @@ export function generateSessionToken(): string {
 
   const array = new Uint8Array(32);
   cryptoObj.getRandomValues(array);
-  return Array.from(array, (byte) => byte.toString(16).padStart(2, '0')).join(
-    '',
-  );
+  return Array.from(array, (byte) => byte.toString(16).padStart(2, '0')).join('');
 }
 
 /**
@@ -241,13 +297,7 @@ export class SessionManager {
    * @deprecated Use Supabase Auth instead
    * Sessions should be managed by Supabase with secure httpOnly cookies
    */
-  static createSession(userId: string): string {
-    if (import.meta.env.DEV) {
-      console.warn(
-        'SessionManager.createSession is deprecated. Use Supabase Auth for secure session management.',
-        { userId },
-      );
-    }
+  static createSession(_userId: string): string {
     // Return a dummy token - actual session is managed by Supabase
     return 'supabase-managed-session';
   }
@@ -260,11 +310,6 @@ export class SessionManager {
     token: string;
     createdAt: number;
   } | null {
-    if (import.meta.env.DEV) {
-      console.warn(
-        'SessionManager.getSession is deprecated. Use supabase.auth.getSession() for secure session retrieval.',
-      );
-    }
     return null;
   }
 
@@ -272,22 +317,13 @@ export class SessionManager {
    * @deprecated Use supabase.auth.signOut() instead
    */
   static clearSession(): void {
-    if (import.meta.env.DEV) {
-      console.warn(
-        'SessionManager.clearSession is deprecated. Use supabase.auth.signOut() for secure session clearing.',
-      );
-    }
+    // Deprecated - use supabase.auth.signOut() instead
   }
 
   /**
    * @deprecated Use supabase.auth.getSession() instead
    */
   static isSessionValid(): boolean {
-    if (import.meta.env.DEV) {
-      console.warn(
-        'SessionManager.isSessionValid is deprecated. Use supabase.auth.getSession() to check session validity.',
-      );
-    }
     return false;
   }
 
@@ -295,11 +331,7 @@ export class SessionManager {
    * @deprecated Session extension is handled automatically by Supabase
    */
   static extendSession(): void {
-    if (import.meta.env.DEV) {
-      console.warn(
-        'SessionManager.extendSession is deprecated. Supabase automatically handles session refresh.',
-      );
-    }
+    // Deprecated - Supabase automatically handles session refresh
   }
 }
 
@@ -357,19 +389,10 @@ export class SecurityLogger {
     }
 
     // In a real app, this would send to a secure logging service
-    if (severity === 'error') {
-      if (import.meta.env.DEV) {
-        console.warn(
-          `Security Event [${severity.toUpperCase()}]: ${event}`,
-          details,
-        );
-      }
-    }
+    // Error-level security events are logged internally for development monitoring
   }
 
-  private static sanitizeLogData(
-    data: Record<string, unknown>,
-  ): Record<string, unknown> {
+  private static sanitizeLogData(data: Record<string, unknown>): Record<string, unknown> {
     const sanitized = { ...data };
     // Remove sensitive fields
     delete (sanitized as { password?: unknown }).password;

@@ -1,4 +1,4 @@
-import { useState, type ReactElement } from 'react';
+import React, { useState, useMemo, useCallback, type ReactElement } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
@@ -20,13 +20,7 @@ import {
 
 import { BrandName } from '@/components/BrandName';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
@@ -40,62 +34,67 @@ interface CoursesPageProps {
   onAuthClick: () => void;
 }
 
-export function CoursesPage({ onAuthClick }: CoursesPageProps): ReactElement {
+function CoursesPageComponent({ onAuthClick }: CoursesPageProps): ReactElement {
   const { user } = useAuth();
   const { subscription, canAccessTier } = useSubscription();
   const { getCourseProgress, startCourse, getDashboardSummary } = useProgress();
   const navigate = useNavigate();
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [filterTier, setFilterTier] = useState<
-    'all' | 'free' | 'advanced' | 'expert'
-  >('all');
+  const [filterTier, setFilterTier] = useState<'all' | 'free' | 'advanced' | 'expert'>('all');
 
   const dashboardSummary = getDashboardSummary();
   // const availableCourses = getAvailableCourses(subscription.planId);
 
   // Filter courses based on search and filter
-  const filteredCourses = Object.values(courseData).filter((course) => {
-    const matchesSearch =
-      course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      course.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesFilter = filterTier === 'all' || course.tier === filterTier;
-    return matchesSearch && matchesFilter;
-  });
+  const filteredCourses = useMemo(
+    () =>
+      Object.values(courseData).filter((course) => {
+        const matchesSearch =
+          course.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          course.description.toLowerCase().includes(searchQuery.toLowerCase());
+        const matchesFilter = filterTier === 'all' || course.tier === filterTier;
+        return matchesSearch && matchesFilter;
+      }),
+    [searchQuery, filterTier],
+  );
 
-  const handleStartCourse = (courseId: string, course: Course): void => {
-    if (!user) {
-      onAuthClick();
-      return;
-    }
+  const handleStartCourse = useCallback(
+    (courseId: string, course: Course): void => {
+      if (!user) {
+        onAuthClick();
+        return;
+      }
 
-    if (!canAccessTier(course.tier)) {
-      toast.error('Subscription required', {
-        description: `This course requires a ${course.tier} subscription.`,
-      });
-      return;
-    }
+      if (!canAccessTier(course.tier)) {
+        toast.error('Subscription required', {
+          description: `This course requires a ${course.tier} subscription.`,
+        });
+        return;
+      }
 
-    startCourse(courseId);
+      startCourse(courseId);
 
-    // Navigate to the appropriate course route based on tier
-    let routePath = '/courses';
-    switch (course.tier) {
-      case 'free':
-        routePath = '/courses/basic';
-        break;
-      case 'advanced':
-        routePath = '/courses/advanced';
-        break;
-      case 'expert':
-        routePath = '/courses/expert';
-        break;
-      default:
-        routePath = '/courses/basic';
-    }
+      // Navigate to the appropriate course route based on tier
+      let routePath = '/courses';
+      switch (course.tier) {
+        case 'free':
+          routePath = '/courses/basic';
+          break;
+        case 'advanced':
+          routePath = '/courses/advanced';
+          break;
+        case 'expert':
+          routePath = '/courses/expert';
+          break;
+        default:
+          routePath = '/courses/basic';
+      }
 
-    void navigate(routePath);
-  };
+      void navigate(routePath);
+    },
+    [user, onAuthClick, canAccessTier, startCourse, navigate],
+  );
 
   const getCourseCompletionData = (
     course: Course,
@@ -145,8 +144,7 @@ export function CoursesPage({ onAuthClick }: CoursesPageProps): ReactElement {
         <div className='mb-8'>
           <h1 className='text-4xl font-bold mb-4'>AI Learning Courses</h1>
           <p className='text-xl text-muted-foreground'>
-            Master AI technology at your own pace with courses designed
-            specifically for adults 50+
+            Master AI technology at your own pace with courses designed specifically for adults 50+
           </p>
         </div>
 
@@ -156,31 +154,21 @@ export function CoursesPage({ onAuthClick }: CoursesPageProps): ReactElement {
             <Card>
               <CardContent className='p-4 text-center'>
                 <Trophy className='w-8 h-8 mx-auto mb-2 text-yellow-500' />
-                <div className='text-2xl font-bold'>
-                  {dashboardSummary.completedModules}
-                </div>
-                <div className='text-sm text-muted-foreground'>
-                  Modules Completed
-                </div>
+                <div className='text-2xl font-bold'>{dashboardSummary.completedModules}</div>
+                <div className='text-sm text-muted-foreground'>Modules Completed</div>
               </CardContent>
             </Card>
             <Card>
               <CardContent className='p-4 text-center'>
                 <BookOpen className='w-8 h-8 mx-auto mb-2 text-primary' />
-                <div className='text-2xl font-bold'>
-                  {dashboardSummary.startedCourses}
-                </div>
-                <div className='text-sm text-muted-foreground'>
-                  Courses Started
-                </div>
+                <div className='text-2xl font-bold'>{dashboardSummary.startedCourses}</div>
+                <div className='text-sm text-muted-foreground'>Courses Started</div>
               </CardContent>
             </Card>
             <Card>
               <CardContent className='p-4 text-center'>
                 <ChartBar className='w-8 h-8 mx-auto mb-2 text-green-500' />
-                <div className='text-2xl font-bold'>
-                  {dashboardSummary.currentStreak}
-                </div>
+                <div className='text-2xl font-bold'>{dashboardSummary.currentStreak}</div>
                 <div className='text-sm text-muted-foreground'>Day Streak</div>
               </CardContent>
             </Card>
@@ -222,12 +210,9 @@ export function CoursesPage({ onAuthClick }: CoursesPageProps): ReactElement {
                         <h3 className='font-semibold mb-2'>{course.title}</h3>
                         <div className='flex items-center justify-between mb-3'>
                           <span className='text-sm text-muted-foreground'>
-                            {completion.completedModules} of{' '}
-                            {completion.totalModules} modules
+                            {completion.completedModules} of {completion.totalModules} modules
                           </span>
-                          <span className='text-sm font-medium'>
-                            {completion.percentage}%
-                          </span>
+                          <span className='text-sm font-medium'>{completion.percentage}%</span>
                         </div>
                         <Progress
                           value={completion.percentage}
@@ -264,15 +249,9 @@ export function CoursesPage({ onAuthClick }: CoursesPageProps): ReactElement {
                     return (
                       <>
                         <h3 className='font-semibold mb-2'>{course.title}</h3>
-                        <p className='text-sm text-muted-foreground mb-4'>
-                          {course.description}
-                        </p>
+                        <p className='text-sm text-muted-foreground mb-4'>{course.description}</p>
                         <div className='flex items-center justify-between mb-4'>
-                          <Badge
-                            variant={
-                              course.tier === 'free' ? 'secondary' : 'default'
-                            }
-                          >
+                          <Badge variant={course.tier === 'free' ? 'secondary' : 'default'}>
                             {course.tier.toUpperCase()}
                           </Badge>
                           <span className='text-sm text-muted-foreground'>
@@ -342,13 +321,9 @@ export function CoursesPage({ onAuthClick }: CoursesPageProps): ReactElement {
                   <div className='flex items-start justify-between'>
                     <div className='flex-1'>
                       <div className='flex items-center gap-3 mb-2'>
-                        <CardTitle className='text-2xl'>
-                          {course.title}
-                        </CardTitle>
+                        <CardTitle className='text-2xl'>{course.title}</CardTitle>
                         <Badge
-                          variant={
-                            course.tier === 'free' ? 'secondary' : 'default'
-                          }
+                          variant={course.tier === 'free' ? 'secondary' : 'default'}
                           className='text-sm'
                         >
                           {course.tier.toUpperCase()}
@@ -381,8 +356,7 @@ export function CoursesPage({ onAuthClick }: CoursesPageProps): ReactElement {
                           {course.totalModules} modules
                         </span>
                         <span className='flex items-center gap-1'>
-                          <Clock className='w-4 h-4' />~
-                          {course.estimatedTotalTime} minutes total
+                          <Clock className='w-4 h-4' />~{course.estimatedTotalTime} minutes total
                         </span>
                         <span className='flex items-center gap-1'>
                           <Users className='w-4 h-4' />
@@ -394,10 +368,7 @@ export function CoursesPage({ onAuthClick }: CoursesPageProps): ReactElement {
                       <div className='mb-4'>
                         <ul className='text-sm space-y-1'>
                           {course.features.slice(0, 3).map((feature) => (
-                            <li
-                              key={feature}
-                              className='flex items-center gap-2'
-                            >
+                            <li key={feature} className='flex items-center gap-2'>
                               <CheckCircle className='w-4 h-4 text-green-500' />
                               {feature}
                             </li>
@@ -406,21 +377,16 @@ export function CoursesPage({ onAuthClick }: CoursesPageProps): ReactElement {
                       </div>
                     </div>
 
-                    {!hasAccess && (
-                      <Lock className='text-muted-foreground flex-shrink-0 mt-1' />
-                    )}
+                    {!hasAccess && <Lock className='text-muted-foreground flex-shrink-0 mt-1' />}
                   </div>
 
                   {/* Progress Bar for Started Courses */}
                   {hasAccess && completion.isStarted && (
                     <div className='mt-4'>
                       <div className='flex items-center justify-between mb-2'>
-                        <span className='text-sm font-medium'>
-                          Your Progress
-                        </span>
+                        <span className='text-sm font-medium'>Your Progress</span>
                         <span className='text-sm text-muted-foreground'>
-                          {completion.completedModules} of{' '}
-                          {completion.totalModules} modules (
+                          {completion.completedModules} of {completion.totalModules} modules (
                           {completion.percentage}%)
                         </span>
                       </div>
@@ -432,9 +398,7 @@ export function CoursesPage({ onAuthClick }: CoursesPageProps): ReactElement {
                       {completion.isCompleted && (
                         <div className='flex items-center gap-2 mt-2 text-green-700'>
                           <CheckCircle className='w-4 h-4' weight='fill' />
-                          <span className='text-sm font-medium'>
-                            Course completed! 🎉
-                          </span>
+                          <span className='text-sm font-medium'>Course completed! 🎉</span>
                         </div>
                       )}
                     </div>
@@ -451,9 +415,7 @@ export function CoursesPage({ onAuthClick }: CoursesPageProps): ReactElement {
                           className='flex items-center gap-2'
                         >
                           <Play className='w-4 h-4' />
-                          {completion.isCompleted
-                            ? 'Review Course'
-                            : 'Continue Learning'}
+                          {completion.isCompleted ? 'Review Course' : 'Continue Learning'}
                         </Button>
                       ) : (
                         <Button
@@ -472,15 +434,11 @@ export function CoursesPage({ onAuthClick }: CoursesPageProps): ReactElement {
                         <div>
                           <p className='font-medium mb-1'>Coming Soon</p>
                           <p className='text-sm text-muted-foreground'>
-                            {course.tier === 'advanced' ? 'Advanced' : 'Expert'}{' '}
-                            courses will be available in the future.
+                            {course.tier === 'advanced' ? 'Advanced' : 'Expert'} courses will be
+                            available in the future.
                           </p>
                         </div>
-                        <Button
-                          disabled
-                          variant='outline'
-                          className='flex items-center gap-2'
-                        >
+                        <Button disabled variant='outline' className='flex items-center gap-2'>
                           <Shield className='h-4 w-4' />
                           Coming Soon
                         </Button>
@@ -519,17 +477,13 @@ export function CoursesPage({ onAuthClick }: CoursesPageProps): ReactElement {
                     {course.modules.map((module, index) => {
                       const isModuleCompleted =
                         completion.isStarted &&
-                        getCourseProgress(course.id)?.completedModules.includes(
-                          module.id,
-                        );
+                        getCourseProgress(course.id)?.completedModules.includes(module.id);
 
                       return (
                         <div
                           key={module.id}
                           className={`border rounded-lg p-4 transition-colors ${
-                            hasAccess
-                              ? 'hover:bg-muted/50 cursor-pointer'
-                              : 'opacity-60'
+                            hasAccess ? 'hover:bg-muted/50 cursor-pointer' : 'opacity-60'
                           }`}
                           onClick={() => {
                             if (hasAccess) {
@@ -539,9 +493,7 @@ export function CoursesPage({ onAuthClick }: CoursesPageProps): ReactElement {
                                   : course.id === 'ai-assistant'
                                     ? 'advanced'
                                     : 'expert';
-                              void navigate(
-                                `/courses/${courseType}/module/${module.id}`,
-                              );
+                              void navigate(`/courses/${courseType}/module/${module.id}`);
                             }
                           }}
                         >
@@ -572,18 +524,14 @@ export function CoursesPage({ onAuthClick }: CoursesPageProps): ReactElement {
                                   {module.estimatedTime} min
                                 </span>
                                 {module.tags.length > 0 && (
-                                  <span className='flex items-center gap-1'>
-                                    #{module.tags[0]}
-                                  </span>
+                                  <span className='flex items-center gap-1'>#{module.tags[0]}</span>
                                 )}
                               </div>
                             </div>
 
                             {hasAccess && (
                               <Button
-                                variant={
-                                  isModuleCompleted ? 'outline' : 'default'
-                                }
+                                variant={isModuleCompleted ? 'outline' : 'default'}
                                 size='sm'
                                 className='flex items-center gap-2'
                                 onClick={(e) => {
@@ -594,9 +542,7 @@ export function CoursesPage({ onAuthClick }: CoursesPageProps): ReactElement {
                                       : course.id === 'ai-assistant'
                                         ? 'advanced'
                                         : 'expert';
-                                  void navigate(
-                                    `/courses/${courseType}/module/${module.id}`,
-                                  );
+                                  void navigate(`/courses/${courseType}/module/${module.id}`);
                                 }}
                               >
                                 {isModuleCompleted ? (
@@ -632,9 +578,9 @@ export function CoursesPage({ onAuthClick }: CoursesPageProps): ReactElement {
                   Ready to Start Your AI Learning Journey?
                 </h3>
                 <p className='text-lg text-muted-foreground mb-6'>
-                  Join thousands of adults 50+ who are already mastering AI
-                  technology with <BrandName variant='short' />. Start with our
-                  free course and upgrade anytime to access advanced content.
+                  Join thousands of adults 50+ who are already mastering AI technology with{' '}
+                  <BrandName variant='short' />. Start with our free course and upgrade anytime to
+                  access advanced content.
                 </p>
                 <div className='flex items-center justify-center gap-4 mb-6'>
                   <div className='flex items-center gap-2'>
@@ -665,8 +611,7 @@ export function CoursesPage({ onAuthClick }: CoursesPageProps): ReactElement {
               <MagnifyingGlass className='w-12 h-12 mx-auto mb-4 text-muted-foreground' />
               <h3 className='text-xl font-semibold mb-2'>No courses found</h3>
               <p className='text-muted-foreground'>
-                Try adjusting your search terms or filters to find what
-                you&apos;re looking for.
+                Try adjusting your search terms or filters to find what you&apos;re looking for.
               </p>
             </CardContent>
           </Card>
@@ -675,3 +620,6 @@ export function CoursesPage({ onAuthClick }: CoursesPageProps): ReactElement {
     </div>
   );
 }
+
+// Memoized export for performance optimization
+export const CoursesPage = React.memo(CoursesPageComponent);

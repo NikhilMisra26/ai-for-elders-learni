@@ -1,4 +1,4 @@
-import React, { useState, useCallback, type ReactElement } from 'react';
+import React, { useState, useCallback, useMemo, type ReactElement } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Brain,
@@ -26,22 +26,11 @@ import { ReviewForm } from './ReviewForm';
 import { BrandName } from './BrandName';
 
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Skeleton } from '@/components/ui/skeleton';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useAuth } from '@/contexts/AuthContext';
 import { subscriptionPlans } from '@/lib/subscription';
 import { useMetrics } from '@/hooks/useMetrics';
@@ -50,7 +39,7 @@ interface HomePageProps {
   onAuthClick: () => void;
 }
 
-export function HomePage({ onAuthClick }: HomePageProps): ReactElement {
+function HomePageComponent({ onAuthClick }: HomePageProps): ReactElement {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { stats, testimonials, isLoading } = useMetrics();
@@ -65,63 +54,69 @@ export function HomePage({ onAuthClick }: HomePageProps): ReactElement {
     void navigate('/courses');
   }, [navigate]);
 
-  const heroFeatures = [
-    {
-      icon: <SpeakerHigh className='w-5 h-5' />,
-      text: 'Audio narration for all content',
-    },
-    {
-      icon: <Eye className='w-5 h-5' />,
-      text: 'Large fonts & high contrast design',
-    },
-    {
-      icon: <Shield className='w-5 h-5' />,
-      text: 'Privacy-focused learning',
-    },
-    {
-      icon: <Clock className='w-5 h-5' />,
-      text: 'Learn at your own pace',
-    },
-  ];
+  const heroFeatures = useMemo(
+    () => [
+      {
+        icon: <SpeakerHigh className='w-5 h-5' />,
+        text: 'Audio narration for all content',
+      },
+      {
+        icon: <Eye className='w-5 h-5' />,
+        text: 'Large fonts & high contrast design',
+      },
+      {
+        icon: <Shield className='w-5 h-5' />,
+        text: 'Privacy-focused learning',
+      },
+      {
+        icon: <Clock className='w-5 h-5' />,
+        text: 'Learn at your own pace',
+      },
+    ],
+    [],
+  );
 
-  const features = [
-    {
-      icon: <Brain className='w-8 h-8 text-primary' />,
-      title: 'Senior-Friendly Design',
-      description:
-        'Large fonts, clear navigation, and audio narration make learning AI accessible and enjoyable for everyone.',
-    },
-    {
-      icon: <Shield className='w-8 h-8 text-primary' />,
-      title: 'Safety-First Approach',
-      description:
-        'Learn to use AI tools safely with comprehensive guidance on privacy, security, and avoiding common pitfalls.',
-    },
-    {
-      icon: <Heart className='w-8 h-8 text-primary' />,
-      title: 'Practical Applications',
-      description:
-        'Focus on real-world uses like health management, family communication, financial planning, and daily organization.',
-    },
-    {
-      icon: <Users className='w-8 h-8 text-primary' />,
-      title: 'Supportive Community',
-      description:
-        "Join a community of learners sharing experiences, tips, and supporting each other's AI learning journey.",
-    },
-    {
-      icon: <Sparkle className='w-8 h-8 text-primary' />,
-      title: 'Expert-Designed Content',
-      description:
-        'Courses created by AI experts specifically for adults 50+, with clear explanations and practical examples.',
-    },
-    {
-      icon: <Trophy className='w-8 h-8 text-primary' />,
-      title: 'Progress Tracking',
-      description:
-        'Visual progress indicators, achievement badges, and personalized learning paths keep you motivated.',
-    },
-  ];
+  const features = useMemo(
+    () => [
+      {
+        icon: <Brain className='w-8 h-8 text-primary' />,
+        title: 'Senior-Friendly Design',
+        description:
+          'Large fonts, clear navigation, and audio narration make learning AI accessible and enjoyable for everyone.',
+      },
+      {
+        icon: <Shield className='w-8 h-8 text-primary' />,
+        title: 'Safety-First Approach',
+        description:
+          'Learn to use AI tools safely with comprehensive guidance on privacy, security, and avoiding common pitfalls.',
+      },
+      {
+        icon: <Heart className='w-8 h-8 text-primary' />,
+        title: 'Practical Applications',
+        description:
+          'Focus on real-world uses like health management, family communication, financial planning, and daily organization.',
+      },
+      {
+        icon: <Users className='w-8 h-8 text-primary' />,
+        title: 'Supportive Community',
+        description:
+          "Join a community of learners sharing experiences, tips, and supporting each other's AI learning journey.",
+      },
+      {
+        icon: <Sparkle className='w-8 h-8 text-primary' />,
+        title: 'Expert-Designed Content',
+        description:
+          'Courses created by AI experts specifically for adults 50+, with clear explanations and practical examples.',
+      },
+      {
+        icon: <Trophy className='w-8 h-8 text-primary' />,
+        title: 'Progress Tracking',
+        description:
+          'Visual progress indicators, achievement badges, and personalized learning paths keep you motivated.',
+      },
+    ],
+    [],
+  );
 
   // Format course tier for display
   const formatCourseTier = (tier: string): string => {
@@ -137,24 +132,27 @@ export function HomePage({ onAuthClick }: HomePageProps): ReactElement {
     }
   };
 
-  const trustIndicators = [
-    {
-      icon: <Shield className='w-5 h-5' />,
-      text: 'No credit card required for free course',
-    },
-    {
-      icon: <CreditCard className='w-5 h-5' />,
-      text: 'Cancel anytime, no hidden fees',
-    },
-    {
-      icon: <Phone className='w-5 h-5' />,
-      text: 'Email & phone support available',
-    },
-    {
-      icon: <Globe className='w-5 h-5' />,
-      text: 'Trusted by learners worldwide',
-    },
-  ];
+  const trustIndicators = useMemo(
+    () => [
+      {
+        icon: <Shield className='w-5 h-5' />,
+        text: 'No credit card required for free course',
+      },
+      {
+        icon: <CreditCard className='w-5 h-5' />,
+        text: 'Cancel anytime, no hidden fees',
+      },
+      {
+        icon: <Phone className='w-5 h-5' />,
+        text: 'Email & phone support available',
+      },
+      {
+        icon: <Globe className='w-5 h-5' />,
+        text: 'Trusted by learners worldwide',
+      },
+    ],
+    [],
+  );
 
   return (
     <div className='min-h-screen'>
@@ -176,13 +174,11 @@ export function HomePage({ onAuthClick }: HomePageProps): ReactElement {
 
             {/* Right side - Content */}
             <div>
-              <p className='text-2xl font-semibold text-primary mb-4'>
-                Designed for Adults 50+
-              </p>
+              <p className='text-2xl font-semibold text-primary mb-4'>Designed for Adults 50+</p>
               <p className='text-xl text-muted-foreground mb-8 leading-relaxed'>
-                Learn to use artificial intelligence safely and confidently with
-                courses designed specifically for your needs. No technical
-                experience required – just curiosity and a willingness to learn.
+                Learn to use artificial intelligence safely and confidently with courses designed
+                specifically for your needs. No technical experience required – just curiosity and a
+                willingness to learn.
               </p>
 
               {/* Hero Features */}
@@ -211,11 +207,7 @@ export function HomePage({ onAuthClick }: HomePageProps): ReactElement {
                   </Button>
                 ) : (
                   <>
-                    <Button
-                      size='lg'
-                      onClick={onAuthClick}
-                      className='text-lg px-8 py-6 h-auto'
-                    >
+                    <Button size='lg' onClick={onAuthClick} className='text-lg px-8 py-6 h-auto'>
                       Start Free Course
                       <Play className='ml-2' />
                     </Button>
@@ -278,9 +270,7 @@ export function HomePage({ onAuthClick }: HomePageProps): ReactElement {
               >
                 {stats.map((stat) => (
                   <div key={stat.label}>
-                    <div className='text-3xl font-bold text-primary mb-2'>
-                      {stat.number}
-                    </div>
+                    <div className='text-3xl font-bold text-primary mb-2'>{stat.number}</div>
                     <div className='text-muted-foreground'>{stat.label}</div>
                   </div>
                 ))}
@@ -298,9 +288,8 @@ export function HomePage({ onAuthClick }: HomePageProps): ReactElement {
               Why Choose <BrandName variant='short' />?
             </h2>
             <p className='text-xl text-muted-foreground max-w-3xl mx-auto'>
-              We understand the unique needs of adult learners and have designed
-              every aspect of our platform with accessibility, safety, and
-              practical application in mind.
+              We understand the unique needs of adult learners and have designed every aspect of our
+              platform with accessibility, safety, and practical application in mind.
             </p>
           </div>
 
@@ -314,9 +303,7 @@ export function HomePage({ onAuthClick }: HomePageProps): ReactElement {
                   <CardTitle className='text-xl'>{feature.title}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className='text-muted-foreground leading-relaxed'>
-                    {feature.description}
-                  </p>
+                  <p className='text-muted-foreground leading-relaxed'>{feature.description}</p>
                 </CardContent>
               </Card>
             ))}
@@ -328,13 +315,10 @@ export function HomePage({ onAuthClick }: HomePageProps): ReactElement {
       <section className='py-20 px-4 sm:px-6 lg:px-8 bg-muted/20'>
         <div className='max-w-6xl mx-auto'>
           <div className='text-center mb-16'>
-            <h2 className='text-4xl font-bold mb-4'>
-              Choose Your Learning Path
-            </h2>
+            <h2 className='text-4xl font-bold mb-4'>Choose Your Learning Path</h2>
             <p className='text-xl text-muted-foreground max-w-3xl mx-auto'>
-              Start with our free course and upgrade anytime to access advanced
-              content. All plans include our senior-friendly design and
-              dedicated support.
+              Start with our free course and upgrade anytime to access advanced content. All plans
+              include our senior-friendly design and dedicated support.
             </p>
           </div>
 
@@ -367,9 +351,7 @@ export function HomePage({ onAuthClick }: HomePageProps): ReactElement {
                     {plan.id === 'free' ? 'Free' : 'Coming Soon'}
                   </div>
                   {/* End of added code for subscription removal */}
-                  <CardDescription className='text-base'>
-                    {plan.description}
-                  </CardDescription>
+                  <CardDescription className='text-base'>{plan.description}</CardDescription>
                 </CardHeader>
                 <CardContent>
                   {/* Start of removed/added code for subscription removal */}
@@ -450,9 +432,7 @@ export function HomePage({ onAuthClick }: HomePageProps): ReactElement {
             // Show real testimonials
             <>
               <div className='text-center mb-16'>
-                <h2 className='text-4xl font-bold mb-4'>
-                  What Our Learners Say
-                </h2>
+                <h2 className='text-4xl font-bold mb-4'>What Our Learners Say</h2>
                 <p className='text-xl text-muted-foreground'>
                   Real feedback from our community of learners
                 </p>
@@ -480,13 +460,9 @@ export function HomePage({ onAuthClick }: HomePageProps): ReactElement {
                         ))}
                       </div>
                       <div>
-                        <CardTitle className='text-lg'>
-                          {testimonial.userName}
-                        </CardTitle>
+                        <CardTitle className='text-lg'>{testimonial.userName}</CardTitle>
                         {testimonial.userLocation && (
-                          <CardDescription>
-                            {testimonial.userLocation}
-                          </CardDescription>
+                          <CardDescription>{testimonial.userLocation}</CardDescription>
                         )}
                         <Badge variant='secondary' className='mt-2'>
                           {formatCourseTier(testimonial.courseTier)}
@@ -505,11 +481,7 @@ export function HomePage({ onAuthClick }: HomePageProps): ReactElement {
               {/* Add review button for authenticated users */}
               {user && (
                 <div className='text-center mt-12'>
-                  <Button
-                    variant='outline'
-                    size='lg'
-                    onClick={() => setShowReviewForm(true)}
-                  >
+                  <Button variant='outline' size='lg' onClick={() => setShowReviewForm(true)}>
                     <PencilSimple className='mr-2' />
                     Share Your Experience
                   </Button>
@@ -520,13 +492,10 @@ export function HomePage({ onAuthClick }: HomePageProps): ReactElement {
             // No testimonials yet - show call to action
             <div className='text-center'>
               <div className='max-w-2xl mx-auto'>
-                <h2 className='text-4xl font-bold mb-4'>
-                  Be the First to Review
-                </h2>
+                <h2 className='text-4xl font-bold mb-4'>Be the First to Review</h2>
                 <p className='text-xl text-muted-foreground mb-8'>
-                  We&apos;re just getting started! Be among the first to share
-                  your learning experience and help others discover the benefits
-                  of AI education.
+                  We&apos;re just getting started! Be among the first to share your learning
+                  experience and help others discover the benefits of AI education.
                 </p>
 
                 {user ? (
@@ -571,13 +540,10 @@ export function HomePage({ onAuthClick }: HomePageProps): ReactElement {
       {/* Final CTA Section */}
       <section className='py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-primary/10 to-accent/10'>
         <div className='max-w-4xl mx-auto text-center'>
-          <h2 className='text-4xl font-bold mb-4'>
-            Ready to Start Your AI Journey?
-          </h2>
+          <h2 className='text-4xl font-bold mb-4'>Ready to Start Your AI Journey?</h2>
           <p className='text-xl text-muted-foreground mb-8'>
-            Join our community of lifelong learners and discover how AI can
-            enhance your daily life. Start with our free course today – no
-            technical experience required.
+            Join our community of lifelong learners and discover how AI can enhance your daily life.
+            Start with our free course today – no technical experience required.
           </p>
 
           <div className='flex flex-col sm:flex-row gap-4 justify-center'>
@@ -603,11 +569,7 @@ export function HomePage({ onAuthClick }: HomePageProps): ReactElement {
               </>
             ) : (
               <>
-                <Button
-                  size='lg'
-                  onClick={onAuthClick}
-                  className='text-lg px-8 py-6 h-auto'
-                >
+                <Button size='lg' onClick={onAuthClick} className='text-lg px-8 py-6 h-auto'>
                   Start Learning Free
                   <ArrowRight className='ml-2' />
                 </Button>
@@ -646,5 +608,6 @@ export function HomePage({ onAuthClick }: HomePageProps): ReactElement {
   );
 }
 
-// Memoized version for performance optimization
-export const MemoizedHomePage = React.memo(HomePage);
+// Memoized export for performance optimization
+export const HomePage = React.memo(HomePageComponent);
+export const MemoizedHomePage = HomePage; // Backward compatibility

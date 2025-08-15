@@ -16,9 +16,7 @@ function TooltipProvider({
   );
 }
 
-function Tooltip({
-  ...props
-}: ComponentProps<typeof TooltipPrimitive.Root>): JSX.Element {
+function Tooltip({ ...props }: ComponentProps<typeof TooltipPrimitive.Root>): JSX.Element {
   return (
     <TooltipProvider>
       <TooltipPrimitive.Root data-slot='tooltip' {...props} />
