@@ -86,6 +86,54 @@ function normalizeUrlToOrigin(url: string): string | undefined {
 }
 
 /**
+ * Validate and normalize the application URL from environment variables.
+ * Ensures a properly formatted URL, no credentials, and enforces HTTPS in production.
+ * Returns the normalized origin (protocol + host + optional port) or undefined if invalid.
+ */
+function validateAndNormalizeAppUrl(url: string): string | undefined {
+  let parsed: URL;
+  try {
+    parsed = new URL(url);
+  } catch {
+    logWarning('VITE_APP_URL is not a valid URL and will be ignored for CORS.', {
+      component: 'securityConfig',
+      action: 'ALLOWED_ORIGINS_VALIDATE',
+    });
+    return undefined;
+  }
+
+  const isProd = import.meta.env.PROD;
+  if (isProd && parsed.protocol !== 'https:') {
+    logWarning('VITE_APP_URL must use HTTPS in production and will be ignored.', {
+      component: 'securityConfig',
+      action: 'ALLOWED_ORIGINS_VALIDATE',
+    });
+    return undefined;
+  }
+
+  if (parsed.username || parsed.password) {
+    logWarning('VITE_APP_URL must not include credentials and will be ignored.', {
+      component: 'securityConfig',
+      action: 'ALLOWED_ORIGINS_VALIDATE',
+    });
+    return undefined;
+  }
+
+  if (parsed.pathname !== '/' || parsed.search || parsed.hash) {
+    // Not fatal, but warn and normalize to origin to avoid surprising behavior
+    logWarning(
+      'VITE_APP_URL should be an origin only (no path, query, or hash). Normalizing to origin.',
+      {
+        component: 'securityConfig',
+        action: 'ALLOWED_ORIGINS_VALIDATE',
+      },
+    );
+  }
+
+  return normalizeUrlToOrigin(url);
+}
+
+/**
  * Allowed origins for CORS
  * Strict allowlist of trusted domains
  */
@@ -105,8 +153,13 @@ export const ALLOWED_ORIGINS = [
       }
       return undefined;
     }
-    // Normalize URL to origin only
-    return normalizeUrlToOrigin(appUrl);
+    // Validate and normalize to origin only
+    const normalized = validateAndNormalizeAppUrl(appUrl);
+    if (!normalized) {
+      // Invalid URL — do not include in allowlist
+      return undefined;
+    }
+    return normalized;
   })(),
   // Supabase
   'https://kboefdqxbsdkmnmjosjx.supabase.co',
