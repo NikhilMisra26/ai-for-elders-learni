@@ -105,19 +105,14 @@ export async function apiCall<T = unknown>(
     const data = (await response.json()) as T;
     return { data };
   } catch (error) {
-    if (
-      error instanceof TypeError &&
-      error.message.includes('Failed to fetch')
-    ) {
+    if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
       return {
-        error:
-          'Unable to connect to the API server. Please ensure the server is running.',
+        error: 'Unable to connect to the API server. Please ensure the server is running.',
       };
     }
 
     return {
-      error:
-        error instanceof Error ? error.message : 'An unexpected error occurred',
+      error: error instanceof Error ? error.message : 'An unexpected error occurred',
     };
   }
 }

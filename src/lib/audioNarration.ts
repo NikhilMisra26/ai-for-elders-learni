@@ -24,9 +24,7 @@ export interface AudioNarrationControls {
   getText: () => string;
 }
 
-export function useAudioNarration(
-  text: string,
-): [AudioNarrationState, AudioNarrationControls] {
+export function useAudioNarration(text: string): [AudioNarrationState, AudioNarrationControls] {
   // Create a unique ID for this hook instance for logging
   const hookId = useRef(
     typeof crypto !== 'undefined' && crypto.randomUUID
@@ -230,24 +228,15 @@ export function useAudioNarration(
 
     if (!state.isSupported || !utteranceRef.current) {
       if (!state.isSupported) {
-        errorHandler.logWarning(
-          'Speech synthesis not supported in this browser',
-          {
-            component: 'audio_narration',
-            action: 'play_attempt',
-            metadata: {
-              hookId: hookId.current,
-              userAgent:
-                typeof navigator !== 'undefined'
-                  ? navigator.userAgent
-                  : 'unknown',
-              platform:
-                typeof navigator !== 'undefined'
-                  ? navigator.platform
-                  : 'unknown',
-            },
+        errorHandler.logWarning('Speech synthesis not supported in this browser', {
+          component: 'audio_narration',
+          action: 'play_attempt',
+          metadata: {
+            hookId: hookId.current,
+            userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'unknown',
+            platform: typeof navigator !== 'undefined' ? navigator.platform : 'unknown',
           },
-        );
+        });
       }
       return;
     }
@@ -273,10 +262,7 @@ export function useAudioNarration(
 
         // Wait until speechSynthesis is no longer speaking or pending before starting new utterance
         const waitAndSpeak = (): void => {
-          if (
-            !window.speechSynthesis.speaking &&
-            !window.speechSynthesis.pending
-          ) {
+          if (!window.speechSynthesis.speaking && !window.speechSynthesis.pending) {
             try {
               if (utteranceRef.current) {
                 window.speechSynthesis.speak(utteranceRef.current);
@@ -284,9 +270,7 @@ export function useAudioNarration(
             } catch (delayedError) {
               errorHandler.logError(
                 'Failed to start speech synthesis after waiting',
-                delayedError instanceof Error
-                  ? delayedError
-                  : new Error(String(delayedError)),
+                delayedError instanceof Error ? delayedError : new Error(String(delayedError)),
                 {
                   component: 'audio_narration',
                   action: 'play_delayed',
@@ -461,10 +445,7 @@ export function useAudioNarration(
           // Check if the current utterance matches this instance's utterance
           // We can't directly check if our utterance is the one playing, but we can
           // check if speech is active and we have an utterance
-          if (
-            window.speechSynthesis.speaking ||
-            window.speechSynthesis.pending
-          ) {
+          if (window.speechSynthesis.speaking || window.speechSynthesis.pending) {
             window.speechSynthesis.cancel();
           }
         } catch {
@@ -509,36 +490,27 @@ export function useNarrationPreferences(): [
     preferredVoice: null,
     enabled: true,
   };
-  const [preferences, setPreferences] = useState<NarrationPreferences | null>(
-    () => {
-      if (typeof window === 'undefined') return null;
-      try {
-        const saved = window.localStorage.getItem(
-          'audio-narration-preferences',
-        );
-        return saved
-          ? (JSON.parse(saved) as NarrationPreferences)
-          : defaultPrefs;
-      } catch (error) {
-        errorHandler.handleStorageError(
-          'read narration preferences from localStorage',
-          error instanceof Error ? error : new Error(String(error)),
-          {
-            metadata: { key: 'audio-narration-preferences' },
-          },
-        );
-        return defaultPrefs;
-      }
-    },
-  );
+  const [preferences, setPreferences] = useState<NarrationPreferences | null>(() => {
+    if (typeof window === 'undefined') return null;
+    try {
+      const saved = window.localStorage.getItem('audio-narration-preferences');
+      return saved ? (JSON.parse(saved) as NarrationPreferences) : defaultPrefs;
+    } catch (error) {
+      errorHandler.handleStorageError(
+        'read narration preferences from localStorage',
+        error instanceof Error ? error : new Error(String(error)),
+        {
+          metadata: { key: 'audio-narration-preferences' },
+        },
+      );
+      return defaultPrefs;
+    }
+  });
 
   useEffect(() => {
     if (preferences && typeof window !== 'undefined') {
       try {
-        window.localStorage.setItem(
-          'audio-narration-preferences',
-          JSON.stringify(preferences),
-        );
+        window.localStorage.setItem('audio-narration-preferences', JSON.stringify(preferences));
       } catch (error) {
         errorHandler.handleStorageError(
           'save narration preferences to localStorage',

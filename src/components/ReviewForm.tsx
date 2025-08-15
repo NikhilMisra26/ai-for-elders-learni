@@ -2,13 +2,7 @@ import React, { useState, type ReactElement } from 'react';
 import { Star } from '@phosphor-icons/react';
 
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
@@ -21,10 +15,7 @@ import {
 } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useAuth } from '@/contexts/AuthContext';
-import {
-  submitTestimonial,
-  hasUserSubmittedTestimonial,
-} from '@/lib/analytics';
+import { submitTestimonial, hasUserSubmittedTestimonial } from '@/lib/analytics';
 import { useSubscription } from '@/lib/subscription';
 
 interface ReviewFormProps {
@@ -32,10 +23,7 @@ interface ReviewFormProps {
   onCancel?: () => void;
 }
 
-export function ReviewForm({
-  onSuccess,
-  onCancel,
-}: ReviewFormProps): ReactElement {
+export function ReviewForm({ onSuccess, onCancel }: ReviewFormProps): ReactElement {
   const { user } = useAuth();
   const { subscription } = useSubscription();
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -181,12 +169,8 @@ export function ReviewForm({
                 >
                   <Star
                     className='w-8 h-8'
-                    weight={
-                      (hoveredRating || rating) >= star ? 'fill' : 'regular'
-                    }
-                    color={
-                      (hoveredRating || rating) >= star ? '#facc15' : '#9ca3af'
-                    }
+                    weight={(hoveredRating || rating) >= star ? 'fill' : 'regular'}
+                    color={(hoveredRating || rating) >= star ? '#facc15' : '#9ca3af'}
                   />
                 </button>
               ))}
@@ -198,9 +182,7 @@ export function ReviewForm({
             <Label htmlFor='course'>Course Type</Label>
             <Select
               value={courseTier}
-              onValueChange={(value) =>
-                setCourseTier(value as 'free' | 'advanced' | 'expert')
-              }
+              onValueChange={(value) => setCourseTier(value as 'free' | 'advanced' | 'expert')}
             >
               <SelectTrigger id='course' className='mt-2'>
                 <SelectValue />
@@ -239,9 +221,7 @@ export function ReviewForm({
               maxLength={500}
               required
             />
-            <p className='text-sm text-muted-foreground mt-1'>
-              {content.length}/500 characters
-            </p>
+            <p className='text-sm text-muted-foreground mt-1'>{content.length}/500 characters</p>
           </div>
 
           {/* Error Message */}
@@ -257,12 +237,7 @@ export function ReviewForm({
               {isSubmitting ? 'Submitting...' : 'Submit Review'}
             </Button>
             {onCancel && (
-              <Button
-                type='button'
-                variant='outline'
-                onClick={onCancel}
-                disabled={isSubmitting}
-              >
+              <Button type='button' variant='outline' onClick={onCancel} disabled={isSubmitting}>
                 Cancel
               </Button>
             )}

@@ -15,20 +15,13 @@ function DropdownMenu({
 function DropdownMenuPortal({
   ...props
 }: ComponentProps<typeof DropdownMenuPrimitive.Portal>): ReactElement {
-  return (
-    <DropdownMenuPrimitive.Portal data-slot='dropdown-menu-portal' {...props} />
-  );
+  return <DropdownMenuPrimitive.Portal data-slot='dropdown-menu-portal' {...props} />;
 }
 
 function DropdownMenuTrigger({
   ...props
 }: ComponentProps<typeof DropdownMenuPrimitive.Trigger>): ReactElement {
-  return (
-    <DropdownMenuPrimitive.Trigger
-      data-slot='dropdown-menu-trigger'
-      {...props}
-    />
-  );
+  return <DropdownMenuPrimitive.Trigger data-slot='dropdown-menu-trigger' {...props} />;
 }
 
 function DropdownMenuContent({
@@ -54,9 +47,7 @@ function DropdownMenuContent({
 function DropdownMenuGroup({
   ...props
 }: ComponentProps<typeof DropdownMenuPrimitive.Group>): ReactElement {
-  return (
-    <DropdownMenuPrimitive.Group data-slot='dropdown-menu-group' {...props} />
-  );
+  return <DropdownMenuPrimitive.Group data-slot='dropdown-menu-group' {...props} />;
 }
 
 function DropdownMenuItem({
@@ -111,12 +102,7 @@ function DropdownMenuCheckboxItem({
 function DropdownMenuRadioGroup({
   ...props
 }: ComponentProps<typeof DropdownMenuPrimitive.RadioGroup>): ReactElement {
-  return (
-    <DropdownMenuPrimitive.RadioGroup
-      data-slot='dropdown-menu-radio-group'
-      {...props}
-    />
-  );
+  return <DropdownMenuPrimitive.RadioGroup data-slot='dropdown-menu-radio-group' {...props} />;
 }
 
 function DropdownMenuRadioItem({
@@ -154,10 +140,7 @@ function DropdownMenuLabel({
     <DropdownMenuPrimitive.Label
       data-slot='dropdown-menu-label'
       data-inset={inset}
-      className={cn(
-        'px-2 py-1.5 text-sm font-medium data-[inset]:pl-8',
-        className,
-      )}
+      className={cn('px-2 py-1.5 text-sm font-medium data-[inset]:pl-8', className)}
       {...props}
     />
   );
@@ -176,17 +159,11 @@ function DropdownMenuSeparator({
   );
 }
 
-function DropdownMenuShortcut({
-  className,
-  ...props
-}: ComponentProps<'span'>): ReactElement {
+function DropdownMenuShortcut({ className, ...props }: ComponentProps<'span'>): ReactElement {
   return (
     <span
       data-slot='dropdown-menu-shortcut'
-      className={cn(
-        'text-muted-foreground ml-auto text-xs tracking-widest',
-        className,
-      )}
+      className={cn('text-muted-foreground ml-auto text-xs tracking-widest', className)}
       {...props}
     />
   );

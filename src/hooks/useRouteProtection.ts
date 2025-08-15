@@ -12,9 +12,7 @@ export function useRouteProtection(): {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  hasRequiredAccess: (
-    requiredRole?: 'free' | 'advanced' | 'expert' | 'admin',
-  ) => boolean;
+  hasRequiredAccess: (requiredRole?: 'free' | 'advanced' | 'expert' | 'admin') => boolean;
   getRedirectInfo: (currentPath?: string) => {
     shouldRedirect: boolean;
     redirectData: {
@@ -23,9 +21,7 @@ export function useRouteProtection(): {
       message: string;
     };
   };
-  checkAccess: (
-    requiredRole?: 'free' | 'advanced' | 'expert' | 'admin',
-  ) => AccessCheckResult;
+  checkAccess: (requiredRole?: 'free' | 'advanced' | 'expert' | 'admin') => AccessCheckResult;
   canAccessCourse: (courseId: string) => boolean;
   userTier: 'free' | 'advanced' | 'expert';
 } {
@@ -34,9 +30,7 @@ export function useRouteProtection(): {
   /**
    * Check if user has required access level
    */
-  const hasRequiredAccess = (
-    requiredRole?: 'free' | 'advanced' | 'expert' | 'admin',
-  ): boolean => {
+  const hasRequiredAccess = (requiredRole?: 'free' | 'advanced' | 'expert' | 'admin'): boolean => {
     if (isLoading || !user) return false;
     if (!requiredRole) return true;
 

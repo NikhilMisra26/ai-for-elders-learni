@@ -8,8 +8,7 @@ import './main.css';
 import './styles/theme.css';
 import './index.css';
 
-const mount =
-  typeof document !== 'undefined' ? document.getElementById('root') : null;
+const mount = typeof document !== 'undefined' ? document.getElementById('root') : null;
 if (mount) {
   createRoot(mount).render(
     <ErrorBoundary FallbackComponent={ErrorFallback}>

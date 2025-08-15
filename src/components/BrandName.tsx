@@ -26,11 +26,7 @@ interface BrandNameProps {
  * <BrandName variant="hero" />
  * ```
  */
-export function BrandName({
-  variant,
-  size = 'md',
-  className,
-}: BrandNameProps): ReactElement {
+export function BrandName({ variant, size = 'md', className }: BrandNameProps): ReactElement {
   // Size mappings for regular text
   const sizeClasses = {
     sm: 'text-lg',
@@ -65,19 +61,13 @@ export function BrandName({
       >
         <h1 className='text-3xl md:text-4xl lg:text-5xl font-bold text-white tracking-tight'>
           <span>DISC</span>
-          <span
-            className='font-bold'
-            style={rainbowTextStyle}
-            role='text'
-            aria-label='Over 50'
-          >
+          <span className='font-bold' style={rainbowTextStyle} role='text' aria-label='Over 50'>
             OVER 50
           </span>
           <span> AI</span>
         </h1>
         <p className='mt-4 text-base md:text-lg text-white/90 max-w-md'>
-          Empowering adults over 50 to confidently navigate the world of
-          artificial intelligence
+          Empowering adults over 50 to confidently navigate the world of artificial intelligence
         </p>
       </div>
     );

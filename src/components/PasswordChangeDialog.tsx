@@ -74,8 +74,7 @@ export function PasswordChangeDialog({
     if (!currentPassword) return 'Current password is required';
     if (!newPassword) return 'New password is required';
     if (newPassword.length < 8) return 'Password must be at least 8 characters';
-    if (newPassword === currentPassword)
-      return 'New password must be different';
+    if (newPassword === currentPassword) return 'New password must be different';
     if (newPassword !== confirmPassword) return 'Passwords do not match';
     return null;
   };
@@ -153,11 +152,7 @@ export function PasswordChangeDialog({
     if (!password) return '';
     if (password.length < 8) return 'Weak';
     if (password.length < 12) return 'Fair';
-    if (
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/.test(
-        password,
-      )
-    ) {
+    if (/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/.test(password)) {
       return 'Strong';
     }
     return 'Good';
@@ -207,13 +202,9 @@ export function PasswordChangeDialog({
                 variant='ghost'
                 size='sm'
                 className='absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent text-black'
-                onClick={(): void =>
-                  setShowCurrentPassword(!showCurrentPassword)
-                }
+                onClick={(): void => setShowCurrentPassword(!showCurrentPassword)}
                 disabled={isLoading}
-                aria-label={
-                  showCurrentPassword ? 'Hide password' : 'Show password'
-                }
+                aria-label={showCurrentPassword ? 'Hide password' : 'Show password'}
               >
                 {showCurrentPassword ? (
                   <EyeSlash className='h-4 w-4' />
@@ -248,17 +239,11 @@ export function PasswordChangeDialog({
                 disabled={isLoading}
                 aria-label={showNewPassword ? 'Hide password' : 'Show password'}
               >
-                {showNewPassword ? (
-                  <EyeSlash className='h-4 w-4' />
-                ) : (
-                  <Eye className='h-4 w-4' />
-                )}
+                {showNewPassword ? <EyeSlash className='h-4 w-4' /> : <Eye className='h-4 w-4' />}
               </Button>
             </div>
             {newPassword && (
-              <p className={`text-sm ${strengthColor}`}>
-                Password strength: {strength}
-              </p>
+              <p className={`text-sm ${strengthColor}`}>Password strength: {strength}</p>
             )}
 
             {/* Password breach warning */}
@@ -267,21 +252,15 @@ export function PasswordChangeDialog({
                 <div className='flex items-start gap-2'>
                   <Warning className='h-4 w-4 text-orange-600 mt-0.5 flex-shrink-0' />
                   <div className='flex-1'>
-                    <p className='text-sm text-orange-800 font-medium'>
-                      Security Warning
-                    </p>
-                    <p className='text-sm text-orange-700 mt-1'>
-                      {breachWarning}
-                    </p>
+                    <p className='text-sm text-orange-800 font-medium'>Security Warning</p>
+                    <p className='text-sm text-orange-700 mt-1'>{breachWarning}</p>
                   </div>
                 </div>
               </div>
             )}
 
             {isCheckingBreach && (
-              <p className='text-sm text-muted-foreground'>
-                Checking password security...
-              </p>
+              <p className='text-sm text-muted-foreground'>Checking password security...</p>
             )}
           </div>
 
@@ -305,13 +284,9 @@ export function PasswordChangeDialog({
                 variant='ghost'
                 size='sm'
                 className='absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent text-black'
-                onClick={(): void =>
-                  setShowConfirmPassword(!showConfirmPassword)
-                }
+                onClick={(): void => setShowConfirmPassword(!showConfirmPassword)}
                 disabled={isLoading}
-                aria-label={
-                  showConfirmPassword ? 'Hide password' : 'Show password'
-                }
+                aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
               >
                 {showConfirmPassword ? (
                   <EyeSlash className='h-4 w-4' />
@@ -327,12 +302,7 @@ export function PasswordChangeDialog({
         </div>
 
         <DialogFooter>
-          <Button
-            type='button'
-            variant='outline'
-            onClick={handleClose}
-            disabled={isLoading}
-          >
+          <Button type='button' variant='outline' onClick={handleClose} disabled={isLoading}>
             Cancel
           </Button>
           <Button

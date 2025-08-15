@@ -30,18 +30,10 @@ export function useSessionManager(): {
 
   useEffect(() => {
     if (!user) return undefined;
-    if (typeof document === 'undefined' || typeof window === 'undefined')
-      return undefined;
+    if (typeof document === 'undefined' || typeof window === 'undefined') return undefined;
 
     // Events that indicate user activity
-    const activityEvents = [
-      'mousedown',
-      'mousemove',
-      'keypress',
-      'scroll',
-      'touchstart',
-      'click',
-    ];
+    const activityEvents = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'click'];
 
     // Throttle activity tracking to avoid excessive calls
     let activityTimeout: number | null = null;
@@ -61,10 +53,7 @@ export function useSessionManager(): {
     });
 
     // Check session validity every 5 minutes
-    const sessionCheckInterval = window.setInterval(
-      checkSession,
-      5 * 60 * 1000,
-    );
+    const sessionCheckInterval = window.setInterval(checkSession, 5 * 60 * 1000);
 
     // Cleanup
     return (): void => {

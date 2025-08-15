@@ -4,27 +4,19 @@ import { X } from '@phosphor-icons/react';
 
 import { cn } from '@/lib/utils';
 
-function Sheet({
-  ...props
-}: ComponentProps<typeof SheetPrimitive.Root>): ReactElement {
+function Sheet({ ...props }: ComponentProps<typeof SheetPrimitive.Root>): ReactElement {
   return <SheetPrimitive.Root data-slot='sheet' {...props} />;
 }
 
-function SheetTrigger({
-  ...props
-}: ComponentProps<typeof SheetPrimitive.Trigger>): ReactElement {
+function SheetTrigger({ ...props }: ComponentProps<typeof SheetPrimitive.Trigger>): ReactElement {
   return <SheetPrimitive.Trigger data-slot='sheet-trigger' {...props} />;
 }
 
-function SheetClose({
-  ...props
-}: ComponentProps<typeof SheetPrimitive.Close>): ReactElement {
+function SheetClose({ ...props }: ComponentProps<typeof SheetPrimitive.Close>): ReactElement {
   return <SheetPrimitive.Close data-slot='sheet-close' {...props} />;
 }
 
-function SheetPortal({
-  ...props
-}: ComponentProps<typeof SheetPrimitive.Portal>): ReactElement {
+function SheetPortal({ ...props }: ComponentProps<typeof SheetPrimitive.Portal>): ReactElement {
   return <SheetPrimitive.Portal data-slot='sheet-portal' {...props} />;
 }
 
@@ -81,10 +73,7 @@ function SheetContent({
   );
 }
 
-function SheetHeader({
-  className,
-  ...props
-}: ComponentProps<'div'>): ReactElement {
+function SheetHeader({ className, ...props }: ComponentProps<'div'>): ReactElement {
   return (
     <div
       data-slot='sheet-header'
@@ -94,10 +83,7 @@ function SheetHeader({
   );
 }
 
-function SheetFooter({
-  className,
-  ...props
-}: ComponentProps<'div'>): ReactElement {
+function SheetFooter({ className, ...props }: ComponentProps<'div'>): ReactElement {
   return (
     <div
       data-slot='sheet-footer'

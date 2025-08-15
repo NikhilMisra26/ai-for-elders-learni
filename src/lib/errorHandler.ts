@@ -35,10 +35,7 @@ class ErrorHandlerService {
 
     // Handle uncaught errors globally
     if (typeof window !== 'undefined') {
-      window.addEventListener(
-        'error',
-        this.handleGlobalError.bind(this) as EventListener,
-      );
+      window.addEventListener('error', this.handleGlobalError.bind(this) as EventListener);
       window.addEventListener(
         'unhandledrejection',
         this.handleUnhandledRejection.bind(this) as EventListener,
@@ -74,15 +71,9 @@ class ErrorHandlerService {
     return { message, stack };
   }
 
-  private readonly consoleHandler: ErrorHandler = (
-    report: ErrorReport,
-  ): void => {
+  private readonly consoleHandler: ErrorHandler = (report: ErrorReport): void => {
     const logLevel =
-      report.level === 'error'
-        ? 'error'
-        : report.level === 'warning'
-          ? 'warn'
-          : 'info';
+      report.level === 'error' ? 'error' : report.level === 'warning' ? 'warn' : 'info';
     console[logLevel](`[ErrorHandler] ${report.message}`, {
       id: report.id,
       context: report.context,
@@ -93,9 +84,7 @@ class ErrorHandlerService {
   private handleGlobalError(event: ErrorEvent): void {
     this.logError(
       'Global JavaScript error',
-      event.error instanceof Error
-        ? event.error
-        : new Error(String(event.error)),
+      event.error instanceof Error ? event.error : new Error(String(event.error)),
       {
         component: 'window',
         action: 'global_error',
@@ -111,9 +100,7 @@ class ErrorHandlerService {
   private handleUnhandledRejection(event: PromiseRejectionEvent): void {
     this.logError(
       'Unhandled Promise rejection',
-      event.reason instanceof Error
-        ? event.reason
-        : new Error(String(event.reason)),
+      event.reason instanceof Error ? event.reason : new Error(String(event.reason)),
       {
         component: 'window',
         action: 'unhandled_rejection',
@@ -152,8 +139,7 @@ class ErrorHandlerService {
       message,
       originalError: error,
       context,
-      userAgent:
-        typeof navigator !== 'undefined' ? navigator.userAgent : 'unknown',
+      userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'unknown',
       url: typeof window !== 'undefined' ? window.location.href : 'unknown',
       stackTrace: sanitizedError?.stack,
     };
@@ -256,10 +242,7 @@ class ErrorHandlerService {
       "We're having trouble connecting right now. Please check your internet connection.",
     ];
 
-    return (
-      fallback ??
-      genericMessages[Math.floor(Math.random() * genericMessages.length)]
-    );
+    return fallback ?? genericMessages[Math.floor(Math.random() * genericMessages.length)];
   }
 
   // Check if we're in a development environment
@@ -280,11 +263,7 @@ class ErrorHandlerService {
 export const errorHandler = new ErrorHandlerService();
 
 // Convenience functions for common error patterns
-export function logError(
-  message: string,
-  error?: Error,
-  context?: ErrorContext,
-): string {
+export function logError(message: string, error?: Error, context?: ErrorContext): string {
   return errorHandler.logError(message, error, context);
 }
 

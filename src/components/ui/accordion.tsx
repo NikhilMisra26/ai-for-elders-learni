@@ -4,9 +4,7 @@ import { CaretDown } from '@phosphor-icons/react';
 
 import { cn } from '@/lib/utils';
 
-function Accordion({
-  ...props
-}: ComponentProps<typeof AccordionPrimitive.Root>): ReactElement {
+function Accordion({ ...props }: ComponentProps<typeof AccordionPrimitive.Root>): ReactElement {
   return <AccordionPrimitive.Root data-slot='accordion' {...props} />;
 }
 

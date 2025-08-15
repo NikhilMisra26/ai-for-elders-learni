@@ -38,11 +38,7 @@ export interface CourseProgress {
 
 export interface UserActivity {
   id: string;
-  type:
-    | 'module_completed'
-    | 'course_started'
-    | 'course_completed'
-    | 'rating_given';
+  type: 'module_completed' | 'course_started' | 'course_completed' | 'rating_given';
   title: string;
   description: string;
   timestamp: string;
@@ -94,17 +90,9 @@ export interface UseProgressReturn {
   userActivity: UserActivity[];
   learningStats: LearningStats;
   getCourseProgress: (courseId: string) => CourseProgress | null;
-  getModuleProgress: (
-    courseId: string,
-    moduleId: string,
-  ) => ModuleProgress | null;
+  getModuleProgress: (courseId: string, moduleId: string) => ModuleProgress | null;
   isModuleCompleted: (courseId: string, moduleId: string) => boolean;
-  completeModule: (
-    courseId: string,
-    moduleId: string,
-    timeSpent: number,
-    rating?: number,
-  ) => void;
+  completeModule: (courseId: string, moduleId: string, timeSpent: number, rating?: number) => void;
   startCourse: (courseId: string) => void;
   setCurrentModule: (courseId: string, moduleId: string) => void;
   addActivity: (activity: Omit<UserActivity, 'id' | 'timestamp'>) => void;
@@ -196,21 +184,15 @@ export function useProgress(): UseProgressReturn {
 
         // Calculate and set learning stats based on hydrated data
         if (moduleRows.length > 0) {
-          const totalTimeSpent = moduleRows.reduce(
-            (sum, row) => sum + row.time_spent,
-            0,
-          );
+          const totalTimeSpent = moduleRows.reduce((sum, row) => sum + row.time_spent, 0);
           const modulesCompleted = moduleRows.length;
-          const coursesCompleted = courseRows.filter(
-            (row) => row.completed,
-          ).length;
+          const coursesCompleted = courseRows.filter((row) => row.completed).length;
 
           // Calculate average rating
           const ratedModules = moduleRows.filter((row) => row.rating !== null);
           const averageRating =
             ratedModules.length > 0
-              ? ratedModules.reduce((sum, row) => sum + (row.rating ?? 0), 0) /
-                ratedModules.length
+              ? ratedModules.reduce((sum, row) => sum + (row.rating ?? 0), 0) / ratedModules.length
               : 0;
 
           // Calculate streak
@@ -220,16 +202,11 @@ export function useProgress(): UseProgressReturn {
 
           let currentStreak = 0;
           let longestStreak = 0;
-          const lastLearningDate =
-            sortedCompletions[0] ?? new Date().toISOString();
+          const lastLearningDate = sortedCompletions[0] ?? new Date().toISOString();
 
           if (sortedCompletions.length > 0) {
             const uniqueDays = Array.from(
-              new Set(
-                sortedCompletions.map(
-                  (date) => new Date(date).toISOString().split('T')[0],
-                ),
-              ),
+              new Set(sortedCompletions.map((date) => new Date(date).toISOString().split('T')[0])),
             ).sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
 
             let streak = 0;
@@ -237,8 +214,7 @@ export function useProgress(): UseProgressReturn {
 
             for (let i = 0; i < uniqueDays.length; i++) {
               const daysDiff = Math.floor(
-                (new Date(today).getTime() -
-                  new Date(uniqueDays[i]).getTime()) /
+                (new Date(today).getTime() - new Date(uniqueDays[i]).getTime()) /
                   (1000 * 60 * 60 * 24),
               );
 
@@ -310,22 +286,15 @@ export function useProgress(): UseProgressReturn {
   };
 
   // Get progress for a specific module
-  const getModuleProgress = (
-    courseId: string,
-    moduleId: string,
-  ): ModuleProgress | null => {
+  const getModuleProgress = (courseId: string, moduleId: string): ModuleProgress | null => {
     return (
-      moduleProgress.find(
-        (mp) => mp.courseId === courseId && mp.moduleId === moduleId,
-      ) ?? null
+      moduleProgress.find((mp) => mp.courseId === courseId && mp.moduleId === moduleId) ?? null
     );
   };
 
   // Check if a module is completed
   const isModuleCompleted = (courseId: string, moduleId: string): boolean => {
-    return moduleProgress.some(
-      (mp) => mp.courseId === courseId && mp.moduleId === moduleId,
-    );
+    return moduleProgress.some((mp) => mp.courseId === courseId && mp.moduleId === moduleId);
   };
 
   // Mark a module as completed
@@ -342,9 +311,7 @@ export function useProgress(): UseProgressReturn {
 
     // Add or update module progress
     setModuleProgress((current) => {
-      const existing = current.find(
-        (mp) => mp.courseId === courseId && mp.moduleId === moduleId,
-      );
+      const existing = current.find((mp) => mp.courseId === courseId && mp.moduleId === moduleId);
       if (existing) {
         // Update existing progress
         return current.map((mp) =>
@@ -377,9 +344,7 @@ export function useProgress(): UseProgressReturn {
       const existingProgress = moduleProgress.find(
         (mp) => mp.courseId === courseId && mp.moduleId === moduleId,
       );
-      const attemptsCount = existingProgress
-        ? existingProgress.attempts + 1
-        : 1;
+      const attemptsCount = existingProgress ? existingProgress.attempts + 1 : 1;
 
       upsertModuleProgress({
         user_id: user.id,
@@ -598,9 +563,7 @@ export function useProgress(): UseProgressReturn {
       const existing = current.find((cp) => cp.courseId === courseId);
       if (existing) {
         return current.map((cp) =>
-          cp.courseId === courseId
-            ? { ...cp, lastAccessedAt: new Date().toISOString() }
-            : cp,
+          cp.courseId === courseId ? { ...cp, lastAccessedAt: new Date().toISOString() } : cp,
         );
       } else {
         const newCourseProgress: CourseProgress = {
@@ -644,9 +607,7 @@ export function useProgress(): UseProgressReturn {
   );
 
   // Add user activity
-  const addActivity = (
-    activity: Omit<UserActivity, 'id' | 'timestamp'>,
-  ): void => {
+  const addActivity = (activity: Omit<UserActivity, 'id' | 'timestamp'>): void => {
     const newActivity: UserActivity = {
       ...activity,
       id: `activity_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
@@ -657,11 +618,7 @@ export function useProgress(): UseProgressReturn {
   };
 
   // Update learning statistics
-  const updateLearningStats = (
-    timeSpent: number,
-    tags: string[],
-    rating?: number,
-  ): void => {
+  const updateLearningStats = (timeSpent: number, tags: string[], rating?: number): void => {
     setLearningStats((current) => {
       const today = new Date().toISOString().split('T')[0];
       const lastLearningDate = current.streak.lastLearningDate.split('T')[0];
@@ -671,18 +628,12 @@ export function useProgress(): UseProgressReturn {
       if (lastLearningDate === today) {
         // Same day, don't update streak
         newStreak = current.streak;
-      } else if (
-        lastLearningDate ===
-        new Date(Date.now() - 86400000).toISOString().split('T')[0]
-      ) {
+      } else if (lastLearningDate === new Date(Date.now() - 86400000).toISOString().split('T')[0]) {
         // Yesterday, increment streak
         newStreak = {
           ...current.streak,
           currentStreak: current.streak.currentStreak + 1,
-          longestStreak: Math.max(
-            current.streak.longestStreak,
-            current.streak.currentStreak + 1,
-          ),
+          longestStreak: Math.max(current.streak.longestStreak, current.streak.currentStreak + 1),
           lastLearningDate: new Date().toISOString(),
         };
       } else {
@@ -706,9 +657,7 @@ export function useProgress(): UseProgressReturn {
       let newAverageRating = current.averageRating;
       if (rating && rating > 0) {
         const currentModules = current.modulesCompleted;
-        newAverageRating =
-          (current.averageRating * currentModules + rating) /
-          (currentModules + 1);
+        newAverageRating = (current.averageRating * currentModules + rating) / (currentModules + 1);
       }
 
       // Calculate weekly progress
@@ -741,10 +690,7 @@ export function useProgress(): UseProgressReturn {
     const completedModules = progress?.completedModules ?? [];
 
     // Find first incomplete module
-    return (
-      course.modules.find((module) => !completedModules.includes(module.id)) ??
-      null
-    );
+    return course.modules.find((module) => !completedModules.includes(module.id)) ?? null;
   };
 
   // Get learning recommendations
@@ -776,14 +722,10 @@ export function useProgress(): UseProgressReturn {
     }
 
     // Find module to review (low rating)
-    const lowRatedModule = moduleProgress.find(
-      (mp) => mp.rating && mp.rating <= 3,
-    );
+    const lowRatedModule = moduleProgress.find((mp) => mp.rating && mp.rating <= 3);
     if (lowRatedModule) {
       const course = courseData[lowRatedModule.courseId];
-      const module = course?.modules.find(
-        (m) => m.id === lowRatedModule.moduleId,
-      );
+      const module = course?.modules.find((m) => m.id === lowRatedModule.moduleId);
       if (module) {
         return {
           reviewModule: {
@@ -798,16 +740,10 @@ export function useProgress(): UseProgressReturn {
   };
 
   // Rate a module
-  const rateModule = (
-    courseId: string,
-    moduleId: string,
-    rating: number,
-  ): void => {
+  const rateModule = (courseId: string, moduleId: string, rating: number): void => {
     setModuleProgress((current) =>
       current.map((mp) =>
-        mp.courseId === courseId && mp.moduleId === moduleId
-          ? { ...mp, rating }
-          : mp,
+        mp.courseId === courseId && mp.moduleId === moduleId ? { ...mp, rating } : mp,
       ),
     );
 

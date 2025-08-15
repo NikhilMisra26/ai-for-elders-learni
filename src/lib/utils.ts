@@ -136,9 +136,7 @@ export const getInitials = (name: string): string => {
 /**
  * Parse query string to object
  */
-export const parseQueryString = (
-  queryString: string,
-): Record<string, string> => {
+export const parseQueryString = (queryString: string): Record<string, string> => {
   const params = new URLSearchParams(queryString);
   const result: Record<string, string> = {};
   params.forEach((value, key) => {
@@ -150,9 +148,7 @@ export const parseQueryString = (
 /**
  * Build query string from object
  */
-export const buildQueryString = (
-  params: Record<string, string | number | boolean>,
-): string => {
+export const buildQueryString = (params: Record<string, string | number | boolean>): string => {
   const searchParams = new URLSearchParams();
   Object.entries(params).forEach(([key, value]) => {
     if (value !== undefined && value !== null) {
@@ -165,11 +161,7 @@ export const buildQueryString = (
 /**
  * Retry async operation with exponential backoff
  */
-export const retry = async <T>(
-  fn: () => Promise<T>,
-  maxAttempts = 3,
-  delay = 1000,
-): Promise<T> => {
+export const retry = async <T>(fn: () => Promise<T>, maxAttempts = 3, delay = 1000): Promise<T> => {
   let lastError: Error | undefined;
 
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
@@ -198,9 +190,7 @@ export const isBrowser = (): boolean => {
  */
 export const isMobileDevice = (): boolean => {
   if (!isBrowser()) return false;
-  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-    navigator.userAgent,
-  );
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 };
 
 /**

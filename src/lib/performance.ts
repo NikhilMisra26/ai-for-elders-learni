@@ -13,6 +13,30 @@ interface PerformanceMetrics {
 }
 
 /**
+ * Layout Shift Performance Entry interface
+ */
+interface LayoutShiftEntry extends PerformanceEntry {
+  readonly value: number;
+  readonly hadRecentInput: boolean;
+}
+
+/**
+ * Memory Performance interface
+ */
+interface MemoryInfo {
+  readonly usedJSHeapSize: number;
+  readonly jsHeapSizeLimit: number;
+  readonly totalJSHeapSize: number;
+}
+
+/**
+ * Extended Performance interface with memory
+ */
+interface PerformanceWithMemory extends Performance {
+  readonly memory: MemoryInfo;
+}
+
+/**
  * Measure Web Vitals
  */
 export function measureWebVitals(callback: (metrics: PerformanceMetrics) => void): void {
@@ -53,10 +77,13 @@ export function measureWebVitals(callback: (metrics: PerformanceMetrics) => void
   let clsValue = 0;
   const clsObserver = new PerformanceObserver((list) => {
     for (const entry of list.getEntries()) {
-      if ('value' in entry && !(entry as any).hadRecentInput) {
-        clsValue += (entry as any).value;
-        metrics.CLS = clsValue;
-        callback(metrics);
+      if ('value' in entry && 'hadRecentInput' in entry) {
+        const layoutShiftEntry = entry as LayoutShiftEntry;
+        if (!layoutShiftEntry.hadRecentInput) {
+          clsValue += layoutShiftEntry.value;
+          metrics.CLS = clsValue;
+          callback(metrics);
+        }
       }
     }
   });
@@ -73,7 +100,7 @@ export function measureWebVitals(callback: (metrics: PerformanceMetrics) => void
  * Performance timer utility
  */
 export class PerformanceTimer {
-  private marks: Map<string, number> = new Map();
+  private readonly marks: Map<string, number> = new Map();
 
   mark(name: string): void {
     this.marks.set(name, performance.now());
@@ -101,10 +128,7 @@ export class PerformanceTimer {
 /**
  * Debounced render optimization hook
  */
-export function useOptimizedRender<T>(
-  value: T,
-  delay = 100,
-): T {
+export function useOptimizedRender<T>(value: T, delay = 100): T {
   const [optimizedValue, setOptimizedValue] = React.useState(value);
 
   React.useEffect(() => {
@@ -112,7 +136,7 @@ export function useOptimizedRender<T>(
       setOptimizedValue(value);
     }, delay);
 
-    return () => clearTimeout(timer);
+    return (): void => clearTimeout(timer);
   }, [value, delay]);
 
   return optimizedValue;
@@ -130,7 +154,8 @@ export function getMemoryUsage(): {
     return null;
   }
 
-  const memory = (performance as any).memory;
+  const performanceWithMemory = performance as PerformanceWithMemory;
+  const memory = performanceWithMemory.memory;
   return {
     used: memory.usedJSHeapSize,
     limit: memory.jsHeapSizeLimit,

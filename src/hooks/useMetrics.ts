@@ -78,10 +78,7 @@ export function useMetrics(): MetricsData {
           }
 
           // Only show rating if above threshold and we have testimonials
-          if (
-            statsData.avgRating >= THRESHOLDS.MIN_RATING &&
-            testimonialsData.length > 0
-          ) {
+          if (statsData.avgRating >= THRESHOLDS.MIN_RATING && testimonialsData.length > 0) {
             visibleStats.push({
               number: `${statsData.avgRating}/5`,
               label: 'Average Rating',

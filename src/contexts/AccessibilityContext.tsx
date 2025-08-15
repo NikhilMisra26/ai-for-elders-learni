@@ -12,32 +12,20 @@ interface AccessibilityContextType {
   isSpeaking: boolean;
 }
 
-const AccessibilityContext = createContext<
-  AccessibilityContextType | undefined
->(undefined);
+const AccessibilityContext = createContext<AccessibilityContextType | undefined>(undefined);
 
-export function AccessibilityProvider({
-  children,
-}: {
-  children: ReactNode;
-}): JSX.Element {
-  const [fontSize, setFontSize] = useState<'small' | 'normal' | 'large'>(
-    'normal',
-  );
+export function AccessibilityProvider({ children }: { children: ReactNode }): JSX.Element {
+  const [fontSize, setFontSize] = useState<'small' | 'normal' | 'large'>('normal');
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
 
   useEffect(() => {
     // Load saved preferences
     const savedFontSize = (
-      typeof window !== 'undefined'
-        ? window.localStorage.getItem('fontSize')
-        : null
+      typeof window !== 'undefined' ? window.localStorage.getItem('fontSize') : null
     ) as 'small' | 'normal' | 'large';
     const savedDarkMode =
-      (typeof window !== 'undefined'
-        ? window.localStorage.getItem('darkMode')
-        : null) === 'true';
+      (typeof window !== 'undefined' ? window.localStorage.getItem('darkMode') : null) === 'true';
 
     if (savedFontSize) setFontSize(savedFontSize);
     if (savedDarkMode) setIsDarkMode(savedDarkMode);
@@ -46,10 +34,7 @@ export function AccessibilityProvider({
   useEffect(() => {
     // Apply font size class to body
     if (typeof document !== 'undefined') {
-      document.body.className = document.body.className.replace(
-        /font-size-\w+/g,
-        '',
-      );
+      document.body.className = document.body.className.replace(/font-size-\w+/g, '');
       if (fontSize !== 'normal') {
         document.body.classList.add(`font-size-${fontSize}`);
       }
@@ -139,9 +124,7 @@ export function AccessibilityProvider({
 export function useAccessibility(): AccessibilityContextType {
   const context = useContext(AccessibilityContext);
   if (context === undefined) {
-    throw new Error(
-      'useAccessibility must be used within an AccessibilityProvider',
-    );
+    throw new Error('useAccessibility must be used within an AccessibilityProvider');
   }
   return context;
 }

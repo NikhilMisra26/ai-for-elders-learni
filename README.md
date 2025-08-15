@@ -24,6 +24,7 @@
 - **Duplicate Prevention**: Users can only submit one review
 
 ### 🎨 **Senior-Friendly Design**
+
 - Large fonts and high contrast design for people over 50
 - **Robust Audio narration** with intelligent error handling, smooth state management, and instance isolation
 - Touch-friendly interface with proper target sizes
@@ -282,7 +283,7 @@ The project now includes comprehensive security automation via GitHub Actions:
 
 - **Dependency Auditing**: Automated vulnerability scanning with `pnpm audit`
 - **Type Safety**: TypeScript type checking on every commit
-- **Code Quality**: ESLint and Prettier validation 
+- **Code Quality**: ESLint and Prettier validation
 - **Secret Scanning**: TruffleHog integration for credential detection
 - **Bundle Size Monitoring**: 5MB limit enforcement with detailed analysis
 - **License Compliance**: Automated license checking for legal compliance
@@ -291,7 +292,7 @@ The project now includes comprehensive security automation via GitHub Actions:
 #### **Automated Triggers**
 
 - ✅ Every push to main branch
-- ✅ All pull requests 
+- ✅ All pull requests
 - ✅ Weekly scheduled dependency audits
 - ✅ Manual workflow dispatch for on-demand checks
 

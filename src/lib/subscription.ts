@@ -1,10 +1,6 @@
 import { useEffect, useState } from 'react';
 
-import {
-  addInvoice as dbAddInvoice,
-  getUserSubscription,
-  upsertSubscription,
-} from './db';
+import { addInvoice as dbAddInvoice, getUserSubscription, upsertSubscription } from './db';
 import { SecurityLogger } from './security';
 import { errorHandler } from './errorHandler';
 
@@ -120,10 +116,7 @@ export function useSubscription(): {
   isInGracePeriod: () => boolean;
   getDaysUntilExpiry: () => number | null;
   startTrial: (planId: 'advanced' | 'expert') => void;
-  upgradeToPaid: (
-    planId: 'advanced' | 'expert',
-    paymentMethod?: PaymentMethod,
-  ) => void;
+  upgradeToPaid: (planId: 'advanced' | 'expert', paymentMethod?: PaymentMethod) => void;
   cancelSubscription: (immediate?: boolean) => void;
   reactivateSubscription: () => void;
 } {
@@ -218,8 +211,7 @@ export function useSubscription(): {
 
   const getCurrentPlan = (): SubscriptionPlan => {
     return (
-      subscriptionPlans.find((plan) => plan.id === subscription.planId) ??
-      subscriptionPlans[0]
+      subscriptionPlans.find((plan) => plan.id === subscription.planId) ?? subscriptionPlans[0]
     );
   };
 
@@ -281,10 +273,7 @@ export function useSubscription(): {
 
   // Start of removed/added code for subscription removal
   // Removed for subscription removal: upgradeToPaid function implementation
-  const upgradeToPaid = (
-    _planId: 'advanced' | 'expert',
-    _paymentMethod?: PaymentMethod,
-  ): void => {
+  const upgradeToPaid = (_planId: 'advanced' | 'expert', _paymentMethod?: PaymentMethod): void => {
     /*
     const nextBillingDate = new Date();
     nextBillingDate.setMonth(nextBillingDate.getMonth() + 1);
@@ -390,8 +379,7 @@ export async function simulatePaymentFlow(_planId: string): Promise<{
   // Added for subscription removal: return failure immediately
   return Promise.resolve({
     success: false,
-    error:
-      'Payment functionality is currently disabled. Only free tier is available.',
+    error: 'Payment functionality is currently disabled. Only free tier is available.',
   });
 }
 // End of removed/added code for subscription removal
@@ -404,9 +392,7 @@ export function formatBillingPeriod(period: 'month' | 'year'): string {
   return period === 'month' ? '/month' : '/year';
 }
 
-export function getPlanFeatures(
-  planId: 'free' | 'advanced' | 'expert',
-): string[] {
+export function getPlanFeatures(planId: 'free' | 'advanced' | 'expert'): string[] {
   const plan = subscriptionPlans.find((p) => p.id === planId);
   return plan?.features ?? [];
 }
@@ -414,10 +400,8 @@ export function getPlanFeatures(
 export function getUpgradeRecommendation(
   currentPlan: 'free' | 'advanced' | 'expert',
 ): SubscriptionPlan | null {
-  if (currentPlan === 'free')
-    return subscriptionPlans.find((p) => p.id === 'advanced') ?? null;
-  if (currentPlan === 'advanced')
-    return subscriptionPlans.find((p) => p.id === 'expert') ?? null;
+  if (currentPlan === 'free') return subscriptionPlans.find((p) => p.id === 'advanced') ?? null;
+  if (currentPlan === 'advanced') return subscriptionPlans.find((p) => p.id === 'expert') ?? null;
   return null;
 }
 

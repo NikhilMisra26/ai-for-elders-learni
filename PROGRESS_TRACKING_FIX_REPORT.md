@@ -13,7 +13,7 @@ Successfully implemented Supabase hydration for the `progressTracking.ts` file t
 - Added `useEffect` hook that triggers when user logs in
 - Fetches progress data from Supabase in parallel using Promise.all:
   - Course progress via `getCourseProgressRows()`
-  - Module progress via `getModuleProgressRows()` 
+  - Module progress via `getModuleProgressRows()`
   - User activity via `listUserActivity()`
 - Converts database rows to frontend state format
 - Calculates learning statistics from hydrated data
@@ -23,11 +23,13 @@ Successfully implemented Supabase hydration for the `progressTracking.ts` file t
 **Location**: `src/lib/progressTracking.ts` lines 363-368
 
 **Before**: Always saved attempts as 1 in database
+
 ```typescript
 attempts: 1,  // Always hardcoded to 1
 ```
 
 **After**: Properly increments attempts count
+
 ```typescript
 const existingProgress = moduleProgress.find(
   (mp) => mp.courseId === courseId && mp.moduleId === moduleId,
@@ -41,6 +43,7 @@ const attemptsCount = existingProgress ? existingProgress.attempts + 1 : 1;
 **Location**: `src/lib/progressTracking.ts` lines 1-10
 
 Added imports for:
+
 - `useEffect` from React
 - `getCourseProgressRows`, `getModuleProgressRows`, `listUserActivity` from './db'
 
@@ -49,8 +52,9 @@ Added imports for:
 ### Hydration Pattern
 
 Follows the established pattern from `subscription.ts` lines 139-176:
+
 - Uses `useEffect` with `[user]` dependency
-- Async IIFE pattern for database calls  
+- Async IIFE pattern for database calls
 - Error handling via `errorHandler.handleDatabaseError`
 - Only runs when user is authenticated
 
@@ -59,8 +63,9 @@ Follows the established pattern from `subscription.ts` lines 139-176:
 Properly converts between database schema and frontend types:
 
 **Database → Frontend Mapping**:
+
 - `course_id` → `courseId`
-- `module_id` → `moduleId` 
+- `module_id` → `moduleId`
 - `completed_at` → `completedAt`
 - `time_spent` → `timeSpent`
 - `current_module_id` → `currentModuleId`
@@ -68,6 +73,7 @@ Properly converts between database schema and frontend types:
 ### Learning Stats Calculation
 
 The hydration calculates comprehensive learning statistics from database data:
+
 - **Total time spent**: Sum of all module time_spent values
 - **Modules completed**: Count of module progress records
 - **Courses completed**: Count of course progress records marked as completed
@@ -97,7 +103,7 @@ The hydration calculates comprehensive learning statistics from database data:
 
 ## Testing Recommendations
 
-1. **Test Progress Persistence**: 
+1. **Test Progress Persistence**:
    - Complete a module
    - Refresh page
    - Verify progress is retained

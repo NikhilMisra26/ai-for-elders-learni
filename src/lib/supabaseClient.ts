@@ -42,19 +42,15 @@ function validateEnvironment(): SupabaseConfig {
   if (errors.length > 0) {
     if (isProduction) {
       // In production, log sanitized error without exposing configuration details
-      errorHandler.logError(
-        'Configuration validation failed',
-        new Error('Invalid configuration'),
-        {
-          component: 'supabase',
-          action: 'validate_config',
-          // Only log boolean flags, not actual values or detailed errors
-          metadata: {
-            hasValidConfig: false,
-            errorCount: errors.length,
-          },
+      errorHandler.logError('Configuration validation failed', new Error('Invalid configuration'), {
+        component: 'supabase',
+        action: 'validate_config',
+        // Only log boolean flags, not actual values or detailed errors
+        metadata: {
+          hasValidConfig: false,
+          errorCount: errors.length,
         },
-      );
+      });
 
       // In production, throw generic error to prevent app from starting with invalid config
       throw new Error(
@@ -126,9 +122,7 @@ export async function withSupabaseErrorHandling<T>(
         component: 'supabase',
         userId: context.userId,
         // Don't expose config errors in production
-        metadata: isProduction
-          ? { hasValidConfig: false }
-          : { configErrors: config.errors },
+        metadata: isProduction ? { hasValidConfig: false } : { configErrors: config.errors },
       },
     );
 
@@ -139,8 +133,7 @@ export async function withSupabaseErrorHandling<T>(
     const result = await operation();
     return { data: result, error: null };
   } catch (error) {
-    const errorInstance =
-      error instanceof Error ? error : new Error(String(error));
+    const errorInstance = error instanceof Error ? error : new Error(String(error));
     const errorId = errorHandler.handleDatabaseError(
       `${context.operation}${context.table ? ` on ${context.table}` : ''}`,
       errorInstance,

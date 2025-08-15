@@ -138,17 +138,15 @@ export async function getTestimonials(limit = 3): Promise<Testimonial[]> {
       return [];
     }
 
-    const testimonials: Testimonial[] = (data ?? []).map(
-      (t: TestimonialData) => ({
-        id: t.id,
-        userName: t.user_name,
-        userLocation: t.user_location,
-        courseTier: t.course_tier,
-        rating: t.rating,
-        content: t.content,
-        createdAt: t.created_at,
-      }),
-    );
+    const testimonials: Testimonial[] = (data ?? []).map((t: TestimonialData) => ({
+      id: t.id,
+      userName: t.user_name,
+      userLocation: t.user_location,
+      courseTier: t.course_tier,
+      rating: t.rating,
+      content: t.content,
+      createdAt: t.created_at,
+    }));
 
     // Update cache
     testimonialsCache.current = {
@@ -225,9 +223,7 @@ export async function submitTestimonial(
 }
 
 // Check if user has already submitted a testimonial
-export async function hasUserSubmittedTestimonial(
-  userId: string,
-): Promise<boolean> {
+export async function hasUserSubmittedTestimonial(userId: string): Promise<boolean> {
   try {
     const { count, error } = await supabase
       .from('testimonials')

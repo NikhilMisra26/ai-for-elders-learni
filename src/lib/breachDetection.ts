@@ -25,9 +25,7 @@ async function sha1Hash(text: string): Promise<string> {
   const data = encoder.encode(text);
   const hashBuffer = await crypto.subtle.digest('SHA-1', data);
   const hashArray = Array.from(new Uint8Array(hashBuffer));
-  const hashHex = hashArray
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('');
+  const hashHex = hashArray.map((b) => b.toString(16).padStart(2, '0')).join('');
   return hashHex.toUpperCase();
 }
 
@@ -50,9 +48,7 @@ function cleanupCache(): void {
  * @param password - The password to check
  * @returns Promise with breach status and occurrence count
  */
-export async function checkPasswordBreach(
-  password: string,
-): Promise<BreachCheckResult> {
+export async function checkPasswordBreach(password: string): Promise<BreachCheckResult> {
   try {
     // Clean up old cache entries periodically
     if (breachCache.size > 100) {
@@ -73,14 +69,11 @@ export async function checkPasswordBreach(
     const hashSuffix = passwordHash.substring(5);
 
     // Call HaveIBeenPwned API
-    const response = await fetch(
-      `https://api.pwnedpasswords.com/range/${hashPrefix}`,
-      {
-        headers: {
-          'Add-Padding': 'true', // Adds padding to responses for additional privacy
-        },
+    const response = await fetch(`https://api.pwnedpasswords.com/range/${hashPrefix}`, {
+      headers: {
+        'Add-Padding': 'true', // Adds padding to responses for additional privacy
       },
-    );
+    });
 
     if (!response.ok) {
       // If API is down or rate limited, don't block the user
@@ -170,9 +163,7 @@ export async function checkPasswordWithWarning(password: string): Promise<{
   const result = await checkPasswordBreach(password);
   return {
     isBreached: result.isBreached,
-    warning: result.isBreached
-      ? getBreachWarningMessage(result.occurrences)
-      : '',
+    warning: result.isBreached ? getBreachWarningMessage(result.occurrences) : '',
   };
 }
 

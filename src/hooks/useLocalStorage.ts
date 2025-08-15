@@ -61,8 +61,7 @@ export function useLocalStorage<T>(
     };
 
     window.addEventListener('storage', handleStorageChange);
-    return (): void =>
-      window.removeEventListener('storage', handleStorageChange);
+    return (): void => window.removeEventListener('storage', handleStorageChange);
   }, [key]);
 
   return [storedValue, setValue, removeValue];

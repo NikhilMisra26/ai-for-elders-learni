@@ -199,8 +199,7 @@ Linda, 65, uses AI every Sunday to plan her week. She asks: "I have a doctor's a
       {
         id: 'staying-safe',
         title: 'Staying Safe with AI',
-        description:
-          'Essential privacy rules, how to spot AI mistakes, and avoiding scams.',
+        description: 'Essential privacy rules, how to spot AI mistakes, and avoiding scams.',
         content: `# Staying Safe with AI
 
 ## Introduction
@@ -373,8 +372,7 @@ Remember: You're in control. AI is there to help you, not to make decisions for 
       {
         id: 'mcp-protocol',
         title: 'Model Context Protocol (MCP)',
-        description:
-          'Learn how to safely connect AI to your personal data and applications.',
+        description: 'Learn how to safely connect AI to your personal data and applications.',
         content:
           '# Model Context Protocol (MCP)\n\n[Placeholder content for Expert Course Module 2]\n\nThis module will cover:\n- Understanding MCP technology\n- Safe data connections\n- Privacy and security considerations\n- Practical implementation examples',
         estimatedTime: 30,
@@ -416,18 +414,13 @@ export const getCourseById = (courseId: string): Course | undefined => {
   return courseData[courseId];
 };
 
-export const getModuleById = (
-  courseId: string,
-  moduleId: string,
-): Module | undefined => {
+export const getModuleById = (courseId: string, moduleId: string): Module | undefined => {
   const course = getCourseById(courseId);
   return course?.modules.find((module) => module.id === moduleId);
 };
 
 // Start of removed/added code for subscription removal
-export const getAvailableCourses = (
-  _userTier: 'free' | 'advanced' | 'expert',
-): Course[] => {
+export const getAvailableCourses = (_userTier: 'free' | 'advanced' | 'expert'): Course[] => {
   // Removed for subscription removal: original tier-based filtering
   /*
   const userLevel = TIER_ORDER[userTier];
@@ -460,10 +453,7 @@ export const isModuleAccessible = (
 };
 // End of removed/added code for subscription removal
 
-export const calculateCourseProgress = (
-  courseId: string,
-  completedModules: string[],
-): number => {
+export const calculateCourseProgress = (courseId: string, completedModules: string[]): number => {
   const course = getCourseById(courseId);
   if (!course) return 0;
 
@@ -474,32 +464,21 @@ export const calculateCourseProgress = (
   return Math.round((completed / course.totalModules) * 100);
 };
 
-export const getNextModule = (
-  courseId: string,
-  currentModuleId: string,
-): Module | null => {
+export const getNextModule = (courseId: string, currentModuleId: string): Module | null => {
   const course = getCourseById(courseId);
   if (!course) return null;
 
-  const currentIndex = course.modules.findIndex(
-    (module) => module.id === currentModuleId,
-  );
-  if (currentIndex === -1 || currentIndex === course.modules.length - 1)
-    return null;
+  const currentIndex = course.modules.findIndex((module) => module.id === currentModuleId);
+  if (currentIndex === -1 || currentIndex === course.modules.length - 1) return null;
 
   return course.modules[currentIndex + 1];
 };
 
-export const getPreviousModule = (
-  courseId: string,
-  currentModuleId: string,
-): Module | null => {
+export const getPreviousModule = (courseId: string, currentModuleId: string): Module | null => {
   const course = getCourseById(courseId);
   if (!course) return null;
 
-  const currentIndex = course.modules.findIndex(
-    (module) => module.id === currentModuleId,
-  );
+  const currentIndex = course.modules.findIndex((module) => module.id === currentModuleId);
   if (currentIndex <= 0) return null;
 
   return course.modules[currentIndex - 1];

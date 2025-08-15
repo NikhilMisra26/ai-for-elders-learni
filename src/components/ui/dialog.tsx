@@ -6,27 +6,19 @@ import { VisuallyHidden } from './visually-hidden';
 
 import { cn } from '@/lib/utils';
 
-function Dialog({
-  ...props
-}: ComponentProps<typeof DialogPrimitive.Root>): ReactElement {
+function Dialog({ ...props }: ComponentProps<typeof DialogPrimitive.Root>): ReactElement {
   return <DialogPrimitive.Root data-slot='dialog' {...props} />;
 }
 
-function DialogTrigger({
-  ...props
-}: ComponentProps<typeof DialogPrimitive.Trigger>): ReactElement {
+function DialogTrigger({ ...props }: ComponentProps<typeof DialogPrimitive.Trigger>): ReactElement {
   return <DialogPrimitive.Trigger data-slot='dialog-trigger' {...props} />;
 }
 
-function DialogPortal({
-  ...props
-}: ComponentProps<typeof DialogPrimitive.Portal>): ReactElement {
+function DialogPortal({ ...props }: ComponentProps<typeof DialogPrimitive.Portal>): ReactElement {
   return <DialogPrimitive.Portal data-slot='dialog-portal' {...props} />;
 }
 
-function DialogClose({
-  ...props
-}: ComponentProps<typeof DialogPrimitive.Close>): ReactElement {
+function DialogClose({ ...props }: ComponentProps<typeof DialogPrimitive.Close>): ReactElement {
   return <DialogPrimitive.Close data-slot='dialog-close' {...props} />;
 }
 
@@ -72,10 +64,7 @@ function DialogContent({
   );
 }
 
-function DialogHeader({
-  className,
-  ...props
-}: ComponentProps<'div'>): ReactElement {
+function DialogHeader({ className, ...props }: ComponentProps<'div'>): ReactElement {
   return (
     <div
       data-slot='dialog-header'
@@ -85,17 +74,11 @@ function DialogHeader({
   );
 }
 
-function DialogFooter({
-  className,
-  ...props
-}: ComponentProps<'div'>): ReactElement {
+function DialogFooter({ className, ...props }: ComponentProps<'div'>): ReactElement {
   return (
     <div
       data-slot='dialog-footer'
-      className={cn(
-        'flex flex-col-reverse gap-2 sm:flex-row sm:justify-end',
-        className,
-      )}
+      className={cn('flex flex-col-reverse gap-2 sm:flex-row sm:justify-end', className)}
       {...props}
     />
   );

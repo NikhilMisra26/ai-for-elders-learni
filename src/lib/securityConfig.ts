@@ -119,12 +119,7 @@ export const ALLOWED_ORIGINS = [
 export const CORS_CONFIG = {
   allowedOrigins: ALLOWED_ORIGINS,
   allowedMethods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: [
-    'Content-Type',
-    'Authorization',
-    'X-Requested-With',
-    'X-CSRF-Token',
-  ],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'X-CSRF-Token'],
   credentials: true,
   maxAge: 86400, // 24 hours
 };
@@ -200,13 +195,7 @@ export const INPUT_VALIDATION = {
  * File upload security configuration
  */
 export const FILE_UPLOAD_CONFIG = {
-  allowedMimeTypes: [
-    'image/jpeg',
-    'image/png',
-    'image/gif',
-    'image/webp',
-    'application/pdf',
-  ],
+  allowedMimeTypes: ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf'],
   maxFileSize: 5 * 1024 * 1024, // 5MB
   maxFiles: 10,
   scanForVirus: true, // Enable virus scanning if available
@@ -290,9 +279,7 @@ export function isAllowedOrigin(origin: string): boolean {
 export function generateCSRFToken(): string {
   const array = new Uint8Array(32);
   crypto.getRandomValues(array);
-  return Array.from(array, (byte) => byte.toString(16).padStart(2, '0')).join(
-    '',
-  );
+  return Array.from(array, (byte) => byte.toString(16).padStart(2, '0')).join('');
 }
 
 /**
@@ -358,9 +345,7 @@ export function initializeSecurity(): void {
 
   // Set up CSP meta tag if not set by server
   if (typeof document !== 'undefined') {
-    const existingCSP = document.querySelector(
-      'meta[http-equiv="Content-Security-Policy"]',
-    );
+    const existingCSP = document.querySelector('meta[http-equiv="Content-Security-Policy"]');
     if (!existingCSP) {
       const meta = document.createElement('meta');
       meta.httpEquiv = 'Content-Security-Policy';
@@ -384,8 +369,7 @@ export function initializeSecurity(): void {
   // Set up beforeunload handler for unsaved changes
   window.addEventListener('beforeunload', (e) => {
     // Check for unsaved changes
-    const hasUnsavedChanges =
-      sessionStorage.getItem('hasUnsavedChanges') === 'true';
+    const hasUnsavedChanges = sessionStorage.getItem('hasUnsavedChanges') === 'true';
     if (hasUnsavedChanges) {
       e.preventDefault();
       e.returnValue = '';

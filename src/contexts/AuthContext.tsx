@@ -35,22 +35,14 @@ interface SecurityState {
 
 interface AuthContextType {
   user: User | null;
-  login: (
-    email: string,
-    password: string,
-  ) => Promise<{ success: boolean; error?: string }>;
+  login: (email: string, password: string) => Promise<{ success: boolean; error?: string }>;
   register: (
     email: string,
     password: string,
     name: string,
   ) => Promise<{ success: boolean; error?: string; isDuplicate?: boolean }>;
-  verifySignupOtp: (
-    email: string,
-    token: string,
-  ) => Promise<{ success: boolean; error?: string }>;
-  resendSignupOtp: (
-    email: string,
-  ) => Promise<{ success: boolean; error?: string }>;
+  verifySignupOtp: (email: string, token: string) => Promise<{ success: boolean; error?: string }>;
+  resendSignupOtp: (email: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   isLoading: boolean;
   // Removed for subscription removal: updateTier: (tier: 'free' | 'advanced' | 'expert') => void;
@@ -61,11 +53,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({
-  children,
-}: {
-  children: ReactNode;
-}): ReactElement {
+export function AuthProvider({ children }: { children: ReactNode }): ReactElement {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [rateLimiter] = useState(() => new RateLimiter());
@@ -190,11 +178,7 @@ export function AuthProvider({
     // Set up auth state change listener
     const { data: listener } = supabase.auth.onAuthStateChange((event) => {
       // Only re-init on actual auth state changes, not on token refresh
-      if (
-        event === 'SIGNED_IN' ||
-        event === 'SIGNED_OUT' ||
-        event === 'USER_UPDATED'
-      ) {
+      if (event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'USER_UPDATED') {
         void init();
       }
     });
@@ -254,8 +238,7 @@ export function AuthProvider({
         password,
         options: {
           data: { name: sanitizedName },
-          emailRedirectTo:
-            typeof window !== 'undefined' ? window.location.origin : undefined,
+          emailRedirectTo: typeof window !== 'undefined' ? window.location.origin : undefined,
         },
       });
 
@@ -278,11 +261,7 @@ export function AuthProvider({
 
       // If we detected a duplicate email, return a specific response
       if (isDuplicateEmail) {
-        SecurityLogger.log(
-          'registration_duplicate_detected',
-          { email: sanitizedEmail },
-          'info',
-        );
+        SecurityLogger.log('registration_duplicate_detected', { email: sanitizedEmail }, 'info');
         setIsLoading(false);
         return {
           success: false,
@@ -367,9 +346,7 @@ export function AuthProvider({
   };
 
   // Resend signup OTP email
-  const resendSignupOtp = async (
-    email: string,
-  ): Promise<{ success: boolean; error?: string }> => {
+  const resendSignupOtp = async (email: string): Promise<{ success: boolean; error?: string }> => {
     try {
       const sanitizedEmail = sanitizeInput(email.toLowerCase());
       const { error } = await supabase.auth.resend({
@@ -429,11 +406,10 @@ export function AuthProvider({
       }
 
       // Attempt Supabase sign-in
-      const { data: signInData, error: signInError } =
-        await supabase.auth.signInWithPassword({
-          email: sanitizedEmail,
-          password,
-        });
+      const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+        email: sanitizedEmail,
+        password,
+      });
 
       if (signInError || !signInData.user) {
         rateLimiter.recordFailedAttempt(sanitizedEmail);
@@ -577,11 +553,7 @@ export function AuthProvider({
       });
     } else if (user && tier !== 'free') {
       // Log attempt to set non-free tier
-      SecurityLogger.log(
-        'tier_change_attempt',
-        { userId: user.id, attemptedTier: tier },
-        'info',
-      );
+      SecurityLogger.log('tier_change_attempt', { userId: user.id, attemptedTier: tier }, 'info');
     }
   };
   // End of removed/added code for subscription removal

@@ -1,7 +1,9 @@
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
 ## MOST IMPORANT STEP
+
 **Before writing or editing any code. MANDATORY STEP!!! DO NOT SKIP!!**:
 
 1. Decide if **multiple subagents can run in parallel** for this task.
@@ -25,8 +27,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 2. When fixing bugs or adding features, use the smartest and most minimalistic approach possible white still maintaining UI/UX, security, and all other important things
 
-2. After finishing edits, use pnpm lint:fix
-
+3. After finishing edits, use pnpm lint:fix
 
 ## Project Overview
 

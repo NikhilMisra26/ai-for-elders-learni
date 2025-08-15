@@ -5,13 +5,7 @@ import { toast } from 'sonner';
 import { useRouteProtection } from '@/hooks/useRouteProtection';
 import { useAuth } from '@/contexts/AuthContext';
 import type { User } from '@/contexts/AuthContext';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
 interface RouteGuardProps {
@@ -90,12 +84,7 @@ export function RouteGuard({
       return <>{fallback}</>;
     }
 
-    return (
-      <AuthRequiredPrompt
-        onAuthRequired={onAuthRequired}
-        requiredRole={requiredRole}
-      />
-    );
+    return <AuthRequiredPrompt onAuthRequired={onAuthRequired} requiredRole={requiredRole} />;
   }
 
   // Handle insufficient tier access
@@ -158,10 +147,7 @@ function AuthRequiredPrompt({
       <Card>
         <CardHeader className='text-center'>
           <div className='flex justify-center mb-4'>
-            <Lock
-              className='h-12 w-12 text-muted-foreground'
-              aria-hidden='true'
-            />
+            <Lock className='h-12 w-12 text-muted-foreground' aria-hidden='true' />
           </div>
           <CardTitle>Authentication Required</CardTitle>
           <CardDescription>
@@ -171,11 +157,7 @@ function AuthRequiredPrompt({
           </CardDescription>
         </CardHeader>
         <CardContent className='text-center'>
-          <Button
-            onClick={handleSignIn}
-            size='lg'
-            aria-label='Sign in to access content'
-          >
+          <Button onClick={handleSignIn} size='lg' aria-label='Sign in to access content'>
             <Shield className='h-4 w-4 mr-2' aria-hidden='true' />
             Sign In
           </Button>
@@ -193,10 +175,7 @@ interface TierUpgradePromptProps {
   currentUser: User;
 }
 
-function TierUpgradePrompt({
-  requiredRole,
-  currentUser,
-}: TierUpgradePromptProps): ReactElement {
+function TierUpgradePrompt({ requiredRole, currentUser }: TierUpgradePromptProps): ReactElement {
   const { updateTier: _updateTier } = useAuth();
 
   // Start of removed/added code for subscription removal
@@ -248,17 +227,13 @@ function TierUpgradePrompt({
             <Lock className='h-12 w-12 text-yellow-500' aria-hidden='true' />
           </div>
           <CardTitle>Upgrade Required</CardTitle>
-          <CardDescription>
-            This content requires the {info.name} tier
-          </CardDescription>
+          <CardDescription>This content requires the {info.name} tier</CardDescription>
         </CardHeader>
         <CardContent>
           <div className='text-center mb-6'>
             <div className='inline-flex items-center gap-2 bg-muted px-3 py-1 rounded-full text-sm mb-4'>
               <span>
-                Current:{' '}
-                {currentUser.tier.charAt(0).toUpperCase() +
-                  currentUser.tier.slice(1)}
+                Current: {currentUser.tier.charAt(0).toUpperCase() + currentUser.tier.slice(1)}
               </span>
               <ArrowRight className='h-3 w-3' aria-hidden='true' />
               <span className='font-medium'>{info.name}</span>
@@ -318,9 +293,7 @@ interface AccessDeniedPromptProps {
   requiredRole: string;
 }
 
-function AccessDeniedPrompt({
-  requiredRole,
-}: AccessDeniedPromptProps): ReactElement {
+function AccessDeniedPrompt({ requiredRole }: AccessDeniedPromptProps): ReactElement {
   return (
     <div className='max-w-2xl mx-auto p-6'>
       <Card>
@@ -329,14 +302,12 @@ function AccessDeniedPrompt({
             <Lock className='h-12 w-12 text-red-500' aria-hidden='true' />
           </div>
           <CardTitle>Access Denied</CardTitle>
-          <CardDescription>
-            You don&apos;t have permission to access this content
-          </CardDescription>
+          <CardDescription>You don&apos;t have permission to access this content</CardDescription>
         </CardHeader>
         <CardContent className='text-center'>
           <p className='text-muted-foreground mb-6'>
-            This content requires {requiredRole} access. Please contact your
-            administrator if you believe this is an error.
+            This content requires {requiredRole} access. Please contact your administrator if you
+            believe this is an error.
           </p>
           <Button
             onClick={() => window.location.reload()}

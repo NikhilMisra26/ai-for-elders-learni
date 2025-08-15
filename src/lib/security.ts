@@ -37,35 +37,20 @@ export function validatePassword(
   const errors: string[] = [];
 
   if (password.length < config.passwordMinLength) {
-    errors.push(
-      `Password must be at least ${config.passwordMinLength} characters long`,
-    );
+    errors.push(`Password must be at least ${config.passwordMinLength} characters long`);
   }
 
   if (config.passwordRequireNumber && !/\d/.test(password)) {
     errors.push('Password must contain at least one number');
   }
 
-  if (
-    config.passwordRequireSpecialChar &&
-    !/[!@#$%^&*(),.?":{}|<>]/.test(password)
-  ) {
-    errors.push(
-      'Password must contain at least one special character (!@#$%^&*)',
-    );
+  if (config.passwordRequireSpecialChar && !/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+    errors.push('Password must contain at least one special character (!@#$%^&*)');
   }
 
   // Check for common weak patterns
-  const commonPasswords = [
-    'password',
-    '12345678',
-    'qwerty',
-    'abc123',
-    'password123',
-  ];
-  if (
-    commonPasswords.some((common) => password.toLowerCase().includes(common))
-  ) {
+  const commonPasswords = ['password', '12345678', 'qwerty', 'abc123', 'password123'];
+  if (commonPasswords.some((common) => password.toLowerCase().includes(common))) {
     errors.push('Password is too common. Please choose a more unique password');
   }
 
@@ -299,9 +284,7 @@ export function generateSessionToken(): string {
 
   const array = new Uint8Array(32);
   cryptoObj.getRandomValues(array);
-  return Array.from(array, (byte) => byte.toString(16).padStart(2, '0')).join(
-    '',
-  );
+  return Array.from(array, (byte) => byte.toString(16).padStart(2, '0')).join('');
 }
 
 /**
@@ -432,17 +415,12 @@ export class SecurityLogger {
     // In a real app, this would send to a secure logging service
     if (severity === 'error') {
       if (import.meta.env.DEV) {
-        console.warn(
-          `Security Event [${severity.toUpperCase()}]: ${event}`,
-          details,
-        );
+        console.warn(`Security Event [${severity.toUpperCase()}]: ${event}`, details);
       }
     }
   }
 
-  private static sanitizeLogData(
-    data: Record<string, unknown>,
-  ): Record<string, unknown> {
+  private static sanitizeLogData(data: Record<string, unknown>): Record<string, unknown> {
     const sanitized = { ...data };
     // Remove sensitive fields
     delete (sanitized as { password?: unknown }).password;

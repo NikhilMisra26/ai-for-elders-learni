@@ -51,8 +51,8 @@ export function EmailAlreadyExistsDialog({
             Account May Already Exist
           </DialogTitle>
           <DialogDescription className='text-base'>
-            This email address might already be associated with an account. If
-            you already have an account, you can sign in or reset your password.
+            This email address might already be associated with an account. If you already have an
+            account, you can sign in or reset your password.
           </DialogDescription>
         </DialogHeader>
 
@@ -71,16 +71,15 @@ export function EmailAlreadyExistsDialog({
               </p>
               <p className='flex items-start gap-2'>
                 <span className='font-medium text-foreground'>•</span>
-                If you&apos;re sure you don&apos;t have an account, try a
-                different email
+                If you&apos;re sure you don&apos;t have an account, try a different email
               </p>
             </div>
           </div>
 
           <div className='bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-3'>
             <p className='text-sm text-blue-700 dark:text-black'>
-              <strong>Tip:</strong> Check if you might have signed up with a
-              different email address, such as a work or personal email.
+              <strong>Tip:</strong> Check if you might have signed up with a different email
+              address, such as a work or personal email.
             </p>
           </div>
         </div>

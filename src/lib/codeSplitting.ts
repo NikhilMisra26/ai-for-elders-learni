@@ -1,3 +1,4 @@
+import type React from 'react';
 import { lazy, type ComponentType } from 'react';
 
 /**
@@ -5,23 +6,23 @@ import { lazy, type ComponentType } from 'react';
  */
 export const ROUTE_CHUNKS = {
   // Core pages
-  home: () => import('@/components/HomePage'),
-  courses: () => import('@/components/CoursesPage'),
-  dashboard: () => import('@/components/DashboardPage'),
-  account: () => import('@/components/AccountPage'),
-  
+  home: async (): Promise<unknown> => import('@/components/HomePage'),
+  courses: async (): Promise<unknown> => import('@/components/CoursesPage'),
+  dashboard: async (): Promise<unknown> => import('@/components/DashboardPage'),
+  account: async (): Promise<unknown> => import('@/components/AccountPage'),
+
   // Auth-related
-  auth: () => import('@/components/AuthForm'),
-  resetPassword: () => import('@/components/ResetPasswordPage'),
-  
+  auth: async (): Promise<unknown> => import('@/components/AuthForm'),
+  resetPassword: async (): Promise<unknown> => import('@/components/ResetPasswordPage'),
+
   // Course modules
-  module: () => import('@/components/ModulePage'),
-  
+  module: async (): Promise<unknown> => import('@/components/ModulePage'),
+
   // Admin/Security
-  security: () => import('@/components/SecurityDashboard'),
-  
+  security: async (): Promise<unknown> => import('@/components/SecurityDashboard'),
+
   // Error pages
-  notFound: () => import('@/components/NotFoundPage'),
+  notFound: async (): Promise<unknown> => import('@/components/NotFoundPage'),
 };
 
 /**
@@ -65,7 +66,7 @@ export function smartPrefetch(currentRoute: string): void {
     dashboard: ['courses', 'account'],
     account: ['dashboard', 'courses'],
   };
-  
+
   const routesToPrefetch = prefetchMap[currentRoute];
   if (routesToPrefetch) {
     // Delay prefetch to avoid competing with current page load

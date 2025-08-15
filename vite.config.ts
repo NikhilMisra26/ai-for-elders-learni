@@ -52,18 +52,12 @@ export default defineConfig(
           // Optimized chunking strategy for better caching
           manualChunks: (id): string | undefined => {
             // Core React libraries
-            if (
-              id.includes('node_modules/react') ||
-              id.includes('node_modules/react-dom')
-            ) {
+            if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) {
               return 'react-vendor';
             }
 
             // Supabase client - separate chunk for authentication/database
-            if (
-              id.includes('node_modules/@supabase') ||
-              id.includes('src/lib/supabaseClient')
-            ) {
+            if (id.includes('node_modules/@supabase') || id.includes('src/lib/supabaseClient')) {
               return 'supabase';
             }
 

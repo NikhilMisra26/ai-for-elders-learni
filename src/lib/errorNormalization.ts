@@ -58,32 +58,25 @@ const userFriendlyMessages: Record<ErrorCode, string> = {
     'The email or password you entered is incorrect. Please try again.',
   [ErrorCode.AUTH_RATE_LIMITED]:
     'Too many login attempts. Please wait a few minutes and try again.',
-  [ErrorCode.AUTH_SESSION_EXPIRED]:
-    'Your session has expired. Please log in again.',
-  [ErrorCode.AUTH_UNAUTHORIZED]:
-    'You do not have permission to access this feature.',
-  [ErrorCode.AUTH_EMAIL_NOT_VERIFIED]:
-    'Please verify your email address before logging in.',
-  [ErrorCode.AUTH_WEAK_PASSWORD]:
-    'Please choose a stronger password with at least 8 characters.',
+  [ErrorCode.AUTH_SESSION_EXPIRED]: 'Your session has expired. Please log in again.',
+  [ErrorCode.AUTH_UNAUTHORIZED]: 'You do not have permission to access this feature.',
+  [ErrorCode.AUTH_EMAIL_NOT_VERIFIED]: 'Please verify your email address before logging in.',
+  [ErrorCode.AUTH_WEAK_PASSWORD]: 'Please choose a stronger password with at least 8 characters.',
   [ErrorCode.AUTH_USER_EXISTS]: 'An account with this email already exists.',
 
   // Validation
   [ErrorCode.VALIDATION_INVALID_EMAIL]: 'Please enter a valid email address.',
-  [ErrorCode.VALIDATION_INVALID_INPUT]:
-    'Please check your input and try again.',
+  [ErrorCode.VALIDATION_INVALID_INPUT]: 'Please check your input and try again.',
   [ErrorCode.VALIDATION_MISSING_FIELDS]: 'Please fill in all required fields.',
 
   // Database
   [ErrorCode.DB_CONNECTION_FAILED]:
     'Unable to connect to our servers. Please check your internet connection.',
   [ErrorCode.DB_QUERY_FAILED]: 'Something went wrong. Please try again.',
-  [ErrorCode.DB_TRANSACTION_FAILED]:
-    'Unable to complete your request. Please try again.',
+  [ErrorCode.DB_TRANSACTION_FAILED]: 'Unable to complete your request. Please try again.',
 
   // Payment
-  [ErrorCode.PAYMENT_FAILED]:
-    'Payment could not be processed. Please try again.',
+  [ErrorCode.PAYMENT_FAILED]: 'Payment could not be processed. Please try again.',
   [ErrorCode.PAYMENT_CARD_DECLINED]:
     'Your card was declined. Please try a different payment method.',
   [ErrorCode.PAYMENT_INSUFFICIENT_FUNDS]:
@@ -93,22 +86,18 @@ const userFriendlyMessages: Record<ErrorCode, string> = {
 
   // Network
   [ErrorCode.NETWORK_TIMEOUT]: 'The request took too long. Please try again.',
-  [ErrorCode.NETWORK_OFFLINE]:
-    'You appear to be offline. Please check your internet connection.',
-  [ErrorCode.NETWORK_REQUEST_FAILED]:
-    'Unable to complete your request. Please try again.',
+  [ErrorCode.NETWORK_OFFLINE]: 'You appear to be offline. Please check your internet connection.',
+  [ErrorCode.NETWORK_REQUEST_FAILED]: 'Unable to complete your request. Please try again.',
 
   // Server
-  [ErrorCode.SERVER_ERROR]:
-    'Something went wrong on our end. Please try again later.',
+  [ErrorCode.SERVER_ERROR]: 'Something went wrong on our end. Please try again later.',
   [ErrorCode.SERVER_MAINTENANCE]:
     'We are currently performing maintenance. Please try again later.',
 
   // Generic
   [ErrorCode.GENERIC_ERROR]: 'An error occurred. Please try again.',
   [ErrorCode.FEATURE_UNAVAILABLE]: 'This feature is temporarily unavailable.',
-  [ErrorCode.PERMISSION_DENIED]:
-    'You do not have permission to perform this action.',
+  [ErrorCode.PERMISSION_DENIED]: 'You do not have permission to perform this action.',
 };
 
 /**
@@ -229,24 +218,14 @@ function sanitizeErrorDetails(error: unknown): Record<string, unknown> {
   } else if (typeof error === 'object' && error !== null) {
     // Sanitize object properties
     const errorObj = error as Record<string, unknown>;
-    const sensitiveKeys = [
-      'password',
-      'token',
-      'key',
-      'secret',
-      'credential',
-      'auth',
-    ];
+    const sensitiveKeys = ['password', 'token', 'key', 'secret', 'credential', 'auth'];
 
     for (const [key, value] of Object.entries(errorObj)) {
       const lowerKey = key.toLowerCase();
-      const isSensitive = sensitiveKeys.some((sensitive) =>
-        lowerKey.includes(sensitive),
-      );
+      const isSensitive = sensitiveKeys.some((sensitive) => lowerKey.includes(sensitive));
 
       if (!isSensitive) {
-        sanitized[key] =
-          typeof value === 'string' ? value.substring(0, 200) : value;
+        sanitized[key] = typeof value === 'string' ? value.substring(0, 200) : value;
       }
     }
   } else {
@@ -415,10 +394,7 @@ export function isRetryableError(code: ErrorCode): boolean {
 /**
  * Format error message for display with optional details
  */
-export function formatErrorMessage(
-  error: NormalizedError,
-  includeRequestId = false,
-): string {
+export function formatErrorMessage(error: NormalizedError, includeRequestId = false): string {
   if (includeRequestId && error.requestId) {
     return `${error.message} (Reference: ${error.requestId})`;
   }
@@ -457,10 +433,7 @@ export function extractSupabaseError(error: unknown): string {
 /**
  * Handle Supabase Auth errors specifically
  */
-export function normalizeSupabaseAuthError(
-  error: unknown,
-  context: string,
-): NormalizedError {
+export function normalizeSupabaseAuthError(error: unknown, context: string): NormalizedError {
   const errorMessage = extractSupabaseError(error);
 
   // Check for specific Supabase auth error patterns
@@ -495,18 +468,13 @@ export function getErrorRecoverySuggestion(code: ErrorCode): string | null {
       'Double-check your email and password, or reset your password if needed.',
     [ErrorCode.AUTH_RATE_LIMITED]: 'Wait a few minutes before trying again.',
     [ErrorCode.AUTH_SESSION_EXPIRED]: 'Please sign in again to continue.',
-    [ErrorCode.AUTH_EMAIL_NOT_VERIFIED]:
-      'Check your email for a verification link.',
+    [ErrorCode.AUTH_EMAIL_NOT_VERIFIED]: 'Check your email for a verification link.',
     [ErrorCode.AUTH_WEAK_PASSWORD]:
       'Try a password with at least 8 characters, including numbers and symbols.',
-    [ErrorCode.NETWORK_OFFLINE]:
-      'Check your internet connection and try again.',
-    [ErrorCode.NETWORK_TIMEOUT]:
-      'The server is taking longer than usual. Please try again.',
-    [ErrorCode.SERVER_ERROR]:
-      'Our servers are experiencing issues. Please try again later.',
-    [ErrorCode.PAYMENT_CARD_DECLINED]:
-      'Contact your bank or try a different payment method.',
+    [ErrorCode.NETWORK_OFFLINE]: 'Check your internet connection and try again.',
+    [ErrorCode.NETWORK_TIMEOUT]: 'The server is taking longer than usual. Please try again.',
+    [ErrorCode.SERVER_ERROR]: 'Our servers are experiencing issues. Please try again later.',
+    [ErrorCode.PAYMENT_CARD_DECLINED]: 'Contact your bank or try a different payment method.',
   };
 
   return suggestions[code] ?? null;
@@ -517,10 +485,7 @@ export function getErrorRecoverySuggestion(code: ErrorCode): string | null {
  */
 export function isAuthorizationError(error: unknown): boolean {
   const normalized = normalizeError(error);
-  return (
-    isAuthError(normalized.code) ||
-    normalized.code === ErrorCode.PERMISSION_DENIED
-  );
+  return isAuthError(normalized.code) || normalized.code === ErrorCode.PERMISSION_DENIED;
 }
 
 /**

@@ -34,26 +34,17 @@ function Alert({
   );
 }
 
-function AlertTitle({
-  className,
-  ...props
-}: ComponentProps<'div'>): ReactElement {
+function AlertTitle({ className, ...props }: ComponentProps<'div'>): ReactElement {
   return (
     <div
       data-slot='alert-title'
-      className={cn(
-        'col-start-2 line-clamp-1 min-h-4 font-medium tracking-tight',
-        className,
-      )}
+      className={cn('col-start-2 line-clamp-1 min-h-4 font-medium tracking-tight', className)}
       {...props}
     />
   );
 }
 
-function AlertDescription({
-  className,
-  ...props
-}: ComponentProps<'div'>): ReactElement {
+function AlertDescription({ className, ...props }: ComponentProps<'div'>): ReactElement {
   return (
     <div
       data-slot='alert-description'

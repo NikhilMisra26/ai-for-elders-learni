@@ -1,4 +1,4 @@
-import { lazy, type ComponentType, type LazyExoticComponent } from 'react';
+import { lazy, type ComponentType, type LazyExoticComponent, type RefObject } from 'react';
 
 /**
  * Enhanced lazy loading with preload capability
@@ -9,7 +9,7 @@ export function lazyWithPreload<T extends ComponentType<unknown>>(
   let preloadedModule: { default: T } | null = null;
   let preloadPromise: Promise<{ default: T }> | null = null;
 
-  const load = (): Promise<{ default: T }> => {
+  const load = async (): Promise<{ default: T }> => {
     if (preloadedModule) {
       return Promise.resolve(preloadedModule);
     }
@@ -43,17 +43,17 @@ export function lazyWithPreload<T extends ComponentType<unknown>>(
 export async function preloadComponents(
   components: Array<{ preload: () => Promise<void> }>,
 ): Promise<void> {
-  await Promise.all(components.map((component) => component.preload()));
+  await Promise.all(components.map(async (component) => component.preload()));
 }
 
 /**
  * Intersection Observer based lazy loading trigger
  */
 export function useLazyLoadOnVisible(
-  ref: React.RefObject<HTMLElement>,
+  ref: RefObject<HTMLElement>,
   callback: () => void,
   options?: IntersectionObserverInit,
-): void {
+): (() => void) | void {
   if (typeof window === 'undefined' || !('IntersectionObserver' in window)) {
     return;
   }

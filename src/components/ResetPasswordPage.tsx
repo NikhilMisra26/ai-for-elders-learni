@@ -1,24 +1,11 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
-import {
-  Lock,
-  Eye,
-  EyeSlash,
-  CheckCircle,
-  XCircle,
-  Warning,
-} from '@phosphor-icons/react';
+import { Lock, Eye, EyeSlash, CheckCircle, XCircle, Warning } from '@phosphor-icons/react';
 import type { ReactElement } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { normalizeError, formatErrorMessage } from '@/lib/errorNormalization';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -137,11 +124,7 @@ export function ResetPasswordPage(): ReactElement {
     if (!password) return '';
     if (password.length < 8) return 'Weak';
     if (password.length < 12) return 'Fair';
-    if (
-      /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/.test(
-        password,
-      )
-    ) {
+    if (/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/.test(password)) {
       return 'Strong';
     }
     return 'Good';
@@ -167,8 +150,7 @@ export function ResetPasswordPage(): ReactElement {
             </div>
             <CardTitle>Invalid Reset Link</CardTitle>
             <CardDescription className='mt-2'>
-              This password reset link is invalid or has expired. Please request
-              a new one.
+              This password reset link is invalid or has expired. Please request a new one.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -194,9 +176,7 @@ export function ResetPasswordPage(): ReactElement {
             <Lock className='h-6 w-6 text-primary' />
           </div>
           <CardTitle>Reset Your Password</CardTitle>
-          <CardDescription>
-            Choose a new secure password for your account
-          </CardDescription>
+          <CardDescription>Choose a new secure password for your account</CardDescription>
         </CardHeader>
 
         <CardContent>
@@ -222,21 +202,13 @@ export function ResetPasswordPage(): ReactElement {
                   className='absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent'
                   onClick={(): void => setShowNewPassword(!showNewPassword)}
                   disabled={isLoading}
-                  aria-label={
-                    showNewPassword ? 'Hide password' : 'Show password'
-                  }
+                  aria-label={showNewPassword ? 'Hide password' : 'Show password'}
                 >
-                  {showNewPassword ? (
-                    <EyeSlash className='h-4 w-4' />
-                  ) : (
-                    <Eye className='h-4 w-4' />
-                  )}
+                  {showNewPassword ? <EyeSlash className='h-4 w-4' /> : <Eye className='h-4 w-4' />}
                 </Button>
               </div>
               {newPassword && (
-                <p className={`text-sm ${strengthColor}`}>
-                  Password strength: {strength}
-                </p>
+                <p className={`text-sm ${strengthColor}`}>Password strength: {strength}</p>
               )}
 
               {/* Password breach warning */}
@@ -245,21 +217,15 @@ export function ResetPasswordPage(): ReactElement {
                   <div className='flex items-start gap-2'>
                     <Warning className='h-4 w-4 text-orange-600 mt-0.5 flex-shrink-0' />
                     <div className='flex-1'>
-                      <p className='text-sm text-orange-800 font-medium'>
-                        Security Warning
-                      </p>
-                      <p className='text-sm text-orange-700 mt-1'>
-                        {breachWarning}
-                      </p>
+                      <p className='text-sm text-orange-800 font-medium'>Security Warning</p>
+                      <p className='text-sm text-orange-700 mt-1'>{breachWarning}</p>
                     </div>
                   </div>
                 </div>
               )}
 
               {isCheckingBreach && (
-                <p className='text-sm text-muted-foreground'>
-                  Checking password security...
-                </p>
+                <p className='text-sm text-muted-foreground'>Checking password security...</p>
               )}
             </div>
 
@@ -281,13 +247,9 @@ export function ResetPasswordPage(): ReactElement {
                   variant='ghost'
                   size='sm'
                   className='absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent'
-                  onClick={(): void =>
-                    setShowConfirmPassword(!showConfirmPassword)
-                  }
+                  onClick={(): void => setShowConfirmPassword(!showConfirmPassword)}
                   disabled={isLoading}
-                  aria-label={
-                    showConfirmPassword ? 'Hide password' : 'Show password'
-                  }
+                  aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
                 >
                   {showConfirmPassword ? (
                     <EyeSlash className='h-4 w-4' />
@@ -299,25 +261,19 @@ export function ResetPasswordPage(): ReactElement {
               {confirmPassword && confirmPassword !== newPassword && (
                 <p className='text-sm text-red-600'>Passwords do not match</p>
               )}
-              {confirmPassword &&
-                confirmPassword === newPassword &&
-                newPassword.length >= 8 && (
-                  <p className='text-sm text-green-600 flex items-center gap-1'>
-                    <CheckCircle className='w-4 h-4' />
-                    Passwords match
-                  </p>
-                )}
+              {confirmPassword && confirmPassword === newPassword && newPassword.length >= 8 && (
+                <p className='text-sm text-green-600 flex items-center gap-1'>
+                  <CheckCircle className='w-4 h-4' />
+                  Passwords match
+                </p>
+              )}
             </div>
 
             <Button
               className='w-full'
               onClick={(): void => void handlePasswordReset()}
               disabled={
-                isLoading ||
-                !newPassword ||
-                !confirmPassword ||
-                isCheckingBreach ||
-                !!breachWarning
+                isLoading || !newPassword || !confirmPassword || isCheckingBreach || !!breachWarning
               }
             >
               {isLoading
