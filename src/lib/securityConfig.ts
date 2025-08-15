@@ -80,7 +80,17 @@ export const ALLOWED_ORIGINS = [
   'http://localhost:5173',
   'http://127.0.0.1:5173',
   // Production (will be replaced with actual domain)
-  import.meta.env.VITE_APP_URL,
+  (() => {
+    const appUrl = import.meta.env.VITE_APP_URL;
+    if (!appUrl) {
+      console.warn(
+        '[securityConfig] Warning: VITE_APP_URL is not set in environment variables. ' +
+        'Production origin will not be included in ALLOWED_ORIGINS.'
+      );
+      return undefined;
+    }
+    return appUrl;
+  })(),
   // Supabase
   'https://kboefdqxbsdkmnmjosjx.supabase.co',
   // Stripe
