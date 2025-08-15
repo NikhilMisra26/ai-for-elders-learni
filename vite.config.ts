@@ -29,7 +29,8 @@ export default defineConfig(
         'X-Frame-Options': 'DENY',
         'X-Content-Type-Options': 'nosniff',
         'Referrer-Policy': 'strict-origin-when-cross-origin',
-        'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=(self https://checkout.stripe.com)',
+        'Permissions-Policy':
+          'camera=(), microphone=(), geolocation=(), payment=(self https://checkout.stripe.com)',
         // Note: CSP is handled by platform deployment configs in production (vercel.json/netlify.toml)
       },
     },
@@ -39,7 +40,8 @@ export default defineConfig(
         'X-Frame-Options': 'DENY',
         'X-Content-Type-Options': 'nosniff',
         'Referrer-Policy': 'strict-origin-when-cross-origin',
-        'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=(self https://checkout.stripe.com)',
+        'Permissions-Policy':
+          'camera=(), microphone=(), geolocation=(), payment=(self https://checkout.stripe.com)',
         // Note: CSP is handled by platform deployment configs in production (vercel.json/netlify.toml)
       },
     },
