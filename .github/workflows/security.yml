@@ -74,12 +74,11 @@ jobs:
           fi
 
       - name: Secret Scan
-        uses: trufflesecurity/trufflehog@v3
+        uses: trufflesecurity/trufflehog-actions-scan@v3
         with:
-          path: ./
-          base: ${{ github.event.repository.default_branch }}
-          head: HEAD
-          extra_args: --debug --only-verified
+          # See https://github.com/trufflesecurity/trufflehog-actions-scan for options
+          # By default, the action scans the repo (and PR ranges on pull_request events)
+          scanArguments: --debug --only-verified
 
       - name: Build Application
         run: pnpm run build
