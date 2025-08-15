@@ -73,12 +73,28 @@ jobs:
             echo "✅ No moderate+ vulnerabilities found"
           fi
 
-      - name: Secret Scan
-        uses: trufflesecurity/trufflehog-actions-scan@v3
-        with:
-          # See https://github.com/trufflesecurity/trufflehog-actions-scan for options
-          # By default, the action scans the repo (and PR ranges on pull_request events)
-          scanArguments: --debug --only-verified
+      - name: Install TruffleHog
+        run: |
+          echo "Installing TruffleHog CLI..."
+          curl -sSL https://github.com/trufflesecurity/trufflehog/releases/latest/download/trufflehog_Linux_x86_64.tar.gz -o trufflehog.tar.gz
+          sudo tar -xzf trufflehog.tar.gz -C /usr/local/bin trufflehog
+          trufflehog --version
+
+      - name: Secret Scan (PR range)
+        if: github.event_name == 'pull_request'
+        run: |
+          set -e
+          echo "Running TruffleHog on PR diff..."
+          BASE_SHA="${{ github.event.pull_request.base.sha }}"
+          echo "Base SHA: $BASE_SHA"
+          trufflehog git file://. --since-commit "$BASE_SHA" --only-verified --debug --fail
+
+      - name: Secret Scan (full history)
+        if: github.event_name != 'pull_request'
+        run: |
+          set -e
+          echo "Running TruffleHog on full git history..."
+          trufflehog git file://. --only-verified --debug --fail
 
       - name: Build Application
         run: pnpm run build
