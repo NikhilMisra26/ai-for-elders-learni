@@ -84,8 +84,8 @@ export function SupportEmailForm(): React.ReactElement {
   const getCharacterCountColor = (): string => {
     const count = message.length;
     if (count < 10 && count > 0) return 'text-orange-600';
-    if (count > 4500) return 'text-orange-600';
     if (count > 4900) return 'text-red-600';
+    if (count > 4500) return 'text-orange-600';
     return 'text-gray-500';
   };
 
