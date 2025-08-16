@@ -241,7 +241,11 @@ export class SupportRateLimiter {
           .join('')
           .substring(0, 16);
       } catch (error) {
-        console.warn('Crypto API failed, falling back to simple hash:', error);
+        SecurityLogger.log(
+          'crypto_digest_fallback',
+          { error: String(error) },
+          'warning',
+        );
       }
     }
 
