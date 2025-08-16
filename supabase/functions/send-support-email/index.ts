@@ -290,7 +290,6 @@ Deno.serve(async (req: Request) => {
       /on\w+\s*=/gi, // Event handlers
       /<iframe[^>]*>/gi,
     ];
-
     if (suspiciousPatterns.some((pattern) => pattern.test(body.message))) {
       console.warn('Suspicious content detected in support message');
       return new Response(
