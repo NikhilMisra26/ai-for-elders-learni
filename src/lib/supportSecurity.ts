@@ -4,11 +4,13 @@
  * Following PASSWORD_SECURITY.md patterns and existing security.ts architecture
  */
 
-import DOMPurify from 'dompurify';
+import createDOMPurify from 'dompurify';
+// Create a DOMPurify instance only in browser environments
+const DOMPurifyInstance =
+  typeof window !== 'undefined' ? createDOMPurify(window as unknown as Window) : null;
+
 import type { SupabaseClient } from '@supabase/supabase-js';
-
 import { SecurityLogger } from './security';
-
 // Type definitions for support security
 export interface SupportRateLimitConfig {
   maxEmailsPerHour: number;
