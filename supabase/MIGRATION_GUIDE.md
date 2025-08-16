@@ -169,12 +169,12 @@ User email, name, and tier are denormalized into tickets for:
    - `idx_support_tickets_status` - Active tickets (pending/in_progress)
 
 2. **Admin Queries**:
-   - `idx_support_tickets_priority_status` - Priority queue
+   - `idx_support_tickets_priority_pending` - Priority queue
    - `idx_support_tickets_created_at` - Recent tickets
 
 3. **Rate Limiting**:
    - `idx_rate_limiting_support_user_time` - Rate limit checks
-   - `idx_rate_limiting_support_old_entries` - Cleanup operations
+   - `idx_rate_limiting_support_created_at` - Cleanup/ordering operations
 
 ### Query Patterns Optimized
 
