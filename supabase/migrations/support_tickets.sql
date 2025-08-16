@@ -319,9 +319,8 @@ CREATE POLICY "Rate limiting is per user"
 CREATE POLICY "System can clean up old entries"
     ON public.rate_limiting_support
     FOR DELETE
-    TO authenticated
+    TO service_role
     USING (created_at < (NOW() - INTERVAL '2 hours'));
-
 -- =========================
 -- GRANT PERMISSIONS
 -- =========================
