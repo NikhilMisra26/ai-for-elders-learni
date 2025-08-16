@@ -46,6 +46,16 @@
 - **Row Level Security (RLS)**: All database tables protected with user-scoped policies
 - **Production-Ready**: Sourcemaps disabled, console logs conditional, error details sanitized
 
+### 💬 **Support System**
+
+- **Email Support Integration**: Secure support ticket system via Supabase Edge Functions
+- **Rate-Limited Requests**: Maximum 3 support emails per hour to prevent abuse
+- **Automated Ticketing**: All support requests tracked with unique ticket IDs
+- **Resend API Integration**: Professional email delivery with reply-to functionality
+- **Security Auditing**: All support actions logged for compliance
+- **In-App Support Form**: User-friendly form with character counting and validation
+- **Ticket History**: Users can view their past support tickets and resolutions
+
 ### 💳 **Subscription System**
 
 - **Free**: Basic AI course with community access
