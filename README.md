@@ -86,13 +86,12 @@
    CREATE TABLE IF NOT EXISTS public.support_tickets (
        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
        user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-       message TEXT NOT NULL CHECK (char_length(message) BETWEEN 10 AND 2000),
+      message TEXT NOT NULL CHECK (char_length(message) BETWEEN 10 AND 5000),
        status TEXT NOT NULL DEFAULT 'pending',
        user_email TEXT NOT NULL,
        user_name TEXT,
        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
    );
-
    CREATE TABLE IF NOT EXISTS public.rate_limiting_support (
        id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
        user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
