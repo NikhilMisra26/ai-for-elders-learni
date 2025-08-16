@@ -33,7 +33,7 @@ import { courseData } from '@/lib/courseData';
 function DashboardPageComponent(): ReactElement {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { subscription, getCurrentPlan } = useSubscription();
+  const { subscription } = useSubscription();
   const { getDashboardSummary, getLearningRecommendations, learningStats, setWeeklyGoal } =
     useProgress();
 
@@ -58,8 +58,8 @@ function DashboardPageComponent(): ReactElement {
 
   const dashboardSummary = getDashboardSummary();
   const recommendations = getLearningRecommendations();
-  const currentPlan = getCurrentPlan();
   // Commented out unused variable - keeping for potential future use
+  // const currentPlan = getCurrentPlan();
   // const _daysUntilExpiry = getDaysUntilExpiry();
 
   // Get greeting based on time
@@ -223,8 +223,8 @@ function DashboardPageComponent(): ReactElement {
                     </div>
                     <Button
                       onClick={handleStartLearning}
-                      variant='outline'
-                      className='flex items-center gap-2'
+                      variant='default'
+                      className='flex items-center gap-2 '
                     >
                       Start Course
                       <ArrowRight />
@@ -339,7 +339,7 @@ function DashboardPageComponent(): ReactElement {
                 </div>
 
                 <Button
-                  variant='outline'
+                  variant='default'
                   className='w-full mt-6'
                   onClick={() => void navigate('/courses')}
                 >
@@ -405,6 +405,7 @@ function DashboardPageComponent(): ReactElement {
                   Account Summary
                 </CardTitle>
               </CardHeader>
+              {/* Start of commented out code for subscription removal
               <CardContent className='space-y-4'>
                 <div>
                   <div className='text-sm font-medium text-muted-foreground'>Subscription</div>
@@ -412,11 +413,14 @@ function DashboardPageComponent(): ReactElement {
                     <Badge variant={subscription.planId === 'free' ? 'secondary' : 'default'}>
                       {currentPlan.name}
                     </Badge>
-                    {subscription.planId === 'free' && (
+                  
+                  
+                  {subscription.planId === 'free' && ( 
                       <Button size='sm' variant='outline' onClick={() => void navigate('/account')}>
                         Upgrade
                       </Button>
                     )}
+
                   </div>
                 </div>
 
@@ -439,7 +443,7 @@ function DashboardPageComponent(): ReactElement {
                 </div>
 
                 <Button
-                  variant='outline'
+                  variant='default'
                   className='w-full'
                   onClick={() => void navigate('/account')}
                 >
@@ -447,6 +451,7 @@ function DashboardPageComponent(): ReactElement {
                   <Gear className='w-4 h-4 ml-2' />
                 </Button>
               </CardContent>
+               End of commented out code for subscription removal*/}
             </Card>
 
             {/* Learning Stats */}

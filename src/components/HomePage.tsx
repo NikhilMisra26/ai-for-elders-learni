@@ -481,7 +481,7 @@ function HomePageComponent({ onAuthClick }: HomePageProps): ReactElement {
               {/* Add review button for authenticated users */}
               {user && (
                 <div className='text-center mt-12'>
-                  <Button variant='outline' size='lg' onClick={() => setShowReviewForm(true)}>
+                  <Button variant='default' size='lg' onClick={() => setShowReviewForm(true)}>
                     <PencilSimple className='mr-2' />
                     Share Your Experience
                   </Button>
@@ -559,7 +559,7 @@ function HomePageComponent({ onAuthClick }: HomePageProps): ReactElement {
                 </Button>
                 <Button
                   size='lg'
-                  variant='outline'
+                  variant='default'
                   onClick={handleNavigateToCourses}
                   className='text-lg px-8 py-6 h-auto'
                 >
@@ -575,7 +575,7 @@ function HomePageComponent({ onAuthClick }: HomePageProps): ReactElement {
                 </Button>
                 <Button
                   size='lg'
-                  variant='outline'
+                  variant='default'
                   onClick={handleNavigateToCourses}
                   className='text-lg px-8 py-6 h-auto'
                 >

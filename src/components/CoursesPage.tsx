@@ -260,7 +260,7 @@ function CoursesPageComponent({ onAuthClick }: CoursesPageProps): ReactElement {
                         </div>
                         <Button
                           onClick={() => handleStartCourse(course.id, course)}
-                          variant='outline'
+                          variant='default'
                           className='w-full'
                         >
                           Start Course
