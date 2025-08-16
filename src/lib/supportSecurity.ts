@@ -417,13 +417,17 @@ export class SupportMessageValidator {
       sanitized = sanitized.replace(pattern, '[REDACTED]');
     }
 
-    // Use DOMPurify for HTML sanitization
-    sanitized = DOMPurify.sanitize(sanitized, {
-      ALLOWED_TAGS: [], // No HTML tags allowed in support messages
-      ALLOWED_ATTR: [],
-      KEEP_CONTENT: true,
-    });
-
+    // Use DOMPurify for HTML sanitization (browser) or fallback (server)
+    if (DOMPurifyInstance) {
+      sanitized = DOMPurifyInstance.sanitize(sanitized, {
+        ALLOWED_TAGS: [], // No HTML tags allowed in support messages
+        ALLOWED_ATTR: [],
+        KEEP_CONTENT: true,
+      });
+    } else {
+      // Fallback: strip HTML tags server-side
+      sanitized = sanitized.replace(/<[^>]*>/g, '');
+    }
     // Trim and normalize whitespace while preserving newlines
     sanitized = sanitized
       .trim()
