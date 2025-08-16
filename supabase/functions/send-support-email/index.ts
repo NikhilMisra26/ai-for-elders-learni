@@ -93,8 +93,7 @@ async function sendEmail(
   ticketId: string,
 ): Promise<{ success: boolean; error?: string }> {
   const resendApiKey = Deno.env.get('RESEND_API_KEY');
-  const supportFrom =
-    Deno.env.get('SUPPORT_FROM_EMAIL') ?? 'Discover 50 AI Support <onboarding@resend.dev>';
+  const supportFrom = Deno.env.get('SUPPORT_FROM_EMAIL') ?? 'onboarding@resend.dev';
   const supportInbox = Deno.env.get('SUPPORT_INBOX_EMAIL') ?? 'discover50ai@gmail.com';
 
   if (!resendApiKey) {
