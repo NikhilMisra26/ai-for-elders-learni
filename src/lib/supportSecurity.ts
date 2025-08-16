@@ -399,8 +399,9 @@ export class SupportMessageValidator {
     }
 
     // Check for repeated characters (e.g., "!!!!!!!!")
-    if (/(.)\1{5,}/g.test(message)) {
+    if (/(.)\1{5,}/.test(message)) {
       return true;
+    }
     }
 
     return false;
