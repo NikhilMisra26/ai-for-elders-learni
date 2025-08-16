@@ -503,18 +503,7 @@ function AccountPageComponent(): ReactElement {
                   Need help with your account or have questions about our courses?
                 </p>
                 <div className='space-y-2'>
-                  <Button
-                    variant='default'
-                    size='sm'
-                    className='w-full'
-                    onClick={(): void => {
-                      const subject = encodeURIComponent('Support Request from DISCOVER 50 AI');
-                      const body = encodeURIComponent(
-                        `Hello DISCOVER 50 AI Support Team,\n\nI need assistance with:\n\n[Please describe your issue or question here]\n\nBest regards,\n${user.name}\n${user.email}`,
-                      );
-                      window.location.href = `mailto:discover50ai@gmail.com?subject=${subject}&body=${body}`;
-                    }}
-                  >
+                  <Button variant='default' size='sm' className='w-full'>
                     <EnvelopeSimple className='w-4 h-4 mr-2' />
                     Email Support
                   </Button>
