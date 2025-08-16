@@ -6,7 +6,7 @@ declare const Deno: {
 };
 
 // tsc in this workspace cannot resolve Deno's npm: specifier; ignore for types only.
-// @ts-expect-error - Deno npm specifier not resolvable by Node/tsc
+// @ts-expect-error: Deno npm: specifier not supported by Node.js TypeScript compiler
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
 // Type definitions
