@@ -1,4 +1,5 @@
 import { supabase } from './supabaseClient';
+import { logError } from './errorHandler';
 
 export interface SendSupportEmailRequest {
   message: string;
@@ -115,8 +116,10 @@ export async function sendSupportEmail(
           }
         }
       } catch (parseError) {
-        // eslint-disable-next-line no-console
-        console.error('Failed to parse error response JSON:', parseError);
+        logError('Failed to parse error response JSON', parseError as Error, {
+          component: 'supportEmail',
+          action: 'parseErrorResponse',
+        });
         // Continue with empty data object
       }
       // Handle rate limiting specifically
@@ -145,8 +148,10 @@ export async function sendSupportEmail(
         }
       }
     } catch (parseError) {
-      // eslint-disable-next-line no-console
-      console.error('Failed to parse success response JSON:', parseError);
+      logError('Failed to parse success response JSON', parseError as Error, {
+        component: 'supportEmail',
+        action: 'parseSuccessResponse',
+      });
     }
 
     return {
@@ -155,8 +160,10 @@ export async function sendSupportEmail(
     };
   } catch (error) {
     // Support email error
-    // eslint-disable-next-line no-console
-    console.error('Support email error:', error);
+    logError('Support email error', error as Error, {
+      component: 'supportEmail',
+      action: 'sendSupportEmail',
+    });
     return {
       success: false,
       error: 'An unexpected error occurred. Please try again.',
@@ -222,8 +229,10 @@ export async function getUserSupportTickets(): Promise<{
     };
   } catch (error) {
     // Support tickets error
-    // eslint-disable-next-line no-console
-    console.error('Support tickets error:', error);
+    logError('Support tickets error', error as Error, {
+      component: 'supportEmail',
+      action: 'getUserSupportTickets',
+    });
     return {
       success: false,
       error: 'An unexpected error occurred',
@@ -266,7 +275,10 @@ export async function checkSupportEmailRateLimit(): Promise<{
 
     if (error) {
       // Rate limit check failed - return error to user instead of failing open
-      console.error('Rate limit database check failed:', error);
+      logError('Rate limit database check failed', error as Error, {
+        component: 'supportEmail',
+        action: 'checkSupportEmailRateLimit',
+      });
       return {
         canSend: false,
         minutesUntilNextAllowed: 0,
@@ -295,8 +307,10 @@ export async function checkSupportEmailRateLimit(): Promise<{
     };
   } catch (error) {
     // Rate limit check error
-    // eslint-disable-next-line no-console
-    console.error('Rate limit check error:', error);
+    logError('Rate limit check error', error as Error, {
+      component: 'supportEmail',
+      action: 'checkSupportEmailRateLimit',
+    });
     // Fail open on error
     return {
       canSend: true,

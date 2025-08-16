@@ -263,9 +263,8 @@ BEGIN
         AND p.prosecdef = true -- SECURITY DEFINER
         AND p.proname IN ('check_support_rate_limit', 'create_support_ticket', 'cleanup_old_rate_limits', 'populate_ticket_user_data')
         AND NOT EXISTS (
-            SELECT 1 FROM pg_proc_config
-            WHERE pg_proc_config.oid = p.oid
-            AND setting[1] = 'search_path'
+            SELECT 1 FROM unnest(COALESCE(p.proconfig, ARRAY[]::text[])) AS config_setting
+            WHERE config_setting LIKE 'search_path=%'
         )
     ) THEN
         RAISE WARNING '⚠️  SECURITY DEFINER functions should set search_path for safety';

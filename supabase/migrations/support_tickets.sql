@@ -160,6 +160,10 @@ BEGIN
         RAISE EXCEPTION 'User must be authenticated to create a support ticket';
     END IF;
     
+    -- Acquire transaction-scoped advisory lock keyed by user ID to prevent race conditions
+    -- Convert UUID to int64 using hash for stable locking key
+    PERFORM pg_advisory_xact_lock(hashtext(v_user_id::text));
+    
     -- Check rate limit (3 tickets per hour by default)
     IF NOT check_support_rate_limit(v_user_id, 'ticket_create', 3, 60) THEN
         RAISE EXCEPTION 'Rate limit exceeded. Please wait before creating another ticket.';

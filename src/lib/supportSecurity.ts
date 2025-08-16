@@ -5,12 +5,12 @@
  */
 
 import createDOMPurify from 'dompurify';
-// Create a DOMPurify instance only in browser environments
-const DOMPurifyInstance =
-  typeof window !== 'undefined' ? createDOMPurify(window as unknown as Window) : null;
-
 import type { SupabaseClient } from '@supabase/supabase-js';
+
 import { SecurityLogger } from './security';
+
+// Create a DOMPurify instance only in browser environments
+const DOMPurifyInstance = typeof window !== 'undefined' ? createDOMPurify(window) : null;
 // Type definitions for support security
 export interface SupportRateLimitConfig {
   maxEmailsPerHour: number;
@@ -241,11 +241,7 @@ export class SupportRateLimiter {
           .join('')
           .substring(0, 16);
       } catch (error) {
-        SecurityLogger.log(
-          'crypto_digest_fallback',
-          { error: String(error) },
-          'warning',
-        );
+        SecurityLogger.log('crypto_digest_fallback', { error: String(error) }, 'warning');
       }
     }
 
@@ -401,7 +397,6 @@ export class SupportMessageValidator {
     // Check for repeated characters (e.g., "!!!!!!!!")
     if (/(.)\1{5,}/.test(message)) {
       return true;
-    }
     }
 
     return false;
