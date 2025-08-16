@@ -46,6 +46,18 @@
 - **Row Level Security (RLS)**: All database tables protected with user-scoped policies
 - **Production-Ready**: Sourcemaps disabled, console logs conditional, error details sanitized
 
+### 💬 **Support System**
+
+- **Email Support Dialog**: Users can send support messages directly from Account page
+- **Security-First Design**: Rate limiting (3 emails/hour), input sanitization, XSS protection
+- **Accessibility Optimized**: ARIA labels, keyboard navigation, senior-friendly UI
+- **Database Tracking**: All support tickets stored with user context and timestamps
+- **Optional Email Integration**: Supabase Edge Function sends emails to support team
+- **Resend API Integration**: Professional email delivery with reply-to functionality
+- **Security Auditing**: All support actions logged for compliance
+- **In-App Support Form**: User-friendly form with character counting and validation
+- **Ticket History**: Users can view their past support tickets and resolutions
+
 ### 💳 **Subscription System**
 
 - **Free**: Basic AI course with community access
@@ -62,6 +74,62 @@
 - **Icons**: Phosphor Icons
 
 ## 🚀 Quick Start
+
+### **For Email Support Feature Setup:**
+
+1. **Database Setup** (Required):
+
+   ```sql
+   -- Copy this into Supabase SQL Editor and run:
+   CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+   CREATE TABLE IF NOT EXISTS public.support_tickets (
+       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+       user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+      message TEXT NOT NULL CHECK (char_length(message) BETWEEN 10 AND 5000),
+       status TEXT NOT NULL DEFAULT 'pending',
+       user_email TEXT NOT NULL,
+       user_name TEXT,
+       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+   );
+   CREATE TABLE IF NOT EXISTS public.rate_limiting_support (
+       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+       user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+       action_type TEXT NOT NULL DEFAULT 'ticket_create',
+       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+   );
+
+   CREATE INDEX IF NOT EXISTS idx_support_tickets_user_id ON public.support_tickets(user_id);
+   CREATE INDEX IF NOT EXISTS idx_support_tickets_status ON public.support_tickets(status);
+   CREATE INDEX IF NOT EXISTS idx_support_tickets_created_at ON public.support_tickets(created_at DESC);
+   CREATE INDEX IF NOT EXISTS idx_rate_limiting_user_time ON public.rate_limiting_support(user_id, created_at DESC);
+
+   ALTER TABLE public.support_tickets ENABLE ROW LEVEL SECURITY;
+   ALTER TABLE public.rate_limiting_support ENABLE ROW LEVEL SECURITY;
+
+   CREATE POLICY "Users can create their own tickets" ON public.support_tickets
+       FOR INSERT WITH CHECK (auth.uid() = user_id);
+   CREATE POLICY "Users can view their own tickets" ON public.support_tickets
+       FOR SELECT USING (auth.uid() = user_id);
+   CREATE POLICY "Users can track their rate limits" ON public.rate_limiting_support
+       FOR ALL USING (auth.uid() = user_id);
+   ```
+
+2. **Test the Feature**:
+   - Run `pnpm run dev`
+   - Go to Account page
+   - Click "Email Support" button
+   - Submit a test message
+
+3. **Optional Email Setup** (for actual email sending):
+   - Sign up at [resend.com](https://resend.com)
+   - Get API key
+   - Add to Supabase → Edge Functions → Secrets:
+     - `RESEND_API_KEY`: your key
+     - `ALLOWED_ORIGIN`: `http://localhost:5173`
+   - Deploy: `supabase functions deploy send-support-email`
+
+### **For Full Project Setup:**
 
 ### Prerequisites
 

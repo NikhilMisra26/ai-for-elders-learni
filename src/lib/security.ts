@@ -362,6 +362,7 @@ export function validateFileUpload(file: File): {
 
 /**
  * Audit logging for security events
+ * Used by multiple security modules including supportSecurity
  */
 export class SecurityLogger {
   private static logs: Array<{

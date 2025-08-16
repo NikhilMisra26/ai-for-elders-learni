@@ -17,6 +17,9 @@
     "security:audit": "pnpm audit --audit-level moderate",
     "security:check": "pnpm run typecheck && pnpm run lint && pnpm run security:audit",
     "security:full": "pnpm run security:check && pnpm run format:check",
+    "supabase:link": "supabase link",
+    "supabase:dev": "supabase start",
+    "supabase:deploy": "supabase db push",
     "prepare": "husky"
   },
   "dependencies": {
@@ -103,6 +106,7 @@
     "lint-staged": "^16.1.2",
     "prettier": "^3.6.2",
     "react-native-dotenv": "^3.4.11",
+    "supabase": "^2.34.3",
     "tailwindcss": "^4.1.11",
     "typescript": "~5.7.2",
     "typescript-eslint": "^8.38.0",

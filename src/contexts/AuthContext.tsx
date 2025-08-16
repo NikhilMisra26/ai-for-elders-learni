@@ -90,7 +90,17 @@ export function AuthProvider({ children }: { children: ReactNode }): ReactElemen
     }
 
     const init = async (): Promise<void> => {
-      const { data } = await supabase.auth.getSession();
+      const { data, error: sessionError } = await supabase.auth.getSession();
+
+      // If there's an invalid/stale refresh token in storage, clear local session to stop 400 spam
+      if (sessionError && typeof sessionError.message === 'string') {
+        const msg = sessionError.message.toLowerCase();
+        if (msg.includes('invalid refresh token') || msg.includes('refresh token not found')) {
+          await supabase.auth.signOut({ scope: 'local' });
+          setUser(null);
+          return;
+        }
+      }
       const authUser = data.session?.user;
       if (authUser) {
         // Check if profile creation is already in progress for this user
@@ -276,8 +286,14 @@ export function AuthProvider({ children }: { children: ReactNode }): ReactElemen
       const hasSession = !!authRes.session;
       if (hasSession) {
         // Trigger init flow by setting user state via auth listener
-        const { data } = await supabase.auth.getSession();
-        if (data.session) {
+        const { data, error: getSessionError } = await supabase.auth.getSession();
+        if (getSessionError) {
+          // If session retrieval failed due to a token issue, clear it locally
+          const m = getSessionError.message?.toLowerCase?.() ?? '';
+          if (m.includes('invalid refresh token') || m.includes('refresh token not found')) {
+            await supabase.auth.signOut({ scope: 'local' });
+          }
+        } else if (data.session) {
           // init() effect will map and upsert as needed; nothing else to do here
         }
       }

@@ -16,6 +16,7 @@ import {
 import type { ReactElement } from 'react';
 
 import { AuthForm } from './AuthForm';
+import { EmailSupportDialog } from './EmailSupportDialog';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -60,6 +61,9 @@ function AccountPageComponent(): ReactElement {
   const [_selectedPlan] = useState<'advanced' | 'expert'>('advanced');
   const [_isProcessingPayment] = useState(false);
   const [_showCancelDialog, setShowCancelDialog] = useState(false);
+
+  // Email support dialog state
+  const [showEmailSupportDialog, setShowEmailSupportDialog] = useState(false);
 
   if (!user) {
     return (
@@ -503,7 +507,12 @@ function AccountPageComponent(): ReactElement {
                   Need help with your account or have questions about our courses?
                 </p>
                 <div className='space-y-2'>
-                  <Button variant='default' size='sm' className='w-full'>
+                  <Button
+                    variant='default'
+                    size='sm'
+                    className='w-full'
+                    onClick={() => setShowEmailSupportDialog(true)}
+                  >
                     <EnvelopeSimple className='w-4 h-4 mr-2' />
                     Email Support
                   </Button>
@@ -653,6 +662,12 @@ function AccountPageComponent(): ReactElement {
           onOpenChange={setShowPasswordDialog}
         /> */}
         {/* End of removed code for subscription removal */}
+
+        {/* Email Support Dialog */}
+        <EmailSupportDialog
+          open={showEmailSupportDialog}
+          onOpenChange={setShowEmailSupportDialog}
+        />
       </div>
     </div>
   );
