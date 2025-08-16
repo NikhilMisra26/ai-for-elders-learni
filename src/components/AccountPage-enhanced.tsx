@@ -17,6 +17,7 @@ import type { ReactElement } from 'react';
 
 import { AuthForm } from './AuthForm';
 import { EmailSupportDialog } from './EmailSupportDialog';
+import { PasswordChangeDialog } from './PasswordChangeDialog';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -64,6 +65,9 @@ function AccountPageComponent(): ReactElement {
 
   // Email support dialog state
   const [showEmailSupportDialog, setShowEmailSupportDialog] = useState(false);
+
+  // Password change dialog state
+  const [showPasswordDialog, setShowPasswordDialog] = useState(false);
 
   if (!user) {
     return (
@@ -537,12 +541,7 @@ function AccountPageComponent(): ReactElement {
                   <Button
                     variant='default'
                     size='sm'
-                    onClick={(): void => {
-                      // Password change functionality would go here
-                      toast.info('Coming Soon', {
-                        description: 'Password change feature will be available soon',
-                      });
-                    }}
+                    onClick={(): void => setShowPasswordDialog(true)}
                   >
                     Change
                   </Button>
@@ -668,6 +667,9 @@ function AccountPageComponent(): ReactElement {
           open={showEmailSupportDialog}
           onOpenChange={setShowEmailSupportDialog}
         />
+
+        {/* Password Change Dialog */}
+        <PasswordChangeDialog open={showPasswordDialog} onOpenChange={setShowPasswordDialog} />
       </div>
     </div>
   );
