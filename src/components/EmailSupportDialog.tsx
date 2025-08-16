@@ -15,7 +15,6 @@ import {
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-// import { supabase } from '@/lib/supabaseClient';
 import { sendSupportEmail } from '@/lib/supportEmail';
 // import { useAuth } from '@/contexts/AuthContext';
 
