@@ -42,7 +42,7 @@ export async function sendSupportEmail(
       };
     }
 
-    // Get the current session
+    // Get the current session and validate it properly
     const {
       data: { session },
       error: sessionError,
@@ -53,6 +53,28 @@ export async function sendSupportEmail(
         success: false,
         error: 'You must be logged in to send a support request',
       };
+    }
+
+    // Additional session validation
+    if (!session.user?.id || !session.user?.email) {
+      return {
+        success: false,
+        error: 'Invalid session. Please sign in again.',
+      };
+    }
+
+    // Check if session is about to expire
+    if (session.expires_at) {
+      const expiresAt = new Date(session.expires_at * 1000);
+      const now = new Date();
+      const minutesUntilExpiry = (expiresAt.getTime() - now.getTime()) / (1000 * 60);
+
+      if (minutesUntilExpiry < 5) {
+        return {
+          success: false,
+          error: 'Your session is about to expire. Please sign in again.',
+        };
+      }
     }
 
     // Get the Edge Function URL
@@ -79,24 +101,24 @@ export async function sendSupportEmail(
       }),
     });
 
-    // Check content-type header before parsing JSON
-    const contentType = response.headers.get('content-type');
-    let data: { error?: string; ticketId?: string } = {};
-
-    try {
-      if (contentType?.includes('application/json')) {
-        const responseText = await response.text();
-        if (responseText.trim()) {
-          data = JSON.parse(responseText) as { error?: string; ticketId?: string };
-        }
-      }
-    } catch (parseError) {
-      // eslint-disable-next-line no-console
-      console.error('Failed to parse response JSON:', parseError);
-      // Continue with empty data object
-    }
-
+    // Check response.ok BEFORE attempting to parse
     if (!response.ok) {
+      // Check content-type header before parsing JSON for error details
+      const contentType = response.headers.get('content-type');
+      let data: { error?: string; ticketId?: string } = {};
+
+      try {
+        if (contentType?.includes('application/json')) {
+          const responseText = await response.text();
+          if (responseText.trim()) {
+            data = JSON.parse(responseText) as { error?: string; ticketId?: string };
+          }
+        }
+      } catch (parseError) {
+        // eslint-disable-next-line no-console
+        console.error('Failed to parse error response JSON:', parseError);
+        // Continue with empty data object
+      }
       // Handle rate limiting specifically
       if (response.status === 429) {
         return {
@@ -112,9 +134,24 @@ export async function sendSupportEmail(
       };
     }
 
+    // Parse successful response
+    let successData: { ticketId?: string; warning?: string } = {};
+    try {
+      const contentType = response.headers.get('content-type');
+      if (contentType?.includes('application/json')) {
+        const responseText = await response.text();
+        if (responseText.trim()) {
+          successData = JSON.parse(responseText) as { ticketId?: string; warning?: string };
+        }
+      }
+    } catch (parseError) {
+      // eslint-disable-next-line no-console
+      console.error('Failed to parse success response JSON:', parseError);
+    }
+
     return {
       success: true,
-      ticketId: data.ticketId ?? '',
+      ticketId: successData.ticketId,
     };
   } catch (error) {
     // Support email error
@@ -228,11 +265,12 @@ export async function checkSupportEmailRateLimit(): Promise<{
       .order('created_at', { ascending: false });
 
     if (error) {
-      // Rate limit check failed
-      // Fail open - allow sending if we can't check
+      // Rate limit check failed - return error to user instead of failing open
+      console.error('Rate limit database check failed:', error);
       return {
-        canSend: true,
+        canSend: false,
         minutesUntilNextAllowed: 0,
+        error: 'Unable to check rate limits. Please try again later.',
       };
     }
 

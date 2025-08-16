@@ -162,14 +162,39 @@ To reply to this user, send an email to: ${userEmail}
       }),
     });
 
+    // Check response.ok before attempting to parse
     if (!response.ok) {
-      const error = await response.text();
-      console.error('Resend API error:', error);
-      return { success: false, error: 'Failed to send email' };
+      let errorMessage = 'Failed to send email';
+      try {
+        const contentType = response.headers.get('content-type');
+        if (contentType?.includes('application/json')) {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorData.error || errorMessage;
+        } else {
+          const errorText = await response.text();
+          if (errorText) {
+            errorMessage = errorText.substring(0, 200); // Limit error message length
+          }
+        }
+      } catch (parseError) {
+        console.error('Failed to parse Resend error response:', parseError);
+      }
+
+      console.error('Resend API error:', response.status, errorMessage);
+      return { success: false, error: errorMessage };
     }
 
-    const data = await response.json();
-    console.log('Email sent successfully:', data.id);
+    // Parse successful response
+    let emailId = 'unknown';
+    try {
+      const data = await response.json();
+      emailId = data.id || 'unknown';
+    } catch (parseError) {
+      console.error('Failed to parse Resend success response:', parseError);
+      // Still treat as success if status was ok
+    }
+
+    console.log('Email sent successfully:', emailId);
     return { success: true };
   } catch (error) {
     console.error('Email sending failed:', error);
@@ -239,11 +264,42 @@ Deno.serve(async (req: Request) => {
       });
     }
 
+    // Comprehensive message validation
     if (!body.message || typeof body.message !== 'string') {
       return new Response(JSON.stringify({ success: false, error: 'Message is required' }), {
         status: 400,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });
+    }
+
+    // Additional validation for message structure
+    if (body.message.length > 10000) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Message too long (maximum 10000 characters)' }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        },
+      );
+    }
+
+    // Check for potential injection attempts
+    const suspiciousPatterns = [
+      /<script[^>]*>/gi,
+      /javascript:/gi,
+      /on\w+\s*=/gi, // Event handlers
+      /<iframe[^>]*>/gi,
+    ];
+
+    if (suspiciousPatterns.some((pattern) => pattern.test(body.message))) {
+      console.warn('Suspicious content detected in support message');
+      return new Response(
+        JSON.stringify({ success: false, error: 'Message contains invalid content' }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        },
+      );
     }
 
     // Sanitize message
@@ -259,12 +315,18 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // Check rate limiting
+    // Check rate limiting BEFORE any database operations
     const rateLimit = await checkRateLimit(supabaseAdmin, user.id);
     if (!rateLimit.allowed) {
       return new Response(JSON.stringify({ success: false, error: rateLimit.reason }), {
         status: 429,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json',
+          'Retry-After': String(
+            Math.ceil((RATE_LIMIT_WINDOW_MS - (Date.now() % RATE_LIMIT_WINDOW_MS)) / 1000),
+          ),
+        },
       });
     }
 

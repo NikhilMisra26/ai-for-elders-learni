@@ -5,7 +5,8 @@
       "Bash(git remote get-url:*)",
       "Bash(cat:*)",
       "Bash(grep:*)",
-      "Bash(rm:*)"
+      "Bash(rm:*)",
+      "Bash(gh api:*)"
     ],
     "deny": [],
     "ask": []

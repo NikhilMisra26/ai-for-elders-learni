@@ -155,7 +155,7 @@ export class SupportRateLimiter {
   /**
    * Record a support email attempt
    */
-  recordEmailAttempt(userId: string, message: string): void {
+  async recordEmailAttempt(userId: string, message: string): Promise<void> {
     const now = Date.now();
     const record = this.attempts.get(userId) ?? {
       hourlyCount: 0,
@@ -182,7 +182,7 @@ export class SupportRateLimiter {
     record.lastAttempt = now;
 
     // Store message hash for duplicate detection (keep last 10)
-    const messageHash = this.hashMessage(message);
+    const messageHash = await this.hashMessage(message);
     record.messages.push(messageHash);
     if (record.messages.length > 10) {
       record.messages = record.messages.slice(-10);
@@ -205,29 +205,51 @@ export class SupportRateLimiter {
   /**
    * Check if a message is a duplicate of recent messages
    */
-  isDuplicateMessage(userId: string, message: string): boolean {
+  async isDuplicateMessage(userId: string, message: string): Promise<boolean> {
     const record = this.attempts.get(userId);
     if (!record || record.messages.length === 0) {
       return false;
     }
 
-    const messageHash = this.hashMessage(message);
+    const messageHash = await this.hashMessage(message);
     return record.messages.includes(messageHash);
   }
 
   /**
-   * Simple hash function for message comparison
+   * Efficient hash function for message comparison
    */
-  private hashMessage(message: string): string {
-    // Simple hash for duplicate detection (not cryptographic)
-    let hash = 0;
+  private async hashMessage(message: string): Promise<string> {
     // Strip HTML tags and normalize whitespace for semantic comparison
     const str = message
       .toLowerCase()
       .replace(/<[^>]*>/g, '') // Remove HTML tags
       .replace(/\s+/g, ' ') // Normalize spaces/tabs
       .trim();
-    for (let i = 0; i < str.length; i++) {
+
+    // Use Web Crypto API for efficient hashing (available in modern browsers)
+    if (typeof window !== 'undefined' && window.crypto?.subtle) {
+      try {
+        const encoder = new TextEncoder();
+        const data = encoder.encode(str);
+        const hashBuffer = await window.crypto.subtle.digest('SHA-256', data);
+        // Convert to hex string
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        return hashArray
+          .map((b) => b.toString(16).padStart(2, '0'))
+          .join('')
+          .substring(0, 16);
+      } catch (error) {
+        console.warn('Crypto API failed, falling back to simple hash:', error);
+      }
+    }
+
+    // Fallback to simple hash for Node.js or if Crypto API fails
+    let hash = 0;
+    // For long messages, sample instead of processing everything
+    const sampleSize = Math.min(str.length, 1000);
+    const step = Math.max(1, Math.floor(str.length / sampleSize));
+
+    for (let i = 0; i < str.length; i += step) {
       const char = str.charCodeAt(i);
       hash = (hash << 5) - hash + char;
       hash = hash & hash; // Convert to 32-bit integer
@@ -426,7 +448,7 @@ export class SupportSessionValidator {
   /**
    * Validate current user session for support operations
    */
-  async validateSession(): Promise<SessionValidationResult> {
+  async validateSession(csrfToken?: string): Promise<SessionValidationResult> {
     try {
       // Get current session
       const {
@@ -439,6 +461,19 @@ export class SupportSessionValidator {
           isValid: false,
           error: 'Please sign in to send a support message',
         };
+      }
+
+      // CSRF Token validation (if provided)
+      if (csrfToken) {
+        // Simple CSRF validation - in production, validate against server-stored token
+        const isValidCsrf = /^[a-zA-Z0-9]{32,}$/.test(csrfToken);
+        if (!isValidCsrf) {
+          SecurityLogger.log('csrf_validation_failed', { userId: session.user.id }, 'warning');
+          return {
+            isValid: false,
+            error: 'Invalid request token. Please refresh the page and try again.',
+          };
+        }
       }
 
       // Check if session is about to expire (require reasonably fresh session)
@@ -560,14 +595,61 @@ export function normalizeSupportError(error: unknown): SupportSecurityError {
 }
 
 /**
- * Audit logging for support operations
+ * Sanitize sensitive data from log details
+ */
+function sanitizeLogData(data: Record<string, unknown>): Record<string, unknown> {
+  const sanitized: Record<string, unknown> = {};
+  const sensitiveKeys = [
+    'password',
+    'token',
+    'secret',
+    'key',
+    'authorization',
+    'cookie',
+    'session',
+  ];
+
+  for (const [key, value] of Object.entries(data)) {
+    const lowerKey = key.toLowerCase();
+
+    // Check if key contains sensitive words
+    if (sensitiveKeys.some((sensitive) => lowerKey.includes(sensitive))) {
+      sanitized[key] = '[REDACTED]';
+    }
+    // Sanitize email addresses (keep domain for debugging)
+    else if (typeof value === 'string' && value.includes('@')) {
+      const parts = value.split('@');
+      if (parts.length === 2) {
+        sanitized[key] = `***@${parts[1]}`;
+      } else {
+        sanitized[key] = '[EMAIL]';
+      }
+    }
+    // Truncate long strings that might contain message content
+    else if (typeof value === 'string' && value.length > 100) {
+      sanitized[key] = value.substring(0, 100) + '...[truncated]';
+    }
+    // Recursively sanitize nested objects
+    else if (value && typeof value === 'object' && !Array.isArray(value)) {
+      sanitized[key] = sanitizeLogData(value as Record<string, unknown>);
+    } else {
+      sanitized[key] = value;
+    }
+  }
+
+  return sanitized;
+}
+
+/**
+ * Audit logging for support operations with data sanitization
  */
 export function logSupportEvent(
   event: 'email_sent' | 'email_blocked' | 'spam_detected' | 'rate_limited',
   details: Record<string, unknown>,
 ): void {
   const severity = event === 'email_sent' ? 'info' : 'warning';
-  SecurityLogger.log(`support_${event}`, details, severity);
+  const sanitizedDetails = sanitizeLogData(details);
+  SecurityLogger.log(`support_${event}`, sanitizedDetails, severity);
 }
 
 /**
@@ -590,6 +672,7 @@ export class SupportSecurityManager {
   async canSendSupportEmail(
     message: string,
     honeypotValue = '',
+    csrfToken?: string,
   ): Promise<{
     allowed: boolean;
     error?: SupportSecurityError;
@@ -597,8 +680,8 @@ export class SupportSecurityManager {
     userId?: string;
     email?: string;
   }> {
-    // 1. Validate session
-    const sessionResult = await this.sessionValidator.validateSession();
+    // 1. Validate session with CSRF token
+    const sessionResult = await this.sessionValidator.validateSession(csrfToken);
     if (!sessionResult.isValid) {
       return {
         allowed: false,
@@ -645,7 +728,7 @@ export class SupportSecurityManager {
     }
 
     // 4. Check for duplicate messages
-    if (this.rateLimiter.isDuplicateMessage(userId, message)) {
+    if (await this.rateLimiter.isDuplicateMessage(userId, message)) {
       // Log duplicate message blocked event
       SecurityLogger.log(
         'support_duplicate_blocked',
@@ -697,8 +780,8 @@ export class SupportSecurityManager {
   /**
    * Record successful email send
    */
-  recordEmailSent(userId: string, message: string): void {
-    this.rateLimiter.recordEmailAttempt(userId, message);
+  async recordEmailSent(userId: string, message: string): Promise<void> {
+    await this.rateLimiter.recordEmailAttempt(userId, message);
     logSupportEvent('email_sent', { userId, messageLength: message.length });
   }
 
