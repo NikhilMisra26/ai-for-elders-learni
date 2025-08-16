@@ -111,7 +111,7 @@ async function sendEmail(
 ): Promise<{ success: boolean; error?: string }> {
   const resendApiKey = Deno.env.get('RESEND_API_KEY');
   const supportFrom = Deno.env.get('SUPPORT_FROM_EMAIL') ?? 'onboarding@resend.dev';
-  const supportInbox = Deno.env.get('SUPPORT_INBOX_EMAIL') ?? 'discover50ai@gmail.com';
+  const supportInbox = Deno.env.get('SUPPORT_INBOX_EMAIL') ?? 'support@example.com';
 
   if (!resendApiKey) {
     console.error('RESEND_API_KEY not configured');
