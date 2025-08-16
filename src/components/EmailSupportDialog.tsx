@@ -15,8 +15,9 @@ import {
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { supabase } from '@/lib/supabaseClient';
-import { useAuth } from '@/contexts/AuthContext';
+// import { supabase } from '@/lib/supabaseClient';
+import { sendSupportEmail } from '@/lib/supportEmail';
+// import { useAuth } from '@/contexts/AuthContext';
 
 interface EmailSupportDialogProps {
   open: boolean;
@@ -24,7 +25,7 @@ interface EmailSupportDialogProps {
 }
 
 export function EmailSupportDialog({ open, onOpenChange }: EmailSupportDialogProps): ReactElement {
-  const { user } = useAuth();
+  // const { user } = useAuth();
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [messageSent, setMessageSent] = useState(false);
@@ -100,57 +101,23 @@ export function EmailSupportDialog({ open, onOpenChange }: EmailSupportDialogPro
     try {
       const sanitizedMessage = sanitizeMessage(message);
 
-      // Get current user details
-      const userEmail = user?.email ?? 'anonymous@discover50ai.com';
-      // Get the auth user for metadata access
-      const { data: authData } = await supabase.auth.getUser();
-      const authUser = authData?.user;
-      const userName =
-        (authUser?.user_metadata?.full_name as string | undefined) ??
-        (authUser?.user_metadata?.name as string | undefined) ??
-        user?.name ??
-        null;
+      // Use Edge Function (enforces rate limiting + sends email)
+      const result = await sendSupportEmail({ message: sanitizedMessage });
 
-      // Get user tier from profile if available
-      let userTier = 'free';
-      if (user?.id) {
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('tier')
-          .eq('id', user.id)
-          .single();
-
-        if (profile?.tier) {
-          userTier = profile.tier as string;
-        }
-      }
-
-      // Insert into support_tickets table
-      const { error } = await supabase
-        .from('support_tickets')
-        .insert({
-          user_id: user?.id ?? '00000000-0000-0000-0000-000000000000', // Anonymous UUID if not logged in
-          message: sanitizedMessage,
-          user_email: userEmail,
-          user_name: userName,
-          user_tier: userTier,
-          category: 'general',
-          priority: 'normal',
-        })
-        .select()
-        .single();
-
-      if (error) {
-        // Handle rate limiting or other database errors
-        if (error.code === '23505') {
-          throw new Error('Too many support requests. Please wait before sending another message.');
-        }
-        throw error;
+      if (!result.success) {
+        // Rate limit friendly message when applicable
+        const err = result.error ?? 'Failed to send support request';
+        const isRateLimited = /too many|rate limit/i.test(err);
+        toast.error(isRateLimited ? 'Rate limit reached' : 'Failed to send support message', {
+          description: err,
+        });
+        // Do NOT show success screen
+        return;
       }
 
       setMessageSent(true);
       toast.success('Support message sent successfully');
-  // Keep dialog open until user closes it manually
+      // Keep dialog open until user closes it manually
     } catch (error) {
       const normalized = normalizeError(error, 'support_message_send');
       toast.error('Failed to send support message', {
