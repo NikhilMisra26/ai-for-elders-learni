@@ -33,7 +33,7 @@ export function EmailSupportDialog({ open, onOpenChange }: EmailSupportDialogPro
 
   // Message constraints
   const MIN_MESSAGE_LENGTH = 10;
-  const MAX_MESSAGE_LENGTH = 2000;
+  const MAX_MESSAGE_LENGTH = 5000;
 
   // Reset state when dialog opens
   useEffect(() => {
@@ -77,18 +77,6 @@ export function EmailSupportDialog({ open, onOpenChange }: EmailSupportDialogPro
     return null;
   };
 
-  const sanitizeMessage = (text: string): string => {
-    // Remove any HTML tags and trim whitespace
-    return text
-      .replace(/<[^>]*>/g, '')
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#x27;')
-      .trim();
-  };
-
   const handleSendMessage = async (): Promise<void> => {
     const validationError = validateMessage(message);
     if (validationError) {
@@ -99,10 +87,10 @@ export function EmailSupportDialog({ open, onOpenChange }: EmailSupportDialogPro
     setIsLoading(true);
 
     try {
-      const sanitizedMessage = sanitizeMessage(message);
+      const trimmedMessage = message.trim();
 
       // Use Edge Function (enforces rate limiting + sends email)
-      const result = await sendSupportEmail({ message: sanitizedMessage });
+      const result = await sendSupportEmail({ message: trimmedMessage });
 
       if (!result.success) {
         // Rate limit friendly message when applicable

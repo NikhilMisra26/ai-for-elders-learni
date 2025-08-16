@@ -30,10 +30,14 @@ export function SupportEmailForm(): React.ReactElement {
   useEffect((): (() => void) | undefined => {
     if (minutesUntilNextAllowed > 0) {
       const timer = setTimeout(() => {
-        setMinutesUntilNextAllowed((prev) => Math.max(0, prev - 1));
-        if (minutesUntilNextAllowed === 1) {
-          setCanSend(true);
-        }
+        setMinutesUntilNextAllowed((prev) => {
+          const newValue = Math.max(0, prev - 1);
+          // Re-check server rate limit when countdown reaches zero
+          if (newValue === 0) {
+            void checkRateLimit();
+          }
+          return newValue;
+        });
       }, 60000);
       return () => clearTimeout(timer);
     }
@@ -80,8 +84,8 @@ export function SupportEmailForm(): React.ReactElement {
   const getCharacterCountColor = (): string => {
     const count = message.length;
     if (count < 10 && count > 0) return 'text-orange-600';
-    if (count > 4900) return 'text-orange-600';
-    if (count > 5000) return 'text-red-600';
+    if (count > 4500) return 'text-orange-600';
+    if (count > 4900) return 'text-red-600';
     return 'text-gray-500';
   };
 
