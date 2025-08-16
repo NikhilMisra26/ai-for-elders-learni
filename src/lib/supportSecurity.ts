@@ -313,11 +313,11 @@ export class SupportRateLimiter {
 export class SupportMessageValidator {
   private readonly config: SupportRateLimitConfig;
   private readonly spamPatterns: RegExp[] = [
-    /\b(viagra|cialis|casino|lottery|winner|congratulations)\b/gi,
-    /\b(click here|act now|limited time|urgent|immediate action)\b/gi,
-    /\b\d{10,}\b/g, // Long number sequences (potential credit cards/SSNs)
-    /\b(?:\d{4}[\s-]?){3}\d{4}\b/g, // Credit card patterns
-    /\b\d{3}-\d{2}-\d{4}\b/g, // SSN patterns
+    /\b(viagra|cialis|casino|lottery|winner|congratulations)\b/i,
+    /\b(click here|act now|limited time|urgent|immediate action)\b/i,
+    /\b\d{10,}\b/, // Long number sequences (potential credit cards/SSNs)
+    /\b(?:\d{4}[\s-]?){3}\d{4}\b/, // Credit card patterns
+    /\b\d{3}-\d{2}-\d{4}\b/, // SSN patterns
   ];
 
   private readonly piiPatterns: RegExp[] = [
