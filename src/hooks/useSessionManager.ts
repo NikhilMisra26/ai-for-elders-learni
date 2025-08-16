@@ -22,7 +22,15 @@ export function useSessionManager(): {
   const checkSession = useCallback((): void => {
     if (!user) return;
     // Check Supabase session validity
-    void supabase.auth.getSession().then(({ data }) => {
+    void supabase.auth.getSession().then(async ({ data, error }) => {
+      if (error && typeof error.message === 'string') {
+        const m = error.message.toLowerCase();
+        if (m.includes('invalid refresh token') || m.includes('refresh token not found')) {
+          await supabase.auth.signOut({ scope: 'local' });
+          await logout();
+          return;
+        }
+      }
       const hasSession = !!data.session;
       if (!hasSession) void logout();
     });

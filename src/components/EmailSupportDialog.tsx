@@ -150,11 +150,7 @@ export function EmailSupportDialog({ open, onOpenChange }: EmailSupportDialogPro
 
       setMessageSent(true);
       toast.success('Support message sent successfully');
-
-      // Auto-close dialog after showing success
-      setTimeout(() => {
-        handleClose();
-      }, 3000);
+  // Keep dialog open until user closes it manually
     } catch (error) {
       const normalized = normalizeError(error, 'support_message_send');
       toast.error('Failed to send support message', {

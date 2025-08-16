@@ -11,16 +11,19 @@ This guide documents the database schema and migration process for the support t
 **Purpose**: Creates the complete support ticket system with rate limiting and RLS policies.
 
 **Tables Created**:
+
 - `support_tickets` - Main ticket storage with denormalized user data
 - `rate_limiting_support` - Rate limiting tracking table
 
 **Functions Created**:
+
 - `check_support_rate_limit()` - Validates rate limits
 - `create_support_ticket()` - Secure ticket creation with rate limiting
 - `cleanup_old_rate_limits()` - Maintenance function for old entries
 - `populate_ticket_user_data()` - Auto-population trigger function
 
 **Security Features**:
+
 - Row Level Security (RLS) enabled on all tables
 - Rate limiting at database level (3 tickets per hour default)
 - User isolation - users can only see their own tickets
@@ -31,6 +34,7 @@ This guide documents the database schema and migration process for the support t
 **Purpose**: Provides test data for development and testing.
 
 **Test Data Includes**:
+
 - 6 sample tickets with various statuses and priorities
 - Different categories (billing, technical, account, etc.)
 - Rate limiting test entries
@@ -60,27 +64,27 @@ Run these verification queries:
 
 ```sql
 -- Check tables exist
-SELECT table_name 
-FROM information_schema.tables 
-WHERE table_schema = 'public' 
+SELECT table_name
+FROM information_schema.tables
+WHERE table_schema = 'public'
 AND table_name IN ('support_tickets', 'rate_limiting_support');
 
 -- Check RLS is enabled
-SELECT tablename, rowsecurity 
-FROM pg_tables 
-WHERE schemaname = 'public' 
+SELECT tablename, rowsecurity
+FROM pg_tables
+WHERE schemaname = 'public'
 AND tablename IN ('support_tickets', 'rate_limiting_support');
 
 -- Check policies exist
-SELECT schemaname, tablename, policyname 
-FROM pg_policies 
-WHERE schemaname = 'public' 
+SELECT schemaname, tablename, policyname
+FROM pg_policies
+WHERE schemaname = 'public'
 AND tablename IN ('support_tickets', 'rate_limiting_support');
 
 -- Check functions exist
-SELECT routine_name 
-FROM information_schema.routines 
-WHERE routine_schema = 'public' 
+SELECT routine_name
+FROM information_schema.routines
+WHERE routine_schema = 'public'
 AND routine_name IN ('check_support_rate_limit', 'create_support_ticket', 'cleanup_old_rate_limits');
 ```
 
@@ -151,6 +155,7 @@ DROP TABLE IF EXISTS public.support_tickets CASCADE;
 ### Data Denormalization
 
 User email, name, and tier are denormalized into tickets for:
+
 - **Performance**: No joins needed for admin views
 - **Historical Accuracy**: Preserves user data at time of ticket creation
 - **Audit Trail**: Changes to user profile don't affect ticket history
@@ -175,19 +180,19 @@ User email, name, and tier are denormalized into tickets for:
 
 ```sql
 -- User viewing their tickets (uses idx_support_tickets_user_id)
-SELECT * FROM support_tickets 
-WHERE user_id = auth.uid() 
+SELECT * FROM support_tickets
+WHERE user_id = auth.uid()
 ORDER BY created_at DESC;
 
 -- Admin priority queue (uses idx_support_tickets_priority_status)
-SELECT * FROM support_tickets 
-WHERE status IN ('pending', 'in_progress') 
+SELECT * FROM support_tickets
+WHERE status IN ('pending', 'in_progress')
 ORDER BY priority DESC, created_at ASC;
 
 -- Rate limit check (uses idx_rate_limiting_support_user_time)
-SELECT COUNT(*) FROM rate_limiting_support 
-WHERE user_id = ? 
-AND action_type = ? 
+SELECT COUNT(*) FROM rate_limiting_support
+WHERE user_id = ?
+AND action_type = ?
 AND created_at > NOW() - INTERVAL '1 hour';
 ```
 
@@ -236,16 +241,19 @@ AND created_at > NOW() - INTERVAL '1 hour';
 ## Maintenance Tasks
 
 ### Daily
+
 - Monitor pending ticket count
 - Check for stuck "in_progress" tickets
 
 ### Weekly
+
 - Run cleanup function for old rate limits:
   ```sql
   SELECT cleanup_old_rate_limits();
   ```
 
 ### Monthly
+
 - Analyze ticket trends and adjust rate limits if needed
 - Archive closed tickets older than 6 months
 - Review and optimize slow queries
@@ -277,6 +285,7 @@ After applying the migration:
 ## Support
 
 For issues with this migration:
+
 1. Check Supabase logs for detailed error messages
 2. Verify user has proper authentication
 3. Ensure RLS policies are correctly applied

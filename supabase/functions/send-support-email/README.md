@@ -8,137 +8,122 @@ This Supabase Edge Function handles secure support email sending with rate limit
 - Rate limiting (3 requests per hour per user)
 - Input sanitization to prevent XSS
 - Email sending via Resend API
+- Emails go to your support inbox (configurable)
 - Support ticket tracking in database
 - Security audit logging
 - CORS configuration for your domain
+- Modern Deno/npm imports (no deprecated patterns)
 
-## Setup Instructions
+## 📋 Complete Setup Instructions
 
-### 1. Apply Database Migration
+### Step 1: Database Setup (REQUIRED)
 
-First, apply the support_tickets table migration:
+Run this SQL in **Supabase Dashboard → SQL Editor**:
 
 ```sql
--- Run in Supabase SQL Editor
--- File: supabase/migrations/20250116_support_tickets.sql
+-- Run the support tickets migration
+-- File: supabase/migrations/support_tickets.sql
 ```
 
-### 2. Deploy Edge Function
+Copy the entire contents of `supabase/migrations/support_tickets.sql` and run it in Supabase SQL Editor.
 
-Deploy the function to your Supabase project:
+This creates:
+
+- `support_tickets` table with comprehensive tracking
+- `rate_limiting_support` table for rate limiting
+- Optimized RLS policies with wrapped `auth.uid()` for performance
+- Security definer functions to bypass RLS overhead
+- Proper indexes for query performance
+
+### Step 2: Test the Database Setup
+
+Run the comprehensive test to verify all schemas work together:
+
+```sql
+-- Run the test migration to verify everything
+-- File: supabase/test_all_migrations.sql
+```
+
+This will test:
+
+- Base schema (profiles, subscriptions, etc.)
+- Testimonials schema
+- Enhanced RLS security
+- Support tickets system
+- All cross-schema relationships
+
+### Step 3: Deploy the Edge Function
 
 ```bash
-# Login to Supabase CLI
+# Install Supabase CLI if needed
+npm install -g supabase
+
+# Login to Supabase
 supabase login
 
-# Link to your project
+# Link to your project (get project-ref from Supabase Dashboard → Settings → General)
 supabase link --project-ref your-project-ref
 
 # Deploy the function
 supabase functions deploy send-support-email
 ```
 
-### 3. Set Environment Variables
+### Step 4: Set Environment Variables
 
-In Supabase Dashboard > Edge Functions > Settings, set:
+In **Supabase Dashboard → Edge Functions → Secrets**, add:
 
-```bash
-# Required - Get from https://resend.com/api-keys
-RESEND_API_KEY=re_xxxxxxxxxxxxx
+| Secret Name           | Value                                    | Description                                        |
+| --------------------- | ---------------------------------------- | -------------------------------------------------- |
+| `RESEND_API_KEY`      | `re_ABcd1234...`                         | Get from [resend.com](https://resend.com/api-keys) |
+| `ALLOWED_ORIGIN`      | `http://localhost:5173`                  | For development                                    |
+| `ALLOWED_ORIGIN`      | `https://yourdomain.com`                 | For production                                     |
+| `SUPPORT_INBOX_EMAIL` | `discover50ai@gmail.com`                 | Where support requests are delivered               |
+| `SUPPORT_FROM_EMAIL`  | `Discover 50 AI <onboarding@resend.dev>` | From address shown to recipients (dev-safe)        |
 
-# Your frontend domain (for CORS)
-ALLOWED_ORIGIN=https://yourdomain.com  # Production
-# or
-ALLOWED_ORIGIN=http://localhost:5173   # Development
+**Note**: `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY` are automatically set by Supabase.
 
-# These are automatically set by Supabase:
-# SUPABASE_URL
-# SUPABASE_SERVICE_ROLE_KEY
-```
+### Step 5: Configure Resend (for email sending)
 
-### 4. Configure Resend
+1. Sign up at [resend.com](https://resend.com)
+2. Go to **API Keys** and create a new key
+3. For production, verify your domain in Resend
+4. Optionally set `SUPPORT_FROM_EMAIL` (e.g., `Support <noreply@yourdomain.com>`). If using a custom domain, verify it in Resend first.
 
-1. Create account at [Resend](https://resend.com)
-2. Verify your domain or use their testing domain
-3. Create an API key
-4. Update the `from` email in the function if using custom domain
+Who receives the email?
+
+- The function sends an email to `SUPPORT_INBOX_EMAIL` (your inbox) containing the user's message and context. The user does not get an email; they just open a ticket. The reply-to is set to the user's email so you can reply from your inbox.
 
 ## Testing
 
-### Local Testing with Supabase CLI
+### Test the UI First (works without email setup)
+
+1. Run `pnpm run dev`
+2. Navigate to Account page
+3. Click "Email Support" button
+4. Submit a test message
+
+The dialog will work and create tickets even without email configuration.
+
+### Test with cURL
 
 ```bash
-# Serve function locally
-supabase functions serve send-support-email --env-file .env.local
+# Get a USER access token (must be a logged-in user's JWT), not the anon key
+# Easiest path: trigger from the frontend which attaches the session token automatically
+# For raw testing, obtain a user JWT via Supabase auth and place it below
+USER_JWT="ey..."
+PROJECT_URL="https://your-project.supabase.co"
 
-# Test with curl
-curl -X POST http://localhost:54321/functions/v1/send-support-email \
+# Test the function
+curl -X POST "$PROJECT_URL/functions/v1/send-support-email" \
+  -H "Authorization: Bearer $USER_JWT" \
   -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_USER_JWT_TOKEN" \
-  -d '{"message": "This is a test support message that needs help with login issues."}'
+  -d '{"message": "This is a test support message that needs help."}'
 ```
 
-### Test from Frontend
+### Expected Responses
 
-```typescript
-import { sendSupportEmail } from '@/lib/supportEmail';
+#### Success
 
-const result = await sendSupportEmail({
-  message: 'I need help with my subscription'
-});
-
-if (result.success) {
-  console.log('Ticket ID:', result.ticketId);
-} else {
-  console.error('Error:', result.error);
-}
-```
-
-### Test Rate Limiting
-
-```bash
-# Send 3 requests quickly (should succeed)
-for i in {1..3}; do
-  curl -X POST YOUR_FUNCTION_URL \
-    -H "Content-Type: application/json" \
-    -H "Authorization: Bearer YOUR_TOKEN" \
-    -d '{"message": "Test message number '$i'"}'
-  echo ""
-done
-
-# 4th request should fail with 429 status
-curl -X POST YOUR_FUNCTION_URL \
-  -H "Content-Type: application/json" \
-  -H "Authorization: Bearer YOUR_TOKEN" \
-  -d '{"message": "This should be rate limited"}'
-```
-
-## Security Features
-
-### Rate Limiting
-- Maximum 3 support emails per hour per user
-- Prevents spam and abuse
-- Returns friendly error messages with time until next allowed
-
-### Input Validation
-- Message must be 10-5000 characters
-- HTML tags are stripped
-- Special characters are escaped
-- Message is trimmed
-
-### Authentication
-- Requires valid Supabase JWT token
-- Verifies user exists in database
-- Fetches user profile for email details
-
-### Audit Trail
-- All requests logged to security_logs table
-- Tracks successful and failed attempts
-- Stores ticket IDs for reference
-
-## Response Format
-
-### Success Response
 ```json
 {
   "success": true,
@@ -146,9 +131,8 @@ curl -X POST YOUR_FUNCTION_URL \
 }
 ```
 
-### Error Responses
-
 #### Rate Limited (429)
+
 ```json
 {
   "success": false,
@@ -156,41 +140,20 @@ curl -X POST YOUR_FUNCTION_URL \
 }
 ```
 
-#### Invalid Input (400)
+#### Email Failed but Ticket Created
+
 ```json
 {
-  "success": false,
-  "error": "Message is too short (minimum 10 characters)"
+  "success": true,
+  "ticketId": "uuid-here",
+  "warning": "Ticket created but email notification failed. Support team will check pending tickets."
 }
 ```
-
-#### Unauthorized (401)
-```json
-{
-  "success": false,
-  "error": "Invalid session"
-}
-```
-
-#### Server Error (500)
-```json
-{
-  "success": false,
-  "error": "Failed to send email"
-}
-```
-
-## Email Template
-
-Emails are sent to `discover50ai@gmail.com` with:
-- Subject: "Support Request from [User Name]"
-- From: noreply@discover50ai.com
-- Reply-To: User's email address
-- Body includes: User details, ticket ID, timestamp, and message
 
 ## Monitoring
 
 ### View Support Tickets
+
 ```sql
 -- All tickets
 SELECT * FROM support_tickets
@@ -201,58 +164,100 @@ SELECT * FROM support_tickets
 WHERE status = 'pending'
 ORDER BY created_at ASC;
 
--- User's tickets
+-- Failed email tickets
 SELECT * FROM support_tickets
-WHERE user_id = 'USER_UUID'
+WHERE status = 'failed'
 ORDER BY created_at DESC;
 ```
 
 ### Check Rate Limiting
+
 ```sql
 -- Recent requests by user
 SELECT * FROM support_tickets
 WHERE user_id = 'USER_UUID'
   AND created_at > NOW() - INTERVAL '1 hour'
 ORDER BY created_at DESC;
+
+-- Rate limit entries
+SELECT * FROM rate_limiting_support
+WHERE user_id = 'USER_UUID'
+ORDER BY created_at DESC;
 ```
 
-### Security Audit
-```sql
--- Support email actions
-SELECT * FROM security_logs
-WHERE action = 'support_email_sent'
-ORDER BY created_at DESC
-LIMIT 100;
-```
+## Security Features
+
+### Rate Limiting
+
+- Maximum 3 support emails per hour per user
+- Tracked in `rate_limiting_support` table
+- Enforced at database level with security definer function
+
+### Input Validation
+
+- Message must be 10-5000 characters
+- HTML tags are stripped
+- Special characters are escaped
+- Message is trimmed
+
+### Authentication
+
+- Requires valid Supabase JWT token
+- Verifies user exists in database
+- Fetches user profile for email details
+
+### Performance Optimizations
+
+- RLS policies use wrapped `(SELECT auth.uid())` for caching
+- Security definer functions bypass RLS overhead
+- Proper indexes on frequently queried columns
+- Denormalized user data in tickets for fast admin access
 
 ## Troubleshooting
 
-### Function Not Found
-- Ensure function is deployed: `supabase functions list`
-- Check function URL format
+### "Table does not exist" error
 
-### CORS Errors
-- Verify ALLOWED_ORIGIN environment variable
-- Must match your frontend URL exactly (including protocol)
+Run the migration from `supabase/migrations/support_tickets.sql`
 
-### Email Not Sending
-- Check RESEND_API_KEY is valid
-- Verify Resend domain/email configuration
-- Check function logs: `supabase functions logs send-support-email`
+### "RESEND_API_KEY not configured"
 
-### Rate Limit Not Working
-- Ensure support_tickets table exists
-- Check user_id is being passed correctly
-- Verify RLS policies are not blocking reads
+Add the Resend API key in Supabase Edge Functions Secrets
+
+### CORS errors
+
+Verify `ALLOWED_ORIGIN` matches your frontend URL exactly (including protocol)
+
+### Rate limit not working
+
+- Ensure `rate_limiting_support` table exists
+- Check that RLS policies are enabled
+- Verify the `check_support_rate_limit` function exists
+
+### Email not sending but ticket created
+
+This is by design - the system creates a ticket even if email fails. Check:
+
+- Resend API key is valid
+- Domain is verified in Resend (for production)
+- Check Edge Function logs: `supabase functions logs send-support-email`
 
 ## Production Checklist
 
-- [ ] Deploy database migration
+- [ ] Run `support_tickets.sql` migration
+- [ ] Test with `test_all_migrations.sql`
 - [ ] Deploy edge function
 - [ ] Set RESEND_API_KEY environment variable
 - [ ] Set ALLOWED_ORIGIN to production domain
-- [ ] Verify email from address in Resend
+- [ ] Verify email domain in Resend
 - [ ] Test rate limiting
 - [ ] Test email delivery
 - [ ] Monitor initial requests in logs
 - [ ] Set up email inbox monitoring for discover50ai@gmail.com
+
+## Files Overview
+
+- `index.ts` - Edge Function with modern Deno/npm imports
+- `supabase/migrations/support_tickets.sql` - Production-ready database schema
+- `supabase/test_all_migrations.sql` - Comprehensive test for all schemas
+- `src/components/EmailSupportDialog.tsx` - React dialog component
+- `src/lib/supportSecurity.ts` - Client-side security utilities

@@ -38,3 +38,6 @@ packages
 .devcontainer/
 
 .spark-workbench-id
+
+# Supabase CLI cache (ephemeral)
+supabase/.temp/

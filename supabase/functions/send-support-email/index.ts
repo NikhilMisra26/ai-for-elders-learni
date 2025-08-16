@@ -1,5 +1,18 @@
-import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
-import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.54.0';
+// This file runs on Deno (Supabase Edge Functions) but is type-checked in a Node/tsc project.
+// Provide light ambient typings so tsc doesn't error while keeping Deno runtime behavior.
+declare const Deno: {
+  env: { get(name: string): string | undefined };
+  serve: (handler: (req: Request) => Response | Promise<Response>) => void;
+};
+
+// tsc in this workspace cannot resolve Deno's npm: specifier; ignore for types only.
+// @ts-ignore - Deno npm specifier not resolvable by Node/tsc
+import { createClient } from 'npm:@supabase/supabase-js@2';
+
+// Type definitions
+interface SupportEmailRequest {
+  message: string;
+}
 
 // CORS headers for your domain
 const corsHeaders = {
@@ -11,21 +24,6 @@ const corsHeaders = {
 // Rate limiting constants
 const RATE_LIMIT_WINDOW_MS = 3600000; // 1 hour
 const RATE_LIMIT_MAX_REQUESTS = 3;
-
-// Input validation schema
-interface SupportEmailRequest {
-  message: string;
-}
-
-interface SupportTicket {
-  id: string;
-  user_id: string;
-  user_email: string;
-  user_name: string;
-  message: string;
-  status: 'pending' | 'in_progress' | 'resolved';
-  created_at: string;
-}
 
 // Sanitize input to prevent XSS
 function sanitizeInput(input: string): string {
@@ -46,11 +44,11 @@ function sanitizeInput(input: string): string {
 // Check rate limiting
 async function checkRateLimit(
   supabase: ReturnType<typeof createClient>,
-  userId: string
+  userId: string,
 ): Promise<{ allowed: boolean; reason?: string }> {
   try {
     const windowStart = new Date(Date.now() - RATE_LIMIT_WINDOW_MS).toISOString();
-    
+
     // Check recent support tickets from this user
     const { data: recentTickets, error } = await supabase
       .from('support_tickets')
@@ -68,12 +66,10 @@ async function checkRateLimit(
     if (recentTickets && recentTickets.length >= RATE_LIMIT_MAX_REQUESTS) {
       const oldestAllowed = recentTickets[RATE_LIMIT_MAX_REQUESTS - 1];
       const nextAllowedTime = new Date(
-        new Date(oldestAllowed.created_at).getTime() + RATE_LIMIT_WINDOW_MS
+        new Date(oldestAllowed.created_at).getTime() + RATE_LIMIT_WINDOW_MS,
       );
-      const minutesUntilAllowed = Math.ceil(
-        (nextAllowedTime.getTime() - Date.now()) / 60000
-      );
-      
+      const minutesUntilAllowed = Math.ceil((nextAllowedTime.getTime() - Date.now()) / 60000);
+
       return {
         allowed: false,
         reason: `Too many support requests. Please try again in ${minutesUntilAllowed} minutes.`,
@@ -94,10 +90,13 @@ async function sendEmail(
   userName: string,
   userId: string,
   message: string,
-  ticketId: string
+  ticketId: string,
 ): Promise<{ success: boolean; error?: string }> {
   const resendApiKey = Deno.env.get('RESEND_API_KEY');
-  
+  const supportFrom =
+    Deno.env.get('SUPPORT_FROM_EMAIL') ?? 'Discover 50 AI Support <onboarding@resend.dev>';
+  const supportInbox = Deno.env.get('SUPPORT_INBOX_EMAIL') ?? 'discover50ai@gmail.com';
+
   if (!resendApiKey) {
     console.error('RESEND_API_KEY not configured');
     return { success: false, error: 'Email service not configured' };
@@ -121,12 +120,12 @@ To reply to this user, send an email to: ${userEmail}
     const response = await fetch('https://api.resend.com/emails', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${resendApiKey}`,
+        Authorization: `Bearer ${resendApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'DISCOVER 50 AI Support <noreply@discover50ai.com>',
-        to: ['discover50ai@gmail.com'],
+        from: supportFrom,
+        to: [supportInbox],
         subject: `Support Request from ${userName}`,
         text: emailBody,
         reply_to: userEmail,
@@ -148,7 +147,8 @@ To reply to this user, send an email to: ${userEmail}
   }
 }
 
-serve(async (req) => {
+// Main handler using Deno.serve (modern pattern)
+Deno.serve(async (req: Request) => {
   // Handle CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -156,20 +156,17 @@ serve(async (req) => {
 
   // Only allow POST requests
   if (req.method !== 'POST') {
-    return new Response(
-      JSON.stringify({ success: false, error: 'Method not allowed' }),
-      {
-        status: 405,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
-    );
+    return new Response(JSON.stringify({ success: false, error: 'Method not allowed' }), {
+      status: 405,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
   }
 
   try {
     // Initialize Supabase client with service role for admin operations
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-    
+
     if (!supabaseUrl || !supabaseServiceKey) {
       throw new Error('Supabase configuration missing');
     }
@@ -179,29 +176,26 @@ serve(async (req) => {
     // Verify JWT token from request
     const authHeader = req.headers.get('Authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return new Response(
-        JSON.stringify({ success: false, error: 'Unauthorized' }),
-        {
-          status: 401,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
+      return new Response(JSON.stringify({ success: false, error: 'Unauthorized' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     const token = authHeader.substring(7);
-    
+
     // Verify the JWT and get user
-    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
-    
+    const {
+      data: { user },
+      error: authError,
+    } = await supabaseAdmin.auth.getUser(token);
+
     if (authError || !user) {
       console.error('Auth verification failed:', authError);
-      return new Response(
-        JSON.stringify({ success: false, error: 'Invalid session' }),
-        {
-          status: 401,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
+      return new Response(JSON.stringify({ success: false, error: 'Invalid session' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     // Parse and validate request body
@@ -209,73 +203,59 @@ serve(async (req) => {
     try {
       body = await req.json();
     } catch {
-      return new Response(
-        JSON.stringify({ success: false, error: 'Invalid request body' }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
+      return new Response(JSON.stringify({ success: false, error: 'Invalid request body' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     if (!body.message || typeof body.message !== 'string') {
-      return new Response(
-        JSON.stringify({ success: false, error: 'Message is required' }),
-        {
-          status: 400,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
+      return new Response(JSON.stringify({ success: false, error: 'Message is required' }), {
+        status: 400,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     // Sanitize message
     const sanitizedMessage = sanitizeInput(body.message);
-    
+
     if (sanitizedMessage.length < 10) {
       return new Response(
         JSON.stringify({ success: false, error: 'Message too short (minimum 10 characters)' }),
         {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
+        },
       );
     }
 
     // Check rate limiting
     const rateLimit = await checkRateLimit(supabaseAdmin, user.id);
     if (!rateLimit.allowed) {
-      return new Response(
-        JSON.stringify({ success: false, error: rateLimit.reason }),
-        {
-          status: 429,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
+      return new Response(JSON.stringify({ success: false, error: rateLimit.reason }), {
+        status: 429,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     }
 
     // Get user profile details
     const { data: profile, error: profileError } = await supabaseAdmin
       .from('profiles')
-      .select('name, email')
+      .select('name, email, tier')
       .eq('id', user.id)
       .single();
 
-    if (profileError || !profile) {
+    if (profileError) {
       console.error('Failed to fetch user profile:', profileError);
-      return new Response(
-        JSON.stringify({ success: false, error: 'User profile not found' }),
-        {
-          status: 404,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
-      );
+      // Continue with user email if profile not found
     }
 
     // Create support ticket record
     const ticketData = {
       user_id: user.id,
-      user_email: profile.email || user.email || 'unknown',
-      user_name: profile.name || 'User',
+      user_email: profile?.email || user.email || 'unknown@email.com',
+      user_name: profile?.name || 'User',
+      user_tier: profile?.tier || 'free',
       message: sanitizedMessage,
       status: 'pending' as const,
     };
@@ -293,9 +273,15 @@ serve(async (req) => {
         {
           status: 500,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
+        },
       );
     }
+
+    // Record rate limiting entry
+    await supabaseAdmin.from('rate_limiting_support').insert({
+      user_id: user.id,
+      action_type: 'ticket_create',
+    });
 
     // Send email
     const emailResult = await sendEmail(
@@ -303,7 +289,7 @@ serve(async (req) => {
       ticketData.user_name,
       user.id,
       sanitizedMessage,
-      ticket.id
+      ticket.id,
     );
 
     if (!emailResult.success) {
@@ -313,41 +299,44 @@ serve(async (req) => {
         .update({ status: 'failed', error_message: emailResult.error })
         .eq('id', ticket.id);
 
+      // Still return success for ticket creation, but note email failure
       return new Response(
-        JSON.stringify({ success: false, error: emailResult.error }),
+        JSON.stringify({
+          success: true,
+          ticketId: ticket.id,
+          warning:
+            'Ticket created but email notification failed. Support team will check pending tickets.',
+        }),
         {
-          status: 500,
+          status: 200,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        }
+        },
       );
     }
 
-    // Log security action
-    await supabaseAdmin
-      .from('security_logs')
-      .insert({
+    // Log security action if security_logs table exists
+    try {
+      await supabaseAdmin.from('security_logs').insert({
         user_id: user.id,
         action: 'support_email_sent',
         details: { ticket_id: ticket.id },
         success: true,
       });
+    } catch (error) {
+      // Ignore if security_logs table doesn't exist
+      console.log('Security logging skipped:', error);
+    }
 
     // Return success response
-    return new Response(
-      JSON.stringify({ success: true, ticketId: ticket.id }),
-      {
-        status: 200,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
-    );
+    return new Response(JSON.stringify({ success: true, ticketId: ticket.id }), {
+      status: 200,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
   } catch (error) {
     console.error('Unexpected error:', error);
-    return new Response(
-      JSON.stringify({ success: false, error: 'An unexpected error occurred' }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      }
-    );
+    return new Response(JSON.stringify({ success: false, error: 'An unexpected error occurred' }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
   }
 });
