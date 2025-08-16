@@ -182,7 +182,7 @@ BEGIN
         AND ((COALESCE(qual, '') || ' ' || COALESCE(with_check, '')) NOT LIKE '%(SELECT auth.uid())%')
         LIMIT 1
     ) THEN
-        RAISE WARNING '⚠️  Some RLS policies not using wrapped auth.uid() for performance';
+        RAISE NOTICE '⚠️  Some RLS policies not using wrapped auth.uid() for performance';
     END IF;
     
     RAISE NOTICE '✅ Enhanced RLS & Security features checked';
@@ -253,6 +253,22 @@ BEGIN
         AND prosecdef = true -- SECURITY DEFINER
     ) THEN
         RAISE EXCEPTION '❌ check_support_rate_limit not configured as SECURITY DEFINER';
+    END IF;
+    
+    -- Safety check for SECURITY DEFINER functions search_path
+    IF EXISTS (
+        SELECT 1 FROM pg_proc p
+        JOIN pg_namespace n ON p.pronamespace = n.oid
+        WHERE n.nspname = 'public'
+        AND p.prosecdef = true -- SECURITY DEFINER
+        AND p.proname IN ('check_support_rate_limit', 'create_support_ticket', 'cleanup_old_rate_limits', 'populate_ticket_user_data')
+        AND NOT EXISTS (
+            SELECT 1 FROM pg_proc_config
+            WHERE pg_proc_config.oid = p.oid
+            AND setting[1] = 'search_path'
+        )
+    ) THEN
+        RAISE WARNING '⚠️  SECURITY DEFINER functions should set search_path for safety';
     END IF;
     
     RAISE NOTICE '✅ Support tickets system validated successfully';

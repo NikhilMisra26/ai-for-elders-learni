@@ -32,5 +32,6 @@
       "@/*": ["src/*"]
     }
   },
-  "include": ["src", "vite.config.ts", "supabase"]
+  "include": ["src", "vite.config.ts"],
+  "exclude": ["supabase/functions/**"]
 }

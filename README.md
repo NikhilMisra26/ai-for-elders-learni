@@ -101,6 +101,8 @@
    );
 
    CREATE INDEX IF NOT EXISTS idx_support_tickets_user_id ON public.support_tickets(user_id);
+   CREATE INDEX IF NOT EXISTS idx_support_tickets_status ON public.support_tickets(status);
+   CREATE INDEX IF NOT EXISTS idx_support_tickets_created_at ON public.support_tickets(created_at DESC);
    CREATE INDEX IF NOT EXISTS idx_rate_limiting_user_time ON public.rate_limiting_support(user_id, created_at DESC);
 
    ALTER TABLE public.support_tickets ENABLE ROW LEVEL SECURITY;

@@ -85,7 +85,7 @@ AND tablename IN ('support_tickets', 'rate_limiting_support');
 SELECT routine_name
 FROM information_schema.routines
 WHERE routine_schema = 'public'
-AND routine_name IN ('check_support_rate_limit', 'create_support_ticket', 'cleanup_old_rate_limits');
+AND routine_name IN ('check_support_rate_limit', 'create_support_ticket', 'cleanup_old_rate_limits', 'populate_ticket_user_data');
 ```
 
 ### Step 4: Load Test Data (Development Only)

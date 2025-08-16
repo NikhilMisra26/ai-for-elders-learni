@@ -79,7 +79,22 @@ export async function sendSupportEmail(
       }),
     });
 
-    const data = (await response.json()) as { error?: string; ticketId?: string };
+    // Check content-type header before parsing JSON
+    const contentType = response.headers.get('content-type');
+    let data: { error?: string; ticketId?: string } = {};
+
+    try {
+      if (contentType?.includes('application/json')) {
+        const responseText = await response.text();
+        if (responseText.trim()) {
+          data = JSON.parse(responseText) as { error?: string; ticketId?: string };
+        }
+      }
+    } catch (parseError) {
+      // eslint-disable-next-line no-console
+      console.error('Failed to parse response JSON:', parseError);
+      // Continue with empty data object
+    }
 
     if (!response.ok) {
       // Handle rate limiting specifically
@@ -101,8 +116,10 @@ export async function sendSupportEmail(
       success: true,
       ticketId: data.ticketId ?? '',
     };
-  } catch {
+  } catch (error) {
     // Support email error
+    // eslint-disable-next-line no-console
+    console.error('Support email error:', error);
     return {
       success: false,
       error: 'An unexpected error occurred. Please try again.',
@@ -166,8 +183,10 @@ export async function getUserSupportTickets(): Promise<{
       success: true,
       tickets: tickets ?? [],
     };
-  } catch {
+  } catch (error) {
     // Support tickets error
+    // eslint-disable-next-line no-console
+    console.error('Support tickets error:', error);
     return {
       success: false,
       error: 'An unexpected error occurred',
@@ -236,8 +255,10 @@ export async function checkSupportEmailRateLimit(): Promise<{
       canSend: true,
       minutesUntilNextAllowed: 0,
     };
-  } catch {
+  } catch (error) {
     // Rate limit check error
+    // eslint-disable-next-line no-console
+    console.error('Rate limit check error:', error);
     // Fail open on error
     return {
       canSend: true,

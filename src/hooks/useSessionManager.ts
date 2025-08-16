@@ -25,7 +25,17 @@ export function useSessionManager(): {
     void supabase.auth.getSession().then(async ({ data, error }) => {
       if (error && typeof error.message === 'string') {
         const m = error.message.toLowerCase();
-        if (m.includes('invalid refresh token') || m.includes('refresh token not found')) {
+        // Broaden token error detection to cover more Supabase/Auth variants
+        if (
+          m.includes('invalid refresh token') ||
+          m.includes('refresh token not found') ||
+          m.includes('invalid_grant') ||
+          m.includes('session not found') ||
+          m.includes('access token expired') ||
+          m.includes('refresh token expired') ||
+          m.includes('token expired') ||
+          m.includes('invalid token')
+        ) {
           await supabase.auth.signOut({ scope: 'local' });
           await logout();
           return;

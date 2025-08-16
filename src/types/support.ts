@@ -4,25 +4,41 @@
 // ============================================================================
 
 /**
+ * Support ticket status constants
+ */
+export const TICKET_STATUSES = ['pending', 'in_progress', 'resolved', 'closed', 'failed'] as const;
+
+/**
+ * Support ticket priority constants
+ */
+export const TICKET_PRIORITIES = ['low', 'normal', 'high', 'urgent'] as const;
+
+/**
+ * Support ticket category constants
+ */
+export const TICKET_CATEGORIES = [
+  'general',
+  'technical',
+  'billing',
+  'account',
+  'course_content',
+  'other',
+] as const;
+
+/**
  * Support ticket status types
  */
-export type TicketStatus = 'pending' | 'in_progress' | 'resolved' | 'closed';
+export type TicketStatus = (typeof TICKET_STATUSES)[number];
 
 /**
  * Support ticket priority levels
  */
-export type TicketPriority = 'low' | 'normal' | 'high' | 'urgent';
+export type TicketPriority = (typeof TICKET_PRIORITIES)[number];
 
 /**
  * Support ticket categories
  */
-export type TicketCategory =
-  | 'general'
-  | 'technical'
-  | 'billing'
-  | 'account'
-  | 'course_content'
-  | 'other';
+export type TicketCategory = (typeof TICKET_CATEGORIES)[number];
 
 /**
  * Rate limiting action types
@@ -120,6 +136,7 @@ export interface TicketStatistics {
   in_progress_tickets: number;
   resolved_tickets: number;
   closed_tickets: number;
+  failed_tickets: number;
   average_response_time: number | null; // in hours
   average_resolution_time: number | null; // in hours
 }
@@ -155,26 +172,21 @@ export interface TicketListResponse {
  * Type guard to check if a value is a valid ticket status
  */
 export function isValidTicketStatus(value: unknown): value is TicketStatus {
-  return (
-    typeof value === 'string' && ['pending', 'in_progress', 'resolved', 'closed'].includes(value)
-  );
+  return typeof value === 'string' && TICKET_STATUSES.includes(value as TicketStatus);
 }
 
 /**
  * Type guard to check if a value is a valid ticket priority
  */
 export function isValidTicketPriority(value: unknown): value is TicketPriority {
-  return typeof value === 'string' && ['low', 'normal', 'high', 'urgent'].includes(value);
+  return typeof value === 'string' && TICKET_PRIORITIES.includes(value as TicketPriority);
 }
 
 /**
  * Type guard to check if a value is a valid ticket category
  */
 export function isValidTicketCategory(value: unknown): value is TicketCategory {
-  return (
-    typeof value === 'string' &&
-    ['general', 'technical', 'billing', 'account', 'course_content', 'other'].includes(value)
-  );
+  return typeof value === 'string' && TICKET_CATEGORIES.includes(value as TicketCategory);
 }
 
 /**
@@ -199,6 +211,7 @@ export function getStatusLabel(status: TicketStatus): string {
     in_progress: 'In Progress',
     resolved: 'Resolved',
     closed: 'Closed',
+    failed: 'Failed',
   };
   return labels[status];
 }
@@ -240,6 +253,7 @@ export function getStatusColor(status: TicketStatus): string {
     in_progress: 'bg-blue-100 text-blue-800',
     resolved: 'bg-green-100 text-green-800',
     closed: 'bg-gray-100 text-gray-800',
+    failed: 'bg-red-100 text-red-800',
   };
   return colors[status];
 }

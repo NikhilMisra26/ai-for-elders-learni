@@ -199,7 +199,7 @@ export class SupportRateLimiter {
     this.attempts.set(userId, record);
 
     // Log the attempt for audit purposes
-    SecurityLogger.log('support_email_sent', { userId, messageLength: message.length }, 'info');
+    SecurityLogger.log('support_email_attempt', { userId, messageLength: message.length }, 'info');
   }
 
   /**
@@ -221,7 +221,12 @@ export class SupportRateLimiter {
   private hashMessage(message: string): string {
     // Simple hash for duplicate detection (not cryptographic)
     let hash = 0;
-    const str = message.toLowerCase().replace(/\s+/g, ' ').trim();
+    // Strip HTML tags and normalize whitespace for semantic comparison
+    const str = message
+      .toLowerCase()
+      .replace(/<[^>]*>/g, '') // Remove HTML tags
+      .replace(/\s+/g, ' ') // Normalize spaces/tabs
+      .trim();
     for (let i = 0; i < str.length; i++) {
       const char = str.charCodeAt(i);
       hash = (hash << 5) - hash + char;
@@ -283,8 +288,6 @@ export class SupportMessageValidator {
     /\b(viagra|cialis|casino|lottery|winner|congratulations)\b/gi,
     /\b(click here|act now|limited time|urgent|immediate action)\b/gi,
     /\b\d{10,}\b/g, // Long number sequences (potential credit cards/SSNs)
-    /(http|https):\/\/[^\s]+/gi, // URLs (block in support messages)
-    /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi, // Email addresses
     /\b(?:\d{4}[\s-]?){3}\d{4}\b/g, // Credit card patterns
     /\b\d{3}-\d{2}-\d{4}\b/g, // SSN patterns
   ];
@@ -294,6 +297,8 @@ export class SupportMessageValidator {
     /\b(?:\d{4}[\s-]?){3}\d{4}\b/g, // Credit card
     /\b\d{3}[-.]?\d{3}[-.]?\d{4}\b/g, // Phone numbers
     /\b[A-Z0-9]{10,}\b/g, // Potential account numbers
+    /(http|https):\/\/[^\s]+/gi, // URLs (redact for safety)
+    /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi, // Email addresses (redact for safety)
   ];
 
   constructor(config = defaultSupportConfig) {
@@ -390,11 +395,11 @@ export class SupportMessageValidator {
       KEEP_CONTENT: true,
     });
 
-    // Trim and normalize whitespace
-    sanitized = sanitized.trim().replace(/\s+/g, ' ');
-
-    // Limit consecutive newlines
-    sanitized = sanitized.replace(/\n{3,}/g, '\n\n');
+    // Trim and normalize whitespace while preserving newlines
+    sanitized = sanitized
+      .trim()
+      .replace(/[ \t]+/g, ' ') // Collapse spaces and tabs only
+      .replace(/\n{3,}/g, '\n\n'); // Limit consecutive newlines
 
     return sanitized;
   }
@@ -446,7 +451,7 @@ export class SupportSessionValidator {
         SecurityLogger.log('expiring_session_support_attempt', { timeUntilExpiry }, 'warning');
         return {
           isValid: false,
-          error: 'Your session has expired. Please sign in again.',
+          error: 'Your session is about to expire. Please sign in again.',
         };
       }
 
@@ -610,6 +615,12 @@ export class SupportSecurityManager {
     // 2. Check rate limits
     const rateLimitCheck = this.rateLimiter.canSendEmail(userId);
     if (!rateLimitCheck.allowed) {
+      // Log rate limiting event
+      SecurityLogger.log(
+        'support_rate_limited',
+        { userId, error: rateLimitCheck.error },
+        'warning',
+      );
       return {
         allowed: false,
         error: rateLimitCheck.error,
@@ -618,6 +629,12 @@ export class SupportSecurityManager {
 
     // 3. Check honeypot
     if (!this.validator.validateHoneypot(honeypotValue)) {
+      // Log honeypot triggered event
+      SecurityLogger.log(
+        'support_honeypot_blocked',
+        { userId, honeypotLength: honeypotValue.length },
+        'warning',
+      );
       return {
         allowed: false,
         error: {
@@ -629,6 +646,12 @@ export class SupportSecurityManager {
 
     // 4. Check for duplicate messages
     if (this.rateLimiter.isDuplicateMessage(userId, message)) {
+      // Log duplicate message blocked event
+      SecurityLogger.log(
+        'support_duplicate_blocked',
+        { userId, messageLength: message.length },
+        'warning',
+      );
       return {
         allowed: false,
         error: {
@@ -641,6 +664,16 @@ export class SupportSecurityManager {
     // 5. Validate and sanitize message
     const validationResult = this.validator.validateMessage(message);
     if (!validationResult.isValid) {
+      // Log validation failure event
+      SecurityLogger.log(
+        'support_validation_failed',
+        {
+          userId,
+          messageLength: message.length,
+          errors: validationResult.errors,
+        },
+        'warning',
+      );
       return {
         allowed: false,
         error: {

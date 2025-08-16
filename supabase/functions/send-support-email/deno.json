@@ -6,6 +6,6 @@
   "compilerOptions": {
     "allowJs": false,
     "strict": true,
-    "lib": ["deno.window", "dom"]
+    "lib": ["deno.window", "dom", "deno.ns"]
   }
 }

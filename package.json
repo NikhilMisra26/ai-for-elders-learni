@@ -17,6 +17,9 @@
     "security:audit": "pnpm audit --audit-level moderate",
     "security:check": "pnpm run typecheck && pnpm run lint && pnpm run security:audit",
     "security:full": "pnpm run security:check && pnpm run format:check",
+    "supabase:link": "supabase link",
+    "supabase:dev": "supabase start",
+    "supabase:deploy": "supabase db push",
     "prepare": "husky"
   },
   "dependencies": {

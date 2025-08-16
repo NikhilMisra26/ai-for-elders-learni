@@ -6,7 +6,7 @@ declare const Deno: {
 };
 
 // tsc in this workspace cannot resolve Deno's npm: specifier; ignore for types only.
-// @ts-ignore - Deno npm specifier not resolvable by Node/tsc
+// @ts-expect-error - Deno npm specifier not resolvable by Node/tsc
 import { createClient } from 'npm:@supabase/supabase-js@2';
 
 // Type definitions
@@ -19,6 +19,8 @@ const corsHeaders = {
   'Access-Control-Allow-Origin': Deno.env.get('ALLOWED_ORIGIN') ?? 'http://localhost:5173',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  Vary: 'Origin',
+  'Access-Control-Max-Age': '86400', // 24 hours
 };
 
 // Rate limiting constants
@@ -39,6 +41,21 @@ function sanitizeInput(input: string): string {
     })
     .trim()
     .slice(0, 5000); // Limit message length
+}
+
+// Sanitize email subject to prevent header injection
+function sanitizeEmailSubject(subject: string): string {
+  return subject
+    .replace(/[\r\n\t]/g, '') // Remove CRLF and tabs to prevent header injection
+    .replace(/[<>]/g, '') // Remove HTML tags
+    .trim()
+    .slice(0, 200); // Limit subject length
+}
+
+// Validate email format (basic validation)
+function isValidEmail(email: string): boolean {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(email);
 }
 
 // Check rate limiting
@@ -101,6 +118,20 @@ async function sendEmail(
     return { success: false, error: 'Email service not configured' };
   }
 
+  // Validate email addresses
+  if (!isValidEmail(userEmail)) {
+    console.error('Invalid user email format:', userEmail);
+    return { success: false, error: 'Invalid email format' };
+  }
+
+  if (!isValidEmail(supportInbox)) {
+    console.error('Invalid support inbox email format:', supportInbox);
+    return { success: false, error: 'Support email configuration invalid' };
+  }
+
+  // Sanitize subject line to prevent header injection
+  const sanitizedSubject = sanitizeEmailSubject(`Support Request from ${userName}`);
+
   const emailBody = `
 User: ${userName} (${userEmail})
 User ID: ${userId}
@@ -125,7 +156,7 @@ To reply to this user, send an email to: ${userEmail}
       body: JSON.stringify({
         from: supportFrom,
         to: [supportInbox],
-        subject: `Support Request from ${userName}`,
+        subject: sanitizedSubject,
         text: emailBody,
         reply_to: userEmail,
       }),
