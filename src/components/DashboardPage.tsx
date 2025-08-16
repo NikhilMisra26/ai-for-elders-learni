@@ -223,7 +223,7 @@ function DashboardPageComponent(): ReactElement {
                     </div>
                     <Button
                       onClick={handleStartLearning}
-                      variant='outline'
+                      variant='default'
                       className='flex items-center gap-2 '
                     >
                       Start Course
@@ -339,7 +339,7 @@ function DashboardPageComponent(): ReactElement {
                 </div>
 
                 <Button
-                  variant='outline'
+                  variant='default'
                   className='w-full mt-6'
                   onClick={() => void navigate('/courses')}
                 >
