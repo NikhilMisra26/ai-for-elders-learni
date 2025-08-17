@@ -15,6 +15,9 @@ import {
   BookmarkSimple,
   Play,
   Sparkle,
+  Brain,
+  Lightning,
+  Medal,
 } from '@phosphor-icons/react';
 
 import { AuthForm } from './AuthForm';
@@ -58,9 +61,6 @@ function DashboardPageComponent(): ReactElement {
 
   const dashboardSummary = getDashboardSummary();
   const recommendations = getLearningRecommendations();
-  // Commented out unused variable - keeping for potential future use
-  // const currentPlan = getCurrentPlan();
-  // const _daysUntilExpiry = getDaysUntilExpiry();
 
   // Get greeting based on time
   const getGreeting = (): string => {
@@ -76,21 +76,8 @@ function DashboardPageComponent(): ReactElement {
       ? Math.min((learningStats.weeklyProgress / learningStats.weeklyGoal) * 100, 100)
       : 0;
 
-  // Commented out unused function - keeping for potential future use
-  // const _getRecentCourses = (): Array<
-  //   (typeof courseData)[keyof typeof courseData]
-  // > => {
-  //   return Object.values(courseData)
-  //     .filter((_course) => {
-  //       const progress = dashboardSummary.startedCourses > 0;
-  //       return progress;
-  //     })
-  //     .slice(0, 3);
-  // };
-
   const handleStartLearning = (): void => {
     if (recommendations.continueModule) {
-      // Navigate to specific module - in a real app, you'd implement this routing
       void navigate('/courses');
     } else if (recommendations.startCourse) {
       void navigate('/courses');
@@ -98,188 +85,236 @@ function DashboardPageComponent(): ReactElement {
   };
 
   return (
-    <div className='min-h-screen bg-background'>
-      <div className='max-w-7xl mx-auto p-6'>
-        {/* Welcome Header */}
-        <div className='mb-8'>
-          <h1 className='text-4xl font-bold mb-2'>
-            {getGreeting()}, {user.name}! 👋
-          </h1>
-          <p className='text-xl text-muted-foreground'>
-            Ready to continue your AI learning journey with <BrandName variant='short' /> today?
-          </p>
+    <div className='min-h-screen'>
+      {/* Hero Section with Gradient */}
+      <section className='relative overflow-hidden bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50 py-16 px-4 sm:px-6 lg:px-8'>
+        {/* Animated Background Elements */}
+        <div className='absolute inset-0 opacity-40 pointer-events-none'>
+          <div className='absolute top-20 left-20 w-32 h-32 bg-gradient-to-br from-purple-300 to-pink-300 rounded-full blur-2xl animate-pulse' />
+          <div className='absolute top-40 right-40 w-40 h-40 bg-gradient-to-br from-orange-300 to-yellow-300 rounded-full blur-2xl animate-pulse delay-1000' />
+          <div className='absolute bottom-20 left-1/3 w-36 h-36 bg-gradient-to-br from-pink-300 to-purple-300 rounded-full blur-2xl animate-pulse delay-2000' />
         </div>
 
-        {/* Key Stats Row */}
-        <div className='grid grid-cols-2 md:grid-cols-4 gap-4 mb-8'>
-          <Card className='text-center'>
-            <CardContent className='p-4'>
-              <Trophy className='w-8 h-8 mx-auto mb-2 text-yellow-500' />
-              <div className='text-2xl font-bold'>{dashboardSummary.completedModules}</div>
-              <div className='text-sm text-muted-foreground'>Modules Completed</div>
-            </CardContent>
-          </Card>
+        <div className='relative max-w-7xl mx-auto'>
+          <div className='text-center'>
+            <h1 className='text-5xl font-bold mb-4 bg-gradient-to-r from-purple-600 via-pink-600 to-orange-600 bg-clip-text text-transparent'>
+              {getGreeting()}, {user.name}!
+            </h1>
+            <p className='text-2xl text-gray-700 font-medium'>
+              Your AI Learning Journey with <BrandName variant='short' />
+            </p>
 
-          <Card className='text-center'>
-            <CardContent className='p-4'>
-              <Fire className='w-8 h-8 mx-auto mb-2 text-orange-500' />
-              <div className='text-2xl font-bold'>{dashboardSummary.currentStreak}</div>
-              <div className='text-sm text-muted-foreground'>Day Streak</div>
-            </CardContent>
-          </Card>
-
-          <Card className='text-center'>
-            <CardContent className='p-4'>
-              <ChartBar className='w-8 h-8 mx-auto mb-2 text-green-500' />
-              <div className='text-2xl font-bold'>
-                {Math.round(dashboardSummary.weeklyProgress / 60)}h
+            {/* Quick Stats Hero Cards */}
+            <div className='grid grid-cols-1 sm:grid-cols-3 gap-4 mt-12 mb-8 max-w-4xl mx-auto'>
+              <div className='relative group'>
+                <div className='absolute inset-0 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-xl blur-lg group-hover:blur-xl transition-all duration-300 opacity-75' />
+                <Card className='relative bg-white/90 backdrop-blur-sm border-0 shadow-xl transform hover:scale-105 transition-all duration-300'>
+                  <CardContent className='p-6'>
+                    <Trophy className='w-12 h-12 mx-auto mb-3 text-yellow-600' />
+                    <div className='text-3xl font-bold text-gray-800'>
+                      {dashboardSummary.completedModules}
+                    </div>
+                    <div className='text-sm font-medium text-gray-600'>Modules Mastered</div>
+                  </CardContent>
+                </Card>
               </div>
-              <div className='text-sm text-muted-foreground'>This Week</div>
-            </CardContent>
-          </Card>
 
-          <Card className='text-center'>
-            <CardContent className='p-4'>
-              <Star className='w-8 h-8 mx-auto mb-2 text-purple-500' />
-              <div className='text-2xl font-bold capitalize'>{subscription.planId}</div>
-              <div className='text-sm text-muted-foreground'>Plan</div>
-            </CardContent>
-          </Card>
+              <div className='relative group'>
+                <div className='absolute inset-0 bg-gradient-to-r from-orange-400 to-red-400 rounded-xl blur-lg group-hover:blur-xl transition-all duration-300 opacity-75' />
+                <Card className='relative bg-white/90 backdrop-blur-sm border-0 shadow-xl transform hover:scale-105 transition-all duration-300'>
+                  <CardContent className='p-6'>
+                    <Fire className='w-12 h-12 mx-auto mb-3 text-orange-600' />
+                    <div className='text-3xl font-bold text-gray-800'>
+                      {dashboardSummary.currentStreak}
+                    </div>
+                    <div className='text-sm font-medium text-gray-600'>Day Streak 🔥</div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <div className='relative group'>
+                <div className='absolute inset-0 bg-gradient-to-r from-green-400 to-teal-400 rounded-xl blur-lg group-hover:blur-xl transition-all duration-300 opacity-75' />
+                <Card className='relative bg-white/90 backdrop-blur-sm border-0 shadow-xl transform hover:scale-105 transition-all duration-300'>
+                  <CardContent className='p-6'>
+                    <Lightning className='w-12 h-12 mx-auto mb-3 text-green-600' />
+                    <div className='text-3xl font-bold text-gray-800'>
+                      {Math.round(dashboardSummary.weeklyProgress / 60)}h
+                    </div>
+                    <div className='text-sm font-medium text-gray-600'>This Week</div>
+                  </CardContent>
+                </Card>
+              </div>
+              {/* start of removed codd for subscription removal
+              <div className='relative group'>
+                <div className='absolute inset-0 bg-gradient-to-r from-purple-400 to-pink-400 rounded-xl blur-lg group-hover:blur-xl transition-all duration-300 opacity-75' />
+                <Card className='relative bg-white/90 backdrop-blur-sm border-0 shadow-xl transform hover:scale-105 transition-all duration-300'>
+                  <CardContent className='p-6'>
+                    <Medal className='w-12 h-12 mx-auto mb-3 text-purple-600' />
+                    <div className='text-3xl font-bold text-gray-800 capitalize'>
+                      {subscription.planId}
+                    </div>
+                    <div className='text-sm font-medium text-gray-600'>Your Plan</div>
+                  </CardContent>
+                </Card>
+              </div> {/* end of removed code for subscription removal */}
+            </div>
+          </div>
         </div>
+      </section>
 
+      {/* Main Content */}
+      <div className='max-w-7xl mx-auto p-6'>
         <div className='grid lg:grid-cols-3 gap-8'>
           {/* Main Content */}
           <div className='lg:col-span-2 space-y-6'>
-            {/* Continue Learning Card */}
+            {/* Continue Learning Card - Enhanced */}
             {recommendations.continueModule && (
-              <Card className='border-primary/20 bg-gradient-to-r from-primary/5 to-accent/5'>
-                <CardHeader>
-                  <CardTitle className='flex items-center gap-2'>
-                    <Play className='w-5 h-5' />
-                    Continue Learning
+              <Card className='relative overflow-hidden border-0 shadow-xl bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50'>
+                <div className='absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-blue-200 to-purple-200 rounded-full blur-2xl opacity-50' />
+                <CardHeader className='relative'>
+                  <CardTitle className='flex items-center gap-2 text-2xl'>
+                    <Play className='w-7 h-7 text-blue-600' />
+                    Continue Your Journey
                   </CardTitle>
-                  <CardDescription>Pick up where you left off</CardDescription>
+                  <CardDescription className='text-base'>
+                    Pick up where you left off
+                  </CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <div className='flex items-center justify-between p-4 bg-background/50 rounded-lg'>
+                <CardContent className='relative'>
+                  <div className='flex items-center justify-between p-6 bg-white/80 backdrop-blur-sm rounded-xl shadow-lg'>
                     <div>
-                      <h3 className='font-semibold text-lg mb-1'>
+                      <h3 className='font-bold text-xl mb-2 text-gray-800'>
                         {recommendations.continueModule.module.title}
                       </h3>
-                      <p className='text-muted-foreground'>
+                      <p className='text-gray-600 font-medium'>
                         {courseData[recommendations.continueModule.courseId]?.title}
                       </p>
-                      <div className='flex items-center gap-2 mt-2'>
-                        <Clock className='w-4 h-4' />
-                        <span className='text-sm text-muted-foreground'>
-                          {recommendations.continueModule.module.estimatedTime} min
+                      <div className='flex items-center gap-2 mt-3'>
+                        <Clock className='w-5 h-5 text-blue-500' />
+                        <span className='text-sm font-medium text-gray-600'>
+                          {recommendations.continueModule.module.estimatedTime} min remaining
                         </span>
                       </div>
                     </div>
                     <Button
                       onClick={handleStartLearning}
                       size='lg'
-                      className='flex items-center gap-2'
+                      className='bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200'
                     >
                       Continue
-                      <ArrowRight />
+                      <ArrowRight className='ml-2' />
                     </Button>
                   </div>
                 </CardContent>
               </Card>
             )}
 
-            {/* Start New Course */}
+            {/* Start New Course - Enhanced */}
             {recommendations.startCourse && !recommendations.continueModule && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className='flex items-center gap-2'>
-                    <BookmarkSimple className='w-5 h-5' />
+              <Card className='relative overflow-hidden border-0 shadow-xl bg-gradient-to-br from-green-50 via-teal-50 to-blue-50'>
+                <div className='absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-green-200 to-teal-200 rounded-full blur-2xl opacity-50' />
+                <CardHeader className='relative'>
+                  <CardTitle className='flex items-center gap-2 text-2xl'>
+                    <BookmarkSimple className='w-7 h-7 text-green-600' />
                     Recommended for You
                   </CardTitle>
-                  <CardDescription>Start a new learning path</CardDescription>
+                  <CardDescription className='text-base'>
+                    Start a new learning adventure
+                  </CardDescription>
                 </CardHeader>
-                <CardContent>
-                  <div className='flex items-center justify-between p-4 bg-muted/30 rounded-lg'>
+                <CardContent className='relative'>
+                  <div className='flex items-center justify-between p-6 bg-white/80 backdrop-blur-sm rounded-xl shadow-lg'>
                     <div>
-                      <h3 className='font-semibold text-lg mb-1'>
+                      <h3 className='font-bold text-xl mb-2 text-gray-800'>
                         {recommendations.startCourse.title}
                       </h3>
-                      <p className='text-muted-foreground mb-2'>
+                      <p className='text-gray-600 mb-3'>
                         {recommendations.startCourse.description}
                       </p>
                       <div className='flex items-center gap-4'>
                         <Badge
-                          variant={
-                            recommendations.startCourse.tier === 'free' ? 'secondary' : 'default'
-                          }
+                          variant='secondary'
+                          className='bg-gradient-to-r from-green-100 to-teal-100 text-green-800 border-green-200'
                         >
                           {recommendations.startCourse.tier.toUpperCase()}
                         </Badge>
-                        <span className='text-sm text-muted-foreground'>
-                          {recommendations.startCourse.totalModules} modules
+                        <span className='text-sm font-medium text-gray-600'>
+                          {recommendations.startCourse.totalModules} exciting modules
                         </span>
                       </div>
                     </div>
                     <Button
                       onClick={handleStartLearning}
-                      variant='default'
-                      className='flex items-center gap-2 '
+                      className='bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200'
                     >
                       Start Course
-                      <ArrowRight />
+                      <ArrowRight className='ml-2' />
                     </Button>
                   </div>
                 </CardContent>
               </Card>
             )}
 
-            {/* Weekly Goal Progress */}
-            <Card>
+            {/* Weekly Goal Progress - Enhanced */}
+            <Card className='border-0 shadow-xl bg-gradient-to-br from-orange-50 to-yellow-50'>
               <CardHeader>
-                <CardTitle className='flex items-center gap-2'>
-                  <Target className='w-5 h-5' />
+                <CardTitle className='flex items-center gap-2 text-xl'>
+                  <Target className='w-6 h-6 text-orange-600' />
                   Weekly Learning Goal
                 </CardTitle>
-                <CardDescription>Track your weekly learning progress</CardDescription>
+                <CardDescription>Track your weekly learning momentum</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className='space-y-4'>
                   <div className='flex items-center justify-between'>
-                    <span className='text-sm font-medium'>
+                    <span className='text-base font-semibold text-gray-700'>
                       {Math.round(learningStats.weeklyProgress)} / {learningStats.weeklyGoal}{' '}
                       minutes
                     </span>
-                    <span className='text-sm text-muted-foreground'>
+                    <span className='text-base font-bold text-orange-600'>
                       {Math.round(weeklyProgressPercentage)}%
                     </span>
                   </div>
-                  <Progress value={weeklyProgressPercentage} className='h-3' />
+                  <div className='relative'>
+                    <Progress value={weeklyProgressPercentage} className='h-4 bg-orange-100' />
+                    <div
+                      className='absolute top-0 left-0 h-full bg-gradient-to-r from-orange-400 to-yellow-400 rounded-full transition-all duration-500'
+                      style={{ width: `${weeklyProgressPercentage}%` }}
+                    />
+                  </div>
                   <div className='flex justify-between items-center'>
-                    <p className='text-xs text-muted-foreground'>
+                    <p className='text-sm font-medium text-gray-600'>
                       {weeklyProgressPercentage >= 100
-                        ? '🎉 Goal achieved this week!'
-                        : `${Math.round((learningStats.weeklyGoal - learningStats.weeklyProgress) / 60)} hours to go`}
+                        ? '🎉 Goal achieved! You are amazing!'
+                        : `${Math.round((learningStats.weeklyGoal - learningStats.weeklyProgress) / 60)} hours to go - you can do it!`}
                     </p>
                     <Button
                       variant='ghost'
                       size='sm'
                       onClick={() => setShowGoalSetting(!showGoalSetting)}
+                      className='hover:bg-orange-100'
                     >
                       <Gear className='w-4 h-4' />
                     </Button>
                   </div>
 
                   {showGoalSetting && (
-                    <div className='pt-4 border-t'>
-                      <label className='text-sm font-medium'>Weekly Goal (minutes)</label>
-                      <div className='flex gap-2 mt-2'>
+                    <div className='pt-4 border-t border-orange-200'>
+                      <label className='text-sm font-semibold text-gray-700'>
+                        Set Weekly Goal (minutes)
+                      </label>
+                      <div className='flex gap-2 mt-3'>
                         {[60, 120, 180, 240].map((minutes) => (
                           <Button
                             key={minutes}
                             variant={learningStats.weeklyGoal === minutes ? 'default' : 'outline'}
                             size='sm'
                             onClick={() => setWeeklyGoal(minutes)}
+                            className={
+                              learningStats.weeklyGoal === minutes
+                                ? 'bg-gradient-to-r from-orange-500 to-yellow-500 text-white'
+                                : 'hover:bg-orange-100'
+                            }
                           >
                             {minutes / 60}h
                           </Button>
@@ -291,46 +326,60 @@ function DashboardPageComponent(): ReactElement {
               </CardContent>
             </Card>
 
-            {/* Course Progress Overview */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Your Courses</CardTitle>
-                <CardDescription>Track your progress across all available courses</CardDescription>
+            {/* Course Progress Overview - Enhanced */}
+            <Card className='border-0 shadow-xl'>
+              <CardHeader className='bg-gradient-to-r from-purple-50 to-pink-50'>
+                <CardTitle className='text-xl'>Your Learning Path</CardTitle>
+                <CardDescription>Track your progress across all courses</CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className='pt-6'>
                 <div className='space-y-6'>
                   {Object.values(courseData)
                     .filter((course) => {
-                      // Show courses user has access to
                       const tierOrder = { free: 1, advanced: 2, expert: 3 };
                       return tierOrder[subscription.planId] >= tierOrder[course.tier];
                     })
                     .map((course) => {
                       const completedModules = course.modules.filter(
-                        () =>
-                          // Check if module is completed - in real app, use progress tracking
-                          false, // Placeholder
+                        () => false, // Placeholder
                       ).length;
                       const progressPercentage = Math.round(
                         (completedModules / course.totalModules) * 100,
                       );
 
                       return (
-                        <div key={course.id} className='space-y-3'>
-                          <div className='flex items-center justify-between'>
-                            <div className='flex items-center gap-2'>
-                              <h3 className='font-medium'>{course.title}</h3>
-                              <Badge variant={course.tier === 'free' ? 'secondary' : 'default'}>
+                        <div
+                          key={course.id}
+                          className='p-4 bg-gradient-to-r from-gray-50 to-gray-100 rounded-lg'
+                        >
+                          <div className='flex items-center justify-between mb-3'>
+                            <div className='flex items-center gap-3'>
+                              <Brain className='w-5 h-5 text-purple-600' />
+                              <h3 className='font-semibold text-gray-800'>{course.title}</h3>
+                              <Badge
+                                variant='secondary'
+                                className={
+                                  course.tier === 'free'
+                                    ? 'bg-green-100 text-green-800'
+                                    : 'bg-purple-100 text-purple-800'
+                                }
+                              >
                                 {course.tier.toUpperCase()}
                               </Badge>
                             </div>
-                            <span className='text-sm text-muted-foreground'>
+                            <span className='text-sm font-medium text-gray-600'>
                               {completedModules}/{course.totalModules} modules
                             </span>
                           </div>
-                          <Progress value={progressPercentage} className='h-2' />
-                          <div className='flex justify-between text-xs text-muted-foreground'>
-                            <span>{progressPercentage}% complete</span>
+                          <div className='relative'>
+                            <Progress value={progressPercentage} className='h-3 bg-gray-200' />
+                            <div
+                              className='absolute top-0 left-0 h-full bg-gradient-to-r from-purple-400 to-pink-400 rounded-full transition-all duration-500'
+                              style={{ width: `${progressPercentage}%` }}
+                            />
+                          </div>
+                          <div className='flex justify-between text-sm text-gray-600 mt-2'>
+                            <span className='font-medium'>{progressPercentage}% complete</span>
                             <span>~{course.estimatedTotalTime} min total</span>
                           </div>
                         </div>
@@ -340,50 +389,50 @@ function DashboardPageComponent(): ReactElement {
 
                 <Button
                   variant='default'
-                  className='w-full mt-6'
+                  className='w-full mt-6 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200'
                   onClick={() => void navigate('/courses')}
                 >
-                  View All Courses
+                  Explore All Courses
                   <ArrowRight className='w-4 h-4 ml-2' />
                 </Button>
               </CardContent>
             </Card>
 
-            {/* Recent Activity */}
+            {/* Recent Activity - Enhanced */}
             {dashboardSummary.recentActivity.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className='flex items-center gap-2'>
-                    <Clock className='w-5 h-5' />
-                    Recent Activity
+              <Card className='border-0 shadow-xl'>
+                <CardHeader className='bg-gradient-to-r from-blue-50 to-teal-50'>
+                  <CardTitle className='flex items-center gap-2 text-xl'>
+                    <Clock className='w-6 h-6 text-blue-600' />
+                    Recent Achievements
                   </CardTitle>
                   <CardDescription>Your latest learning milestones</CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className='pt-6'>
                   <div className='space-y-3'>
                     {dashboardSummary.recentActivity.map((activity) => (
                       <div
                         key={activity.id}
-                        className='flex items-start gap-3 p-3 bg-muted/30 rounded-lg'
+                        className='flex items-start gap-3 p-4 bg-gradient-to-r from-white to-blue-50 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200'
                       >
-                        <div className='w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0'>
+                        <div className='w-10 h-10 rounded-full bg-gradient-to-br from-blue-100 to-teal-100 flex items-center justify-center flex-shrink-0'>
                           {activity.type === 'module_completed' && (
-                            <CheckCircle className='w-4 h-4 text-green-600' />
+                            <CheckCircle className='w-5 h-5 text-green-600' />
                           )}
                           {activity.type === 'course_started' && (
-                            <BookOpen className='w-4 h-4 text-blue-600' />
+                            <BookOpen className='w-5 h-5 text-blue-600' />
                           )}
                           {activity.type === 'course_completed' && (
-                            <Trophy className='w-4 h-4 text-yellow-600' />
+                            <Trophy className='w-5 h-5 text-yellow-600' />
                           )}
                           {activity.type === 'rating_given' && (
-                            <Star className='w-4 h-4 text-purple-600' />
+                            <Star className='w-5 h-5 text-purple-600' />
                           )}
                         </div>
                         <div className='flex-1'>
-                          <p className='font-medium text-sm'>{activity.title}</p>
-                          <p className='text-xs text-muted-foreground'>{activity.description}</p>
-                          <p className='text-xs text-muted-foreground mt-1'>
+                          <p className='font-semibold text-gray-800'>{activity.title}</p>
+                          <p className='text-sm text-gray-600'>{activity.description}</p>
+                          <p className='text-xs text-gray-500 mt-1'>
                             {new Date(activity.timestamp).toLocaleDateString()}
                           </p>
                         </div>
@@ -395,110 +444,97 @@ function DashboardPageComponent(): ReactElement {
             )}
           </div>
 
-          {/* Sidebar */}
+          {/* Sidebar - Enhanced */}
           <div className='space-y-6'>
-            {/* Account Summary */}
-            <Card>
+            {/* Account Summary - Enhanced */}
+            <Card className='border-0 shadow-xl bg-gradient-to-br from-indigo-50 to-purple-50'>
               <CardHeader>
                 <CardTitle className='flex items-center gap-2'>
-                  <Users className='w-5 h-5' />
+                  <Users className='w-5 h-5 text-indigo-600' />
                   Account Summary
                 </CardTitle>
               </CardHeader>
-              {/* Start of commented out code for subscription removal
               <CardContent className='space-y-4'>
-                <div>
-                  <div className='text-sm font-medium text-muted-foreground'>Subscription</div>
-                  <div className='flex items-center justify-between'>
-                    <Badge variant={subscription.planId === 'free' ? 'secondary' : 'default'}>
-                      {currentPlan.name}
-                    </Badge>
-                  
-                  
-                  {subscription.planId === 'free' && ( 
-                      <Button size='sm' variant='outline' onClick={() => void navigate('/account')}>
-                        Upgrade
-                      </Button>
-                    )}
-
-                  </div>
+                <div className='p-4 bg-white/80 backdrop-blur-sm rounded-lg'>
+                  <div className='text-sm font-semibold text-gray-600 mb-1'>Current Plan</div>
+                  <Badge className='bg-gradient-to-r from-indigo-500 to-purple-500 text-white'>
+                    {subscription.planId.toUpperCase()}
+                  </Badge>
                 </div>
 
-                {subscription.planId !== 'free' && (
-                  <div>
-                    <div className='text-sm font-medium text-muted-foreground'>Next Billing</div>
-                    <div className='text-sm'>
-                      {subscription.nextBillingDate
-                        ? new Date(subscription.nextBillingDate).toLocaleDateString()
-                        : 'N/A'}
-                    </div>
+                <Separator className='bg-indigo-100' />
+
+                <div className='p-4 bg-white/80 backdrop-blur-sm rounded-lg'>
+                  <div className='text-sm font-semibold text-gray-600 mb-1'>Member Since</div>
+                  <div className='text-base font-medium text-gray-800'>
+                    {new Date(user.joinDate).toLocaleDateString()}
                   </div>
-                )}
-
-                <Separator />
-
-                <div>
-                  <div className='text-sm font-medium text-muted-foreground'>Member Since</div>
-                  <div className='text-sm'>{new Date(user.joinDate).toLocaleDateString()}</div>
                 </div>
 
                 <Button
                   variant='default'
-                  className='w-full'
+                  className='w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200'
                   onClick={() => void navigate('/account')}
                 >
                   Manage Account
                   <Gear className='w-4 h-4 ml-2' />
                 </Button>
               </CardContent>
-               End of commented out code for subscription removal*/}
             </Card>
 
-            {/* Learning Stats */}
-            <Card>
+            {/* Learning Stats - Enhanced */}
+            <Card className='border-0 shadow-xl bg-gradient-to-br from-yellow-50 to-orange-50'>
               <CardHeader>
                 <CardTitle className='flex items-center gap-2'>
-                  <ChartBar className='w-5 h-5' />
+                  <ChartBar className='w-5 h-5 text-orange-600' />
                   Learning Stats
                 </CardTitle>
               </CardHeader>
               <CardContent className='space-y-4'>
                 <div className='grid grid-cols-2 gap-4'>
-                  <div className='text-center'>
-                    <div className='text-2xl font-bold'>
+                  <div className='text-center p-4 bg-white/80 backdrop-blur-sm rounded-lg'>
+                    <div className='text-3xl font-bold text-orange-600'>
                       {Math.round(learningStats.totalTimeSpent / 60)}
                     </div>
-                    <div className='text-xs text-muted-foreground'>Hours Learned</div>
+                    <div className='text-xs font-semibold text-gray-600'>Hours Learned</div>
                   </div>
-                  <div className='text-center'>
-                    <div className='text-2xl font-bold'>
+                  <div className='text-center p-4 bg-white/80 backdrop-blur-sm rounded-lg'>
+                    <div className='text-3xl font-bold text-yellow-600'>
                       {learningStats.averageRating.toFixed(1)}
                     </div>
-                    <div className='text-xs text-muted-foreground'>Avg Rating</div>
+                    <div className='text-xs font-semibold text-gray-600'>Avg Rating</div>
                   </div>
                 </div>
 
-                <Separator />
+                <Separator className='bg-orange-100' />
 
-                <div>
-                  <div className='text-sm font-medium mb-2'>Current Streak</div>
+                <div className='p-4 bg-white/80 backdrop-blur-sm rounded-lg'>
+                  <div className='text-sm font-semibold text-gray-700 mb-2'>Current Streak</div>
                   <div className='flex items-center gap-2'>
-                    <Fire className='w-5 h-5 text-orange-500' />
-                    <span className='font-semibold'>{learningStats.streak.currentStreak} days</span>
+                    <Fire className='w-6 h-6 text-orange-500' />
+                    <span className='font-bold text-lg text-gray-800'>
+                      {learningStats.streak.currentStreak} days
+                    </span>
                   </div>
-                  <div className='text-xs text-muted-foreground mt-1'>
-                    Longest: {learningStats.streak.longestStreak} days
+                  <div className='text-xs font-medium text-gray-600 mt-1'>
+                    Best streak: {learningStats.streak.longestStreak} days
                   </div>
                 </div>
 
                 {learningStats.favoriteTopics.length > 0 && (
                   <>
-                    <Separator />
-                    <div>
-                      <div className='text-sm font-medium mb-2'>Favorite Topics</div>
-                      <div className='flex flex-wrap gap-1'>
+                    <Separator className='bg-orange-100' />
+                    <div className='p-4 bg-white/80 backdrop-blur-sm rounded-lg'>
+                      <div className='text-sm font-semibold text-gray-700 mb-3'>
+                        Favorite Topics
+                      </div>
+                      <div className='flex flex-wrap gap-2'>
                         {learningStats.favoriteTopics.slice(0, 3).map((topic) => (
-                          <Badge key={topic} variant='secondary' className='text-xs'>
+                          <Badge
+                            key={topic}
+                            variant='secondary'
+                            className='bg-gradient-to-r from-orange-100 to-yellow-100 text-orange-800'
+                          >
                             {topic}
                           </Badge>
                         ))}
@@ -509,49 +545,25 @@ function DashboardPageComponent(): ReactElement {
               </CardContent>
             </Card>
 
-            {/* Learning Tips */}
-            <Card>
+            {/* Daily Tip - Enhanced */}
+            <Card className='border-0 shadow-xl bg-gradient-to-br from-green-50 to-teal-50'>
               <CardHeader>
                 <CardTitle className='flex items-center gap-2'>
-                  <Sparkle className='w-5 h-5' />
-                  Daily Tip
+                  <Sparkle className='w-5 h-5 text-teal-600' />
+                  Daily Wisdom
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <p className='text-sm text-muted-foreground'>
-                  🎯 <strong>Pro tip:</strong> Try to complete at least one module every few days to
-                  maintain your learning momentum. Remember, you can always re-visit modules to
-                  reinforce your understanding!
-                </p>
+                <div className='p-4 bg-white/80 backdrop-blur-sm rounded-lg'>
+                  <p className='text-sm text-gray-700 leading-relaxed'>
+                    <span className='text-2xl mr-2'>💡</span>
+                    <strong className='text-teal-700'>Today&apos;s tip:</strong> Learning AI is a
+                    journey, not a race. Take your time to understand each concept thoroughly.
+                    Remember, even 15 minutes a day can lead to amazing progress over time!
+                  </p>
+                </div>
               </CardContent>
             </Card>
-            {/* Start of commented out code for subscription removal */}
-            {/* Subscription Reminder */}
-            {/* {subscription.planId === 'free' && (  
-              <Card className='border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5'>
-                <CardHeader>
-                  <CardTitle className='flex items-center gap-2'>
-                    <Gift className='w-5 h-5' />
-                    Unlock More Content
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className='text-sm text-muted-foreground mb-4'>
-                    Ready to dive deeper? Upgrade to access advanced AI
-                    techniques and expert-level content.
-                  </p>
-                  <Button
-                    onClick={() => void navigate('/account')}
-                    className='w-full'
-                  >
-                    View Plans
-                    <ArrowRight className='w-4 h-4 ml-2' />
-                  </Button>
-                </CardContent>
-              </Card>
-            )} */}
-
-            {/* End of commented out code for subscription removal */}
           </div>
         </div>
       </div>

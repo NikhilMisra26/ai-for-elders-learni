@@ -46,7 +46,7 @@ export interface PaymentMethod {
 export const subscriptionPlans: SubscriptionPlan[] = [
   {
     id: 'free',
-    name: 'Free Course',
+    name: 'Basic Course',
     price: 0,
     billingPeriod: 'month',
     description: 'Perfect for getting started with AI basics',

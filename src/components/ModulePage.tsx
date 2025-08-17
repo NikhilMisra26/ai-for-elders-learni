@@ -505,7 +505,7 @@ export function ModulePage({ courseType: propCourseType }: ModulePageProps): Rea
                   Upgrade to {plan} Plan
                 </Button>
                 <Button variant='outline' onClick={handleBackToCourses}>
-                  Browse Free Content
+                  Browse Basic Content
                 </Button>
               </div>
             </CardContent>

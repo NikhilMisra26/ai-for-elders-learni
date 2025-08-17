@@ -188,7 +188,7 @@ export function ReviewForm({ onSuccess, onCancel }: ReviewFormProps): ReactEleme
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value='free'>Free Course</SelectItem>
+                <SelectItem value='free'>Basic Course</SelectItem>
                 <SelectItem value='advanced'>Advanced Course</SelectItem>
                 <SelectItem value='expert'>Expert Course</SelectItem>
               </SelectContent>

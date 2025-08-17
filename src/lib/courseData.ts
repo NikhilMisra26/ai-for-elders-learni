@@ -836,7 +836,7 @@ Creating your account is straightforward but important to do correctly. When you
 
 If you choose to sign up with email, you'll need to enter your email address and create a password. Make your password strong but memorable – use a combination of letters, numbers, and symbols. Write it down somewhere safe! You'll then need to verify your email address. ChatGPT will send a message to your email with a link or code. Check your email (including spam folder if you don't see it), and click the link or enter the code.
 
-### Understanding Free vs. Paid Versions
+### Understanding Basic vs. Paid Versions
 
 Understanding the difference between free and paid versions helps you decide what's right for you. The free version of ChatGPT is perfectly adequate for most users. You can ask unlimited questions, get help with various tasks, and have natural conversations. The main limitations are that it might be slower during busy times, it may not have the very latest features, and during very high demand, you might temporarily not be able to access it.
 
@@ -908,7 +908,7 @@ Remember, there's no wrong way to start a conversation with AI. It's designed to
 - ChatGPT is free and easy to use – you just type questions and get answers
 - Account creation is straightforward – use a strong password and verify your email
 - The interface is simple – text box at bottom, conversation appears above
-- Free version is sufficient for most users starting out
+- Basic version is sufficient for most users starting out
 - Works on both computers and mobile devices
 - Conversations are saved automatically for your reference
 - Don't hesitate to ask for help if you run into technical issues

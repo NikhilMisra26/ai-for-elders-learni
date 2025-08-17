@@ -55,7 +55,7 @@ export function TierBadge({
 }: TierBadgeProps): ReactElement {
   const safeTier = tier ?? 'free';
   const Icon = iconMap[safeTier];
-  const displayLabel = label ?? safeTier.toUpperCase();
+  const displayLabel = label ?? (safeTier === 'free' ? 'BASIC' : safeTier.toUpperCase());
 
   return (
     <div

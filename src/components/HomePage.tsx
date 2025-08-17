@@ -203,7 +203,7 @@ function HomePageComponent({ onAuthClick }: HomePageProps): ReactElement {
                       onClick={onAuthClick}
                       className='text-lg px-8 py-6 h-auto bg-[#0B1E3D] hover:bg-[#0A1A33] text-white border-0 shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105'
                     >
-                      Start Free Course
+                      Start Basic Course
                       <Play className='ml-2' />
                     </Button>
                     <Button
@@ -538,7 +538,7 @@ function HomePageComponent({ onAuthClick }: HomePageProps): ReactElement {
                     </p>
                     <Button size='lg' onClick={onAuthClick}>
                       <Play className='mr-2' />
-                      Start Free Course
+                      Start Basic Course
                     </Button>
                   </div>
                 )}

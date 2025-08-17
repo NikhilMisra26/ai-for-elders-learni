@@ -109,7 +109,7 @@ export function HomePage({ onNavigate, onAuthClick }: HomePageProps): ReactEleme
       content:
         "The audio narration feature is wonderful. I can listen while I follow along. It's like having a patient, knowledgeable teacher right beside me every step of the way.",
       rating: 5,
-      course: 'Free Course',
+      course: 'Basic Course',
     },
     {
       name: 'Dorothy Williams, 61',
@@ -195,7 +195,7 @@ export function HomePage({ onNavigate, onAuthClick }: HomePageProps): ReactEleme
               ) : (
                 <>
                   <Button size='lg' onClick={onAuthClick} className='text-lg px-8 py-6 h-auto'>
-                    Start Free Course
+                    Start Basic Course
                     <Play className='ml-2' />
                   </Button>
                   <Button
