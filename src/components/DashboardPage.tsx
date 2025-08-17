@@ -17,7 +17,7 @@ import {
   Sparkle,
   Brain,
   Lightning,
-  Medal,
+  //  Medal, removed for subscription removal
 } from '@phosphor-icons/react';
 
 import { AuthForm } from './AuthForm';
