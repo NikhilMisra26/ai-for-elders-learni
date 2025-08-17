@@ -237,6 +237,18 @@ function AppContent(): ReactElement {
                 }
               />
 
+              {/* Module part routes */}
+              <Route
+                path='/courses/:courseType/module/:moduleId/part/:partId'
+                element={
+                  <ProtectedRoute>
+                    <ErrorBoundary FallbackComponent={ErrorFallback}>
+                      <ModulePage />
+                    </ErrorBoundary>
+                  </ProtectedRoute>
+                }
+              />
+
               {/* Dashboard/Progress */}
               <Route
                 path='/dashboard'

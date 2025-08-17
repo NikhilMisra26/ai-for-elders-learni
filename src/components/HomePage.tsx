@@ -144,7 +144,7 @@ function HomePageComponent({ onAuthClick }: HomePageProps): ReactElement {
       },
       {
         icon: <Phone className='w-5 h-5' />,
-        text: 'Email & phone support available',
+        text: 'Email support available',
       },
       {
         icon: <Globe className='w-5 h-5' />,
