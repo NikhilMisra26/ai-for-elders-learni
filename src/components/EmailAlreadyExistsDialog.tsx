@@ -76,8 +76,8 @@ export function EmailAlreadyExistsDialog({
             </div>
           </div>
 
-          <div className='bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 rounded-lg p-3'>
-            <p className='text-sm text-blue-700 dark:text-black'>
+          <div className='bg-blue-50  border border-blue-200  rounded-lg p-3'>
+            <p className='text-sm text-blue-700 '>
               <strong>Tip:</strong> Check if you might have signed up with a different email
               address, such as a work or personal email.
             </p>

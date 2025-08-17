@@ -40,30 +40,26 @@
   --font-size-lg: 24px;
   --font-size-xl: 28px;
   --font-size-2xl: 32px;
+
+  /* Enhanced color palette for visual engagement */
+  --color-orange-light: oklch(0.85 0.12 60);
+  --color-orange: oklch(0.72 0.15 50);
+  --color-orange-dark: oklch(0.58 0.18 40);
+  
+  --color-green-light: oklch(0.82 0.12 140);
+  --color-green: oklch(0.68 0.15 140);
+  --color-green-dark: oklch(0.54 0.18 140);
+  
+  --color-purple-light: oklch(0.78 0.12 300);
+  --color-purple: oklch(0.62 0.18 300);
+  --color-purple-dark: oklch(0.48 0.20 300);
+  
+  --color-yellow-light: oklch(0.92 0.12 90);
+  --color-yellow: oklch(0.82 0.18 85);
+  --color-yellow-dark: oklch(0.68 0.20 80);
 }
 
-/* Dark mode colors for accessibility */
-.dark {
-  --background: oklch(0.15 0.02 240);
-  --foreground: oklch(0.95 0.01 60);
-  --card: oklch(0.18 0.02 240);
-  --card-foreground: oklch(0.95 0.01 60);
-  --popover: oklch(0.18 0.02 240);
-  --popover-foreground: oklch(0.95 0.01 60);
-  --primary: oklch(0.7 0.1 240);
-  --primary-foreground: oklch(0.15 0.02 240);
-  --secondary: oklch(0.25 0.03 240);
-  --secondary-foreground: oklch(0.95 0.01 60);
-  --muted: oklch(0.22 0.03 240);
-  --muted-foreground: oklch(0.75 0.05 240);
-  --accent: oklch(0.75 0.15 60);
-  --accent-foreground: oklch(0.15 0.02 240);
-  --destructive: oklch(0.7 0.25 25);
-  --destructive-foreground: oklch(0.95 0.01 60);
-  --border: oklch(0.25 0.03 240);
-  --input: oklch(0.25 0.03 240);
-  --ring: oklch(0.7 0.1 240);
-}
+/* Dark mode removed - glassmorphism design only */
 
 /* Font size classes for accessibility */
 .font-size-small {
@@ -129,6 +125,134 @@ button, .btn {
 
 .skip-nav:focus {
   top: 6px;
+}
+
+/* Custom animations for visual enhancement */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.5s ease-out;
+}
+
+.animate-slide-up {
+  animation: slide-up 0.6s ease-out;
+}
+
+.animate-scale-in {
+  animation: scale-in 0.4s ease-out;
+}
+
+/* Enhanced hover effects */
+@media (hover: hover) {
+  .hover\:animate-pulse:hover {
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: .8;
+  }
+}
+
+@keyframes float {
+  0%, 100% { 
+    transform: translateY(0px); 
+  }
+  50% { 
+    transform: translateY(-10px); 
+  }
+}
+
+@keyframes pulse-slow {
+  0%, 100% { 
+    opacity: 1; 
+  }
+  50% { 
+    opacity: 0.85; 
+  }
+}
+
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes spin-slow-reverse {
+  from {
+    transform: rotate(360deg);
+  }
+  to {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes gradient-x {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-pulse-slow {
+  animation: pulse-slow 3s ease-in-out infinite;
+}
+
+.animate-spin-slow {
+  animation: spin-slow 8s linear infinite;
+}
+
+.animate-spin-slow-reverse {
+  animation: spin-slow-reverse 8s linear infinite;
+}
+
+.animate-gradient-x {
+  background-size: 200% 200%;
+  animation: gradient-x 4s ease infinite;
 }
 
 @theme {

@@ -4,7 +4,6 @@ import {
   Brain,
   Shield,
   Heart,
-  Users,
   Star,
   CheckCircle,
   ArrowRight,
@@ -16,8 +15,6 @@ import {
   BookOpen,
   Clock,
   Phone,
-  CreditCard,
-  Globe,
   ChartBar,
   PencilSimple,
 } from '@phosphor-icons/react';
@@ -54,65 +51,84 @@ function HomePageComponent({ onAuthClick }: HomePageProps): ReactElement {
     void navigate('/courses');
   }, [navigate]);
 
-  const heroFeatures = useMemo(
+  // These features are now shown as trust indicators at the bottom of hero
+  const trustFeatures = useMemo(
     () => [
       {
-        icon: <SpeakerHigh className='w-5 h-5' />,
+        icon: <SpeakerHigh className='w-5 h-5 text-white' />,
         text: 'Audio narration for all content',
+        gradient: 'from-blue-400 to-purple-600',
+        shadowColor: 'shadow-blue-200',
       },
       {
-        icon: <Eye className='w-5 h-5' />,
+        icon: <Eye className='w-5 h-5 text-white' />,
         text: 'Large fonts & high contrast design',
+        gradient: 'from-green-400 to-teal-600',
+        shadowColor: 'shadow-green-200',
       },
       {
-        icon: <Shield className='w-5 h-5' />,
+        icon: <Shield className='w-5 h-5 text-white' />,
         text: 'Privacy-focused learning',
+        gradient: 'from-orange-400 to-pink-600',
+        shadowColor: 'shadow-orange-200',
       },
       {
-        icon: <Clock className='w-5 h-5' />,
+        icon: <Clock className='w-5 h-5 text-white' />,
         text: 'Learn at your own pace',
+        gradient: 'from-purple-400 to-indigo-600',
+        shadowColor: 'shadow-purple-200',
       },
     ],
     [],
   );
 
+  // Backward-compat: some older references may still expect `heroFeatures`
+
+  const heroFeatures = trustFeatures;
+
   const features = useMemo(
     () => [
       {
-        icon: <Brain className='w-8 h-8 text-primary' />,
+        icon: <Brain className='w-10 h-10 text-orange-500' />,
         title: 'Senior-Friendly Design',
         description:
           'Large fonts, clear navigation, and audio narration make learning AI accessible and enjoyable for everyone.',
+        gradient: 'from-orange-50 to-orange-100',
       },
       {
-        icon: <Shield className='w-8 h-8 text-primary' />,
+        icon: <Shield className='w-10 h-10 text-green-500' />,
         title: 'Safety-First Approach',
         description:
           'Learn to use AI tools safely with comprehensive guidance on privacy, security, and avoiding common pitfalls.',
+        gradient: 'from-green-50 to-green-100',
       },
       {
-        icon: <Heart className='w-8 h-8 text-primary' />,
+        icon: <Heart className='w-10 h-10 text-purple-500' />,
         title: 'Practical Applications',
         description:
           'Focus on real-world uses like health management, family communication, financial planning, and daily organization.',
+        gradient: 'from-purple-50 to-purple-100',
       },
       {
-        icon: <Users className='w-8 h-8 text-primary' />,
-        title: 'Supportive Community',
-        description:
-          "Join a community of learners sharing experiences, tips, and supporting each other's AI learning journey.",
-      },
-      {
-        icon: <Sparkle className='w-8 h-8 text-primary' />,
+        icon: <Sparkle className='w-10 h-10 text-yellow-500' />,
         title: 'Expert-Designed Content',
         description:
           'Courses created by AI experts specifically for adults 50+, with clear explanations and practical examples.',
+        gradient: 'from-yellow-50 to-yellow-100',
       },
       {
-        icon: <Trophy className='w-8 h-8 text-primary' />,
+        icon: <Trophy className='w-10 h-10 text-blue-500' />,
         title: 'Progress Tracking',
         description:
           'Visual progress indicators, achievement badges, and personalized learning paths keep you motivated.',
+        gradient: 'from-blue-50 to-blue-100',
+      },
+      {
+        icon: <Phone className='w-10 h-10 text-teal-500' />,
+        title: 'Dedicated Support',
+        description:
+          'Get help when you need it with our email support team ready to assist with your learning journey.',
+        gradient: 'from-teal-50 to-cyan-100',
       },
     ],
     [],
@@ -122,7 +138,7 @@ function HomePageComponent({ onAuthClick }: HomePageProps): ReactElement {
   const formatCourseTier = (tier: string): string => {
     switch (tier) {
       case 'free':
-        return 'Free Course';
+        return 'Basic Course';
       case 'advanced':
         return 'Advanced Course';
       case 'expert':
@@ -132,27 +148,7 @@ function HomePageComponent({ onAuthClick }: HomePageProps): ReactElement {
     }
   };
 
-  const trustIndicators = useMemo(
-    () => [
-      {
-        icon: <Shield className='w-5 h-5' />,
-        text: 'No credit card required for free course',
-      },
-      {
-        icon: <CreditCard className='w-5 h-5' />,
-        text: 'Cancel anytime, no hidden fees',
-      },
-      {
-        icon: <Phone className='w-5 h-5' />,
-        text: 'Email support available',
-      },
-      {
-        icon: <Globe className='w-5 h-5' />,
-        text: 'Trusted by learners worldwide',
-      },
-    ],
-    [],
-  );
+  // Removed old trustIndicators - replaced with trustFeatures
 
   return (
     <div className='min-h-screen'>
@@ -162,7 +158,13 @@ function HomePageComponent({ onAuthClick }: HomePageProps): ReactElement {
       </a>
 
       {/* Hero Section */}
-      <section className='py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-primary/10 via-background to-accent/5'>
+      <section className='py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-orange-50 via-yellow-50 to-purple-50 relative overflow-hidden'>
+        {/* Background decorative elements */}
+        <div className='absolute inset-0 opacity-30 pointer-events-none'>
+          <div className='absolute top-10 left-10 w-20 h-20 bg-gradient-to-br from-orange-200 to-orange-300 rounded-full blur-xl' />
+          <div className='absolute top-40 right-20 w-32 h-32 bg-gradient-to-br from-purple-200 to-purple-300 rounded-full blur-xl' />
+          <div className='absolute bottom-20 left-1/3 w-24 h-24 bg-gradient-to-br from-yellow-200 to-yellow-300 rounded-full blur-xl' />
+        </div>
         <div className='max-w-6xl mx-auto'>
           <div className='grid md:grid-cols-2 gap-8 items-center'>
             {/* Left side - Brand name in blue box */}
@@ -174,41 +176,34 @@ function HomePageComponent({ onAuthClick }: HomePageProps): ReactElement {
 
             {/* Right side - Content */}
             <div>
-              <p className='text-2xl font-semibold text-primary mb-4'>Designed for Adults 50+</p>
-              <p className='text-xl text-muted-foreground mb-8 leading-relaxed'>
+              <p className='text-2xl font-semibold text-orange-600 mb-4 tracking-wide'>
+                Designed for Adults 50+
+              </p>
+              <p className='text-xl text-gray-700 mb-8 leading-relaxed font-medium'>
                 Learn to use artificial intelligence safely and confidently with courses designed
                 specifically for your needs. No technical experience required – just curiosity and a
                 willingness to learn.
               </p>
 
-              {/* Hero Features */}
-              <div className='grid grid-cols-2 gap-4 mb-8'>
-                {heroFeatures.map((feature) => (
-                  <div
-                    key={feature.text}
-                    className='flex items-center gap-2 text-sm text-muted-foreground'
-                  >
-                    {feature.icon}
-                    <span>{feature.text}</span>
-                  </div>
-                ))}
-              </div>
-
-              {/* Call to Action */}
-              <div className='flex flex-col sm:flex-row gap-4'>
+              {/* Call to Action - moved up */}
+              <div className='flex flex-col sm:flex-row gap-4 mt-8'>
                 {user ? (
                   <Button
                     size='lg'
                     onClick={handleNavigateToCourses}
-                    className='text-lg px-8 py-6 h-auto'
+                    className='text-lg px-8 py-6 h-auto bg-[#0B1E3D] hover:bg-[#0A1A33] text-white border-0 shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105'
                   >
                     Continue Learning
                     <ArrowRight className='ml-2' />
                   </Button>
                 ) : (
                   <>
-                    <Button size='lg' onClick={onAuthClick} className='text-lg px-8 py-6 h-auto'>
-                      Start Free Course
+                    <Button
+                      size='lg'
+                      onClick={onAuthClick}
+                      className='text-lg px-8 py-6 h-auto bg-[#0B1E3D] hover:bg-[#0A1A33] text-white border-0 shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105'
+                    >
+                      Start Basic Course
                       <Play className='ml-2' />
                     </Button>
                     <Button
@@ -226,15 +221,37 @@ function HomePageComponent({ onAuthClick }: HomePageProps): ReactElement {
             </div>
           </div>
 
-          {/* Trust Indicators - moved below the grid */}
+          {/* Trust Features - enhanced visual prominence with unique gradients */}
           <div className='grid grid-cols-2 md:grid-cols-4 gap-4 mt-12'>
-            {trustIndicators.map((indicator) => (
+            {heroFeatures.map((feature) => (
               <div
-                key={indicator.text}
-                className='flex items-center gap-2 text-sm text-muted-foreground justify-center'
+                key={feature.text}
+                className={`relative flex items-center gap-3 text-sm justify-center p-4 rounded-xl transition-all duration-300 hover:scale-105 group ${
+                  feature.shadowColor
+                }`}
+                style={{
+                  background: 'rgba(255, 255, 255, 0.7)',
+                  backdropFilter: 'blur(10px)',
+                  WebkitBackdropFilter: 'blur(10px)',
+                  border: '1px solid rgba(255, 255, 255, 0.3)',
+                  boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.15)',
+                }}
               >
-                {indicator.icon}
-                <span>{indicator.text}</span>
+                {/* Animated gradient border */}
+                <div
+                  className='absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300'
+                  style={{
+                    background: `linear-gradient(45deg, transparent, rgba(255,255,255,0.5), transparent)`,
+                    backgroundSize: '200% 200%',
+                    animation: 'shimmer 3s ease-in-out infinite',
+                  }}
+                />
+                <div
+                  className={`p-2.5 bg-gradient-to-br ${feature.gradient} rounded-full shadow-lg group-hover:shadow-xl transition-shadow`}
+                >
+                  {feature.icon}
+                </div>
+                <span className='font-semibold text-gray-800'>{feature.text}</span>
               </div>
             ))}
           </div>
@@ -284,8 +301,11 @@ function HomePageComponent({ onAuthClick }: HomePageProps): ReactElement {
       <section className='py-20 px-4 sm:px-6 lg:px-8'>
         <div className='max-w-6xl mx-auto'>
           <div className='text-center mb-16'>
-            <h2 className='text-4xl font-bold mb-4'>
-              Why Choose <BrandName variant='short' />?
+            <h2 className='text-4xl font-bold mb-4 relative inline-flex items-baseline'>
+              <span className='text-black'>Why Choose&nbsp;</span>
+              <BrandName variant='short' className='font-bold leading-none mx-1' />
+              <span className='text-black'>?</span>
+              <div className='absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-20 h-1 bg-gradient-to-r from-orange-400 to-orange-600 rounded-full' />
             </h2>
             <p className='text-xl text-muted-foreground max-w-3xl mx-auto'>
               We understand the unique needs of adult learners and have designed every aspect of our
@@ -295,14 +315,19 @@ function HomePageComponent({ onAuthClick }: HomePageProps): ReactElement {
 
           <div className='grid md:grid-cols-2 lg:grid-cols-3 gap-8'>
             {features.map((feature) => (
-              <Card key={feature.title} className='text-center h-full'>
-                <CardHeader>
-                  <div className='w-16 h-16 mx-auto mb-4 flex items-center justify-center bg-primary/10 rounded-full'>
+              <Card
+                key={feature.title}
+                className='text-center h-full border-0 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-105 overflow-hidden'
+              >
+                <CardHeader className={`bg-gradient-to-br ${feature.gradient} pb-8`}>
+                  <div className='w-20 h-20 mx-auto mb-6 flex items-center justify-center bg-white/80 backdrop-blur-sm rounded-full shadow-lg'>
                     {feature.icon}
                   </div>
-                  <CardTitle className='text-xl'>{feature.title}</CardTitle>
+                  <CardTitle className='text-xl font-bold text-gray-800 tracking-wide'>
+                    {feature.title}
+                  </CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className='pt-6'>
                   <p className='text-muted-foreground leading-relaxed'>{feature.description}</p>
                 </CardContent>
               </Card>
@@ -312,10 +337,13 @@ function HomePageComponent({ onAuthClick }: HomePageProps): ReactElement {
       </section>
 
       {/* Pricing Section */}
-      <section className='py-20 px-4 sm:px-6 lg:px-8 bg-muted/20'>
+      <section className='py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-warmGray-50 to-orange-50/30 shadow-inner'>
         <div className='max-w-6xl mx-auto'>
           <div className='text-center mb-16'>
-            <h2 className='text-4xl font-bold mb-4'>Choose Your Learning Path</h2>
+            <h2 className='text-4xl font-bold mb-4 relative inline-block'>
+              Choose Your Learning Path
+              <div className='absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-24 h-1 bg-gradient-to-r from-orange-400 to-orange-600 rounded-full' />
+            </h2>
             <p className='text-xl text-muted-foreground max-w-3xl mx-auto'>
               Start with our free course and upgrade anytime to access advanced content. All plans
               include our senior-friendly design and dedicated support.
@@ -510,7 +538,7 @@ function HomePageComponent({ onAuthClick }: HomePageProps): ReactElement {
                     </p>
                     <Button size='lg' onClick={onAuthClick}>
                       <Play className='mr-2' />
-                      Start Free Course
+                      Start Basic Course
                     </Button>
                   </div>
                 )}
@@ -538,9 +566,17 @@ function HomePageComponent({ onAuthClick }: HomePageProps): ReactElement {
       </Dialog>
 
       {/* Final CTA Section */}
-      <section className='py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-primary/10 to-accent/10'>
+      <section className='py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-r from-orange-100 via-yellow-50 to-purple-100 relative overflow-hidden'>
+        {/* Background decorative elements */}
+        <div className='absolute inset-0 opacity-20 pointer-events-none'>
+          <div className='absolute top-10 right-10 w-32 h-32 bg-gradient-to-br from-orange-300 to-yellow-300 rounded-full blur-2xl' />
+          <div className='absolute bottom-10 left-10 w-28 h-28 bg-gradient-to-br from-purple-300 to-orange-300 rounded-full blur-xl' />
+        </div>
         <div className='max-w-4xl mx-auto text-center'>
-          <h2 className='text-4xl font-bold mb-4'>Ready to Start Your AI Journey?</h2>
+          <h2 className='text-4xl font-bold mb-4 relative inline-block'>
+            Ready to Start Your AI Journey?
+            <div className='absolute -bottom-2 left-1/2 transform -translate-x-1/2 w-32 h-1 bg-gradient-to-r from-orange-400 to-orange-600 rounded-full' />
+          </h2>
           <p className='text-xl text-muted-foreground mb-8'>
             Join our community of lifelong learners and discover how AI can enhance your daily life.
             Start with our free course today – no technical experience required.
@@ -569,7 +605,11 @@ function HomePageComponent({ onAuthClick }: HomePageProps): ReactElement {
               </>
             ) : (
               <>
-                <Button size='lg' onClick={onAuthClick} className='text-lg px-8 py-6 h-auto'>
+                <Button
+                  size='lg'
+                  onClick={onAuthClick}
+                  className='text-lg px-8 py-6 h-auto bg-[#0B1E3D] hover:bg-[#0A1A33] text-white border-0 shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105'
+                >
                   Start Learning Free
                   <ArrowRight className='ml-2' />
                 </Button>

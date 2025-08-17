@@ -1,5 +1,5 @@
 import React, { useState, type ReactElement } from 'react';
-import { TextAa, Moon, Sun, User, SignOut, List } from '@phosphor-icons/react';
+import { TextAa, User, SignOut, List } from '@phosphor-icons/react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 import { Button } from '@/components/ui/button';
@@ -13,8 +13,7 @@ interface HeaderProps {
 
 export function Header({ onAuthClick }: HeaderProps): ReactElement {
   const { user, logout } = useAuth();
-  const { fontSize, isDarkMode, increaseFontSize, decreaseFontSize, toggleDarkMode } =
-    useAccessibility();
+  const { fontSize, increaseFontSize, decreaseFontSize } = useAccessibility();
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
@@ -113,17 +112,6 @@ export function Header({ onAuthClick }: HeaderProps): ReactElement {
               </Button>
             </div>
 
-            {/* Dark Mode Toggle */}
-            <Button
-              variant='ghost'
-              size='sm'
-              onClick={toggleDarkMode}
-              aria-label={isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'}
-              className='h-8 w-8 p-0'
-            >
-              {isDarkMode ? <Sun weight='regular' /> : <Moon weight='regular' />}
-            </Button>
-
             {/* User Menu */}
             {user ? (
               <div className='flex items-center space-x-3'>
@@ -209,20 +197,6 @@ export function Header({ onAuthClick }: HeaderProps): ReactElement {
                       A+
                     </Button>
                   </div>
-                </div>
-
-                {/* Dark Mode Toggle */}
-                <div className='flex items-center justify-between'>
-                  <span className='text-sm font-medium'>Theme:</span>
-                  <Button
-                    variant='outline'
-                    size='sm'
-                    onClick={toggleDarkMode}
-                    className='flex items-center gap-2'
-                  >
-                    {isDarkMode ? <Sun weight='regular' /> : <Moon weight='regular' />}
-                    {isDarkMode ? 'Light' : 'Dark'}
-                  </Button>
                 </div>
 
                 {/* User Section */}

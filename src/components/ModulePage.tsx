@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo, type ReactElement } from 'react';
+import { useState, useEffect, useRef, useMemo, type ReactElement, type ElementType } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
@@ -19,6 +19,17 @@ import {
   StarFour,
   CaretDown,
   CaretRight,
+  Lightbulb,
+  Shield,
+  Warning,
+  Brain,
+  Heart,
+  Sparkle,
+  Trophy,
+  Target,
+  Rocket,
+  CheckSquare,
+  Square,
 } from '@phosphor-icons/react';
 
 import { Button } from '@/components/ui/button';
@@ -28,6 +39,9 @@ import { Badge } from '@/components/ui/badge';
 import { Slider } from '@/components/ui/slider';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
+import { Callout, CalloutTitle, CalloutDescription } from '@/components/ui/callout';
+import { ProgressRing } from '@/components/ui/progress-ring';
+import { TierBadge } from '@/components/ui/tier-badge';
 import { AudioControlsErrorBoundary } from '@/components/AudioControlsErrorBoundary';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProgress } from '@/lib/progressTracking';
@@ -122,6 +136,7 @@ export function ModulePage({ courseType: propCourseType }: ModulePageProps): Rea
   const [expandedModules, setExpandedModules] = useState<Set<string>>(
     new Set(moduleId ? [moduleId] : []),
   );
+  const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set());
 
   // Track the last module that was set to prevent redundant calls
   const lastSetModuleRef = useRef<string | null>(null);
@@ -490,7 +505,7 @@ export function ModulePage({ courseType: propCourseType }: ModulePageProps): Rea
                   Upgrade to {plan} Plan
                 </Button>
                 <Button variant='outline' onClick={handleBackToCourses}>
-                  Browse Free Content
+                  Browse Basic Content
                 </Button>
               </div>
             </CardContent>
@@ -556,9 +571,7 @@ export function ModulePage({ courseType: propCourseType }: ModulePageProps): Rea
           <div className='flex items-start justify-between flex-wrap gap-4 transition-all duration-200 hover:shadow-sm'>
             <div className='flex-1'>
               <div className='flex items-center gap-3 mb-2'>
-                <Badge variant={course.tier === 'free' ? 'secondary' : 'default'}>
-                  {course.tier.toUpperCase()}
-                </Badge>
+                <TierBadge tier={course.tier} showIcon={true} />
                 <span className='flex items-center gap-1 text-muted-foreground'>
                   <Clock className='w-4 h-4' />
                   {currentPart ? currentPart.estimatedTime : module.estimatedTime} min
@@ -606,15 +619,22 @@ export function ModulePage({ courseType: propCourseType }: ModulePageProps): Rea
           {/* Main Content */}
           <div className='lg:col-span-3 space-y-6'>
             {/* Course Progress */}
-            <Card className='transition-all duration-200 hover:shadow-lg border-0 shadow-sm'>
+            <Card className='transition-all duration-200 hover:shadow-lg border-2 border-gray-900  shadow-md bg-gradient-to-br from-blue-50/50 to-cyan-50/30  '>
               <CardContent className='p-4'>
                 <div className='flex items-center justify-between mb-2'>
-                  <span className='text-sm font-medium'>Course Progress</span>
+                  <span className='text-sm font-medium flex items-center gap-2 text-foreground'>
+                    <ChartBar className='w-4 h-4 text-primary' />
+                    Course Progress
+                  </span>
                   <span className='text-sm text-muted-foreground'>
                     {courseProgress?.completedModules.length ?? 0} of {course.totalModules} modules
                   </span>
                 </div>
-                <Progress value={progressPercentage} className='h-2' />
+                <Progress value={progressPercentage} className='h-3 bg-gray-200 ' />
+                <div className='flex items-center justify-between mt-2'>
+                  <span className='text-xs text-muted-foreground'>Keep going!</span>
+                  <span className='text-xs font-semibold text-primary'>{progressPercentage}%</span>
+                </div>
               </CardContent>
             </Card>
 
@@ -637,7 +657,7 @@ export function ModulePage({ courseType: propCourseType }: ModulePageProps): Rea
                 }
               }}
             >
-              <Card>
+              <Card className='border-2 border-gray-900  shadow-md'>
                 <CardHeader>
                   <div className='flex items-center justify-between'>
                     <CardTitle className='flex items-center gap-2'>
@@ -782,25 +802,320 @@ export function ModulePage({ courseType: propCourseType }: ModulePageProps): Rea
             </AudioControlsErrorBoundary>
 
             {/* Module/Part Content */}
-            <Card className='transition-all duration-200 hover:shadow-lg border-0 shadow-sm'>
-              <CardContent className='p-6'>
+            <Card className='transition-all duration-300 hover:shadow-lg border border-border shadow-md'>
+              <CardContent className='p-8 space-y-6'>
+                {/* Dynamic Welcome Banner for Introduction */}
+                {module.id === 'introduction' && (
+                  <div className='relative overflow-hidden rounded-xl bg-gradient-to-r from-amber-400 via-orange-400 to-red-400 p-8 text-white shadow-xl'>
+                    <div className='absolute top-0 right-0 -mt-4 -mr-4 h-32 w-32 rounded-full bg-white/10 blur-3xl' />
+                    <div className='relative z-10'>
+                      <Sparkle className='w-12 h-12 mb-4' weight='fill' />
+                      <h2 className='text-3xl font-bold mb-2'>Welcome to Your AI Journey!</h2>
+                      <p className='text-lg opacity-95'>
+                        Let&apos;s explore the world of AI together, step by step.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {/* Submodule-specific Key Concept Callout (color by module, content by part) */}
+                {((): ReactElement | null => {
+                  interface Concept {
+                    title: string;
+                    description: string;
+                  }
+                  const concepts: Record<string, Record<string, Concept>> = {
+                    // Module 1: Understanding AI (blue)
+                    'understanding-ai': {
+                      'ai-in-simple-terms': {
+                        title: 'Core Understanding',
+                        description:
+                          'AI is an advanced pattern-recognition tool. It learns from many examples to spot patterns and make predictions — it does not truly think or feel like a person.',
+                      },
+                      'everyday-ai-you-use': {
+                        title: 'You Already Use AI',
+                        description:
+                          'From streaming picks and spam filters to maps and fraud alerts, AI works quietly in the background to make daily tools more helpful — no tech expertise required.',
+                      },
+                      'what-ai-can-cant-do': {
+                        title: 'Know the Limits',
+                        description:
+                          "AI is great at patterns, language, and ideas — but it isn't a doctor or lawyer, has no feelings or real-world memory, and can be confidently wrong. Verify important things.",
+                      },
+                    },
+                    // Module 2: Staying Safe with AI (red)
+                    'staying-safe-ai': {
+                      'recognizing-ai-scams': {
+                        title: 'Scam Defense Basics',
+                        description:
+                          'Expect voice cloning and deepfakes. Use a family code word, hang up and call back on a known number, and never send urgent payments by gift card, wire, or crypto.',
+                      },
+                      'privacy-personal-information': {
+                        title: 'Protect Your Information',
+                        description:
+                          'Never share SSN, account numbers, passwords, or detailed IDs with AI. Share general interests only. Use strong passwords, two‑factor authentication, and separate emails.',
+                      },
+                      'fact-checking-verification': {
+                        title: 'Verify Before You Trust',
+                        description:
+                          'AI can “hallucinate.” For health, finance, legal, and news topics, check multiple reliable sources and build a simple personal verification routine.',
+                      },
+                    },
+                    // Module 3: Your First AI Conversation (green)
+                    'first-ai-conversation': {
+                      'getting-started-chatgpt': {
+                        title: 'Start Simple, Stay Secure',
+                        description:
+                          'The free version is fine to begin. Use strong, unique passwords and 2FA. Conversations are saved — begin with small, easy questions to build comfort.',
+                      },
+                      'writing-effective-prompts': {
+                        title: 'Better Prompts, Better Answers',
+                        description:
+                          'Be specific, provide context, ask for the format you want, and follow up. Treat it like a conversation you refine step by step.',
+                      },
+                      'practice-conversations': {
+                        title: 'Practice Builds Confidence',
+                        description:
+                          'Use real interests to practice. Celebrate small wins, iterate on prompts, and remember — AI is patient and you can’t “break” it by asking.',
+                      },
+                    },
+                    // Module 4: AI for Daily Life (purple)
+                    'ai-daily-life': {
+                      'health-wellness-support': {
+                        title: 'Health Helper — Not a Doctor',
+                        description:
+                          'Use AI to organize questions, decode terms, and plan gentle routines, but always make medical decisions with your healthcare professionals.',
+                      },
+                      'family-social-connections': {
+                        title: 'Communicate With Heart',
+                        description:
+                          'Draft warm notes, plan gatherings, and bridge generations. Personalize tone and details so messages sound like you.',
+                      },
+                      'hobbies-personal-growth': {
+                        title: 'Grow Your Interests',
+                        description:
+                          'Ask AI for simple project ideas, learning plans, travel tips, and organization help. Set small goals and build enjoyable routines.',
+                      },
+                    },
+                  };
+
+                  const palettes: Record<
+                    string,
+                    {
+                      container: string;
+                      title: string;
+                      text: string;
+                      icon: string;
+                      Icon: ElementType;
+                    }
+                  > = {
+                    'understanding-ai': {
+                      container: 'bg-blue-500/20 border border-blue-400/30',
+                      title: 'text-blue-900',
+                      text: 'text-blue-800',
+                      icon: 'text-blue-400',
+                      Icon: Brain,
+                    },
+                    'staying-safe-ai': {
+                      container: 'bg-red-500/20 border border-red-400/30',
+                      title: 'text-red-900',
+                      text: 'text-red-800',
+                      icon: 'text-red-400',
+                      Icon: Shield,
+                    },
+                    'first-ai-conversation': {
+                      container: 'bg-green-500/20 border border-green-400/30',
+                      title: 'text-green-900',
+                      text: 'text-green-800',
+                      icon: 'text-green-400',
+                      Icon: ChatCircle,
+                    },
+                    'ai-daily-life': {
+                      container: 'bg-purple-500/20 border border-purple-400/30',
+                      title: 'text-purple-900',
+                      text: 'text-purple-800',
+                      icon: 'text-purple-400',
+                      Icon: Heart,
+                    },
+                  };
+
+                  const currentConcept = concepts[module.id]?.[currentPart?.id ?? ''];
+                  const palette = palettes[module.id];
+                  if (!currentConcept || !palette) return null;
+                  const IconComp = palette.Icon;
+
+                  return (
+                    <div
+                      className={`${palette.container} backdrop-blur-lg p-6 rounded-xl shadow-2xl`}
+                    >
+                      <div className='flex items-start gap-4'>
+                        <IconComp
+                          className={`w-6 h-6 ${palette.icon} flex-shrink-0 mt-1`}
+                          weight={
+                            module.id === 'staying-safe-ai' || module.id === 'ai-daily-life'
+                              ? 'fill'
+                              : 'duotone'
+                          }
+                        />
+                        <div>
+                          <h3 className={`text-xl font-bold mb-1 ${palette.title}`}>
+                            {currentConcept.title}
+                          </h3>
+                          <p className={`text-lg ${palette.text}`}>{currentConcept.description}</p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* Remove extra top cards for cleaner single-callout header per submodule */}
+
+                {/* Visual Divider */}
+                <div className='relative py-4'>
+                  <div className='absolute inset-0 flex items-center'>
+                    <div className='w-full border-t-2 border-gradient-to-r from-transparent via-purple-300 to-transparent ' />
+                  </div>
+                  <div className='relative flex justify-center'>
+                    <span className='bg-white  px-4'>
+                      <Sparkle className='w-6 h-6 text-purple-500' weight='duotone' />
+                    </span>
+                  </div>
+                </div>
+
+                {/* Enhanced Main Content with Glass Typography */}
                 <article className='prose prose-lg max-w-none'>
                   <div
-                    className='text-lg leading-relaxed space-y-6 prose-headings:bg-gradient-to-r prose-headings:from-blue-50 prose-headings:to-transparent prose-headings:border-l-4 prose-headings:border-blue-500 prose-headings:pl-4 prose-headings:py-2 prose-headings:rounded-r-lg prose-p:mb-4 prose-ul:space-y-2 prose-li:relative prose-li:pl-6 before:prose-li:content-["\u25cf"] before:prose-li:absolute before:prose-li:left-0 before:prose-li:text-blue-500 before:prose-li:font-bold transition-all duration-200'
+                    className='text-lg leading-relaxed space-y-8 [&>h1]:text-3xl [&>h1]:font-bold [&>h1]:bg-gradient-to-r [&>h1]:from-blue-600 [&>h1]:to-purple-600 [&>h1]:bg-clip-text [&>h1]:text-transparent [&>h1]:mb-6 [&>h2]:text-2xl [&>h2]:font-semibold [&>h2]:text-foreground [&>h2]:mb-4 [&>h2]:mt-8 [&>h2]:flex [&>h2]:items-center [&>h2]:gap-3 [&>h2]:before:content-[""] [&>h2]:before:w-1 [&>h2]:before:h-8 [&>h2]:before:bg-gradient-to-b [&>h2]:before:from-blue-600 [&>h2]:before:to-purple-600 [&>h2]:before:rounded-full [&>h3]:text-xl [&>h3]:font-semibold [&>h3]:text-foreground [&>h3]:mb-3 [&>h3]:mt-6 [&>p]:text-muted-foreground [&>p]:mb-6 [&>p]:leading-relaxed [&>ul]:space-y-3 [&>ul]:ml-4 [&>li]:text-muted-foreground [&>li]:flex [&>li]:items-start [&>li]:gap-3 [&>li]:before:content-["→"] [&>li]:before:text-blue-600 [&>li]:before:font-bold [&>li]:before:mt-0.5 [&>strong]:text-blue-600 [&>strong]:font-semibold [&>em]:text-purple-600 [&>em]:not-italic [&>em]:font-medium [&>blockquote]:border-l-4 [&>blockquote]:border-blue-600 [&>blockquote]:pl-6 [&>blockquote]:py-3 [&>blockquote]:bg-blue-500/10 [&>blockquote]:backdrop-blur-sm [&>blockquote]:rounded-r-lg [&>blockquote]:my-6 [&>blockquote]:italic [&>blockquote]:text-blue-700'
                     style={{
                       whiteSpace: 'pre-line',
-                      lineHeight: '1.8',
+                      lineHeight: '1.9',
                       fontSize: '1.125rem',
                     }}
                   >
                     {currentPart ? currentPart.content : module.content}
                   </div>
                 </article>
+
+                {/* Visual Divider */}
+                <div className='relative py-4'>
+                  <div className='absolute inset-0 flex items-center'>
+                    <div className='w-full border-t-2 border-gradient-to-r from-transparent via-pink-300 to-transparent ' />
+                  </div>
+                  <div className='relative flex justify-center'>
+                    <span className='bg-white  px-4'>
+                      <Star className='w-6 h-6 text-pink-500' weight='duotone' />
+                    </span>
+                  </div>
+                </div>
+
+                {/* Dynamic Tips and Reminders */}
+                {module.id === 'understanding-ai' && (
+                  <Callout className='bg-indigo-500/20 border border-indigo-400/30 backdrop-blur-lg p-6 rounded-xl shadow-2xl'>
+                    <CalloutTitle className='flex items-center gap-2 text-lg font-semibold text-indigo-900'>
+                      <Lightbulb className='w-5 h-5 text-indigo-400' weight='duotone' />
+                      Remember
+                    </CalloutTitle>
+                    <CalloutDescription className='text-base mt-2 text-indigo-800'>
+                      AI is a tool, just like a calculator or a dictionary. It&apos;s here to help
+                      you, not replace your judgment!
+                    </CalloutDescription>
+                  </Callout>
+                )}
+
+                {module.id === 'first-ai-conversation' && (
+                  <Callout className='bg-green-500/20 border border-green-400/30 backdrop-blur-lg p-6 rounded-xl shadow-2xl'>
+                    <CalloutTitle className='flex items-center gap-2 text-lg font-semibold text-green-900'>
+                      <Target className='w-5 h-5 text-green-400' weight='duotone' />
+                      Pro Tip
+                    </CalloutTitle>
+                    <CalloutDescription className='text-base mt-2 text-green-800'>
+                      Start with simple questions and gradually work your way up to more complex
+                      conversations. There&apos;s no rush!
+                    </CalloutDescription>
+                  </Callout>
+                )}
+
+                {module.id === 'ai-daily-life' && (
+                  <Callout className='bg-purple-500/20 border border-purple-400/30 backdrop-blur-lg p-6 rounded-xl shadow-2xl'>
+                    <CalloutTitle className='flex items-center gap-2 text-lg font-semibold text-purple-900'>
+                      <Rocket className='w-5 h-5 text-purple-400' weight='duotone' />
+                      You&apos;re Ready!
+                    </CalloutTitle>
+                    <CalloutDescription className='text-base mt-2 text-purple-800'>
+                      You now have practical knowledge to start using AI in your daily life.
+                      Remember, the more you practice, the more comfortable you&apos;ll become!
+                    </CalloutDescription>
+                  </Callout>
+                )}
+
+                {module.id === 'conclusion' && (
+                  <div className='bg-amber-500/20 border border-amber-400/30 backdrop-blur-lg rounded-xl p-6 shadow-2xl'>
+                    <div className='flex items-start gap-4'>
+                      <Trophy className='w-8 h-8 text-amber-400 flex-shrink-0 mt-1' weight='fill' />
+                      <div>
+                        <h3 className='text-xl font-bold text-amber-900 mb-2'>Congratulations!</h3>
+                        <p className='text-lg text-amber-800'>
+                          You&apos;ve completed the AI Basics course! You&apos;re now equipped with
+                          the knowledge to use AI safely and effectively.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Interactive Checklist for Safety Module (moved to bottom for post-reading) */}
+                {module.id === 'staying-safe-ai' && currentPart?.id === 'recognizing-ai-scams' && (
+                  <div className='bg-amber-50 border border-amber-200 rounded-xl p-6 shadow-md'>
+                    <h4 className='text-xl font-semibold text-amber-900 mb-4 flex items-center gap-2'>
+                      <Warning className='w-6 h-6 text-amber-700' weight='duotone' />
+                      Red Flag Checklist — Click to Check Off
+                    </h4>
+                    <div className='space-y-3'>
+                      {[
+                        'Urgency — "Act now or lose out!"',
+                        'Too good to be true promises',
+                        'Requests for personal information',
+                        'Unprofessional grammar or spelling',
+                        'Suspicious email addresses or links',
+                      ].map((item, index) => (
+                        <button
+                          key={item}
+                          onClick={() => {
+                            const newChecked = new Set(checkedItems);
+                            const itemId = `safety-${index}`;
+                            if (newChecked.has(itemId)) {
+                              newChecked.delete(itemId);
+                            } else {
+                              newChecked.add(itemId);
+                            }
+                            setCheckedItems(newChecked);
+                          }}
+                          className='flex items-center gap-3 p-3 bg-white/85 border border-amber-200 rounded-lg shadow-sm hover:shadow-md hover:bg-white transition-all duration-150 w-full text-left'
+                        >
+                          {checkedItems.has(`safety-${index}`) ? (
+                            <CheckSquare className='w-5 h-5 text-green-700' weight='fill' />
+                          ) : (
+                            <Square className='w-5 h-5 text-amber-700' />
+                          )}
+                          <span
+                            className={
+                              checkedItems.has(`safety-${index}`)
+                                ? 'line-through text-gray-500'
+                                : 'text-amber-900'
+                            }
+                          >
+                            {item}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
             {/* Module Actions */}
-            <Card className='transition-all duration-200 hover:shadow-lg border-0 shadow-sm'>
+            <Card className='transition-all duration-300 hover:shadow-lg border border-border shadow-md'>
               <CardContent className='p-6'>
                 <div className='flex items-center justify-between flex-wrap gap-4'>
                   <div>
@@ -887,7 +1202,7 @@ export function ModulePage({ courseType: propCourseType }: ModulePageProps): Rea
             {/* Rating and Comments */}
             <div className='grid md:grid-cols-2 gap-6'>
               {/* Rating */}
-              <Card className='transition-all duration-200 hover:shadow-lg border-0 shadow-sm'>
+              <Card className='transition-all duration-200 hover:shadow-lg border-2 border-gray-900  shadow-md'>
                 <CardHeader>
                   <CardTitle className='flex items-center gap-2'>
                     <Star className='w-5 h-5' />
@@ -922,7 +1237,7 @@ export function ModulePage({ courseType: propCourseType }: ModulePageProps): Rea
               </Card>
 
               {/* Comments */}
-              <Card className='transition-all duration-200 hover:shadow-lg border-0 shadow-sm'>
+              <Card className='transition-all duration-200 hover:shadow-lg border-2 border-gray-900  shadow-md'>
                 <CardHeader>
                   <CardTitle className='flex items-center gap-2'>
                     <ChatCircle className='w-5 h-5' />
@@ -958,7 +1273,7 @@ export function ModulePage({ courseType: propCourseType }: ModulePageProps): Rea
           <div className='lg:col-span-1 space-y-6'>
             {/* Course Outline */}
             <Card
-              className={`${showOutline ? 'block' : 'hidden lg:block'} transition-all duration-200 hover:shadow-lg border-0 shadow-sm`}
+              className={`${showOutline ? 'block' : 'hidden lg:block'} transition-all duration-200 hover:shadow-lg border-2 border-gray-900  shadow-md`}
             >
               <CardHeader>
                 <CardTitle className='flex items-center gap-2 text-lg'>
@@ -1077,10 +1392,10 @@ export function ModulePage({ courseType: propCourseType }: ModulePageProps): Rea
             </Card>
 
             {/* Module Stats */}
-            <Card className='transition-all duration-200 hover:shadow-lg border-0 shadow-sm'>
+            <Card className='transition-all duration-200 hover:shadow-lg border-2 border-gray-900  shadow-md bg-gradient-to-br from-purple-50/40 to-indigo-50/30  '>
               <CardHeader>
-                <CardTitle className='flex items-center gap-2 text-lg'>
-                  <ChartBar className='w-5 h-5' />
+                <CardTitle className='flex items-center gap-2 text-lg text-foreground'>
+                  <ChartBar className='w-5 h-5 text-purple-500' />
                   Your Progress
                 </CardTitle>
               </CardHeader>
@@ -1098,12 +1413,14 @@ export function ModulePage({ courseType: propCourseType }: ModulePageProps): Rea
 
                 <Separator />
 
-                <div>
-                  <div className='flex justify-between text-sm mb-1'>
-                    <span>Course progress</span>
-                    <span>{progressPercentage}%</span>
-                  </div>
-                  <Progress value={progressPercentage} className='h-2' />
+                <div className='text-center'>
+                  <ProgressRing
+                    value={progressPercentage}
+                    size={100}
+                    color='purple'
+                    label='Course'
+                    animate={true}
+                  />
                 </div>
 
                 {moduleProgress && (
@@ -1131,7 +1448,7 @@ export function ModulePage({ courseType: propCourseType }: ModulePageProps): Rea
 
             {/* Tags */}
             {module.tags && module.tags.length > 0 && (
-              <Card className='transition-all duration-200 hover:shadow-lg border-0 shadow-sm'>
+              <Card className='transition-all duration-200 hover:shadow-lg border-2 border-gray-900  shadow-md'>
                 <CardHeader>
                   <CardTitle className='text-lg'>Topics</CardTitle>
                 </CardHeader>

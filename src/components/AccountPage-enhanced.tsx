@@ -4,7 +4,6 @@ import {
   User,
   EnvelopeSimple,
   Star,
-  Gear,
   Download,
   Shield,
   ChartBar,
@@ -12,6 +11,11 @@ import {
   Fire,
   Clock,
   Lock,
+  Lightning,
+  Medal,
+  Brain,
+  Sparkle,
+  Heart,
 } from '@phosphor-icons/react';
 import type { ReactElement } from 'react';
 
@@ -19,6 +23,7 @@ import { AuthForm } from './AuthForm';
 import { EmailSupportDialog } from './EmailSupportDialog';
 import { PasswordChangeDialog } from './PasswordChangeDialog';
 
+import { BrandName } from '@/components/BrandName';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -28,34 +33,12 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useSubscription, formatPrice, useInvoiceHistory } from '@/lib/subscription';
 import { useProgress } from '@/lib/progressTracking';
 
-// Commented out unused interface - keeping for potential future use
-// interface AccountPageProps {
-//   onAuthClick: () => void;
-// }
-
 function AccountPageComponent(): ReactElement {
   const { user } = useAuth();
-  const {
-    subscription,
-    getCurrentPlan,
-    // canAccessTier,
-    startTrial: _startTrial,
-    upgradeToPaid: _upgradeToPaid,
-    cancelSubscription,
-    reactivateSubscription,
-    // getDaysUntilExpiry, // Commented out - unused for now
-  } = useSubscription();
+  const { subscription, getCurrentPlan, cancelSubscription, reactivateSubscription } =
+    useSubscription();
   const { learningStats } = useProgress();
   const { invoices } = useInvoiceHistory();
-
-  // Start of removed code for subscription removal
-  // const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
-  // const [selectedPlan, setSelectedPlan] = useState<'advanced' | 'expert'>(
-  //   'advanced',
-  // );
-  // const [isProcessingPayment, setIsProcessingPayment] = useState(false);
-  // const [showCancelDialog, setShowCancelDialog] = useState(false);
-  // End of removed code for subscription removal
 
   // Added for subscription removal - keeping state variables but unused
   const [_showUpgradeDialog] = useState(false);
@@ -87,50 +70,6 @@ function AccountPageComponent(): ReactElement {
 
   // @ts-expect-error - Plan data may be used for display in the future
   const _currentPlan = getCurrentPlan();
-  // Commented out unused variable - keeping for potential future use
-  // const _daysUntilExpiry = getDaysUntilExpiry();
-
-  // Start of removed code for subscription removal
-  // const handleUpgrade = async (
-  //   planId: 'advanced' | 'expert',
-  // ): Promise<void> => {
-  //   setIsProcessingPayment(true);
-
-  //   try {
-  //     if (subscription.status === 'trial' || subscription.planId === 'free') {
-  //       // Start trial for new users
-  //       startTrial(planId);
-  //       toast.success(
-  //         `🎉 ${planId === 'advanced' ? '7' : '14'}-day free trial started!`,
-  //         {
-  //           description: 'You now have access to all premium content',
-  //         },
-  //       );
-  //     } else {
-  //       // Simulate payment for existing users
-  //       const result = await simulatePaymentFlow(planId);
-
-  //       if (result.success && result.paymentMethod) {
-  //         upgradeToPaid(planId, result.paymentMethod);
-  //         toast.success('Subscription upgraded successfully!', {
-  //           description: 'You now have access to all premium content',
-  //         });
-  //       } else {
-  //         toast.error('Payment failed', {
-  //           description: result.error ?? 'Please try again',
-  //         });
-  //       }
-  //     }
-  //   } catch {
-  //     toast.error('Upgrade failed', {
-  //       description: 'Please try again or contact support',
-  //     });
-  //   } finally {
-  //     setIsProcessingPayment(false);
-  //     setShowUpgradeDialog(false);
-  //   }
-  // };
-  // End of removed code for subscription removal
 
   // Added for subscription removal - placeholder function
   // @ts-expect-error - Handlers may be used when subscriptions are re-enabled
@@ -165,287 +104,202 @@ function AccountPageComponent(): ReactElement {
     window.location.hash = `#/${page}`;
   };
 
+  // Get personalized greeting
+  const getGreeting = (): string => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good morning';
+    if (hour < 17) return 'Good afternoon';
+    return 'Good evening';
+  };
+
   return (
-    <div className='min-h-screen bg-background'>
-      <div className='max-w-6xl mx-auto p-6'>
-        {/* Header */}
-        <div className='mb-8'>
-          <h1 className='text-4xl font-bold mb-2'>Account Settings</h1>
-          <p className='text-xl text-muted-foreground'>
-            Manage your profile, subscription, and learning preferences
-          </p>
+    <div className='min-h-screen'>
+      {/* Hero Section with Gradient */}
+      <section className='relative overflow-hidden bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 py-16 px-4 sm:px-6 lg:px-8'>
+        {/* Animated Background Elements */}
+        <div className='absolute inset-0 opacity-40 pointer-events-none'>
+          <div className='absolute top-20 left-20 w-32 h-32 bg-gradient-to-br from-indigo-300 to-purple-300 rounded-full blur-2xl animate-pulse will-change-transform' />
+          <div className='absolute top-40 right-40 w-40 h-40 bg-gradient-to-br from-purple-300 to-pink-300 rounded-full blur-2xl animate-pulse delay-1000 will-change-transform' />
+          <div className='absolute bottom-20 left-1/3 w-36 h-36 bg-gradient-to-br from-pink-300 to-indigo-300 rounded-full blur-2xl animate-pulse delay-2000 will-change-transform' />
         </div>
 
+        <div className='relative max-w-7xl mx-auto'>
+          <div className='text-center'>
+            <h1 className='text-5xl font-bold mb-4 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent'>
+              {getGreeting()}, {user.name}!
+            </h1>
+            <p className='text-2xl text-gray-700 font-medium mb-2'>
+              Manage Your <BrandName variant='short' /> Account
+            </p>
+            <p className='text-lg text-gray-600'>
+              View your profile, track achievements, and customize your learning experience
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Main Content */}
+      <div className='max-w-6xl mx-auto p-6'>
         <div className='grid lg:grid-cols-3 gap-8'>
           {/* Main Content */}
           <div className='lg:col-span-2 space-y-6'>
-            {/* Profile Information */}
-            <Card>
-              <CardHeader>
-                <CardTitle className='flex items-center gap-2'>
-                  <User className='w-5 h-5' />
+            {/* Profile Information - Enhanced */}
+            <Card className='border-0 shadow-xl bg-gradient-to-br from-white to-indigo-50'>
+              <CardHeader className='bg-gradient-to-r from-indigo-50 to-purple-50'>
+                <CardTitle className='flex items-center gap-2 text-xl'>
+                  <User className='w-6 h-6 text-indigo-600' />
                   Profile Information
                 </CardTitle>
-                <CardDescription>Your basic account details</CardDescription>
+                <CardDescription>Your personal account details</CardDescription>
               </CardHeader>
-              <CardContent className='space-y-4'>
-                <div className='grid grid-cols-2 gap-4'>
-                  <div>
-                    <Label className='text-sm font-medium text-muted-foreground'>Name</Label>
-                    <p className='text-lg'>{user.name}</p>
+              <CardContent className='space-y-6 pt-6'>
+                <div className='grid grid-cols-2 gap-6'>
+                  <div className='p-4 bg-white/80 backdrop-blur-sm rounded-lg shadow-md'>
+                    <Label className='text-sm font-semibold text-gray-600'>Full Name</Label>
+                    <p className='text-lg font-medium text-gray-800 mt-1'>{user.name}</p>
                   </div>
-                  <div>
-                    <Label className='text-sm font-medium text-muted-foreground'>Email</Label>
-                    <p className='text-lg'>{user.email}</p>
+                  <div className='p-4 bg-white/80 backdrop-blur-sm rounded-lg shadow-md'>
+                    <Label className='text-sm font-semibold text-gray-600'>Email Address</Label>
+                    <p className='text-lg font-medium text-gray-800 mt-1'>{user.email}</p>
                   </div>
                 </div>
 
-                <Separator />
+                <Separator className='bg-indigo-100' />
 
-                <div className='grid grid-cols-2 gap-4'>
-                  <div>
-                    <Label className='text-sm font-medium text-muted-foreground'>
-                      Member Since
-                    </Label>
-                    <p className='text-lg'>{new Date(user.joinDate).toLocaleDateString()}</p>
+                <div className='grid grid-cols-2 gap-6'>
+                  <div className='p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg'>
+                    <Label className='text-sm font-semibold text-gray-600'>Member Since</Label>
+                    <p className='text-lg font-medium text-gray-800 mt-1'>
+                      {new Date(user.joinDate).toLocaleDateString()}
+                    </p>
                   </div>
-                  <div>
-                    <Label className='text-sm font-medium text-muted-foreground'>
-                      Account Status
-                    </Label>
-                    <Badge variant='secondary'>Active</Badge>
+                  <div className='p-4 bg-gradient-to-r from-green-50 to-teal-50 rounded-lg'>
+                    <Label className='text-sm font-semibold text-gray-600'>Account Status</Label>
+                    <Badge className='mt-1 bg-gradient-to-r from-green-500 to-teal-500 text-white'>
+                      ✓ Active
+                    </Badge>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Start of removed code for subscription removal - Subscription Management */}
-            {/* <Card>
-              <CardHeader>
-                <CardTitle className='flex items-center gap-2'>
-                  <CreditCard className='w-5 h-5' />
-                  Subscription
-                </CardTitle>
-                <CardDescription>
-                  Manage your learning plan and billing
-                </CardDescription>
-              </CardHeader>
-              <CardContent className='space-y-6'>
-                <div className='p-4 bg-muted/30 rounded-lg'>
-                  <div className='flex items-center justify-between mb-4'>
-                    <div>
-                      <h3 className='text-lg font-semibold'>
-                        {currentPlan.name}
-                      </h3>
-                      <p className='text-muted-foreground'>
-                        {currentPlan.description}
-                      </p>
-                    </div>
-                    <div className='text-right'>
-                      <div className='text-2xl font-bold text-primary'>
-                        {formatPrice(currentPlan.price)}
-                        {currentPlan.price > 0 && (
-                          <span className='text-sm text-muted-foreground'>
-                            /month
-                          </span>
-                        )}
-                      </div>
-                      <Badge
-                        variant={
-                          subscription.planId === 'free'
-                            ? 'secondary'
-                            : 'default'
-                        }
-                      >
-                        {subscription.status.toUpperCase()}
-                      </Badge>
-                    </div>
-                  </div>
-
-                  {subscription.status === 'trial' &&
-                    subscription.trialEndDate && (
-                      <div className='p-3 bg-blue-50 border border-blue-200 rounded-md mb-4'>
-                        <div className='flex items-center gap-2 text-blue-800'>
-                          <Gift className='w-4 h-4' />
-                          <span className='font-medium'>Free Trial Active</span>
-                        </div>
-                        <p className='text-sm text-blue-600 mt-1'>
-                          Your trial ends on{' '}
-                          {new Date(
-                            subscription.trialEndDate,
-                          ).toLocaleDateString()}
-                        </p>
-                      </div>
-                    )}
-
-                  {subscription.cancelAtPeriodEnd && (
-                    <div className='p-3 bg-yellow-50 border border-yellow-200 rounded-md mb-4'>
-                      <div className='flex items-center gap-2 text-yellow-800'>
-                        <Warning className='w-4 h-4' />
-                        <span className='font-medium'>
-                          Subscription Cancelled
-                        </span>
-                      </div>
-                      <p className='text-sm text-yellow-600 mt-1'>
-                        Your subscription will end on{' '}
-                        {subscription.endDate &&
-                          new Date(subscription.endDate).toLocaleDateString()}
-                      </p>
-                      <Button
-                        size='sm'
-                        variant='outline'
-                        className='mt-2'
-                        onClick={handleReactivate}
-                      >
-                        Reactivate Subscription
-                      </Button>
-                    </div>
-                  )}
-
-                  <div>
-                    <h4 className='font-medium mb-3'>What&apos;s included:</h4>
-                    <ul className='space-y-2'>
-                      {currentPlan.features.slice(0, 4).map((feature) => (
-                        <li
-                          key={feature}
-                          className='flex items-center gap-2 text-sm'
-                        >
-                          <CheckCircle className='w-4 h-4 text-green-500' />
-                          {feature}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  <div className='flex gap-3 mt-6'>
-                    {subscription.planId === 'free' ? (
-                      <Button onClick={() => setShowUpgradeDialog(true)}>
-                        Upgrade Plan
-                        <Crown className='w-4 h-4 ml-2' />
-                      </Button>
-                    ) : (
-                      <>
-                        {subscription.planId === 'advanced' && (
-                          <Button
-                            onClick={() => {
-                              setSelectedPlan('expert');
-                              setShowUpgradeDialog(true);
-                            }}
-                          >
-                            Upgrade to Expert
-                            <ArrowRight className='w-4 h-4 ml-2' />
-                          </Button>
-                        )}
-                        {!subscription.cancelAtPeriodEnd && (
-                          <Button
-                            variant='outline'
-                            onClick={() => setShowCancelDialog(true)}
-                          >
-                            Cancel Subscription
-                          </Button>
-                        )}
-                      </>
-                    )}
-                  </div>
-                </div>
-
-                {subscription.nextBillingDate &&
-                  subscription.status === 'active' && (
-                    <div className='p-3 border rounded-md'>
-                      <div className='flex items-center justify-between'>
-                        <div>
-                          <p className='font-medium'>Next Billing Date</p>
-                          <p className='text-sm text-muted-foreground'>
-                            {new Date(
-                              subscription.nextBillingDate,
-                            ).toLocaleDateString()}
-                          </p>
-                        </div>
-                        <div className='text-right'>
-                          <p className='font-medium'>
-                            {formatPrice(currentPlan.price)}
-                          </p>
-                          {subscription.paymentMethod && (
-                            <p className='text-sm text-muted-foreground'>
-                              •••• {subscription.paymentMethod.last4}
-                            </p>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-              </CardContent>
-            </Card> */}
-            {/* End of removed code for subscription removal */}
-
-            {/* Learning Statistics */}
-            <Card>
-              <CardHeader>
-                <CardTitle className='flex items-center gap-2'>
-                  <ChartBar className='w-5 h-5' />
-                  Learning Statistics
-                </CardTitle>
-                <CardDescription>Your learning progress and achievements</CardDescription>
-              </CardHeader>
-              <CardContent>
+            {/* Learning Statistics - Enhanced */}
+            <Card className='border-0 shadow-xl overflow-hidden'>
+              <div className='bg-gradient-to-r from-orange-400 via-pink-400 to-purple-400 p-1'>
+                <CardHeader className='bg-white'>
+                  <CardTitle className='flex items-center gap-2 text-xl'>
+                    <ChartBar className='w-6 h-6 text-orange-600' />
+                    Your Learning Journey
+                  </CardTitle>
+                  <CardDescription>Track your progress and achievements</CardDescription>
+                </CardHeader>
+              </div>
+              <CardContent className='pt-8'>
                 <div className='grid grid-cols-2 md:grid-cols-4 gap-6'>
-                  <div className='text-center'>
-                    <Trophy className='w-8 h-8 mx-auto mb-2 text-yellow-500' />
-                    <div className='text-2xl font-bold'>{learningStats.modulesCompleted}</div>
-                    <div className='text-sm text-muted-foreground'>Modules Completed</div>
-                  </div>
-                  <div className='text-center'>
-                    <Clock className='w-8 h-8 mx-auto mb-2 text-blue-500' />
-                    <div className='text-2xl font-bold'>
-                      {Math.round(learningStats.totalTimeSpent / 60)}h
+                  <div className='relative group'>
+                    <div className='absolute inset-0 bg-gradient-to-r from-yellow-400 to-orange-400 rounded-xl blur-lg group-hover:blur-xl transition-all duration-300 opacity-50' />
+                    <div className='relative text-center p-6 bg-white/90 backdrop-blur-sm rounded-xl shadow-lg transform hover:scale-105 transition-all duration-300'>
+                      <Trophy className='w-10 h-10 mx-auto mb-3 text-yellow-600' />
+                      <div className='text-3xl font-bold text-gray-800'>
+                        {learningStats.modulesCompleted}
+                      </div>
+                      <div className='text-sm font-medium text-gray-600'>Modules Completed</div>
                     </div>
-                    <div className='text-sm text-muted-foreground'>Hours Learned</div>
                   </div>
-                  <div className='text-center'>
-                    <Fire className='w-8 h-8 mx-auto mb-2 text-orange-500' />
-                    <div className='text-2xl font-bold'>{learningStats.streak.currentStreak}</div>
-                    <div className='text-sm text-muted-foreground'>Day Streak</div>
-                  </div>
-                  <div className='text-center'>
-                    <Star className='w-8 h-8 mx-auto mb-2 text-purple-500' />
-                    <div className='text-2xl font-bold'>
-                      {learningStats.averageRating.toFixed(1)}
+
+                  <div className='relative group'>
+                    <div className='absolute inset-0 bg-gradient-to-r from-blue-400 to-purple-400 rounded-xl blur-lg group-hover:blur-xl transition-all duration-300 opacity-50' />
+                    <div className='relative text-center p-6 bg-white/90 backdrop-blur-sm rounded-xl shadow-lg transform hover:scale-105 transition-all duration-300'>
+                      <Clock className='w-10 h-10 mx-auto mb-3 text-blue-600' />
+                      <div className='text-3xl font-bold text-gray-800'>
+                        {Math.round(learningStats.totalTimeSpent / 60)}h
+                      </div>
+                      <div className='text-sm font-medium text-gray-600'>Hours Learned</div>
                     </div>
-                    <div className='text-sm text-muted-foreground'>Avg Rating</div>
+                  </div>
+
+                  <div className='relative group'>
+                    <div className='absolute inset-0 bg-gradient-to-r from-orange-400 to-red-400 rounded-xl blur-lg group-hover:blur-xl transition-all duration-300 opacity-50' />
+                    <div className='relative text-center p-6 bg-white/90 backdrop-blur-sm rounded-xl shadow-lg transform hover:scale-105 transition-all duration-300'>
+                      <Fire className='w-10 h-10 mx-auto mb-3 text-orange-600' />
+                      <div className='text-3xl font-bold text-gray-800'>
+                        {learningStats.streak.currentStreak}
+                      </div>
+                      <div className='text-sm font-medium text-gray-600'>Day Streak</div>
+                    </div>
+                  </div>
+
+                  <div className='relative group'>
+                    <div className='absolute inset-0 bg-gradient-to-r from-purple-400 to-pink-400 rounded-xl blur-lg group-hover:blur-xl transition-all duration-300 opacity-50' />
+                    <div className='relative text-center p-6 bg-white/90 backdrop-blur-sm rounded-xl shadow-lg transform hover:scale-105 transition-all duration-300'>
+                      <Star className='w-10 h-10 mx-auto mb-3 text-purple-600' />
+                      <div className='text-3xl font-bold text-gray-800'>
+                        {learningStats.averageRating.toFixed(1)}
+                      </div>
+                      <div className='text-sm font-medium text-gray-600'>Avg Rating</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Achievement Badges */}
+                <div className='mt-8 p-6 bg-gradient-to-r from-purple-50 to-pink-50 rounded-xl'>
+                  <h3 className='font-semibold text-gray-800 mb-4 flex items-center gap-2'>
+                    <Medal className='w-5 h-5 text-purple-600' />
+                    Recent Achievements
+                  </h3>
+                  <div className='flex flex-wrap gap-3'>
+                    <Badge className='px-4 py-2 bg-gradient-to-r from-yellow-100 to-orange-100 text-orange-800 border-orange-200'>
+                      🏆 First Module Complete
+                    </Badge>
+                    <Badge className='px-4 py-2 bg-gradient-to-r from-blue-100 to-purple-100 text-purple-800 border-purple-200'>
+                      ⚡ Quick Learner
+                    </Badge>
+                    <Badge className='px-4 py-2 bg-gradient-to-r from-green-100 to-teal-100 text-teal-800 border-teal-200'>
+                      🔥 7-Day Streak
+                    </Badge>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Billing History */}
+            {/* Billing History - Enhanced */}
             {invoices.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle className='flex items-center gap-2'>
-                    <Download className='w-5 h-5' />
+              <Card className='border-0 shadow-xl'>
+                <CardHeader className='bg-gradient-to-r from-green-50 to-teal-50'>
+                  <CardTitle className='flex items-center gap-2 text-xl'>
+                    <Download className='w-6 h-6 text-teal-600' />
                     Billing History
                   </CardTitle>
                   <CardDescription>Download your past invoices and receipts</CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className='pt-6'>
                   <div className='space-y-3'>
                     {invoices.slice(0, 5).map((invoice) => (
                       <div
                         key={invoice.id}
-                        className='flex items-center justify-between p-3 border rounded-md'
+                        className='flex items-center justify-between p-4 bg-gradient-to-r from-white to-green-50 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200'
                       >
                         <div>
-                          <p className='font-medium'>{invoice.planName}</p>
-                          <p className='text-sm text-muted-foreground'>
+                          <p className='font-semibold text-gray-800'>{invoice.planName}</p>
+                          <p className='text-sm text-gray-600'>
                             {new Date(invoice.date).toLocaleDateString()}
                           </p>
                         </div>
                         <div className='flex items-center gap-3'>
-                          <Badge variant={invoice.status === 'paid' ? 'secondary' : 'destructive'}>
+                          <Badge
+                            variant='secondary'
+                            className={
+                              invoice.status === 'paid'
+                                ? 'bg-green-100 text-green-800'
+                                : 'bg-red-100 text-red-800'
+                            }
+                          >
                             {invoice.status}
                           </Badge>
-                          <span className='font-medium'>{formatPrice(invoice.amount)}</span>
-                          <Button size='sm' variant='outline'>
+                          <span className='font-bold text-gray-800'>
+                            {formatPrice(invoice.amount)}
+                          </span>
+                          <Button size='sm' variant='outline' className='hover:bg-teal-50'>
                             <Download className='w-4 h-4' />
                           </Button>
                         </div>
@@ -457,20 +311,20 @@ function AccountPageComponent(): ReactElement {
             )}
           </div>
 
-          {/* Sidebar */}
+          {/* Sidebar - Enhanced */}
           <div className='space-y-6'>
-            {/* Quick Actions */}
-            <Card>
+            {/* Quick Actions - Enhanced */}
+            <Card className='border-0 shadow-xl bg-gradient-to-br from-purple-50 to-pink-50'>
               <CardHeader>
                 <CardTitle className='flex items-center gap-2'>
-                  <Gear className='w-5 h-5' />
+                  <Lightning className='w-5 h-5 text-purple-600' />
                   Quick Actions
                 </CardTitle>
               </CardHeader>
               <CardContent className='space-y-3'>
                 <Button
                   variant='default'
-                  className='w-full justify-start'
+                  className='w-full justify-start bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200'
                   onClick={() => handleNavigation('dashboard')}
                 >
                   <ChartBar className='w-4 h-4 mr-2' />
@@ -478,189 +332,100 @@ function AccountPageComponent(): ReactElement {
                 </Button>
                 <Button
                   variant='default'
-                  className='w-full justify-start'
+                  className='w-full justify-start bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200'
                   onClick={() => handleNavigation('courses')}
                 >
-                  <Trophy className='w-4 h-4 mr-2' />
+                  <Brain className='w-4 h-4 mr-2' />
                   Browse Courses
                 </Button>
-                {/* Start of removed code for subscription removal */}
-                {/* {subscription.planId === 'free' && (
-                  <Button
-                    className='w-full justify-start'
-                    onClick={() => setShowUpgradeDialog(true)}
-                  >
-                    <Crown className='w-4 h-4 mr-2' />
-                    Upgrade Plan
-                  </Button>
-                )} */}
-                {/* End of removed code for subscription removal */}
               </CardContent>
             </Card>
 
-            {/* Support */}
-            <Card>
+            {/* Support - Enhanced */}
+            <Card className='border-0 shadow-xl bg-gradient-to-br from-teal-50 to-cyan-50'>
               <CardHeader>
                 <CardTitle className='flex items-center gap-2'>
-                  <Shield className='w-5 h-5' />
+                  <Heart className='w-5 h-5 text-teal-600' />
                   Support & Help
                 </CardTitle>
               </CardHeader>
               <CardContent className='space-y-4'>
-                <p className='text-sm text-muted-foreground'>
-                  Need help with your account or have questions about our courses?
-                </p>
-                <div className='space-y-2'>
+                <div className='p-4 bg-white/80 backdrop-blur-sm rounded-lg'>
+                  <p className='text-sm text-gray-700 leading-relaxed'>
+                    Our friendly support team is here to help you succeed in your AI learning
+                    journey!
+                  </p>
+                </div>
+                <Button
+                  variant='default'
+                  className='w-full bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200'
+                  onClick={() => setShowEmailSupportDialog(true)}
+                >
+                  <EnvelopeSimple className='w-4 h-4 mr-2' />
+                  Contact Support
+                </Button>
+              </CardContent>
+            </Card>
+
+            {/* Account Security - Enhanced */}
+            <Card className='border-0 shadow-xl bg-gradient-to-br from-red-50 to-orange-50'>
+              <CardHeader>
+                <CardTitle className='flex items-center gap-2'>
+                  <Shield className='w-5 h-5 text-red-600' />
+                  Account Security
+                </CardTitle>
+              </CardHeader>
+              <CardContent className='space-y-4'>
+                <div className='p-4 bg-white/80 backdrop-blur-sm rounded-lg'>
+                  <div className='flex items-center justify-between mb-3'>
+                    <span className='text-sm font-semibold text-gray-700 flex items-center gap-2'>
+                      <Lock className='w-4 h-4 text-red-500' />
+                      Password Protection
+                    </span>
+                    <Badge className='bg-green-100 text-green-800'>Secure</Badge>
+                  </div>
                   <Button
-                    variant='default'
+                    variant='outline'
                     size='sm'
-                    className='w-full'
-                    onClick={() => setShowEmailSupportDialog(true)}
+                    className='w-full hover:bg-orange-50 border-orange-200'
+                    onClick={(): void => setShowPasswordDialog(true)}
                   >
-                    <EnvelopeSimple className='w-4 h-4 mr-2' />
-                    Email Support
+                    Change Password
                   </Button>
+                </div>
+
+                <Separator className='bg-orange-100' />
+
+                <div className='p-4 bg-white/80 backdrop-blur-sm rounded-lg'>
+                  <div className='text-sm font-semibold text-gray-700 mb-1'>Last Login</div>
+                  <div className='text-sm text-gray-600'>
+                    {new Date().toLocaleDateString()} at {new Date().toLocaleTimeString()}
+                  </div>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Account Security */}
-            <Card>
+            {/* Learning Tips - Enhanced */}
+            <Card className='border-0 shadow-xl bg-gradient-to-br from-yellow-50 to-orange-50'>
               <CardHeader>
                 <CardTitle className='flex items-center gap-2'>
-                  <Shield className='w-5 h-5' />
-                  Account Security
+                  <Sparkle className='w-5 h-5 text-yellow-600' />
+                  Account Tips
                 </CardTitle>
               </CardHeader>
-              <CardContent className='space-y-3'>
-                <div className='flex items-center justify-between'>
-                  <span className='text-sm flex items-center gap-2'>
-                    <Lock className='w-4 h-4' />
-                    Password
-                  </span>
-                  <Button
-                    variant='default'
-                    size='sm'
-                    onClick={(): void => setShowPasswordDialog(true)}
-                  >
-                    Change
-                  </Button>
-                </div>
-                <Separator />
-                <div className='text-sm text-muted-foreground'>
-                  Last login: {new Date().toLocaleDateString()}
+              <CardContent>
+                <div className='p-4 bg-white/80 backdrop-blur-sm rounded-lg'>
+                  <p className='text-sm text-gray-700 leading-relaxed'>
+                    <span className='text-2xl mr-2'>💡</span>
+                    <strong className='text-yellow-700'>Pro tip:</strong> Keep your profile updated
+                    and check back regularly for new features and courses tailored to your learning
+                    style!
+                  </p>
                 </div>
               </CardContent>
             </Card>
           </div>
         </div>
-
-        {/* Start of removed code for subscription removal - Upgrade and Cancel Dialogs */}
-        {/* <Dialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog}>
-          <DialogContent className='max-w-2xl'>
-            <DialogHeader>
-              <DialogTitle>Upgrade Your Learning Experience</DialogTitle>
-              <DialogDescription>
-                Choose a plan that fits your learning goals and unlock premium
-                content
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className='grid md:grid-cols-2 gap-4'>
-              {subscriptionPlans
-                .filter((plan) => plan.id !== 'free')
-                .map((plan) => (
-                  <Card
-                    key={plan.id}
-                    className={`cursor-pointer transition-colors ${
-                      selectedPlan === plan.id ? 'ring-2 ring-primary' : ''
-                    } ${plan.popular ? 'border-primary' : ''}`}
-                    onClick={() =>
-                      setSelectedPlan(plan.id as 'advanced' | 'expert')
-                    }
-                  >
-                    {plan.popular && (
-                      <Badge className='absolute -top-3 left-1/2 transform -translate-x-1/2'>
-                        Most Popular
-                      </Badge>
-                    )}
-                    <CardHeader className='text-center'>
-                      <CardTitle>{plan.name}</CardTitle>
-                      <div className='text-3xl font-bold text-primary'>
-                        {formatPrice(plan.price)}
-                        <span className='text-lg text-muted-foreground'>
-                          /month
-                        </span>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <ul className='space-y-2'>
-                        {plan.features.slice(0, 4).map((feature) => (
-                          <li
-                            key={feature}
-                            className='flex items-center gap-2 text-sm'
-                          >
-                            <CheckCircle className='w-4 h-4 text-green-500' />
-                            {feature}
-                          </li>
-                        ))}
-                      </ul>
-                    </CardContent>
-                  </Card>
-                ))}
-            </div>
-
-            <div className='flex justify-end gap-3'>
-              <Button
-                variant='outline'
-                onClick={() => setShowUpgradeDialog(false)}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={() => void handleUpgrade(selectedPlan)}
-                disabled={isProcessingPayment}
-              >
-                {isProcessingPayment ? 'Processing...' : 'Start Free Trial'}
-                <Crown className='w-4 h-4 ml-2' />
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-
-        <Dialog open={showCancelDialog} onOpenChange={setShowCancelDialog}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Cancel Subscription</DialogTitle>
-              <DialogDescription>
-                Are you sure you want to cancel your subscription? You&apos;ll
-                lose access to premium content at the end of your billing
-                period.
-              </DialogDescription>
-            </DialogHeader>
-
-            <div className='flex justify-end gap-3'>
-              <Button
-                variant='outline'
-                onClick={() => setShowCancelDialog(false)}
-              >
-                Keep Subscription
-              </Button>
-              <Button variant='destructive' onClick={handleCancelSubscription}>
-                <X className='w-4 h-4 mr-2' />
-                Cancel Subscription
-              </Button>
-            </div>
-          </DialogContent>
-
-        </Dialog>
-
-        {/* Password Change Dialog */}
-        {/* <PasswordChangeDialog
-          open={showPasswordDialog}
-          onOpenChange={setShowPasswordDialog}
-        /> */}
-        {/* End of removed code for subscription removal */}
 
         {/* Email Support Dialog */}
         <EmailSupportDialog

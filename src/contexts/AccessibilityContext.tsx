@@ -3,10 +3,8 @@ import { createContext, useContext, useState, useEffect } from 'react';
 
 interface AccessibilityContextType {
   fontSize: 'small' | 'normal' | 'large';
-  isDarkMode: boolean;
   increaseFontSize: () => void;
   decreaseFontSize: () => void;
-  toggleDarkMode: () => void;
   speakText: (text: string) => void;
   stopSpeaking: () => void;
   isSpeaking: boolean;
@@ -16,7 +14,6 @@ const AccessibilityContext = createContext<AccessibilityContextType | undefined>
 
 export function AccessibilityProvider({ children }: { children: ReactNode }): JSX.Element {
   const [fontSize, setFontSize] = useState<'small' | 'normal' | 'large'>('normal');
-  const [isDarkMode, setIsDarkMode] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
 
   useEffect(() => {
@@ -24,11 +21,8 @@ export function AccessibilityProvider({ children }: { children: ReactNode }): JS
     const savedFontSize = (
       typeof window !== 'undefined' ? window.localStorage.getItem('fontSize') : null
     ) as 'small' | 'normal' | 'large';
-    const savedDarkMode =
-      (typeof window !== 'undefined' ? window.localStorage.getItem('darkMode') : null) === 'true';
 
     if (savedFontSize) setFontSize(savedFontSize);
-    if (savedDarkMode) setIsDarkMode(savedDarkMode);
   }, []);
 
   useEffect(() => {
@@ -44,20 +38,6 @@ export function AccessibilityProvider({ children }: { children: ReactNode }): JS
     }
   }, [fontSize]);
 
-  useEffect(() => {
-    // Apply dark mode class to body
-    if (typeof document !== 'undefined') {
-      if (isDarkMode) {
-        document.body.classList.add('dark');
-      } else {
-        document.body.classList.remove('dark');
-      }
-    }
-    if (typeof window !== 'undefined') {
-      window.localStorage.setItem('darkMode', isDarkMode.toString());
-    }
-  }, [isDarkMode]);
-
   const increaseFontSize = (): void => {
     setFontSize((current) => {
       if (current === 'small') return 'normal';
@@ -72,10 +52,6 @@ export function AccessibilityProvider({ children }: { children: ReactNode }): JS
       if (current === 'normal') return 'small';
       return 'small';
     });
-  };
-
-  const toggleDarkMode = (): void => {
-    setIsDarkMode(!isDarkMode);
   };
 
   const speakText = (text: string): void => {
@@ -107,10 +83,8 @@ export function AccessibilityProvider({ children }: { children: ReactNode }): JS
     <AccessibilityContext.Provider
       value={{
         fontSize,
-        isDarkMode,
         increaseFontSize,
         decreaseFontSize,
-        toggleDarkMode,
         speakText,
         stopSpeaking,
         isSpeaking,

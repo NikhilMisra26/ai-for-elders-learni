@@ -80,7 +80,7 @@ export function BrandName({ variant, size = 'md', className }: BrandNameProps): 
         className={cn(
           sizeClasses[size],
           'font-bold inline-flex items-center leading-none',
-          'text-gray-900 dark:text-white',
+          'text-gray-900 ',
           className,
         )}
         aria-label='Discover 50 AI'
@@ -100,28 +100,23 @@ export function BrandName({ variant, size = 'md', className }: BrandNameProps): 
     );
   }
 
-  // Short variant: "DISCOVER 50"
+  // Short variant: "DISCOVER 50 AI"
   return (
     <span
-      className={cn(
-        sizeClasses[size],
-        'font-bold inline-flex items-center',
-        'text-gray-900 dark:text-white',
-        className,
-      )}
-      aria-label='Discover 50'
+      className={cn('font-bold inline-flex items-center', className)}
+      aria-label='Discover 50 AI'
       role='text'
     >
-      <span className='text-black'>DISC</span>
+      <span>DISC</span>
       <span
         className='font-bold bg-gradient-to-r from-[#FF9A9E] via-[#FBC2EB] to-[#A18CD1] bg-clip-text text-transparent'
         style={rainbowTextStyle}
         role='text'
-        aria-label='50'
+        aria-label='Over 50'
       >
         OVER 50
       </span>
-      <span className='text-black'>&nbsp;AI</span>
+      <span>&nbsp;AI</span>
     </span>
   );
 }

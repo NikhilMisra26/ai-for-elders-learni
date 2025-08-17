@@ -188,7 +188,7 @@ export function EmailSupportDialog({ open, onOpenChange }: EmailSupportDialogPro
                       characterCount > MAX_MESSAGE_LENGTH
                         ? 'text-destructive font-medium'
                         : characterCount > MAX_MESSAGE_LENGTH * 0.9
-                          ? 'text-yellow-600 dark:text-yellow-500'
+                          ? 'text-yellow-600 '
                           : 'text-muted-foreground'
                     }
                     aria-live='polite'
@@ -242,10 +242,10 @@ export function EmailSupportDialog({ open, onOpenChange }: EmailSupportDialogPro
           <>
             <div className='py-8 text-center' role='status' aria-live='polite'>
               <div
-                className='mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100 dark:bg-green-900/30'
+                className='mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100 '
                 aria-hidden='true'
               >
-                <CheckCircle className='h-8 w-8 text-green-600 dark:text-green-500' />
+                <CheckCircle className='h-8 w-8 text-green-600 ' />
               </div>
               <h3 className='text-lg font-semibold mb-2'>Message Sent!</h3>
               <p className='text-base text-muted-foreground mb-4'>Thank you for contacting us!</p>
