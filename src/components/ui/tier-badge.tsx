@@ -53,27 +53,28 @@ export function TierBadge({
   showIcon = true,
   label,
 }: TierBadgeProps): ReactElement {
-  const Icon = iconMap[tier as 'free' | 'advanced' | 'expert'];
-  const displayLabel = label ?? tier.toUpperCase();
+  const safeTier = (tier ?? 'free') as 'free' | 'advanced' | 'expert';
+  const Icon = iconMap[safeTier];
+  const displayLabel = label ?? safeTier.toUpperCase();
 
   return (
     <div
-      className={cn(tierBadgeVariants({ tier, size, animated }), className)}
+  className={cn(tierBadgeVariants({ tier: safeTier, size, animated }), className)}
       role='status'
-      aria-label={`${tier} tier`}
+  aria-label={`${safeTier} tier`}
     >
       {showIcon && (
         <Icon
           className={cn(
             'flex-shrink-0',
             size === 'sm' ? 'w-3 h-3' : size === 'lg' ? 'w-5 h-5' : 'w-4 h-4',
-            tier === 'expert' && 'animate-pulse',
+    safeTier === 'expert' && 'animate-pulse',
           )}
           weight='fill'
         />
       )}
       <span>{displayLabel}</span>
-      {tier === 'expert' && (
+  {safeTier === 'expert' && (
         <Sparkle
           className={cn(
             'flex-shrink-0',
