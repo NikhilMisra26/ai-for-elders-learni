@@ -969,7 +969,7 @@ export function ModulePage({ courseType: propCourseType }: ModulePageProps): Rea
               <CardContent>
                 <nav aria-label='Course modules'>
                   <ul className='space-y-2'>
-                    {course.modules.map((mod, index) => {
+                    {course.modules.map((mod) => {
                       const modCompleted = isModuleCompleted(courseId, mod.id);
                       const isCurrent = mod.id === moduleId;
                       const hasPartsToShow = mod.parts && mod.parts.length > 0;
@@ -1016,9 +1016,7 @@ export function ModulePage({ courseType: propCourseType }: ModulePageProps): Rea
                                 ) : null}
                               </div>
                               <div className='flex-1 min-w-0'>
-                                <p className='font-medium text-sm truncate'>
-                                  {index + 1}. {mod.title}
-                                </p>
+                                <p className='font-medium text-sm truncate'>{mod.title}</p>
                                 <p className='text-xs text-muted-foreground mt-1'>
                                   {mod.estimatedTime} min
                                 </p>
@@ -1029,7 +1027,7 @@ export function ModulePage({ courseType: propCourseType }: ModulePageProps): Rea
                           {/* Parts subsection */}
                           {hasPartsToShow && isExpanded && mod.parts && (
                             <div className='ml-6 mt-2 space-y-1 transition-all duration-200 ease-in-out'>
-                              {mod.parts.map((part, partIndex) => {
+                              {mod.parts.map((part) => {
                                 const isCurrentPart = currentPart?.id === part.id;
                                 const isPartCompleted = part.isCompleted ?? false;
 
@@ -1057,7 +1055,7 @@ export function ModulePage({ courseType: propCourseType }: ModulePageProps): Rea
                                       </div>
                                       <div className='flex-1 min-w-0'>
                                         <p className='font-medium text-xs truncate'>
-                                          {index + 1}.{partIndex + 1} {part.title}
+                                          {part.title}
                                           {isCurrentPart && ' [current]'}
                                         </p>
                                         <p className='text-xs text-muted-foreground mt-0.5'>
