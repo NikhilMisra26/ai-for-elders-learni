@@ -9,11 +9,11 @@ const tierBadgeVariants = cva(
   {
     variants: {
       tier: {
-        free: 'bg-gradient-to-r from-orange-100/70 to-amber-100/70 text-orange-900 border-2 border-orange-300 hover:shadow-md hover:shadow-orange-200/50 dark:from-orange-900/30 dark:to-amber-900/30 dark:text-orange-100 dark:border-orange-700',
+        free: 'bg-gradient-to-r from-orange-100/70 to-amber-100/70 text-orange-900 border-2 border-orange-300 hover:shadow-md hover:shadow-orange-200/50    ',
         advanced:
-          'bg-gradient-to-r from-purple-100/70 to-indigo-100/70 text-purple-900 border-2 border-purple-300 hover:shadow-md hover:shadow-purple-200/50 dark:from-purple-900/30 dark:to-indigo-900/30 dark:text-purple-100 dark:border-purple-700',
+          'bg-gradient-to-r from-purple-100/70 to-indigo-100/70 text-purple-900 border-2 border-purple-300 hover:shadow-md hover:shadow-purple-200/50    ',
         expert:
-          'bg-gradient-to-r from-yellow-100/70 via-amber-100/70 to-yellow-100/70 text-yellow-950 border-2 border-yellow-400 hover:shadow-lg hover:shadow-yellow-300/50 animate-shimmer dark:from-yellow-900/30 dark:via-amber-900/30 dark:to-yellow-900/30 dark:text-yellow-100 dark:border-yellow-600',
+          'bg-gradient-to-r from-yellow-100/70 via-amber-100/70 to-yellow-100/70 text-yellow-950 border-2 border-yellow-400 hover:shadow-lg hover:shadow-yellow-300/50 animate-shimmer     ',
       },
       size: {
         sm: 'text-xs px-2 py-1',
@@ -53,28 +53,28 @@ export function TierBadge({
   showIcon = true,
   label,
 }: TierBadgeProps): ReactElement {
-  const safeTier = (tier ?? 'free') as 'free' | 'advanced' | 'expert';
+  const safeTier = tier ?? 'free';
   const Icon = iconMap[safeTier];
   const displayLabel = label ?? safeTier.toUpperCase();
 
   return (
     <div
-  className={cn(tierBadgeVariants({ tier: safeTier, size, animated }), className)}
+      className={cn(tierBadgeVariants({ tier: safeTier, size, animated }), className)}
       role='status'
-  aria-label={`${safeTier} tier`}
+      aria-label={`${safeTier} tier`}
     >
       {showIcon && (
         <Icon
           className={cn(
             'flex-shrink-0',
             size === 'sm' ? 'w-3 h-3' : size === 'lg' ? 'w-5 h-5' : 'w-4 h-4',
-    safeTier === 'expert' && 'animate-pulse',
+            safeTier === 'expert' && 'animate-pulse',
           )}
           weight='fill'
         />
       )}
       <span>{displayLabel}</span>
-  {safeTier === 'expert' && (
+      {safeTier === 'expert' && (
         <Sparkle
           className={cn(
             'flex-shrink-0',

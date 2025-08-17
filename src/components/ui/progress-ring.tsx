@@ -72,7 +72,7 @@ export function ProgressRing({
           cy={size / 2}
           r={radius}
           strokeWidth={strokeWidth}
-          className='stroke-gray-200 dark:stroke-gray-700'
+          className='stroke-gray-200 '
           fill='none'
         />
 
@@ -96,7 +96,7 @@ export function ProgressRing({
             cx={size / 2 + radius * Math.cos((angle * Math.PI) / 180)}
             cy={size / 2 + radius * Math.sin((angle * Math.PI) / 180)}
             r={2}
-            className='fill-gray-300 dark:fill-gray-600'
+            className='fill-gray-300 '
           />
         ))}
       </svg>
@@ -149,7 +149,7 @@ export function ProgressRingMini({
           cy={size / 2}
           r={radius}
           strokeWidth={strokeWidth}
-          className='stroke-gray-200 dark:stroke-gray-700'
+          className='stroke-gray-200 '
           fill='none'
         />
         <circle

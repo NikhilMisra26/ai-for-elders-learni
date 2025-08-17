@@ -83,7 +83,7 @@ function HomePageComponent({ onAuthClick }: HomePageProps): ReactElement {
   );
 
   // Backward-compat: some older references may still expect `heroFeatures`
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+
   const heroFeatures = trustFeatures;
 
   const features = useMemo(
@@ -138,7 +138,7 @@ function HomePageComponent({ onAuthClick }: HomePageProps): ReactElement {
   const formatCourseTier = (tier: string): string => {
     switch (tier) {
       case 'free':
-        return 'Free Course';
+        return 'Basic Course';
       case 'advanced':
         return 'Advanced Course';
       case 'expert':

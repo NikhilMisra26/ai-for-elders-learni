@@ -80,7 +80,7 @@ export function BrandName({ variant, size = 'md', className }: BrandNameProps): 
         className={cn(
           sizeClasses[size],
           'font-bold inline-flex items-center leading-none',
-          'text-gray-900 dark:text-white',
+          'text-gray-900 ',
           className,
         )}
         aria-label='Discover 50 AI'
@@ -103,10 +103,7 @@ export function BrandName({ variant, size = 'md', className }: BrandNameProps): 
   // Short variant: "DISCOVER 50 AI"
   return (
     <span
-      className={cn(
-        'font-bold inline-flex items-center',
-        className
-      )}
+      className={cn('font-bold inline-flex items-center', className)}
       aria-label='Discover 50 AI'
       role='text'
     >

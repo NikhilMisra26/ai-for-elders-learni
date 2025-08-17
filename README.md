@@ -39,7 +39,7 @@
 ### 🎨 **Enhanced Visual Design**
 
 - **Expanded Color Palette**: Vibrant orange, green, purple, and yellow color schemes for visual engagement
-- **Tier-Based Visual Differentiation**: 
+- **Tier-Based Visual Differentiation**:
   - Free tier: Orange theme with warm, inviting colors
   - Advanced tier: Purple gradient with premium feel
   - Expert tier: Gold/yellow accents with exclusive appearance

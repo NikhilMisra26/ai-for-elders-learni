@@ -172,7 +172,7 @@ const defaultTheme = {
       },
     },
     backgroundSize: {
-      'shimmer': '200% 100%',
+      shimmer: '200% 100%',
     },
   },
   spacing: {
