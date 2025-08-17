@@ -16,6 +16,7 @@ interface ModuleFeedbackRequest {
   courseId: string;
   moduleTitle: string;
   rating?: number;
+  honeypot?: string; // Honeypot field for spam detection
 }
 
 // CORS headers for your domain
@@ -283,6 +284,16 @@ Deno.serve(async (req: Request) => {
       });
     }
 
+    // Check honeypot field for spam detection
+    if (body.honeypot && body.honeypot.length > 0) {
+      console.warn('Honeypot triggered - potential spam detected');
+      // Silently reject but return success to not alert spammers
+      return new Response(JSON.stringify({ success: true, feedbackId: 'spam-rejected' }), {
+        status: 200,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
     // Comprehensive message validation
     if (!body.message || typeof body.message !== 'string') {
       return new Response(JSON.stringify({ success: false, error: 'Message is required' }), {
@@ -295,6 +306,18 @@ Deno.serve(async (req: Request) => {
     if (!body.moduleId || !body.courseId || !body.moduleTitle) {
       return new Response(
         JSON.stringify({ success: false, error: 'Module information is required' }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        },
+      );
+    }
+
+    // Validate UUID format for moduleId and courseId
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    if (!uuidRegex.test(body.moduleId) || !uuidRegex.test(body.courseId)) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Invalid module or course ID format' }),
         {
           status: 400,
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },

@@ -17,7 +17,7 @@ import {
   Sparkle,
   Brain,
   Lightning,
-  //  Medal, removed for subscription removal
+  //  Medal, // Subscription feature - temporarily disabled, will be re-enabled later
 } from '@phosphor-icons/react';
 
 import { AuthForm } from './AuthForm';
@@ -88,11 +88,11 @@ function DashboardPageComponent(): ReactElement {
     <div className='min-h-screen'>
       {/* Hero Section with Gradient */}
       <section className='relative overflow-hidden bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50 py-16 px-4 sm:px-6 lg:px-8'>
-        {/* Animated Background Elements */}
+        {/* Animated Background Elements - optimized for performance */}
         <div className='absolute inset-0 opacity-40 pointer-events-none'>
-          <div className='absolute top-20 left-20 w-32 h-32 bg-gradient-to-br from-purple-300 to-pink-300 rounded-full blur-2xl animate-pulse' />
-          <div className='absolute top-40 right-40 w-40 h-40 bg-gradient-to-br from-orange-300 to-yellow-300 rounded-full blur-2xl animate-pulse delay-1000' />
-          <div className='absolute bottom-20 left-1/3 w-36 h-36 bg-gradient-to-br from-pink-300 to-purple-300 rounded-full blur-2xl animate-pulse delay-2000' />
+          <div className='absolute top-20 left-20 w-32 h-32 bg-gradient-to-br from-purple-300 to-pink-300 rounded-full blur-2xl animate-pulse will-change-transform' />
+          <div className='absolute top-40 right-40 w-40 h-40 bg-gradient-to-br from-orange-300 to-yellow-300 rounded-full blur-2xl animate-pulse delay-1000 will-change-transform' />
+          <div className='absolute bottom-20 left-1/3 w-36 h-36 bg-gradient-to-br from-pink-300 to-purple-300 rounded-full blur-2xl animate-pulse delay-2000 will-change-transform' />
         </div>
 
         <div className='relative max-w-7xl mx-auto'>
