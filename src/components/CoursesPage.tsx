@@ -24,6 +24,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { TierBadge } from '@/components/ui/tier-badge';
+import { ProgressRingMini } from '@/components/ui/progress-ring';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProgress } from '@/lib/progressTracking';
 import { useSubscription } from '@/lib/subscription';
@@ -151,31 +153,37 @@ function CoursesPageComponent({ onAuthClick }: CoursesPageProps): ReactElement {
         {/* Quick Stats for Logged In Users */}
         {user && (
           <div className='grid md:grid-cols-4 gap-4 mb-8'>
-            <Card>
+            <Card className='bg-gradient-to-br from-yellow-50/60 to-amber-50/40 dark:from-yellow-950/30 dark:to-amber-950/20 border-2 border-gray-800 dark:border-gray-200 hover:shadow-lg transition-all duration-200 shadow-sm'>
               <CardContent className='p-4 text-center'>
-                <Trophy className='w-8 h-8 mx-auto mb-2 text-yellow-500' />
-                <div className='text-2xl font-bold'>{dashboardSummary.completedModules}</div>
+                <Trophy className='w-8 h-8 mx-auto mb-2 text-yellow-500 animate-pulse' />
+                <div className='text-2xl font-bold text-foreground'>
+                  {dashboardSummary.completedModules}
+                </div>
                 <div className='text-sm text-muted-foreground'>Modules Completed</div>
               </CardContent>
             </Card>
-            <Card>
+            <Card className='bg-gradient-to-br from-blue-50/60 to-cyan-50/40 dark:from-blue-950/30 dark:to-cyan-950/20 border-2 border-gray-800 dark:border-gray-200 hover:shadow-lg transition-all duration-200 shadow-sm'>
               <CardContent className='p-4 text-center'>
-                <BookOpen className='w-8 h-8 mx-auto mb-2 text-primary' />
-                <div className='text-2xl font-bold'>{dashboardSummary.startedCourses}</div>
+                <BookOpen className='w-8 h-8 mx-auto mb-2 text-blue-500' />
+                <div className='text-2xl font-bold text-foreground'>
+                  {dashboardSummary.startedCourses}
+                </div>
                 <div className='text-sm text-muted-foreground'>Courses Started</div>
               </CardContent>
             </Card>
-            <Card>
+            <Card className='bg-gradient-to-br from-green-50/60 to-emerald-50/40 dark:from-green-950/30 dark:to-emerald-950/20 border-2 border-gray-800 dark:border-gray-200 hover:shadow-lg transition-all duration-200 shadow-sm'>
               <CardContent className='p-4 text-center'>
                 <ChartBar className='w-8 h-8 mx-auto mb-2 text-green-500' />
-                <div className='text-2xl font-bold'>{dashboardSummary.currentStreak}</div>
+                <div className='text-2xl font-bold text-foreground'>
+                  {dashboardSummary.currentStreak}
+                </div>
                 <div className='text-sm text-muted-foreground'>Day Streak</div>
               </CardContent>
             </Card>
-            <Card>
+            <Card className='bg-gradient-to-br from-purple-50/60 to-indigo-50/40 dark:from-purple-950/30 dark:to-indigo-950/20 border-2 border-gray-800 dark:border-gray-200 hover:shadow-lg transition-all duration-200 shadow-sm'>
               <CardContent className='p-4 text-center'>
                 <Medal className='w-8 h-8 mx-auto mb-2 text-purple-500' />
-                <div className='text-2xl font-bold'>
+                <div className='text-2xl font-bold text-foreground'>
                   {Math.round(dashboardSummary.weeklyProgress / 60)}h
                 </div>
                 <div className='text-sm text-muted-foreground'>This Week</div>
@@ -310,10 +318,18 @@ function CoursesPageComponent({ onAuthClick }: CoursesPageProps): ReactElement {
               course.tier === 'free' ||
               (course.tier === 'advanced' && subscription.planId === 'free');
 
+            const tierColors = {
+              free: 'from-orange-50/50 to-orange-50/30 dark:from-orange-950/20 dark:to-orange-950/10',
+              advanced:
+                'from-purple-50/50 to-purple-50/30 dark:from-purple-950/20 dark:to-purple-950/10',
+              expert:
+                'from-yellow-50/50 via-amber-50/40 to-yellow-50/50 dark:from-yellow-950/20 dark:via-amber-950/15 dark:to-yellow-950/20',
+            };
+
             return (
               <Card
                 key={course.id}
-                className={`overflow-hidden ${isRecommended ? 'ring-2 ring-primary/20' : ''}`}
+                className={`overflow-hidden bg-gradient-to-br ${tierColors[course.tier]} border-2 border-gray-900 dark:border-gray-100 transition-all duration-300 hover:shadow-xl shadow-md ${isRecommended ? 'ring-2 ring-primary/30' : ''}`}
                 role='article'
                 aria-label={`Course: ${course.title}`}
               >
@@ -322,12 +338,7 @@ function CoursesPageComponent({ onAuthClick }: CoursesPageProps): ReactElement {
                     <div className='flex-1'>
                       <div className='flex items-center gap-3 mb-2'>
                         <CardTitle className='text-2xl'>{course.title}</CardTitle>
-                        <Badge
-                          variant={course.tier === 'free' ? 'secondary' : 'default'}
-                          className='text-sm'
-                        >
-                          {course.tier.toUpperCase()}
-                        </Badge>
+                        <TierBadge tier={course.tier} showIcon={true} />
                         {/* Start of removed code for subscription removal */}
                         {/* {course.price > 0 && (
                           <Badge variant='outline' className='text-sm'>
@@ -382,23 +393,34 @@ function CoursesPageComponent({ onAuthClick }: CoursesPageProps): ReactElement {
 
                   {/* Progress Bar for Started Courses */}
                   {hasAccess && completion.isStarted && (
-                    <div className='mt-4'>
+                    <div className='mt-4 p-4 bg-muted/30 rounded-lg'>
                       <div className='flex items-center justify-between mb-2'>
-                        <span className='text-sm font-medium'>Your Progress</span>
+                        <span className='text-sm font-medium flex items-center gap-2'>
+                          <ProgressRingMini
+                            value={completion.percentage}
+                            color={
+                              course.tier === 'free'
+                                ? 'orange'
+                                : course.tier === 'advanced'
+                                  ? 'purple'
+                                  : 'warning'
+                            }
+                          />
+                          Your Progress
+                        </span>
                         <span className='text-sm text-muted-foreground'>
-                          {completion.completedModules} of {completion.totalModules} modules (
-                          {completion.percentage}%)
+                          {completion.completedModules} of {completion.totalModules} modules
                         </span>
                       </div>
                       <Progress
                         value={completion.percentage}
-                        className='h-2'
+                        className='h-3 bg-gray-200 dark:bg-gray-700'
                         aria-label={`Course progress: ${completion.percentage}% complete`}
                       />
                       {completion.isCompleted && (
-                        <div className='flex items-center gap-2 mt-2 text-green-700'>
+                        <div className='flex items-center gap-2 mt-2 text-green-700 dark:text-green-400'>
                           <CheckCircle className='w-4 h-4' weight='fill' />
-                          <span className='text-sm font-medium'>Course completed! 🎉</span>
+                          <span className='text-sm font-medium'>Course completed!</span>
                         </div>
                       )}
                     </div>
@@ -412,7 +434,7 @@ function CoursesPageComponent({ onAuthClick }: CoursesPageProps): ReactElement {
                       {completion.isStarted ? (
                         <Button
                           onClick={() => handleStartCourse(course.id, course)}
-                          className='flex items-center gap-2'
+                          className='flex items-center gap-2 shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105'
                         >
                           <Play className='w-4 h-4' />
                           {completion.isCompleted ? 'Review Course' : 'Continue Learning'}
@@ -420,7 +442,7 @@ function CoursesPageComponent({ onAuthClick }: CoursesPageProps): ReactElement {
                       ) : (
                         <Button
                           onClick={() => handleStartCourse(course.id, course)}
-                          className='flex items-center gap-2'
+                          className='flex items-center gap-2 shadow-lg hover:shadow-xl transition-all duration-200 hover:scale-105'
                         >
                           <Play className='w-4 h-4' />
                           Start Course

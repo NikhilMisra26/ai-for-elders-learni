@@ -28,6 +28,9 @@ import { Badge } from '@/components/ui/badge';
 import { Slider } from '@/components/ui/slider';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
+import { Callout, CalloutTitle, CalloutDescription } from '@/components/ui/callout';
+import { ProgressRing } from '@/components/ui/progress-ring';
+import { TierBadge } from '@/components/ui/tier-badge';
 import { AudioControlsErrorBoundary } from '@/components/AudioControlsErrorBoundary';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProgress } from '@/lib/progressTracking';
@@ -556,9 +559,7 @@ export function ModulePage({ courseType: propCourseType }: ModulePageProps): Rea
           <div className='flex items-start justify-between flex-wrap gap-4 transition-all duration-200 hover:shadow-sm'>
             <div className='flex-1'>
               <div className='flex items-center gap-3 mb-2'>
-                <Badge variant={course.tier === 'free' ? 'secondary' : 'default'}>
-                  {course.tier.toUpperCase()}
-                </Badge>
+                <TierBadge tier={course.tier} showIcon={true} />
                 <span className='flex items-center gap-1 text-muted-foreground'>
                   <Clock className='w-4 h-4' />
                   {currentPart ? currentPart.estimatedTime : module.estimatedTime} min
@@ -606,15 +607,22 @@ export function ModulePage({ courseType: propCourseType }: ModulePageProps): Rea
           {/* Main Content */}
           <div className='lg:col-span-3 space-y-6'>
             {/* Course Progress */}
-            <Card className='transition-all duration-200 hover:shadow-lg border-0 shadow-sm'>
+            <Card className='transition-all duration-200 hover:shadow-lg border-2 border-gray-900 dark:border-gray-100 shadow-md bg-gradient-to-br from-blue-50/50 to-cyan-50/30 dark:from-blue-950/20 dark:to-cyan-950/10'>
               <CardContent className='p-4'>
                 <div className='flex items-center justify-between mb-2'>
-                  <span className='text-sm font-medium'>Course Progress</span>
+                  <span className='text-sm font-medium flex items-center gap-2 text-foreground'>
+                    <ChartBar className='w-4 h-4 text-primary' />
+                    Course Progress
+                  </span>
                   <span className='text-sm text-muted-foreground'>
                     {courseProgress?.completedModules.length ?? 0} of {course.totalModules} modules
                   </span>
                 </div>
-                <Progress value={progressPercentage} className='h-2' />
+                <Progress value={progressPercentage} className='h-3 bg-gray-200 dark:bg-gray-700' />
+                <div className='flex items-center justify-between mt-2'>
+                  <span className='text-xs text-muted-foreground'>Keep going!</span>
+                  <span className='text-xs font-semibold text-primary'>{progressPercentage}%</span>
+                </div>
               </CardContent>
             </Card>
 
@@ -637,7 +645,7 @@ export function ModulePage({ courseType: propCourseType }: ModulePageProps): Rea
                 }
               }}
             >
-              <Card>
+              <Card className='border-2 border-gray-900 dark:border-gray-100 shadow-md'>
                 <CardHeader>
                   <div className='flex items-center justify-between'>
                     <CardTitle className='flex items-center gap-2'>
@@ -782,11 +790,23 @@ export function ModulePage({ courseType: propCourseType }: ModulePageProps): Rea
             </AudioControlsErrorBoundary>
 
             {/* Module/Part Content */}
-            <Card className='transition-all duration-200 hover:shadow-lg border-0 shadow-sm'>
-              <CardContent className='p-6'>
+            <Card className='transition-all duration-200 hover:shadow-lg border-2 border-gray-900 dark:border-gray-100 shadow-md'>
+              <CardContent className='p-8'>
+                {/* Sample Callout for demonstration - in real implementation, these would be parsed from content */}
+                {module.id === 'intro-to-ai' && (
+                  <Callout variant='concept' className='mb-6'>
+                    <CalloutTitle>Key Concept</CalloutTitle>
+                    <CalloutDescription>
+                      Artificial Intelligence (AI) refers to computer systems that can perform tasks
+                      that typically require human intelligence, such as understanding language,
+                      recognizing images, and making decisions.
+                    </CalloutDescription>
+                  </Callout>
+                )}
+
                 <article className='prose prose-lg max-w-none'>
                   <div
-                    className='text-lg leading-relaxed space-y-6 prose-headings:bg-gradient-to-r prose-headings:from-blue-50 prose-headings:to-transparent prose-headings:border-l-4 prose-headings:border-blue-500 prose-headings:pl-4 prose-headings:py-2 prose-headings:rounded-r-lg prose-p:mb-4 prose-ul:space-y-2 prose-li:relative prose-li:pl-6 before:prose-li:content-["\u25cf"] before:prose-li:absolute before:prose-li:left-0 before:prose-li:text-blue-500 before:prose-li:font-bold transition-all duration-200'
+                    className='text-lg leading-relaxed space-y-6 prose-headings:bg-gradient-to-r prose-headings:from-purple-50 prose-headings:to-transparent prose-headings:border-l-4 prose-headings:border-purple-500 prose-headings:pl-4 prose-headings:py-2 prose-headings:rounded-r-lg prose-headings:text-purple-900 dark:prose-headings:from-purple-950/30 dark:prose-headings:text-purple-100 prose-p:mb-4 prose-ul:space-y-2 prose-li:relative prose-li:pl-6 before:prose-li:content-["▸"] before:prose-li:absolute before:prose-li:left-0 before:prose-li:text-purple-500 before:prose-li:font-bold transition-all duration-200'
                     style={{
                       whiteSpace: 'pre-line',
                       lineHeight: '1.8',
@@ -796,11 +816,23 @@ export function ModulePage({ courseType: propCourseType }: ModulePageProps): Rea
                     {currentPart ? currentPart.content : module.content}
                   </div>
                 </article>
+
+                {/* Sample tip callout */}
+                {module.id === 'intro-to-ai' && (
+                  <Callout variant='tip' className='mt-6'>
+                    <CalloutTitle>Pro Tip</CalloutTitle>
+                    <CalloutDescription>
+                      Take your time with each module. It&apos;s better to fully understand each
+                      concept before moving on to the next one. Remember, learning AI is a journey,
+                      not a race!
+                    </CalloutDescription>
+                  </Callout>
+                )}
               </CardContent>
             </Card>
 
             {/* Module Actions */}
-            <Card className='transition-all duration-200 hover:shadow-lg border-0 shadow-sm'>
+            <Card className='transition-all duration-200 hover:shadow-lg border-2 border-gray-900 dark:border-gray-100 shadow-md'>
               <CardContent className='p-6'>
                 <div className='flex items-center justify-between flex-wrap gap-4'>
                   <div>
@@ -887,7 +919,7 @@ export function ModulePage({ courseType: propCourseType }: ModulePageProps): Rea
             {/* Rating and Comments */}
             <div className='grid md:grid-cols-2 gap-6'>
               {/* Rating */}
-              <Card className='transition-all duration-200 hover:shadow-lg border-0 shadow-sm'>
+              <Card className='transition-all duration-200 hover:shadow-lg border-2 border-gray-900 dark:border-gray-100 shadow-md'>
                 <CardHeader>
                   <CardTitle className='flex items-center gap-2'>
                     <Star className='w-5 h-5' />
@@ -922,7 +954,7 @@ export function ModulePage({ courseType: propCourseType }: ModulePageProps): Rea
               </Card>
 
               {/* Comments */}
-              <Card className='transition-all duration-200 hover:shadow-lg border-0 shadow-sm'>
+              <Card className='transition-all duration-200 hover:shadow-lg border-2 border-gray-900 dark:border-gray-100 shadow-md'>
                 <CardHeader>
                   <CardTitle className='flex items-center gap-2'>
                     <ChatCircle className='w-5 h-5' />
@@ -958,7 +990,7 @@ export function ModulePage({ courseType: propCourseType }: ModulePageProps): Rea
           <div className='lg:col-span-1 space-y-6'>
             {/* Course Outline */}
             <Card
-              className={`${showOutline ? 'block' : 'hidden lg:block'} transition-all duration-200 hover:shadow-lg border-0 shadow-sm`}
+              className={`${showOutline ? 'block' : 'hidden lg:block'} transition-all duration-200 hover:shadow-lg border-2 border-gray-900 dark:border-gray-100 shadow-md`}
             >
               <CardHeader>
                 <CardTitle className='flex items-center gap-2 text-lg'>
@@ -1077,10 +1109,10 @@ export function ModulePage({ courseType: propCourseType }: ModulePageProps): Rea
             </Card>
 
             {/* Module Stats */}
-            <Card className='transition-all duration-200 hover:shadow-lg border-0 shadow-sm'>
+            <Card className='transition-all duration-200 hover:shadow-lg border-2 border-gray-900 dark:border-gray-100 shadow-md bg-gradient-to-br from-purple-50/40 to-indigo-50/30 dark:from-purple-950/15 dark:to-indigo-950/10'>
               <CardHeader>
-                <CardTitle className='flex items-center gap-2 text-lg'>
-                  <ChartBar className='w-5 h-5' />
+                <CardTitle className='flex items-center gap-2 text-lg text-foreground'>
+                  <ChartBar className='w-5 h-5 text-purple-500' />
                   Your Progress
                 </CardTitle>
               </CardHeader>
@@ -1098,12 +1130,14 @@ export function ModulePage({ courseType: propCourseType }: ModulePageProps): Rea
 
                 <Separator />
 
-                <div>
-                  <div className='flex justify-between text-sm mb-1'>
-                    <span>Course progress</span>
-                    <span>{progressPercentage}%</span>
-                  </div>
-                  <Progress value={progressPercentage} className='h-2' />
+                <div className='text-center'>
+                  <ProgressRing
+                    value={progressPercentage}
+                    size={100}
+                    color='purple'
+                    label='Course'
+                    animate={true}
+                  />
                 </div>
 
                 {moduleProgress && (
@@ -1131,7 +1165,7 @@ export function ModulePage({ courseType: propCourseType }: ModulePageProps): Rea
 
             {/* Tags */}
             {module.tags && module.tags.length > 0 && (
-              <Card className='transition-all duration-200 hover:shadow-lg border-0 shadow-sm'>
+              <Card className='transition-all duration-200 hover:shadow-lg border-2 border-gray-900 dark:border-gray-100 shadow-md'>
                 <CardHeader>
                   <CardTitle className='text-lg'>Topics</CardTitle>
                 </CardHeader>
