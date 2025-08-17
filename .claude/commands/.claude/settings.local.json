@@ -6,7 +6,8 @@
       "Bash(cat:*)",
       "Bash(grep:*)",
       "Bash(rm:*)",
-      "Bash(gh api:*)"
+      "Bash(gh api:*)",
+      "WebSearch"
     ],
     "deny": [],
     "ask": []

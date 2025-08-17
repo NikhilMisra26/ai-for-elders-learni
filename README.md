@@ -60,9 +60,22 @@
 
 ### 💳 **Subscription System**
 
-- **Free**: Basic AI course with community access
+- **Free**: Complete 6-module AI basics course covering fundamentals, conversations, daily tasks, safety, AI for daily life, and graduation
 - **Advanced ($1.99/month)**: Personal assistant course + advanced features
 - **Expert ($4.99/month)**: Cutting-edge AI technologies + custom assistants
+
+### 📖 **Course Content**
+
+The free "DISCOVER BASICS: AI for Everyday Life" course is now complete with 6 comprehensive modules:
+
+1. **What is AI, Really?** - Understanding AI through familiar examples like Netflix and GPS
+2. **Your First AI Conversation** - Learning natural conversation techniques vs keyword searches
+3. **AI for Daily Tasks** - Practical applications for health, family, hobbies, and organization
+4. **Staying Safe with AI** - Essential privacy rules, spotting mistakes, and avoiding scams
+5. **AI for Daily Life** - In-depth coverage of health/wellness support, family connections, and personal growth
+6. **Congratulations - Your AI Journey Begins!** - Course completion and encouragement for continued learning
+
+Each module includes real-world examples, success stories from seniors, practical exercises, and safety reminders specifically designed for learners over 50.
 
 ## 🛠️ Tech Stack
 
@@ -323,6 +336,34 @@ The platform now uses React Router v7 for seamless course and module navigation:
 - `basic` ↔ `ai-basics` (Free tier)
 - `advanced` ↔ `ai-assistant` (Advanced tier, $1.99/month)
 - `expert` ↔ `advanced-ai` (Expert tier, $4.99/month)
+
+### 🎨 Content Formatting System
+
+The platform includes a comprehensive content parsing and visual formatting system (`src/lib/contentFormatting.ts`) for rendering course content:
+
+**Content Section Types:**
+
+- **Normal** - Standard text sections with gray styling
+- **Warning** - Amber-colored warning blocks (⚠️ prefix)
+- **Tips** - Purple-accented helpful tips (💡 prefix)
+- **Exercises** - Blue-bordered practice exercises (📝 prefix)
+- **Success** - Green success/completion blocks (✅ prefix)
+- **Key Points** - Yellow-highlighted important information (🔑/⭐ prefix)
+
+**Parsing Features:**
+
+- **Markdown-style headers** - `#`, `##`, `###` for different heading levels
+- **Bullet points** - Lines starting with `-` become formatted lists
+- **Numbered lists** - Lines starting with numbers become ordered lists
+- **Text formatting** - Support for **bold**, _italic_, and `code` inline styles
+- **Paragraph handling** - Automatic paragraph wrapping with proper spacing
+
+**Visual Design:**
+
+- **Senior-friendly styling** - Large fonts, high contrast, adequate spacing
+- **Phosphor Icons** - Contextual icons for each section type
+- **Tailwind CSS** - Consistent color schemes and responsive design
+- **HTML output** - Safe HTML generation with proper sanitization
 
 **Recent Bug Fixes:**
 

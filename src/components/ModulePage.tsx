@@ -17,6 +17,8 @@ import {
   ChartBar,
   Printer,
   StarFour,
+  CaretDown,
+  CaretRight,
 } from '@phosphor-icons/react';
 
 import { Button } from '@/components/ui/button';
@@ -36,16 +38,29 @@ import {
   announceToScreenReader,
 } from '@/lib/audioNarration';
 import { errorHandler } from '@/lib/errorHandler';
-import { getCourseById, getModuleById, getNextModule, getPreviousModule } from '@/lib/courseData';
+import {
+  getCourseById,
+  getModuleById,
+  getNextModule,
+  getPreviousModule,
+  getPartById,
+  getNextPart,
+  getPreviousPart,
+} from '@/lib/courseData';
 
 interface ModulePageProps {
   courseType?: 'basic' | 'advanced' | 'expert';
 }
 
 export function ModulePage({ courseType: propCourseType }: ModulePageProps): ReactElement {
-  const { courseType: paramCourseType, moduleId: paramModuleId } = useParams<{
+  const {
+    courseType: paramCourseType,
+    moduleId: paramModuleId,
+    partId: paramPartId,
+  } = useParams<{
     courseType: string;
     moduleId: string;
+    partId?: string;
   }>();
   const navigate = useNavigate();
 
@@ -72,22 +87,30 @@ export function ModulePage({ courseType: propCourseType }: ModulePageProps): Rea
     expert: 'advanced-ai',
   } as const;
 
-  // Determine course type and module ID from props or URL params
+  // Determine course type, module ID, and part ID from props or URL params
   const courseType = (propCourseType ?? paramCourseType) as keyof typeof courseTypeToId;
   const courseId = courseTypeToId[courseType];
   const moduleId = paramModuleId ?? null;
+  const partId = paramPartId ?? null;
 
-  // Get course and module data (may be null)
+  // Get course, module, and part data (may be null)
   const course = getCourseById(courseId);
   const module = moduleId ? getModuleById(courseId, moduleId) : null;
+  const currentPart = partId && moduleId ? getPartById(courseId, moduleId, partId) : null;
   const nextModule = moduleId ? getNextModule(courseId, moduleId) : null;
   const previousModule = moduleId ? getPreviousModule(courseId, moduleId) : null;
+  const nextPart = partId && moduleId ? getNextPart(courseId, moduleId, partId) : null;
+  const previousPart = partId && moduleId ? getPreviousPart(courseId, moduleId, partId) : null;
   const courseProgress = getCourseProgress(courseId);
   const moduleProgress = moduleId ? getModuleProgress(courseId, moduleId) : null;
 
   // Audio narration state - memoize content to prevent hook recreation
-  const moduleContent = useMemo(() => module?.content ?? '', [module?.content]);
-  const [audioState, audioControls] = useAudioNarration(moduleContent);
+  // Use part content if viewing a part, otherwise use module content
+  const contentToNarrate = useMemo(() => {
+    if (currentPart) return currentPart.content;
+    return module?.content ?? '';
+  }, [currentPart, module?.content]);
+  const [audioState, audioControls] = useAudioNarration(contentToNarrate);
   const [showAudioControls, setShowAudioControls] = useState(false);
 
   // Module interaction state
@@ -96,6 +119,9 @@ export function ModulePage({ courseType: propCourseType }: ModulePageProps): Rea
   const [comment, setComment] = useState('');
   const [startTime, setStartTime] = useState(Date.now());
   const [showOutline, setShowOutline] = useState(false);
+  const [expandedModules, setExpandedModules] = useState<Set<string>>(
+    new Set(moduleId ? [moduleId] : []),
+  );
 
   // Track the last module that was set to prevent redundant calls
   const lastSetModuleRef = useRef<string | null>(null);
@@ -114,6 +140,23 @@ export function ModulePage({ courseType: propCourseType }: ModulePageProps): Rea
       }
     }
   }, [courseType, moduleId, courseId, navigate]);
+
+  // Auto-expand current module when viewing it or its parts
+  useEffect(() => {
+    if (moduleId) {
+      setExpandedModules(new Set([moduleId]));
+    }
+  }, [moduleId]);
+
+  // If viewing a module with parts but no specific part, redirect to first part
+  useEffect(() => {
+    if (module?.parts && module.parts.length > 0 && !partId) {
+      const firstPart = module.parts[0];
+      void navigate(`/courses/${courseType}/module/${moduleId}/part/${firstPart.id}`, {
+        replace: true,
+      });
+    }
+  }, [module, partId, courseType, moduleId, navigate]);
 
   // Set current module when available - with guard to prevent infinite loops
   useEffect(() => {
@@ -269,7 +312,15 @@ export function ModulePage({ courseType: propCourseType }: ModulePageProps): Rea
   // Check access permissions
   const hasAccess = canAccessTier(course.tier);
   const isCompleted = isModuleCompleted(courseId, moduleId);
-  const estimatedSpeechTime = getEstimatedSpeechTime(module.content);
+  // Use part content for speech estimation if viewing a part
+  const contentForSpeech = currentPart ? currentPart.content : module.content;
+  const estimatedSpeechTime = getEstimatedSpeechTime(contentForSpeech);
+
+  const handleNavigateToPart = (targetPartId: string): void => {
+    if (courseType && moduleId) {
+      void navigate(`/courses/${courseType}/module/${moduleId}/part/${targetPartId}`);
+    }
+  };
 
   const handleMarkComplete = (): void => {
     const finalTimeSpent = Math.max(timeSpent, 1); // At least 1 minute
@@ -333,10 +384,41 @@ export function ModulePage({ courseType: propCourseType }: ModulePageProps): Rea
   const handlePrint = (): void => {
     const printWindow = window.open('', '_blank');
     if (printWindow) {
+      // Determine what to print - part or entire module
+      let contentToPrint = '';
+      let titleToPrint = '';
+      let descriptionToPrint = '';
+      let estimatedTimeToPrint = 0;
+
+      if (currentPart) {
+        // Print only current part
+        titleToPrint = `${module.title} - ${currentPart.title}`;
+        descriptionToPrint = currentPart.description;
+        contentToPrint = currentPart.content;
+        estimatedTimeToPrint = currentPart.estimatedTime;
+      } else if (module.parts && module.parts.length > 0) {
+        // Print entire module with all parts
+        titleToPrint = module.title;
+        descriptionToPrint = module.description;
+        estimatedTimeToPrint = module.parts.reduce((total, part) => total + part.estimatedTime, 0);
+
+        // Combine module content and all parts
+        contentToPrint = module.content;
+        module.parts.forEach((part, index) => {
+          contentToPrint += `\n\n## Part ${index + 1}: ${part.title}\n\n${part.description}\n\n${part.content}`;
+        });
+      } else {
+        // Print module content only (legacy modules without parts)
+        titleToPrint = module.title;
+        descriptionToPrint = module.description;
+        contentToPrint = module.content;
+        estimatedTimeToPrint = module.estimatedTime;
+      }
+
       printWindow.document.write(`
         <html>
           <head>
-            <title>${module.title} - ${course.title}</title>
+            <title>${titleToPrint} - ${course.title}</title>
             <style>
               body { font-family: 'Inter', sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
               h1 { color: #2c3e50; }
@@ -344,18 +426,20 @@ export function ModulePage({ courseType: propCourseType }: ModulePageProps): Rea
               p { line-height: 1.6; margin-bottom: 15px; }
               .metadata { background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
               .highlight { background: #fff3cd; padding: 10px; border-left: 4px solid #ffc107; margin: 15px 0; }
+              .part-divider { border-top: 2px solid #e0e0e0; margin: 30px 0; padding-top: 20px; }
             </style>
           </head>
           <body>
             <div class="metadata">
               <strong>Course:</strong> ${course.title}<br>
-              <strong>Module:</strong> ${module.title}<br>
-              <strong>Estimated Time:</strong> ${module.estimatedTime} minutes<br>
+              <strong>Module:</strong> ${titleToPrint}<br>
+              <strong>Estimated Time:</strong> ${estimatedTimeToPrint} minutes<br>
               <strong>Printed:</strong> ${new Date().toLocaleDateString()}
             </div>
-            <h1>${module.title}</h1>
-            <p><em>${module.description}</em></p>
-            ${module.content.replace(/\n/g, '<br>').replace(/#{1,6}\s+(.+)/g, '<h2>$1</h2>')}
+            <h1>${titleToPrint}</h1>
+            <p><em>${descriptionToPrint}</em></p>
+            <div class="part-divider"></div>
+            ${contentToPrint.replace(/\n/g, '<br>').replace(/#{1,6}\s+(.+)/g, '<h2>$1</h2>')}
           </body>
         </html>
       `);
@@ -445,14 +529,31 @@ export function ModulePage({ courseType: propCourseType }: ModulePageProps): Rea
                 </button>
               </li>
               <li>/</li>
-              <li className='text-foreground font-medium'>
-                Module {currentModuleIndex + 1}: {module.title}
+              <li>
+                {currentPart ? (
+                  <button
+                    onClick={() => void navigate(`/courses/${courseType}/module/${moduleId}`)}
+                    className='hover:text-foreground'
+                  >
+                    Module {currentModuleIndex + 1}: {module.title}
+                  </button>
+                ) : (
+                  <span className='text-foreground font-medium'>
+                    Module {currentModuleIndex + 1}: {module.title}
+                  </span>
+                )}
               </li>
+              {currentPart && (
+                <>
+                  <li>/</li>
+                  <li className='text-foreground font-medium'>{currentPart.title}</li>
+                </>
+              )}
             </ol>
           </nav>
 
           {/* Module Header */}
-          <div className='flex items-start justify-between flex-wrap gap-4'>
+          <div className='flex items-start justify-between flex-wrap gap-4 transition-all duration-200 hover:shadow-sm'>
             <div className='flex-1'>
               <div className='flex items-center gap-3 mb-2'>
                 <Badge variant={course.tier === 'free' ? 'secondary' : 'default'}>
@@ -460,7 +561,7 @@ export function ModulePage({ courseType: propCourseType }: ModulePageProps): Rea
                 </Badge>
                 <span className='flex items-center gap-1 text-muted-foreground'>
                   <Clock className='w-4 h-4' />
-                  {module.estimatedTime} min
+                  {currentPart ? currentPart.estimatedTime : module.estimatedTime} min
                 </span>
                 {isCompleted && (
                   <Badge variant='outline' className='text-green-700 border-green-700'>
@@ -470,18 +571,30 @@ export function ModulePage({ courseType: propCourseType }: ModulePageProps): Rea
                 )}
               </div>
               <h1 id='main-content' className='text-3xl font-bold mb-2'>
-                {module.title}
+                {currentPart ? currentPart.title : module.title}
               </h1>
-              <p className='text-lg text-muted-foreground'>{module.description}</p>
+              <p className='text-lg text-muted-foreground'>
+                {currentPart ? currentPart.description : module.description}
+              </p>
             </div>
 
             {/* Quick Actions */}
             <div className='flex items-center gap-2'>
-              <Button variant='default' size='sm' onClick={handlePrint}>
+              <Button
+                variant='default'
+                size='sm'
+                onClick={handlePrint}
+                className='transition-all duration-200 hover:shadow-md hover:scale-105 focus:ring-2 focus:ring-primary focus:ring-offset-2'
+              >
                 <Printer className='w-4 h-4 mr-2' />
                 Print
               </Button>
-              <Button variant='default' size='sm' onClick={() => setShowOutline(!showOutline)}>
+              <Button
+                variant='default'
+                size='sm'
+                onClick={() => setShowOutline(!showOutline)}
+                className='transition-all duration-200 hover:shadow-md hover:scale-105 focus:ring-2 focus:ring-primary focus:ring-offset-2'
+              >
                 <List className='w-4 h-4 mr-2' />
                 Outline
               </Button>
@@ -493,7 +606,7 @@ export function ModulePage({ courseType: propCourseType }: ModulePageProps): Rea
           {/* Main Content */}
           <div className='lg:col-span-3 space-y-6'>
             {/* Course Progress */}
-            <Card>
+            <Card className='transition-all duration-200 hover:shadow-lg border-0 shadow-sm'>
               <CardContent className='p-4'>
                 <div className='flex items-center justify-between mb-2'>
                   <span className='text-sm font-medium'>Course Progress</span>
@@ -668,22 +781,26 @@ export function ModulePage({ courseType: propCourseType }: ModulePageProps): Rea
               </Card>
             </AudioControlsErrorBoundary>
 
-            {/* Module Content */}
-            <Card>
+            {/* Module/Part Content */}
+            <Card className='transition-all duration-200 hover:shadow-lg border-0 shadow-sm'>
               <CardContent className='p-6'>
                 <article className='prose prose-lg max-w-none'>
                   <div
-                    className='text-lg leading-relaxed space-y-4'
-                    style={{ whiteSpace: 'pre-line' }}
+                    className='text-lg leading-relaxed space-y-6 prose-headings:bg-gradient-to-r prose-headings:from-blue-50 prose-headings:to-transparent prose-headings:border-l-4 prose-headings:border-blue-500 prose-headings:pl-4 prose-headings:py-2 prose-headings:rounded-r-lg prose-p:mb-4 prose-ul:space-y-2 prose-li:relative prose-li:pl-6 before:prose-li:content-["\u25cf"] before:prose-li:absolute before:prose-li:left-0 before:prose-li:text-blue-500 before:prose-li:font-bold transition-all duration-200'
+                    style={{
+                      whiteSpace: 'pre-line',
+                      lineHeight: '1.8',
+                      fontSize: '1.125rem',
+                    }}
                   >
-                    {module.content}
+                    {currentPart ? currentPart.content : module.content}
                   </div>
                 </article>
               </CardContent>
             </Card>
 
             {/* Module Actions */}
-            <Card>
+            <Card className='transition-all duration-200 hover:shadow-lg border-0 shadow-sm'>
               <CardContent className='p-6'>
                 <div className='flex items-center justify-between flex-wrap gap-4'>
                   <div>
@@ -691,7 +808,7 @@ export function ModulePage({ courseType: propCourseType }: ModulePageProps): Rea
                       <Button
                         onClick={handleMarkComplete}
                         size='lg'
-                        className='flex items-center gap-2'
+                        className='flex items-center gap-2 transition-all duration-200 hover:shadow-lg hover:scale-105 focus:ring-2 focus:ring-primary focus:ring-offset-2'
                       >
                         <CheckCircle className='w-5 h-5' />
                         Mark as Complete
@@ -706,19 +823,60 @@ export function ModulePage({ courseType: propCourseType }: ModulePageProps): Rea
 
                   {/* Navigation */}
                   <div className='flex items-center gap-2'>
-                    {previousModule && (
+                    {/* Part Navigation (if viewing parts) */}
+                    {currentPart && previousPart && (
+                      <Button
+                        variant='outline'
+                        onClick={() => handleNavigateToPart(previousPart.id)}
+                        className='transition-all duration-200 hover:shadow-md hover:scale-105 focus:ring-2 focus:ring-primary focus:ring-offset-2'
+                      >
+                        <ArrowLeft className='w-4 h-4 mr-2' />
+                        Previous Part
+                      </Button>
+                    )}
+                    {currentPart && nextPart && (
+                      <Button
+                        onClick={() => handleNavigateToPart(nextPart.id)}
+                        className='transition-all duration-200 hover:shadow-md hover:scale-105 focus:ring-2 focus:ring-primary focus:ring-offset-2'
+                      >
+                        Next Part
+                        <ArrowRight className='w-4 h-4 ml-2' />
+                      </Button>
+                    )}
+
+                    {/* Module Navigation (when not viewing parts or no more parts) */}
+                    {!currentPart && previousModule && (
                       <Button
                         variant='outline'
                         onClick={() => handleNavigateToModule(courseId, previousModule.id)}
                       >
                         <ArrowLeft className='w-4 h-4 mr-2' />
-                        Previous
+                        Previous Module
                       </Button>
                     )}
-                    {nextModule && (
+                    {!currentPart && nextModule && (
                       <Button onClick={() => handleNavigateToModule(courseId, nextModule.id)}>
-                        Next
+                        Next Module
                         <ArrowRight className='w-4 h-4 ml-2' />
+                      </Button>
+                    )}
+
+                    {/* Show next module if on last part */}
+                    {currentPart && !nextPart && nextModule && (
+                      <Button onClick={() => handleNavigateToModule(courseId, nextModule.id)}>
+                        Next Module
+                        <ArrowRight className='w-4 h-4 ml-2' />
+                      </Button>
+                    )}
+
+                    {/* Show previous module if on first part */}
+                    {currentPart && !previousPart && previousModule && (
+                      <Button
+                        variant='outline'
+                        onClick={() => handleNavigateToModule(courseId, previousModule.id)}
+                      >
+                        <ArrowLeft className='w-4 h-4 mr-2' />
+                        Previous Module
                       </Button>
                     )}
                   </div>
@@ -729,7 +887,7 @@ export function ModulePage({ courseType: propCourseType }: ModulePageProps): Rea
             {/* Rating and Comments */}
             <div className='grid md:grid-cols-2 gap-6'>
               {/* Rating */}
-              <Card>
+              <Card className='transition-all duration-200 hover:shadow-lg border-0 shadow-sm'>
                 <CardHeader>
                   <CardTitle className='flex items-center gap-2'>
                     <Star className='w-5 h-5' />
@@ -764,7 +922,7 @@ export function ModulePage({ courseType: propCourseType }: ModulePageProps): Rea
               </Card>
 
               {/* Comments */}
-              <Card>
+              <Card className='transition-all duration-200 hover:shadow-lg border-0 shadow-sm'>
                 <CardHeader>
                   <CardTitle className='flex items-center gap-2'>
                     <ChatCircle className='w-5 h-5' />
@@ -799,7 +957,9 @@ export function ModulePage({ courseType: propCourseType }: ModulePageProps): Rea
           {/* Sidebar */}
           <div className='lg:col-span-1 space-y-6'>
             {/* Course Outline */}
-            <Card className={showOutline ? 'block' : 'hidden lg:block'}>
+            <Card
+              className={`${showOutline ? 'block' : 'hidden lg:block'} transition-all duration-200 hover:shadow-lg border-0 shadow-sm`}
+            >
               <CardHeader>
                 <CardTitle className='flex items-center gap-2 text-lg'>
                   <List className='w-5 h-5' />
@@ -812,23 +972,48 @@ export function ModulePage({ courseType: propCourseType }: ModulePageProps): Rea
                     {course.modules.map((mod, index) => {
                       const modCompleted = isModuleCompleted(courseId, mod.id);
                       const isCurrent = mod.id === moduleId;
+                      const hasPartsToShow = mod.parts && mod.parts.length > 0;
+                      const isExpanded = expandedModules.has(mod.id);
+
+                      const handleModuleClick = (): void => {
+                        // Always navigate to the module
+                        handleNavigateToModule(courseId, mod.id);
+                      };
+
+                      const handleKeyDown = (event: {
+                        key: string;
+                        preventDefault: () => void;
+                      }): void => {
+                        if (event.key === 'Enter' || event.key === ' ') {
+                          event.preventDefault();
+                          handleModuleClick();
+                        }
+                      };
 
                       return (
                         <li key={mod.id}>
                           <button
-                            onClick={() => handleNavigateToModule(courseId, mod.id)}
+                            onClick={handleModuleClick}
+                            onKeyDown={handleKeyDown}
                             className={`w-full text-left p-3 rounded-lg transition-colors ${
                               isCurrent ? 'bg-primary text-primary-foreground' : 'hover:bg-muted'
                             }`}
                             aria-current={isCurrent ? 'page' : undefined}
+                            aria-expanded={hasPartsToShow ? isExpanded : undefined}
                           >
                             <div className='flex items-start gap-2'>
-                              <div className='mt-1'>
+                              <div className='mt-1 flex items-center gap-1'>
+                                {hasPartsToShow &&
+                                  (isExpanded ? (
+                                    <CaretDown className='w-4 h-4' />
+                                  ) : (
+                                    <CaretRight className='w-4 h-4' />
+                                  ))}
                                 {modCompleted ? (
                                   <CheckCircle className='w-4 h-4 text-green-600' weight='fill' />
-                                ) : (
+                                ) : !hasPartsToShow ? (
                                   <div className='w-4 h-4 rounded-full border-2 border-muted-foreground' />
-                                )}
+                                ) : null}
                               </div>
                               <div className='flex-1 min-w-0'>
                                 <p className='font-medium text-sm truncate'>
@@ -840,6 +1025,51 @@ export function ModulePage({ courseType: propCourseType }: ModulePageProps): Rea
                               </div>
                             </div>
                           </button>
+
+                          {/* Parts subsection */}
+                          {hasPartsToShow && isExpanded && mod.parts && (
+                            <div className='ml-6 mt-2 space-y-1 transition-all duration-200 ease-in-out'>
+                              {mod.parts.map((part, partIndex) => {
+                                const isCurrentPart = currentPart?.id === part.id;
+                                const isPartCompleted = part.isCompleted ?? false;
+
+                                return (
+                                  <button
+                                    key={part.id}
+                                    onClick={() => handleNavigateToPart(part.id)}
+                                    className={`w-full text-left p-2 pl-5 rounded-md transition-colors text-sm ${
+                                      isCurrentPart
+                                        ? 'bg-primary text-primary-foreground'
+                                        : 'hover:bg-muted/50'
+                                    }`}
+                                    aria-current={isCurrentPart ? 'page' : undefined}
+                                  >
+                                    <div className='flex items-start gap-2'>
+                                      <div className='mt-0.5'>
+                                        {isPartCompleted ? (
+                                          <CheckCircle
+                                            className='w-3 h-3 text-green-600'
+                                            weight='fill'
+                                          />
+                                        ) : (
+                                          <div className='w-3 h-3 rounded-full border border-muted-foreground' />
+                                        )}
+                                      </div>
+                                      <div className='flex-1 min-w-0'>
+                                        <p className='font-medium text-xs truncate'>
+                                          {index + 1}.{partIndex + 1} {part.title}
+                                          {isCurrentPart && ' [current]'}
+                                        </p>
+                                        <p className='text-xs text-muted-foreground mt-0.5'>
+                                          {part.estimatedTime} min
+                                        </p>
+                                      </div>
+                                    </div>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          )}
                         </li>
                       );
                     })}
@@ -849,7 +1079,7 @@ export function ModulePage({ courseType: propCourseType }: ModulePageProps): Rea
             </Card>
 
             {/* Module Stats */}
-            <Card>
+            <Card className='transition-all duration-200 hover:shadow-lg border-0 shadow-sm'>
               <CardHeader>
                 <CardTitle className='flex items-center gap-2 text-lg'>
                   <ChartBar className='w-5 h-5' />
@@ -903,7 +1133,7 @@ export function ModulePage({ courseType: propCourseType }: ModulePageProps): Rea
 
             {/* Tags */}
             {module.tags && module.tags.length > 0 && (
-              <Card>
+              <Card className='transition-all duration-200 hover:shadow-lg border-0 shadow-sm'>
                 <CardHeader>
                   <CardTitle className='text-lg'>Topics</CardTitle>
                 </CardHeader>
