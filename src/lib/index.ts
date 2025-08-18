@@ -22,8 +22,5 @@ export { errorHandler } from './errorHandler';
 // Export security utilities
 export * from './security';
 
-// Export audio narration
-export * from './audioNarration';
-
 // Export configuration
 export * from './config';
