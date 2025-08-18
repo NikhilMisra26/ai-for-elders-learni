@@ -104,7 +104,6 @@ export function useMP3AudioPlayer(
     if (playlistChanged) {
       // Stop current audio if playing
       if (audioRef.current) {
-        // eslint-disable-next-line no-console
         audioRef.current.pause();
         audioRef.current.currentTime = 0;
 

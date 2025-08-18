@@ -124,7 +124,7 @@ export function ModulePage({ courseType: propCourseType }: ModulePageProps): Rea
   const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set());
 
   // Audio system
-  // eslint-disable-next-line no-console
+
   const audioPlaylist = getAudioPlaylist(moduleId ?? '', partId ?? undefined);
   const [audioState, audioControls] = useMP3AudioPlayer(audioPlaylist);
 
@@ -158,7 +158,7 @@ export function ModulePage({ courseType: propCourseType }: ModulePageProps): Rea
     return (): void => {
       // Cleanup: stop audio when leaving the module page
       // This will only run when moduleId or partId changes (actual navigation)
-      // eslint-disable-next-line no-console
+
       audioControls.stop();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps

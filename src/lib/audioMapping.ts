@@ -217,27 +217,8 @@ export function getAudioPlaylist(moduleId: string, partId?: string): AudioPlayli
   // Generate the key based on module and part IDs
   const key = partId ? `${moduleId}-${partId}` : moduleId;
 
-  // eslint-disable-next-line no-console
-  console.log('[AudioMapping] Looking for audio with key:', key);
-  // eslint-disable-next-line no-console
-
   const files = audioFileMap[key];
-  if (!files) {
-    // eslint-disable-next-line no-console
-    console.log('[AudioMapping] No audio files found for key:', key);
-    return null;
-  }
 
-  // eslint-disable-next-line no-console
-  console.log(
-    '[AudioMapping] Found audio files:',
-    files.map((f) => f.filename),
-
-
-  const files = audioFileMap[key];
-  if (!files) {
-    return null;
-  }
   return {
     moduleId,
     partId,
