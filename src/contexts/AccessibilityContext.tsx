@@ -5,16 +5,12 @@ interface AccessibilityContextType {
   fontSize: 'small' | 'normal' | 'large';
   increaseFontSize: () => void;
   decreaseFontSize: () => void;
-  speakText: (text: string) => void;
-  stopSpeaking: () => void;
-  isSpeaking: boolean;
 }
 
 const AccessibilityContext = createContext<AccessibilityContextType | undefined>(undefined);
 
 export function AccessibilityProvider({ children }: { children: ReactNode }): JSX.Element {
   const [fontSize, setFontSize] = useState<'small' | 'normal' | 'large'>('normal');
-  const [isSpeaking, setIsSpeaking] = useState(false);
 
   useEffect(() => {
     // Load saved preferences
@@ -54,40 +50,12 @@ export function AccessibilityProvider({ children }: { children: ReactNode }): JS
     });
   };
 
-  const speakText = (text: string): void => {
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      // Stop any current speech
-      window.speechSynthesis.cancel();
-
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.rate = 0.8;
-      utterance.pitch = 1;
-      utterance.volume = 1;
-
-      utterance.onstart = (): void => setIsSpeaking(true);
-      utterance.onend = (): void => setIsSpeaking(false);
-      utterance.onerror = (): void => setIsSpeaking(false);
-
-      window.speechSynthesis.speak(utterance);
-    }
-  };
-
-  const stopSpeaking = (): void => {
-    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-      setIsSpeaking(false);
-    }
-  };
-
   return (
     <AccessibilityContext.Provider
       value={{
         fontSize,
         increaseFontSize,
         decreaseFontSize,
-        speakText,
-        stopSpeaking,
-        isSpeaking,
       }}
     >
       {children}

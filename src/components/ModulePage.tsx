@@ -1,10 +1,7 @@
-import { useState, useEffect, useRef, useMemo, type ReactElement, type ElementType } from 'react';
+import { useState, useEffect, useRef, type ReactElement, type ElementType } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
-  Play,
-  Pause,
-  Stop,
   CheckCircle,
   BookOpen,
   Clock,
@@ -12,7 +9,6 @@ import {
   ChatCircle,
   ArrowLeft,
   ArrowRight,
-  SpeakerHigh,
   List,
   ChartBar,
   Printer,
@@ -30,28 +26,24 @@ import {
   Rocket,
   CheckSquare,
   Square,
+  Play,
+  Pause,
+  Stop,
+  SpeakerHigh,
 } from '@phosphor-icons/react';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
-import { Slider } from '@/components/ui/slider';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { Callout, CalloutTitle, CalloutDescription } from '@/components/ui/callout';
 import { ProgressRing } from '@/components/ui/progress-ring';
 import { TierBadge } from '@/components/ui/tier-badge';
-import { AudioControlsErrorBoundary } from '@/components/AudioControlsErrorBoundary';
 import { useAuth } from '@/contexts/AuthContext';
 import { useProgress } from '@/lib/progressTracking';
 import { useSubscription } from '@/lib/subscription';
-import {
-  useAudioNarration,
-  getEstimatedSpeechTime,
-  announceToScreenReader,
-} from '@/lib/audioNarration';
-import { errorHandler } from '@/lib/errorHandler';
 import {
   getCourseById,
   getModuleById,
@@ -61,6 +53,8 @@ import {
   getNextPart,
   getPreviousPart,
 } from '@/lib/courseData';
+import { getAudioPlaylist } from '@/lib/audioMapping';
+import { useMP3AudioPlayer } from '@/hooks/useMP3AudioPlayer';
 
 interface ModulePageProps {
   courseType?: 'basic' | 'advanced' | 'expert';
@@ -118,15 +112,6 @@ export function ModulePage({ courseType: propCourseType }: ModulePageProps): Rea
   const courseProgress = getCourseProgress(courseId);
   const moduleProgress = moduleId ? getModuleProgress(courseId, moduleId) : null;
 
-  // Audio narration state - memoize content to prevent hook recreation
-  // Use part content if viewing a part, otherwise use module content
-  const contentToNarrate = useMemo(() => {
-    if (currentPart) return currentPart.content;
-    return module?.content ?? '';
-  }, [currentPart, module?.content]);
-  const [audioState, audioControls] = useAudioNarration(contentToNarrate);
-  const [showAudioControls, setShowAudioControls] = useState(false);
-
   // Module interaction state
   const [timeSpent, setTimeSpent] = useState(0);
   const [currentRating, setCurrentRating] = useState(moduleProgress?.rating ?? 0);
@@ -137,6 +122,12 @@ export function ModulePage({ courseType: propCourseType }: ModulePageProps): Rea
     new Set(moduleId ? [moduleId] : []),
   );
   const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set());
+
+  // Audio system
+  // eslint-disable-next-line no-console
+  console.log('[ModulePage] Current moduleId:', moduleId, 'partId:', partId);
+  const audioPlaylist = getAudioPlaylist(moduleId ?? '', partId ?? undefined);
+  const [audioState, audioControls] = useMP3AudioPlayer(audioPlaylist);
 
   // Track the last module that was set to prevent redundant calls
   const lastSetModuleRef = useRef<string | null>(null);
@@ -162,6 +153,18 @@ export function ModulePage({ courseType: propCourseType }: ModulePageProps): Rea
       setExpandedModules(new Set([moduleId]));
     }
   }, [moduleId]);
+
+  // Stop audio when component unmounts or when navigating away
+  useEffect(() => {
+    return (): void => {
+      // Cleanup: stop audio when leaving the module page
+      // This will only run when moduleId or partId changes (actual navigation)
+      // eslint-disable-next-line no-console
+      console.log('[ModulePage] Navigation detected - stopping audio');
+      audioControls.stop();
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [moduleId, partId]); // Only depend on route params, not audio state
 
   // If viewing a module with parts but no specific part, redirect to first part
   useEffect(() => {
@@ -230,44 +233,9 @@ export function ModulePage({ courseType: propCourseType }: ModulePageProps): Rea
       if (timeSpent > 0) {
         // Auto-save time spent when leaving module
       }
-
-      // Cleanup audio on unmount
-      try {
-        if (audioState.isPlaying) {
-          audioControls.stop();
-        }
-        setShowAudioControls(false);
-      } catch (error) {
-        // Silent cleanup error - no user-facing action needed
-        errorHandler.logError(
-          'Audio cleanup failed on unmount',
-          error instanceof Error ? error : new Error(String(error)),
-          {
-            component: 'ModulePage',
-            action: 'audio_cleanup',
-          },
-        );
-      }
     };
     // Dependencies for cleanup effect
-  }, [timeSpent, audioState.isPlaying, audioControls]);
-
-  // Handle audio state errors and auto-hide controls on stop
-  useEffect(() => {
-    if (!audioState.isPlaying && !audioState.isPaused && showAudioControls) {
-      // Auto-hide controls when audio stops naturally
-      const timer = setTimeout(() => {
-        setShowAudioControls(false);
-      }, 2000);
-
-      return (): void => {
-        clearTimeout(timer);
-      };
-    }
-
-    // Return undefined when no cleanup is needed
-    return undefined;
-  }, [audioState.isPlaying, audioState.isPaused, showAudioControls]);
+  }, [timeSpent]);
 
   // Loading fallback component
   const PageLoader = (): ReactElement => (
@@ -327,9 +295,6 @@ export function ModulePage({ courseType: propCourseType }: ModulePageProps): Rea
   // Check access permissions
   const hasAccess = canAccessTier(course.tier);
   const isCompleted = isModuleCompleted(courseId, moduleId);
-  // Use part content for speech estimation if viewing a part
-  const contentForSpeech = currentPart ? currentPart.content : module.content;
-  const estimatedSpeechTime = getEstimatedSpeechTime(contentForSpeech);
 
   const handleNavigateToPart = (targetPartId: string): void => {
     if (courseType && moduleId) {
@@ -343,57 +308,12 @@ export function ModulePage({ courseType: propCourseType }: ModulePageProps): Rea
     toast.success('Module completed! 🎉', {
       description: 'Great job! Your progress has been saved.',
     });
-    announceToScreenReader('Module marked as complete. Great job!');
   };
 
   const handleRating = (rating: number): void => {
     setCurrentRating(rating);
     rateModule(courseId, moduleId, rating);
     toast.success(`Rated ${rating} star${rating !== 1 ? 's' : ''}`);
-    announceToScreenReader(`Module rated ${rating} out of 5 stars`);
-  };
-
-  const handleAudioPlay = (): void => {
-    try {
-      if (audioState.isPlaying) {
-        audioControls.pause();
-      } else if (audioState.isPaused) {
-        audioControls.resume();
-      } else {
-        // Show controls immediately for better UX
-        setShowAudioControls(true);
-        audioControls.play();
-      }
-    } catch (error) {
-      // Error already logged by errorHandler
-      errorHandler.logError(
-        'Audio playback failed',
-        error instanceof Error ? error : new Error(String(error)),
-        {
-          component: 'ModulePage',
-          action: 'audio_play',
-        },
-      );
-      toast.error('Audio playback failed. Please try again.');
-      setShowAudioControls(false);
-    }
-  };
-
-  const handleAudioStop = (): void => {
-    try {
-      audioControls.stop();
-      setShowAudioControls(false);
-    } catch (error) {
-      errorHandler.logError(
-        '[ModulePage] Audio stop failed',
-        error instanceof Error ? error : new Error(String(error)),
-        {
-          component: 'ModulePage',
-          action: 'audio_stop',
-        },
-      );
-      setShowAudioControls(false);
-    }
   };
 
   const handlePrint = (): void => {
@@ -639,167 +559,64 @@ export function ModulePage({ courseType: propCourseType }: ModulePageProps): Rea
             </Card>
 
             {/* Audio Controls */}
-            <AudioControlsErrorBoundary
-              onError={() => {
-                setShowAudioControls(false);
-                try {
-                  audioControls.stop();
-                } catch (error) {
-                  // Silent cleanup error - audio already errored
-                  errorHandler.logError(
-                    'Audio cleanup failed in error boundary',
-                    error instanceof Error ? error : new Error(String(error)),
-                    {
-                      component: 'ModulePage',
-                      action: 'audio_error_boundary_cleanup',
-                    },
-                  );
-                }
-              }}
-            >
-              <Card className='border-2 border-gray-900  shadow-md'>
+            {audioState.hasAudio && (
+              <Card className='border-2 border-gray-900 shadow-md'>
                 <CardHeader>
                   <div className='flex items-center justify-between'>
                     <CardTitle className='flex items-center gap-2'>
                       <SpeakerHigh className='w-5 h-5' />
                       Audio Narration
                     </CardTitle>
-                    {audioState.isSupported ? (
-                      <div className='flex items-center gap-2'>
-                        <Button
-                          variant='outline'
-                          size='sm'
-                          onClick={handleAudioPlay}
-                          aria-label={audioState.isPlaying ? 'Pause narration' : 'Play narration'}
-                        >
-                          {audioState.isPlaying ? (
-                            <Pause className='w-4 h-4' />
-                          ) : (
-                            <Play className='w-4 h-4' />
-                          )}
-                          {audioState.isPlaying ? 'Pause' : audioState.isPaused ? 'Resume' : 'Play'}
-                        </Button>
-                        {audioState.isPlaying && (
-                          <Button variant='outline' size='sm' onClick={handleAudioStop}>
-                            <Stop className='w-4 h-4' />
-                          </Button>
+                    <div className='flex items-center gap-2'>
+                      <Button
+                        variant='outline'
+                        size='sm'
+                        onClick={() => {
+                          if (audioState.isPlaying) {
+                            audioControls.pause();
+                          } else {
+                            audioControls.play();
+                          }
+                        }}
+                        aria-label={audioState.isPlaying ? 'Pause narration' : 'Play narration'}
+                        disabled={audioState.isLoading}
+                      >
+                        {audioState.isPlaying ? (
+                          <Pause className='w-4 h-4' />
+                        ) : (
+                          <Play className='w-4 h-4' />
                         )}
-                      </div>
-                    ) : (
-                      <Badge variant='secondary'>Not Supported</Badge>
-                    )}
+                        {audioState.isLoading
+                          ? 'Loading...'
+                          : audioState.isPlaying
+                            ? 'Pause'
+                            : audioState.isPaused
+                              ? 'Resume'
+                              : 'Play'}
+                      </Button>
+                      {(audioState.isPlaying || audioState.isPaused) && (
+                        <Button variant='outline' size='sm' onClick={audioControls.stop}>
+                          <Stop className='w-4 h-4' />
+                        </Button>
+                      )}
+                    </div>
                   </div>
-                  {audioState.isSupported && (
+                  {audioState.currentFile && (
                     <p className='text-sm text-muted-foreground'>
-                      Estimated listening time: {estimatedSpeechTime} minute
-                      {estimatedSpeechTime !== 1 ? 's' : ''}
+                      Playing: {audioState.currentFile.title}
+                      {audioPlaylist && audioPlaylist.files.length > 1 && (
+                        <span className='ml-2'>
+                          ({audioState.currentFileIndex + 1} of {audioPlaylist.files.length})
+                        </span>
+                      )}
                     </p>
                   )}
+                  {audioState.error && (
+                    <p className='text-sm text-red-600'>Audio Error: {audioState.error}</p>
+                  )}
                 </CardHeader>
-
-                {showAudioControls && audioState.isSupported && (
-                  <CardContent className='space-y-4'>
-                    {((): ReactElement => {
-                      try {
-                        // Ensure values are properly initialized
-                        const rate =
-                          typeof audioState.rate === 'number' && !isNaN(audioState.rate)
-                            ? audioState.rate
-                            : 1;
-                        const volume =
-                          typeof audioState.volume === 'number' && !isNaN(audioState.volume)
-                            ? audioState.volume
-                            : 1;
-
-                        return (
-                          <>
-                            <div>
-                              <label className='text-sm font-medium mb-2 block'>
-                                Speed: {rate.toFixed(1)}x
-                              </label>
-                              <Slider
-                                value={[rate]}
-                                onValueChange={([newRate]) => {
-                                  try {
-                                    audioControls.setRate(newRate);
-                                  } catch (error) {
-                                    errorHandler.logError(
-                                      'Failed to set audio rate',
-                                      error instanceof Error ? error : new Error(String(error)),
-                                      {
-                                        component: 'ModulePage',
-                                        action: 'set_audio_rate',
-                                      },
-                                    );
-                                  }
-                                }}
-                                min={0.5}
-                                max={2}
-                                step={0.1}
-                                className='w-full'
-                                aria-label='Adjust playback speed'
-                              />
-                            </div>
-                            <div>
-                              <label className='text-sm font-medium mb-2 block'>
-                                Volume: {Math.round(volume * 100)}%
-                              </label>
-                              <Slider
-                                value={[volume]}
-                                onValueChange={([newVolume]) => {
-                                  try {
-                                    audioControls.setVolume(newVolume);
-                                  } catch (error) {
-                                    errorHandler.logError(
-                                      'Failed to set audio volume',
-                                      error instanceof Error ? error : new Error(String(error)),
-                                      {
-                                        component: 'ModulePage',
-                                        action: 'set_audio_volume',
-                                      },
-                                    );
-                                  }
-                                }}
-                                min={0}
-                                max={1}
-                                step={0.1}
-                                className='w-full'
-                                aria-label='Adjust volume'
-                              />
-                            </div>
-                          </>
-                        );
-                      } catch (error) {
-                        errorHandler.logError(
-                          'Error rendering audio controls',
-                          error instanceof Error ? error : new Error(String(error)),
-                          {
-                            component: 'ModulePage',
-                            action: 'render_audio_controls',
-                          },
-                        );
-                        return (
-                          <div className='text-center p-4 text-muted-foreground'>
-                            <p>Audio controls temporarily unavailable</p>
-                            <Button
-                              variant='outline'
-                              size='sm'
-                              onClick={() => {
-                                setShowAudioControls(false);
-                                audioControls.stop();
-                              }}
-                              className='mt-2'
-                            >
-                              Close Controls
-                            </Button>
-                          </div>
-                        );
-                      }
-                    })()}
-                  </CardContent>
-                )}
               </Card>
-            </AudioControlsErrorBoundary>
+            )}
 
             {/* Module/Part Content */}
             <Card className='transition-all duration-300 hover:shadow-lg border border-border shadow-md'>
