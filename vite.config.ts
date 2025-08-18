@@ -56,13 +56,18 @@ export default defineConfig(
     build: {
       // Disable sourcemaps in production for security and performance
       sourcemap: mode !== 'production',
+      // Ensure proper module format
+      target: 'es2020',
       // Configure build for SPA deployment
       rollupOptions: {
         output: {
           // Optimized chunking strategy for better caching
           manualChunks: (id): string | undefined => {
-            // Core React libraries
-            if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) {
+            // Core React libraries - ensure they're in the same chunk
+            if (id.includes('node_modules/react-dom') || id.includes('node_modules/react/')) {
+              return 'react-vendor';
+            }
+            if (id.includes('node_modules/react')) {
               return 'react-vendor';
             }
 
