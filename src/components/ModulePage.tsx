@@ -159,7 +159,6 @@ export function ModulePage({ courseType: propCourseType }: ModulePageProps): Rea
       // Cleanup: stop audio when leaving the module page
       // This will only run when moduleId or partId changes (actual navigation)
       // eslint-disable-next-line no-console
-      console.log('[ModulePage] Navigation detected - stopping audio');
       audioControls.stop();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
