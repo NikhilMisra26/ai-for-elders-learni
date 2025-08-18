@@ -125,7 +125,6 @@ export function ModulePage({ courseType: propCourseType }: ModulePageProps): Rea
 
   // Audio system
   // eslint-disable-next-line no-console
-  console.log('[ModulePage] Current moduleId:', moduleId, 'partId:', partId);
   const audioPlaylist = getAudioPlaylist(moduleId ?? '', partId ?? undefined);
   const [audioState, audioControls] = useMP3AudioPlayer(audioPlaylist);
 
