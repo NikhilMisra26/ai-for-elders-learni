@@ -233,7 +233,12 @@ export function getAudioPlaylist(moduleId: string, partId?: string): AudioPlayli
   console.log(
     '[AudioMapping] Found audio files:',
     files.map((f) => f.filename),
-  );
+
+
+  const files = audioFileMap[key];
+  if (!files) {
+    return null;
+  }
   return {
     moduleId,
     partId,
