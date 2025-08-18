@@ -217,19 +217,23 @@ VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 ## ⚡ Performance Optimization
 
 A comprehensive performance audit has been completed and documented. For detailed optimization instructions, see:
+
 - **[PERFORMANCE_OPTIMIZATION.md](./PERFORMANCE_OPTIMIZATION.md)** - Step-by-step guide to fix all identified performance issues
 
 ### Current Performance Status
+
 - **Bundle Size**: 1.3MB (optimizable to <800KB)
 - **Lighthouse Score**: ~75/100 (target: 90+)
 - **FCP**: 2.5-3s on 3G (target: <2s)
 - **TTI**: 4-5s on 3G (target: <3.5s)
 
 ### Key Issues Identified
+
 - **HIGH**: CSS render-blocking (91.6KB gzipped, adds 500-600ms to FCP)
 - **MEDIUM**: Missing route-based code splitting (200-300ms TTI impact)
 
 ### Already Optimized
+
 ✅ Audio lazy loading (28.8MB loads on-demand, not upfront)  
 ✅ Component code-splitting (ModulePage uses React.lazy)  
 ✅ Efficient vendor chunking  

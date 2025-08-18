@@ -213,7 +213,7 @@ For example:
 - **Current Size**: 2.4MB JPEG
 - **Performance Impact**: Adds ~3-5s to LCP on 3G networks
 - **Description**: Hero banner image is served as uncompressed JPEG at 4000x3000px resolution, but displayed at 1920x1080px max
-- **Recommendation**: 
+- **Recommendation**:
   - Convert to WebP format (60-80% size reduction)
   - Provide responsive images with srcset for different screen sizes
   - Implement lazy loading for below-fold images
