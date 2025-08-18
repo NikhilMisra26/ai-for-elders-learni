@@ -202,7 +202,7 @@ Phase 4 - Asset Optimization Review:
 
 REQUIRED OUTPUT FORMAT:
 
-You MUST output your findings in markdown. The markdown output should contain the file, line number (when applicable), severity, category, performance impact metrics, and fix recommendation.
+You MUST output your findings in markdown. The markdown output should contain the file, line number (when applicable), severity, category, performance impact metrics, and fix recommendation. It should also include actionable steps on how to fix each issue such that another agentic agent can come in without context of the issue, see the context and the steps in the file, and work from there.
 
 For example:
 
