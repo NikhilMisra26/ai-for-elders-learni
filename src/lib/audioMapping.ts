@@ -220,7 +220,6 @@ export function getAudioPlaylist(moduleId: string, partId?: string): AudioPlayli
   // eslint-disable-next-line no-console
   console.log('[AudioMapping] Looking for audio with key:', key);
   // eslint-disable-next-line no-console
-  console.log('[AudioMapping] Available keys:', Object.keys(audioFileMap));
 
   const files = audioFileMap[key];
   if (!files) {
