@@ -41,3 +41,5 @@ packages
 
 # Supabase CLI cache (ephemeral)
 supabase/.temp/
+.vercel
+.env*.local

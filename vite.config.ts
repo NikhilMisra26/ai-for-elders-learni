@@ -1,11 +1,19 @@
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react-swc';
 import type { UserConfig } from 'vite';
-import { defineConfig } from 'vite';
+import { defineConfig, loadEnv } from 'vite';
+import dotenvExpand from 'dotenv-expand';
 
 // https://vite.dev/config/
 export default defineConfig(
-  (({ mode }): UserConfig => ({
+  (({ mode }): UserConfig => {
+    // Load env files in development for Vercel Blob
+    if (mode === 'development') {
+      const env = loadEnv(mode, process.cwd(), '');
+      dotenvExpand.expand({ parsed: env });
+    }
+    
+    return {
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {
@@ -104,5 +112,6 @@ export default defineConfig(
     define: {
       __DEV__: mode !== 'production',
     },
-  })) as (config: { mode: string }) => UserConfig,
+  };
+  }) as (config: { mode: string }) => UserConfig,
 );

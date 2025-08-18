@@ -227,11 +227,16 @@ export function getAudioPlaylist(moduleId: string, partId?: string): AudioPlayli
   };
 }
 
+// Import the audio storage module for Vercel Blob
+import { getAudioUrl } from './audioStorage';
+
 /**
  * Get the full path to an audio file
  */
 export function getAudioFilePath(filename: string): string {
-  return `/audio/${filename}`;
+  // Use the new audio storage module that handles Vercel Blob URLs
+  // During migration, this will handle both Blob and local files
+  return getAudioUrl(filename);
 }
 
 /**
