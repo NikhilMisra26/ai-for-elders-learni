@@ -13,11 +13,21 @@ export default defineConfig((({ mode }): UserConfig => {
   }
 
   return {
-    plugins: [react(), tailwindcss()],
+    plugins: [
+      react({
+        // Ensure React 19 compatibility
+        jsxRuntime: 'automatic',
+      }), 
+      tailwindcss()
+    ],
     resolve: {
       alias: {
         '@': new URL('./src', import.meta.url).pathname,
       },
+    },
+    optimizeDeps: {
+      // Pre-bundle React dependencies to avoid runtime issues
+      include: ['react', 'react-dom', 'react/jsx-runtime', 'react/jsx-dev-runtime'],
     },
     server: {
       // Strict CORS configuration for development server
@@ -62,64 +72,24 @@ export default defineConfig((({ mode }): UserConfig => {
         output: {
           // Ensure React is properly initialized in the correct order
           format: 'es',
-          // Optimized chunking strategy for better caching
-          manualChunks: (id): string | undefined => {
-            // Core React libraries - ensure they're in the same chunk and loaded first
-            if (
-              id.includes('node_modules/react-dom') ||
-              id.includes('node_modules/react/') ||
-              id.includes('node_modules/scheduler')
-            ) {
-              return 'react-vendor';
-            }
-
-            // Catch any other React-related modules
-            if (id.includes('node_modules/react')) {
-              return 'react-vendor';
-            }
-
-            // Supabase client - separate chunk for authentication/database
-            if (id.includes('node_modules/@supabase') || id.includes('src/lib/supabaseClient')) {
-              return 'supabase';
-            }
-
-            // Radix UI components - large UI library
-            if (id.includes('node_modules/@radix-ui')) {
-              return 'radix-ui';
-            }
-
-            // Framer Motion - animation library
-            if (id.includes('node_modules/framer-motion')) {
-              return 'framer-motion';
-            }
-
-            // React Query - data fetching
-            if (id.includes('node_modules/@tanstack/react-query')) {
-              return 'react-query';
-            }
-
-            // Other large dependencies
-            if (id.includes('node_modules/react-router-dom')) {
-              return 'router';
-            }
-
-            // Group other node_modules into a general vendor chunk
-            if (id.includes('node_modules')) {
-              return 'vendor';
-            }
-
-            // Return undefined for other files (default chunking)
-            return undefined;
-          },
-          // Ensure proper import order
-          chunkFileNames: (chunkInfo) => {
-            const facadeModuleId = chunkInfo.facadeModuleId ? chunkInfo.facadeModuleId : '';
-            if (facadeModuleId.includes('react')) {
-              return 'assets/[name]-[hash].js';
-            }
-            return 'assets/[name]-[hash].js';
+          // Simplified chunking strategy to prevent React loading issues
+          manualChunks: {
+            // Ensure React and ReactDOM are in the same chunk and loaded together
+            'react-vendor': ['react', 'react-dom'],
+            // UI components
+            'ui-vendor': [
+              '@radix-ui/react-dialog',
+              '@radix-ui/react-dropdown-menu',
+              '@radix-ui/react-slot',
+              '@radix-ui/react-tabs',
+              '@radix-ui/react-tooltip'
+            ],
+            // Supabase and auth
+            'supabase': ['@supabase/supabase-js'],
           },
         },
+        // Explicitly define external dependencies that should not be bundled
+        external: [],
       },
       // Production-specific optimizations
       ...(mode === 'production' && {
