@@ -219,6 +219,11 @@ export function getAudioPlaylist(moduleId: string, partId?: string): AudioPlayli
 
   const files = audioFileMap[key];
 
+  // Return null if no audio files exist for this key
+  if (!files || files.length === 0) {
+    return null;
+  }
+
   return {
     moduleId,
     partId,
