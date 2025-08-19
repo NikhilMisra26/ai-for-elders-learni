@@ -122,6 +122,9 @@ importers:
       date-fns:
         specifier: ^3.6.0
         version: 3.6.0
+      discover-50-ai:
+        specifier: 'link:'
+        version: 'link:'
       dompurify:
         specifier: ^3.2.6
         version: 3.2.6

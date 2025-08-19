@@ -4,6 +4,7 @@ import { ErrorBoundary } from 'react-error-boundary';
 
 import App from './App.tsx';
 import { ErrorFallback } from './ErrorFallback.tsx';
+import { logError } from './lib/errorHandler.ts';
 
 import './main.css';
 import './styles/theme.css';
@@ -20,7 +21,10 @@ const initApp = (): void => {
     const rootElement = document.getElementById('root');
 
     if (!rootElement) {
-      console.error('Root element not found');
+      logError('Root element not found', new Error('Root element missing'), {
+        component: 'main',
+        action: 'init',
+      });
       return;
     }
 
@@ -42,7 +46,14 @@ const initApp = (): void => {
       </StrictMode>,
     );
   } catch (error) {
-    console.error('Failed to initialize app:', error);
+    logError(
+      'Failed to initialize app',
+      error instanceof Error ? error : new Error(String(error)),
+      {
+        component: 'main',
+        action: 'init',
+      },
+    );
     // Fallback rendering without StrictMode
     const rootElement = document.getElementById('root');
     if (rootElement) {
