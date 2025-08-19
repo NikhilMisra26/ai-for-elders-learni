@@ -15,15 +15,15 @@ export default defineConfig((({ mode }): UserConfig => {
   return {
     plugins: [
       // SWC plugin already targets modern JSX transform; no explicit option needed
-      react(), 
-      tailwindcss()
+      react(),
+      tailwindcss(),
     ],
     resolve: {
       alias: {
         '@': new URL('./src', import.meta.url).pathname,
       },
-  // Ensure a single React instance and avoid duplicate copies across deps
-  dedupe: ['react', 'react-dom'],
+      // Ensure a single React instance and avoid duplicate copies across deps
+      dedupe: ['react', 'react-dom'],
     },
     optimizeDeps: {
       // Pre-bundle React dependencies to avoid runtime issues
