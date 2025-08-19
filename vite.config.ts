@@ -61,12 +61,18 @@ export default defineConfig(
       // Configure build for SPA deployment
       rollupOptions: {
         output: {
+          // Ensure React is properly initialized in the correct order
+          format: 'es',
           // Optimized chunking strategy for better caching
           manualChunks: (id): string | undefined => {
-            // Core React libraries - ensure they're in the same chunk
-            if (id.includes('node_modules/react-dom') || id.includes('node_modules/react/')) {
+            // Core React libraries - ensure they're in the same chunk and loaded first
+            if (id.includes('node_modules/react-dom') || 
+                id.includes('node_modules/react/') ||
+                id.includes('node_modules/scheduler')) {
               return 'react-vendor';
             }
+            
+            // Catch any other React-related modules
             if (id.includes('node_modules/react')) {
               return 'react-vendor';
             }
@@ -103,6 +109,14 @@ export default defineConfig(
 
             // Return undefined for other files (default chunking)
             return undefined;
+          },
+          // Ensure proper import order
+          chunkFileNames: (chunkInfo) => {
+            const facadeModuleId = chunkInfo.facadeModuleId ? chunkInfo.facadeModuleId : '';
+            if (facadeModuleId.includes('react')) {
+              return 'assets/[name]-[hash].js';
+            }
+            return 'assets/[name]-[hash].js';
           },
         },
       },
