@@ -5,15 +5,14 @@ import { defineConfig, loadEnv } from 'vite';
 import dotenvExpand from 'dotenv-expand';
 
 // https://vite.dev/config/
-export default defineConfig(
-  (({ mode }): UserConfig => {
-    // Load env files in development for Vercel Blob
-    if (mode === 'development') {
-      const env = loadEnv(mode, process.cwd(), '');
-      dotenvExpand.expand({ parsed: env });
-    }
-    
-    return {
+export default defineConfig((({ mode }): UserConfig => {
+  // Load env files in development for Vercel Blob
+  if (mode === 'development') {
+    const env = loadEnv(mode, process.cwd(), '');
+    dotenvExpand.expand({ parsed: env });
+  }
+
+  return {
     plugins: [react(), tailwindcss()],
     resolve: {
       alias: {
@@ -66,12 +65,14 @@ export default defineConfig(
           // Optimized chunking strategy for better caching
           manualChunks: (id): string | undefined => {
             // Core React libraries - ensure they're in the same chunk and loaded first
-            if (id.includes('node_modules/react-dom') || 
-                id.includes('node_modules/react/') ||
-                id.includes('node_modules/scheduler')) {
+            if (
+              id.includes('node_modules/react-dom') ||
+              id.includes('node_modules/react/') ||
+              id.includes('node_modules/scheduler')
+            ) {
               return 'react-vendor';
             }
-            
+
             // Catch any other React-related modules
             if (id.includes('node_modules/react')) {
               return 'react-vendor';
@@ -132,5 +133,4 @@ export default defineConfig(
       __DEV__: mode !== 'production',
     },
   };
-  }) as (config: { mode: string }) => UserConfig,
-);
+}) as (config: { mode: string }) => UserConfig);

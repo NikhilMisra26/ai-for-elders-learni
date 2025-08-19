@@ -1,9 +1,11 @@
 # Audio Migration to Vercel Blob Storage
 
 ## Overview
+
 This guide provides a complete, step-by-step implementation for migrating 28.8MB of MP3 audio files from the `/public/audio/` folder to Vercel Blob Storage. This migration will reduce deployment size, improve performance through Vercel's global CDN, and provide 100GB/month free bandwidth (50x more than Supabase's 2GB).
 
 ## Benefits of Migration
+
 - **Generous Bandwidth**: 100GB/month free tier (vs 2GB with Supabase)
 - **Native Integration**: Seamless integration with Vercel hosting platform
 - **CDN Performance**: Global edge caching for faster audio delivery
@@ -12,6 +14,7 @@ This guide provides a complete, step-by-step implementation for migrating 28.8MB
 - **Cost Effective**: Free tier covers typical educational platform usage
 
 ## Prerequisites
+
 - Vercel account with project deployed
 - Node.js 18+ installed locally
 - `pnpm` package manager installed
@@ -26,6 +29,7 @@ pnpm add @vercel/blob
 ```
 
 For development tools (optional but recommended):
+
 ```bash
 pnpm add -D dotenv dotenv-expand
 ```
@@ -44,6 +48,7 @@ pnpm add -D dotenv dotenv-expand
 ### 2.2 Get Environment Variables
 
 After creation, Vercel will provide you with:
+
 - `BLOB_READ_WRITE_TOKEN` - For server-side operations
 
 Copy these to your `.env.local`:
@@ -95,7 +100,7 @@ export async function uploadAudioFile(
   file: File | Buffer | ReadableStream | ArrayBuffer,
   options?: {
     onProgress?: (event: { loaded: number; total: number; percentage: number }) => void;
-  }
+  },
 ): Promise<{ url: string; downloadUrl: string; pathname: string; size: number }> {
   try {
     const blob = await put(filename, file, {
@@ -121,7 +126,7 @@ export async function uploadAudioFile(
         component: 'audioStorage',
         action: 'upload',
         metadata: { filename },
-      }
+      },
     );
     throw error;
   }
@@ -158,7 +163,7 @@ export async function deleteAudioFile(filename: string): Promise<void> {
         component: 'audioStorage',
         action: 'delete',
         metadata: { filename },
-      }
+      },
     );
     throw error;
   }
@@ -167,20 +172,22 @@ export async function deleteAudioFile(filename: string): Promise<void> {
 /**
  * List all audio files in Vercel Blob
  */
-export async function listAudioFiles(): Promise<Array<{
-  pathname: string;
-  url: string;
-  size: number;
-  uploadedAt: Date;
-}>> {
+export async function listAudioFiles(): Promise<
+  Array<{
+    pathname: string;
+    url: string;
+    size: number;
+    uploadedAt: Date;
+  }>
+> {
   try {
     const { blobs } = await list({
       token: BLOB_TOKEN,
     });
-    
+
     return blobs
-      .filter(blob => blob.pathname.endsWith('.mp3'))
-      .map(blob => ({
+      .filter((blob) => blob.pathname.endsWith('.mp3'))
+      .map((blob) => ({
         pathname: blob.pathname,
         url: blob.url,
         size: blob.size,
@@ -193,7 +200,7 @@ export async function listAudioFiles(): Promise<Array<{
       {
         component: 'audioStorage',
         action: 'list',
-      }
+      },
     );
     return [];
   }
@@ -216,12 +223,12 @@ export function getAudioUrl(filename: string): string {
   if (AUDIO_BLOB_URLS[filename]) {
     return AUDIO_BLOB_URLS[filename];
   }
-  
+
   // Fallback to local files during migration
   if (import.meta.env.DEV) {
     return `/audio/${filename}`;
   }
-  
+
   // In production, all files should be in Blob storage
   console.warn(`Audio file ${filename} not found in Blob storage mapping`);
   return getAudioUrlSync(filename);
@@ -294,10 +301,10 @@ const AUDIO_FILES = [
 
 async function checkExistingFiles() {
   console.log('🔍 Checking existing files in Vercel Blob...');
-  
+
   try {
     const { blobs } = await list({ token: BLOB_TOKEN });
-    const existingFiles = blobs.map(blob => blob.pathname);
+    const existingFiles = blobs.map((blob) => blob.pathname);
     console.log(`Found ${existingFiles.length} existing files`);
     return existingFiles;
   } catch (error) {
@@ -324,7 +331,7 @@ async function uploadAudioFiles() {
     }
 
     const filePath = path.join(audioDir, filename);
-    
+
     // Check if file exists locally
     if (!fs.existsSync(filePath)) {
       console.error(`❌ File not found: ${filename}`);
@@ -334,12 +341,12 @@ async function uploadAudioFiles() {
 
     const fileBuffer = fs.readFileSync(filePath);
     const fileSizeMB = (fileBuffer.length / (1024 * 1024)).toFixed(2);
-    
+
     console.log(`📤 Uploading ${filename} (${fileSizeMB} MB)...`);
-    
+
     try {
       const startTime = Date.now();
-      
+
       const blob = await put(filename, fileBuffer, {
         access: 'public',
         token: BLOB_TOKEN,
@@ -351,14 +358,13 @@ async function uploadAudioFiles() {
           process.stdout.write(`\r   Progress: ${percentage}%`);
         },
       });
-      
+
       const uploadTime = ((Date.now() - startTime) / 1000).toFixed(1);
       console.log(`\r✅ Uploaded ${filename} in ${uploadTime}s`);
       console.log(`   URL: ${blob.url}`);
-      
+
       results.success.push(filename);
       urlMappings[filename] = blob.url;
-      
     } catch (error) {
       console.error(`\r❌ Failed to upload ${filename}:`, error.message);
       results.failed.push({ filename, error: error.message });
@@ -371,7 +377,7 @@ async function uploadAudioFiles() {
   console.log(`✅ Successfully uploaded: ${results.success.length} files`);
   console.log(`⏭️  Skipped (existing): ${results.skipped.length} files`);
   console.log(`❌ Failed: ${results.failed.length} files`);
-  
+
   if (results.failed.length > 0) {
     console.log('\nFailed uploads:');
     results.failed.forEach(({ filename, error }) => {
@@ -458,26 +464,26 @@ const EXPECTED_FILES = [
 
 async function verifyAudioFiles() {
   console.log('🔍 Verifying audio files in Vercel Blob Storage...\n');
-  
+
   const results = { found: [], missing: [], errors: [] };
-  
+
   try {
     // List all files in storage
     const { blobs } = await list({ token: BLOB_TOKEN });
-    const storedFiles = blobs.map(blob => blob.pathname);
-    
+    const storedFiles = blobs.map((blob) => blob.pathname);
+
     console.log(`📊 Found ${storedFiles.length} files in storage\n`);
-    
+
     // Check each expected file
     for (const filename of EXPECTED_FILES) {
       process.stdout.write(`Checking ${filename}... `);
-      
+
       try {
         // Check if file exists in list
         if (storedFiles.includes(filename)) {
           // Get file metadata to verify it's accessible
           const metadata = await head(filename, { token: BLOB_TOKEN });
-          
+
           if (metadata) {
             const sizeMB = (metadata.size / (1024 * 1024)).toFixed(2);
             console.log(`✅ Found (${sizeMB} MB)`);
@@ -495,45 +501,45 @@ async function verifyAudioFiles() {
         results.errors.push({ filename, error: error.message });
       }
     }
-    
+
     // Check for unexpected files
     const unexpectedFiles = storedFiles.filter(
-      file => file.endsWith('.mp3') && !EXPECTED_FILES.includes(file)
+      (file) => file.endsWith('.mp3') && !EXPECTED_FILES.includes(file),
     );
-    
+
     if (unexpectedFiles.length > 0) {
       console.log('\n⚠️  Unexpected audio files found:');
-      unexpectedFiles.forEach(file => console.log(`  - ${file}`));
+      unexpectedFiles.forEach((file) => console.log(`  - ${file}`));
     }
-    
+
     // Print summary
     console.log('\n' + '='.repeat(60));
     console.log('📊 Verification Summary:');
     console.log(`✅ Verified: ${results.found.length}/${EXPECTED_FILES.length} files`);
     console.log(`❌ Missing: ${results.missing.length} files`);
     console.log(`⚠️  Errors: ${results.errors.length} files`);
-    
+
     if (results.missing.length > 0) {
       console.log('\nMissing files:');
-      results.missing.forEach(file => console.log(`  - ${file}`));
+      results.missing.forEach((file) => console.log(`  - ${file}`));
     }
-    
+
     if (results.errors.length > 0) {
       console.log('\nFiles with errors:');
       results.errors.forEach(({ filename, error }) => {
         console.log(`  - ${filename}: ${error}`);
       });
     }
-    
+
     // Test URL accessibility
     if (results.found.length > 0) {
       console.log('\n🌐 Testing URL accessibility...');
       const testFile = results.found[0];
-      const testBlob = blobs.find(b => b.pathname === testFile);
-      
+      const testBlob = blobs.find((b) => b.pathname === testFile);
+
       if (testBlob) {
         console.log(`Testing: ${testBlob.url}`);
-        
+
         try {
           const response = await fetch(testBlob.url, { method: 'HEAD' });
           if (response.ok) {
@@ -546,14 +552,13 @@ async function verifyAudioFiles() {
         }
       }
     }
-    
+
     console.log('='.repeat(60));
-    
+
     // Exit with error if not all files are found
     if (results.missing.length > 0 || results.errors.length > 0) {
       process.exit(1);
     }
-    
   } catch (error) {
     console.error('❌ Verification failed:', error.message);
     process.exit(1);
@@ -643,6 +648,7 @@ export default defineConfig(({ mode }) => {
 ### Manual Steps to Execute:
 
 1. **Install dependencies:**
+
    ```bash
    pnpm add @vercel/blob
    pnpm add -D dotenv dotenv-expand
@@ -654,11 +660,13 @@ export default defineConfig(({ mode }) => {
    - Copy the `BLOB_READ_WRITE_TOKEN` to `.env.local`
 
 3. **Upload audio files:**
+
    ```bash
    pnpm run audio:upload
    ```
 
 4. **Verify migration:**
+
    ```bash
    pnpm run audio:verify
    ```
@@ -668,22 +676,26 @@ export default defineConfig(({ mode }) => {
    - Update `src/lib/audioStorage.ts` with actual blob URLs
 
 6. **Test locally:**
+
    ```bash
    pnpm run dev
    ```
+
    - Navigate to modules with audio
    - Verify audio plays correctly from Blob URLs
 
 7. **Deploy to Vercel:**
+
    ```bash
    vercel --prod
    ```
 
 8. **Clean up (after verification):**
+
    ```bash
    # Backup first
    tar -czf audio-backup.tar.gz public/audio/
-   
+
    # Remove local files
    rm -rf public/audio/
    ```
@@ -691,21 +703,26 @@ export default defineConfig(({ mode }) => {
 ## Troubleshooting
 
 ### CORS Issues
+
 Vercel Blob automatically handles CORS for public files. If you encounter issues:
+
 1. Ensure files are uploaded with `access: 'public'`
 2. Check that your domain is properly configured in Vercel
 
 ### Environment Variables Not Loading
+
 1. Ensure `.env.local` exists with correct values
 2. Restart your dev server after changing env files
 3. Use the Vite config provided above if using Vite
 
 ### File Not Found
+
 1. Run `pnpm run audio:list` to see all uploaded files
 2. Check that filenames match exactly (case-sensitive)
 3. Verify the blob store ID in your URLs
 
 ### Upload Failures
+
 1. Check your token has write permissions
 2. Ensure file sizes are under 500MB (Vercel Blob limit)
 3. Verify network connectivity
@@ -747,6 +764,7 @@ Vercel Blob automatically handles CORS for public files. If you encounter issues
 ## Expected Results
 
 After migration:
+
 - ✅ Deployment size reduced by 28.8MB
 - ✅ 100GB monthly bandwidth available
 - ✅ Global CDN delivery with ~50ms latency

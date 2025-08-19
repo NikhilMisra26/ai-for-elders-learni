@@ -18,20 +18,20 @@ if (typeof window !== 'undefined') {
 const initApp = (): void => {
   try {
     const rootElement = document.getElementById('root');
-    
+
     if (!rootElement) {
       console.error('Root element not found');
       return;
     }
-    
+
     // Check if already initialized
     if (rootElement.hasAttribute('data-react-root')) {
       return;
     }
-    
+
     // Mark as initialized
     rootElement.setAttribute('data-react-root', 'true');
-    
+
     // Create React root and render app
     const root = createRoot(rootElement);
     root.render(

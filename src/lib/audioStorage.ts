@@ -140,34 +140,61 @@ export async function listAudioFiles(): Promise<
  * In production, store these in a database or config file
  */
 const AUDIO_BLOB_URLS: Record<string, string> = {
-  "IntroAudio.mp3": "https://vwi2dhqib5x7lguh.public.blob.vercel-storage.com/IntroAudio.mp3",
-  "Module 1.1 Part 1.mp3": "https://vwi2dhqib5x7lguh.public.blob.vercel-storage.com/Module%201.1%20Part%201.mp3",
-  "Module 1.1 Part 2.mp3": "https://vwi2dhqib5x7lguh.public.blob.vercel-storage.com/Module%201.1%20Part%202.mp3",
-  "Module 1.2 Part 1.mp3": "https://vwi2dhqib5x7lguh.public.blob.vercel-storage.com/Module%201.2%20Part%201.mp3",
-  "Module 1.2 Part 2.mp3": "https://vwi2dhqib5x7lguh.public.blob.vercel-storage.com/Module%201.2%20Part%202.mp3",
-  "Module 1.3 Part 1.mp3": "https://vwi2dhqib5x7lguh.public.blob.vercel-storage.com/Module%201.3%20Part%201.mp3",
-  "Module 1.3 Part 2.mp3": "https://vwi2dhqib5x7lguh.public.blob.vercel-storage.com/Module%201.3%20Part%202.mp3",
-  "Module 2.1 Part 1.mp3": "https://vwi2dhqib5x7lguh.public.blob.vercel-storage.com/Module%202.1%20Part%201.mp3",
-  "Module 2.1 Part 2.mp3": "https://vwi2dhqib5x7lguh.public.blob.vercel-storage.com/Module%202.1%20Part%202.mp3",
-  "Module 2.2 Part 1.mp3": "https://vwi2dhqib5x7lguh.public.blob.vercel-storage.com/Module%202.2%20Part%201.mp3",
-  "Module 2.2 Part 2.mp3": "https://vwi2dhqib5x7lguh.public.blob.vercel-storage.com/Module%202.2%20Part%202.mp3",
-  "Module 2.3 Part 1.mp3": "https://vwi2dhqib5x7lguh.public.blob.vercel-storage.com/Module%202.3%20Part%201.mp3",
-  "Module 2.3 Part 2.mp3": "https://vwi2dhqib5x7lguh.public.blob.vercel-storage.com/Module%202.3%20Part%202.mp3",
-  "Module 3.1 Part 1.mp3": "https://vwi2dhqib5x7lguh.public.blob.vercel-storage.com/Module%203.1%20Part%201.mp3",
-  "Module 3.1 Part 2.mp3": "https://vwi2dhqib5x7lguh.public.blob.vercel-storage.com/Module%203.1%20Part%202.mp3",
-  "Module 3.2 Part 1.mp3": "https://vwi2dhqib5x7lguh.public.blob.vercel-storage.com/Module%203.2%20Part%201.mp3",
-  "Module 3.2 Part 2.mp3": "https://vwi2dhqib5x7lguh.public.blob.vercel-storage.com/Module%203.2%20Part%202.mp3",
-  "Module 3.3 Part 1.mp3": "https://vwi2dhqib5x7lguh.public.blob.vercel-storage.com/Module%203.3%20Part%201.mp3",
-  "Module 3.3 Part 2.mp3": "https://vwi2dhqib5x7lguh.public.blob.vercel-storage.com/Module%203.3%20Part%202.mp3",
-  "Module 3.3 Part 3.mp3": "https://vwi2dhqib5x7lguh.public.blob.vercel-storage.com/Module%203.3%20Part%203.mp3",
-  "Module 4.1 Part 1.mp3": "https://vwi2dhqib5x7lguh.public.blob.vercel-storage.com/Module%204.1%20Part%201.mp3",
-  "Module 4.1 Part 2.mp3": "https://vwi2dhqib5x7lguh.public.blob.vercel-storage.com/Module%204.1%20Part%202.mp3",
-  "Module 4.2 Part 1.mp3": "https://vwi2dhqib5x7lguh.public.blob.vercel-storage.com/Module%204.2%20Part%201.mp3",
-  "Module 4.2 Part 2.mp3": "https://vwi2dhqib5x7lguh.public.blob.vercel-storage.com/Module%204.2%20Part%202.mp3",
-  "Module 4.3 Part 1.mp3": "https://vwi2dhqib5x7lguh.public.blob.vercel-storage.com/Module%204.3%20Part%201.mp3",
-  "Module 4.3 Part 2.mp3": "https://vwi2dhqib5x7lguh.public.blob.vercel-storage.com/Module%204.3%20Part%202.mp3",
-  "Conclusion part 1.mp3": "https://vwi2dhqib5x7lguh.public.blob.vercel-storage.com/Conclusion%20part%201.mp3",
-  "Conclusion Part 2.mp3": "https://vwi2dhqib5x7lguh.public.blob.vercel-storage.com/Conclusion%20Part%202.mp3"
+  'IntroAudio.mp3': 'https://vwi2dhqib5x7lguh.public.blob.vercel-storage.com/IntroAudio.mp3',
+  'Module 1.1 Part 1.mp3':
+    'https://vwi2dhqib5x7lguh.public.blob.vercel-storage.com/Module%201.1%20Part%201.mp3',
+  'Module 1.1 Part 2.mp3':
+    'https://vwi2dhqib5x7lguh.public.blob.vercel-storage.com/Module%201.1%20Part%202.mp3',
+  'Module 1.2 Part 1.mp3':
+    'https://vwi2dhqib5x7lguh.public.blob.vercel-storage.com/Module%201.2%20Part%201.mp3',
+  'Module 1.2 Part 2.mp3':
+    'https://vwi2dhqib5x7lguh.public.blob.vercel-storage.com/Module%201.2%20Part%202.mp3',
+  'Module 1.3 Part 1.mp3':
+    'https://vwi2dhqib5x7lguh.public.blob.vercel-storage.com/Module%201.3%20Part%201.mp3',
+  'Module 1.3 Part 2.mp3':
+    'https://vwi2dhqib5x7lguh.public.blob.vercel-storage.com/Module%201.3%20Part%202.mp3',
+  'Module 2.1 Part 1.mp3':
+    'https://vwi2dhqib5x7lguh.public.blob.vercel-storage.com/Module%202.1%20Part%201.mp3',
+  'Module 2.1 Part 2.mp3':
+    'https://vwi2dhqib5x7lguh.public.blob.vercel-storage.com/Module%202.1%20Part%202.mp3',
+  'Module 2.2 Part 1.mp3':
+    'https://vwi2dhqib5x7lguh.public.blob.vercel-storage.com/Module%202.2%20Part%201.mp3',
+  'Module 2.2 Part 2.mp3':
+    'https://vwi2dhqib5x7lguh.public.blob.vercel-storage.com/Module%202.2%20Part%202.mp3',
+  'Module 2.3 Part 1.mp3':
+    'https://vwi2dhqib5x7lguh.public.blob.vercel-storage.com/Module%202.3%20Part%201.mp3',
+  'Module 2.3 Part 2.mp3':
+    'https://vwi2dhqib5x7lguh.public.blob.vercel-storage.com/Module%202.3%20Part%202.mp3',
+  'Module 3.1 Part 1.mp3':
+    'https://vwi2dhqib5x7lguh.public.blob.vercel-storage.com/Module%203.1%20Part%201.mp3',
+  'Module 3.1 Part 2.mp3':
+    'https://vwi2dhqib5x7lguh.public.blob.vercel-storage.com/Module%203.1%20Part%202.mp3',
+  'Module 3.2 Part 1.mp3':
+    'https://vwi2dhqib5x7lguh.public.blob.vercel-storage.com/Module%203.2%20Part%201.mp3',
+  'Module 3.2 Part 2.mp3':
+    'https://vwi2dhqib5x7lguh.public.blob.vercel-storage.com/Module%203.2%20Part%202.mp3',
+  'Module 3.3 Part 1.mp3':
+    'https://vwi2dhqib5x7lguh.public.blob.vercel-storage.com/Module%203.3%20Part%201.mp3',
+  'Module 3.3 Part 2.mp3':
+    'https://vwi2dhqib5x7lguh.public.blob.vercel-storage.com/Module%203.3%20Part%202.mp3',
+  'Module 3.3 Part 3.mp3':
+    'https://vwi2dhqib5x7lguh.public.blob.vercel-storage.com/Module%203.3%20Part%203.mp3',
+  'Module 4.1 Part 1.mp3':
+    'https://vwi2dhqib5x7lguh.public.blob.vercel-storage.com/Module%204.1%20Part%201.mp3',
+  'Module 4.1 Part 2.mp3':
+    'https://vwi2dhqib5x7lguh.public.blob.vercel-storage.com/Module%204.1%20Part%202.mp3',
+  'Module 4.2 Part 1.mp3':
+    'https://vwi2dhqib5x7lguh.public.blob.vercel-storage.com/Module%204.2%20Part%201.mp3',
+  'Module 4.2 Part 2.mp3':
+    'https://vwi2dhqib5x7lguh.public.blob.vercel-storage.com/Module%204.2%20Part%202.mp3',
+  'Module 4.3 Part 1.mp3':
+    'https://vwi2dhqib5x7lguh.public.blob.vercel-storage.com/Module%204.3%20Part%201.mp3',
+  'Module 4.3 Part 2.mp3':
+    'https://vwi2dhqib5x7lguh.public.blob.vercel-storage.com/Module%204.3%20Part%202.mp3',
+  'Conclusion part 1.mp3':
+    'https://vwi2dhqib5x7lguh.public.blob.vercel-storage.com/Conclusion%20part%201.mp3',
+  'Conclusion Part 2.mp3':
+    'https://vwi2dhqib5x7lguh.public.blob.vercel-storage.com/Conclusion%20Part%202.mp3',
 
   // These will be populated after initial upload
   // Example: 'IntroAudio.mp3': 'https://abc123.public.blob.vercel-storage.com/IntroAudio.mp3'
