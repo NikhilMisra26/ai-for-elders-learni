@@ -214,6 +214,16 @@ VITE_SUPABASE_URL=your_supabase_project_url
 VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
+## 🎵 Audio Infrastructure
+
+The platform utilizes **Vercel Blob Storage** for efficient audio file delivery:
+
+- **28 MP3 files** (28.8MB total) hosted on Vercel's global CDN
+- **100GB/month bandwidth** on free tier (50x more than alternatives)
+- **Edge caching** for ~50ms global latency
+- **Streaming support** for progressive audio loading
+- **Migration Guide**: See [AUDIO_MIGRATION.md](./AUDIO_MIGRATION.md) for implementation details
+
 ## ⚡ Performance Optimization
 
 A comprehensive performance audit has been completed and documented. For detailed optimization instructions, see:
@@ -234,7 +244,7 @@ A comprehensive performance audit has been completed and documented. For detaile
 
 ### Already Optimized
 
-✅ Audio lazy loading (28.8MB loads on-demand, not upfront)  
+✅ Audio migration to Vercel Blob Storage (28.8MB moved to CDN, 100GB/month bandwidth)  
 ✅ Component code-splitting (ModulePage uses React.lazy)  
 ✅ Efficient vendor chunking  
 ✅ Production build optimizations  

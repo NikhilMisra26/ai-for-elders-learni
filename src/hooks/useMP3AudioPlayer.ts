@@ -44,13 +44,13 @@ export function useMP3AudioPlayer(
     isPaused: false,
     isLoading: false,
     currentFileIndex: 0,
-    currentFile: playlist?.files[0] ?? null,
+    currentFile: playlist?.files?.[0] ?? null,
     duration: 0,
     currentTime: 0,
     volume: 1,
     playbackRate: 1,
     error: null,
-    hasAudio: Boolean(playlist?.files.length),
+    hasAudio: Boolean(playlist?.files?.length),
   });
 
   // Refs for HTML5 Audio element and tracking
@@ -122,11 +122,11 @@ export function useMP3AudioPlayer(
           isPaused: false,
           isLoading: false,
           currentFileIndex: 0,
-          currentFile: playlist.files[0] ?? null,
+          currentFile: playlist.files?.[0] ?? null,
           duration: 0,
           currentTime: 0,
           error: null,
-          hasAudio: Boolean(playlist.files.length),
+          hasAudio: Boolean(playlist.files?.length),
         }));
 
         // Clear the current source reference to force reload
@@ -215,9 +215,9 @@ export function useMP3AudioPlayer(
       }
 
       // Auto-advance to next file if available and auto-advance is enabled
-      if (playlist?.autoAdvance && state.currentFileIndex < (playlist?.files.length ?? 0) - 1) {
+      if (playlist?.autoAdvance && state.currentFileIndex < (playlist?.files?.length ?? 0) - 1) {
         const nextIndex = state.currentFileIndex + 1;
-        const nextFile = playlist?.files[nextIndex];
+        const nextFile = playlist?.files?.[nextIndex];
         if (nextFile) {
           setState((prev) => ({
             ...prev,
@@ -320,7 +320,7 @@ export function useMP3AudioPlayer(
       audio.removeEventListener('error', handleError);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentAudioPath, playlist?.autoAdvance, playlist?.files.length, state.currentFileIndex]); // Only essential dependencies
+  }, [currentAudioPath, playlist?.autoAdvance, playlist?.files?.length, state.currentFileIndex]); // Only essential dependencies
 
   // Separate effect for volume/playback rate updates (performance optimization)
   useEffect(() => {
@@ -445,7 +445,7 @@ export function useMP3AudioPlayer(
   }, [state.isPaused, play]);
 
   const next = useCallback((): void => {
-    if (!playlist || state.currentFileIndex >= playlist.files.length - 1) {
+    if (!playlist?.files || state.currentFileIndex >= playlist.files.length - 1) {
       return;
     }
 
@@ -468,7 +468,7 @@ export function useMP3AudioPlayer(
   }, [playlist, state.currentFileIndex]);
 
   const previous = useCallback((): void => {
-    if (!playlist || state.currentFileIndex <= 0) {
+    if (!playlist?.files || state.currentFileIndex <= 0) {
       return;
     }
 

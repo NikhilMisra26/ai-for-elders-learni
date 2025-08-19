@@ -1,16 +1,33 @@
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react-swc';
 import type { UserConfig } from 'vite';
-import { defineConfig } from 'vite';
+import { defineConfig, loadEnv } from 'vite';
+import dotenvExpand from 'dotenv-expand';
 
 // https://vite.dev/config/
-export default defineConfig(
-  (({ mode }): UserConfig => ({
-    plugins: [react(), tailwindcss()],
+export default defineConfig((({ mode }): UserConfig => {
+  // Load env files in development for Vercel Blob
+  if (mode === 'development') {
+    const env = loadEnv(mode, process.cwd(), '');
+    dotenvExpand.expand({ parsed: env });
+  }
+
+  return {
+    plugins: [
+      // SWC plugin already targets modern JSX transform; no explicit option needed
+      react(),
+      tailwindcss(),
+    ],
     resolve: {
       alias: {
         '@': new URL('./src', import.meta.url).pathname,
       },
+      // Ensure a single React instance and avoid duplicate copies across deps
+      dedupe: ['react', 'react-dom'],
+    },
+    optimizeDeps: {
+      // Pre-bundle React dependencies to avoid runtime issues
+      include: ['react', 'react-dom', 'react/jsx-runtime', 'react/jsx-dev-runtime'],
     },
     server: {
       // Strict CORS configuration for development server
@@ -48,55 +65,13 @@ export default defineConfig(
     build: {
       // Disable sourcemaps in production for security and performance
       sourcemap: mode !== 'production',
-      // Configure build for SPA deployment
-      rollupOptions: {
-        output: {
-          // Optimized chunking strategy for better caching
-          manualChunks: (id): string | undefined => {
-            // Core React libraries
-            if (id.includes('node_modules/react') || id.includes('node_modules/react-dom')) {
-              return 'react-vendor';
-            }
-
-            // Supabase client - separate chunk for authentication/database
-            if (id.includes('node_modules/@supabase') || id.includes('src/lib/supabaseClient')) {
-              return 'supabase';
-            }
-
-            // Radix UI components - large UI library
-            if (id.includes('node_modules/@radix-ui')) {
-              return 'radix-ui';
-            }
-
-            // Framer Motion - animation library
-            if (id.includes('node_modules/framer-motion')) {
-              return 'framer-motion';
-            }
-
-            // React Query - data fetching
-            if (id.includes('node_modules/@tanstack/react-query')) {
-              return 'react-query';
-            }
-
-            // Other large dependencies
-            if (id.includes('node_modules/react-router-dom')) {
-              return 'router';
-            }
-
-            // Group other node_modules into a general vendor chunk
-            if (id.includes('node_modules')) {
-              return 'vendor';
-            }
-
-            // Return undefined for other files (default chunking)
-            return undefined;
-          },
-        },
-      },
-      // Production-specific optimizations
+      target: 'es2020',
+      // Use Vite defaults for chunking and vendor splitting to guarantee
+      // correct dependency ordering on all hosts (e.g., Vercel).
+      rollupOptions: {},
       ...(mode === 'production' && {
         minify: 'esbuild',
-        reportCompressedSize: false, // Faster builds
+        reportCompressedSize: false,
         chunkSizeWarningLimit: 1000,
       }),
     },
@@ -104,5 +79,5 @@ export default defineConfig(
     define: {
       __DEV__: mode !== 'production',
     },
-  })) as (config: { mode: string }) => UserConfig,
-);
+  };
+}) as (config: { mode: string }) => UserConfig);
