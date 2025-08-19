@@ -14,16 +14,16 @@ export default defineConfig((({ mode }): UserConfig => {
 
   return {
     plugins: [
-      react({
-        // Ensure React 19 compatibility
-        jsxRuntime: 'automatic',
-      }), 
+      // SWC plugin already targets modern JSX transform; no explicit option needed
+      react(), 
       tailwindcss()
     ],
     resolve: {
       alias: {
         '@': new URL('./src', import.meta.url).pathname,
       },
+  // Ensure a single React instance and avoid duplicate copies across deps
+  dedupe: ['react', 'react-dom'],
     },
     optimizeDeps: {
       // Pre-bundle React dependencies to avoid runtime issues
@@ -65,36 +65,13 @@ export default defineConfig((({ mode }): UserConfig => {
     build: {
       // Disable sourcemaps in production for security and performance
       sourcemap: mode !== 'production',
-      // Ensure proper module format
       target: 'es2020',
-      // Configure build for SPA deployment
-      rollupOptions: {
-        output: {
-          // Ensure React is properly initialized in the correct order
-          format: 'es',
-          // Simplified chunking strategy to prevent React loading issues
-          manualChunks: {
-            // Ensure React and ReactDOM are in the same chunk and loaded together
-            'react-vendor': ['react', 'react-dom'],
-            // UI components
-            'ui-vendor': [
-              '@radix-ui/react-dialog',
-              '@radix-ui/react-dropdown-menu',
-              '@radix-ui/react-slot',
-              '@radix-ui/react-tabs',
-              '@radix-ui/react-tooltip'
-            ],
-            // Supabase and auth
-            'supabase': ['@supabase/supabase-js'],
-          },
-        },
-        // Explicitly define external dependencies that should not be bundled
-        external: [],
-      },
-      // Production-specific optimizations
+      // Use Vite defaults for chunking and vendor splitting to guarantee
+      // correct dependency ordering on all hosts (e.g., Vercel).
+      rollupOptions: {},
       ...(mode === 'production' && {
         minify: 'esbuild',
-        reportCompressedSize: false, // Faster builds
+        reportCompressedSize: false,
         chunkSizeWarningLimit: 1000,
       }),
     },
