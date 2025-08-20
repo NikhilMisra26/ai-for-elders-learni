@@ -123,6 +123,9 @@ export function ModulePage({ courseType: propCourseType }: ModulePageProps): Rea
   );
   const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set());
 
+  // Check for reduced motion preference
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
   // Audio system
 
   const audioPlaylist = getAudioPlaylist(moduleId ?? '', partId ?? undefined);
@@ -152,6 +155,33 @@ export function ModulePage({ courseType: propCourseType }: ModulePageProps): Rea
       setExpandedModules(new Set([moduleId]));
     }
   }, [moduleId]);
+
+  // Scroll to top when navigating to a new module or part
+  useEffect(() => {
+    // Small delay to ensure DOM is updated before scrolling
+    const scrollTimer = setTimeout(() => {
+      // Try to scroll to main content first
+      const mainContent = document.getElementById('main-content');
+      if (mainContent) {
+        // Scroll to a position slightly above the main content to show breadcrumbs
+        const yOffset = -20; // Small offset to ensure breadcrumbs are visible
+        const y = mainContent.getBoundingClientRect().top + window.pageYOffset + yOffset;
+
+        window.scrollTo({
+          top: y,
+          behavior: prefersReducedMotion ? 'instant' : 'smooth',
+        });
+      } else {
+        // Fallback to top of page if main content not found
+        window.scrollTo({
+          top: 0,
+          behavior: prefersReducedMotion ? 'instant' : 'smooth',
+        });
+      }
+    }, 100); // Small delay to ensure React has rendered the new content
+
+    return (): void => clearTimeout(scrollTimer);
+  }, [moduleId, partId, prefersReducedMotion]);
 
   // Stop audio when component unmounts or when navigating away
   useEffect(() => {
@@ -642,12 +672,9 @@ export function ModulePage({ courseType: propCourseType }: ModulePageProps): Rea
                       <p className='text-sm font-medium text-purple-700 flex items-center gap-2'>
                         <Sparkle className='w-4 h-4 text-purple-500' weight='duotone' />
                         Now Playing:{' '}
-                        <span className='font-bold'>{audioState.currentFile.title}</span>
-                        {audioPlaylist && audioPlaylist.files.length > 1 && (
-                          <Badge className='ml-2 bg-gradient-to-r from-purple-500 to-pink-500 text-white'>
-                            Track {audioState.currentFileIndex + 1} of {audioPlaylist.files.length}
-                          </Badge>
-                        )}
+                        <span className='font-bold'>
+                          {audioState.currentFile.title.replace(/ - Part \d+$/, '')}
+                        </span>
                       </p>
                     </div>
                   )}

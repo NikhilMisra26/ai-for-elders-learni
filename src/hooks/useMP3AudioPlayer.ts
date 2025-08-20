@@ -59,6 +59,7 @@ export function useMP3AudioPlayer(
   const timeUpdateIntervalRef = useRef<number | null>(null);
   const isUserInitiated = useRef(false);
   const previousPlaylistRef = useRef<AudioPlaylist | null>(playlist);
+  const shouldAutoPlayNextRef = useRef(false); // Track if we should auto-play after auto-advance
   const hookId = useRef(
     typeof crypto !== 'undefined' && crypto.randomUUID
       ? crypto.randomUUID()
@@ -102,6 +103,9 @@ export function useMP3AudioPlayer(
       prevPlaylist?.moduleId !== playlist?.moduleId || prevPlaylist?.partId !== playlist?.partId;
 
     if (playlistChanged) {
+      // Reset auto-play flag when changing modules
+      shouldAutoPlayNextRef.current = false;
+
       // Stop current audio if playing
       if (audioRef.current) {
         audioRef.current.pause();
@@ -179,6 +183,29 @@ export function useMP3AudioPlayer(
 
     const handleCanPlay = (): void => {
       setState((prev) => ({ ...prev, isLoading: false }));
+
+      // Auto-play the next track if this load was triggered by auto-advance
+      if (shouldAutoPlayNextRef.current && audioRef.current) {
+        shouldAutoPlayNextRef.current = false; // Reset the flag
+        const playPromise = audioRef.current.play();
+
+        if (playPromise !== undefined) {
+          playPromise.catch((error) => {
+            errorHandler.logError(
+              'Failed to auto-play next track after auto-advance',
+              error instanceof Error ? error : new Error(String(error)),
+              {
+                component: 'useMP3AudioPlayer',
+                action: 'auto-play-next',
+                metadata: {
+                  hookId: hookId.current,
+                  filename: state.currentFile?.filename,
+                },
+              },
+            );
+          });
+        }
+      }
     };
 
     const handleLoadedMetadata = (): void => {
@@ -219,6 +246,9 @@ export function useMP3AudioPlayer(
         const nextIndex = state.currentFileIndex + 1;
         const nextFile = playlist?.files?.[nextIndex];
         if (nextFile) {
+          // Set flag to auto-play when the next track loads
+          shouldAutoPlayNextRef.current = true;
+
           setState((prev) => ({
             ...prev,
             currentFileIndex: nextIndex,
