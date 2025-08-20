@@ -567,7 +567,16 @@ export function ModulePage({ courseType: propCourseType }: ModulePageProps): Rea
                     <div className='absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-gradient-to-br from-pink-300 to-purple-300 rounded-full blur-3xl animate-pulse' />
                   )}
                 </div>
-
+                {!prefersReducedMotion && (
+                  <div className='absolute inset-0 opacity-30 pointer-events-none'>
+                    <div className='absolute top-4 left-4 w-24 h-24 bg-gradient-to-br from-purple-300 to-pink-300 rounded-full blur-2xl animate-pulse' />
+                    <div className='absolute bottom-4 right-4 w-28 h-28 bg-gradient-to-br from-orange-300 to-yellow-300 rounded-full blur-2xl animate-pulse delay-1000' />
+                    {audioState.isPlaying && (
+                      <div className='absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-gradient-to-br from-pink-300 to-purple-300 rounded-full blur-3xl animate-pulse' />
+                    )}
+                  </div>
+                )}
+                {/* Optionally, you could add a static fallback for reduced motion users */}
                 <CardHeader className='relative'>
                   <div className='flex items-center justify-between'>
                     <CardTitle className='flex items-center gap-3'>
