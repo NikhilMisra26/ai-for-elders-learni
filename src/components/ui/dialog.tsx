@@ -62,7 +62,8 @@ function DialogContent({
         {children}
         {!hideCloseButton && (
           <DialogPrimitive.Close className='absolute top-3 right-3 h-4 w-4 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 text-black shadow-lg transition-all hover:from-orange-500 hover:to-orange-700 hover:shadow-xl hover:scale-110 focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none flex items-center justify-center'>
-            <X className='h-2 w-2' />
+          <DialogPrimitive.Close className='absolute top-3 right-3 h-11 w-11 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 text-black shadow-lg transition-all hover:from-orange-500 hover:to-orange-700 hover:shadow-xl hover:scale-110 focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none flex items-center justify-center p-0'>
+            <X className='h-4 w-4' />
             <span className='sr-only'>Close</span>
           </DialogPrimitive.Close>
         )}
