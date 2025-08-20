@@ -19,7 +19,6 @@ import {
 } from '@phosphor-icons/react';
 import type { ReactElement } from 'react';
 
-import { AuthForm } from './AuthForm';
 import { EmailSupportDialog } from './EmailSupportDialog';
 import { PasswordChangeDialog } from './PasswordChangeDialog';
 
@@ -51,22 +50,6 @@ function AccountPageComponent(): ReactElement {
 
   // Password change dialog state
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
-
-  if (!user) {
-    return (
-      <div className='min-h-screen flex items-center justify-center bg-background'>
-        <Card className='max-w-md'>
-          <CardHeader>
-            <CardTitle>Sign In Required</CardTitle>
-            <CardDescription>Please sign in to view your account information</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <AuthForm onClose={() => handleNavigation('home')} />
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
 
   // @ts-expect-error - Plan data may be used for display in the future
   const _currentPlan = getCurrentPlan();
@@ -126,7 +109,7 @@ function AccountPageComponent(): ReactElement {
         <div className='relative max-w-7xl mx-auto'>
           <div className='text-center'>
             <h1 className='text-5xl font-bold mb-4 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent'>
-              {getGreeting()}, {user.name}!
+              {getGreeting()}, {user?.name ?? 'there'}!
             </h1>
             <p className='text-2xl text-gray-700 font-medium mb-2'>
               Manage Your <BrandName variant='short' /> Account
@@ -156,11 +139,11 @@ function AccountPageComponent(): ReactElement {
                 <div className='grid grid-cols-2 gap-6'>
                   <div className='p-4 bg-white/80 backdrop-blur-sm rounded-lg shadow-md'>
                     <Label className='text-sm font-semibold text-gray-600'>Full Name</Label>
-                    <p className='text-lg font-medium text-gray-800 mt-1'>{user.name}</p>
+                    <p className='text-lg font-medium text-gray-800 mt-1'>{user?.name ?? ''}</p>
                   </div>
                   <div className='p-4 bg-white/80 backdrop-blur-sm rounded-lg shadow-md'>
                     <Label className='text-sm font-semibold text-gray-600'>Email Address</Label>
-                    <p className='text-lg font-medium text-gray-800 mt-1'>{user.email}</p>
+                    <p className='text-lg font-medium text-gray-800 mt-1'>{user?.email ?? ''}</p>
                   </div>
                 </div>
 
@@ -170,7 +153,7 @@ function AccountPageComponent(): ReactElement {
                   <div className='p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg'>
                     <Label className='text-sm font-semibold text-gray-600'>Member Since</Label>
                     <p className='text-lg font-medium text-gray-800 mt-1'>
-                      {new Date(user.joinDate).toLocaleDateString()}
+                      {user?.joinDate ? new Date(user.joinDate).toLocaleDateString() : ''}
                     </p>
                   </div>
                   <div className='p-4 bg-gradient-to-r from-green-50 to-teal-50 rounded-lg'>

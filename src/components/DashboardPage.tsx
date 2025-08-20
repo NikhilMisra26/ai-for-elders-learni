@@ -20,8 +20,6 @@ import {
   //  Medal, // Subscription feature - temporarily disabled, will be re-enabled later
 } from '@phosphor-icons/react';
 
-import { AuthForm } from './AuthForm';
-
 import { BrandName } from '@/components/BrandName';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -41,23 +39,6 @@ function DashboardPageComponent(): ReactElement {
     useProgress();
 
   const [showGoalSetting, setShowGoalSetting] = useState(false);
-
-  // Redirect if not authenticated
-  if (!user) {
-    return (
-      <div className='min-h-screen flex items-center justify-center bg-background'>
-        <Card className='max-w-md'>
-          <CardHeader>
-            <CardTitle>Sign In Required</CardTitle>
-            <CardDescription>Please sign in to view your learning dashboard</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <AuthForm onClose={() => void navigate('/home')} />
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
 
   const dashboardSummary = getDashboardSummary();
   const recommendations = getLearningRecommendations();
@@ -98,7 +79,7 @@ function DashboardPageComponent(): ReactElement {
         <div className='relative max-w-7xl mx-auto'>
           <div className='text-center'>
             <h1 className='text-5xl font-bold mb-4 bg-gradient-to-r from-purple-600 via-pink-600 to-orange-600 bg-clip-text text-transparent'>
-              {getGreeting()}, {user.name}!
+              {getGreeting()}, {user?.name ?? 'there'}!
             </h1>
             <p className='text-2xl text-gray-700 font-medium'>
               Your AI Learning Journey with <BrandName variant='short' />
@@ -467,7 +448,7 @@ function DashboardPageComponent(): ReactElement {
                 <div className='p-4 bg-white/80 backdrop-blur-sm rounded-lg'>
                   <div className='text-sm font-semibold text-gray-600 mb-1'>Member Since</div>
                   <div className='text-base font-medium text-gray-800'>
-                    {new Date(user.joinDate).toLocaleDateString()}
+                    {user?.joinDate ? new Date(user.joinDate).toLocaleDateString() : ''}
                   </div>
                 </div>
 

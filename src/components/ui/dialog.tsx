@@ -38,11 +38,16 @@ function DialogOverlay({
   );
 }
 
+interface DialogContentProps extends ComponentProps<typeof DialogPrimitive.Content> {
+  hideCloseButton?: boolean;
+}
+
 function DialogContent({
   className,
   children,
+  hideCloseButton = false,
   ...props
-}: ComponentProps<typeof DialogPrimitive.Content>): ReactElement {
+}: DialogContentProps): ReactElement {
   return (
     <DialogPortal data-slot='dialog-portal'>
       <DialogOverlay />
@@ -55,10 +60,12 @@ function DialogContent({
         {...props}
       >
         {children}
-        <DialogPrimitive.Close className="ring-offset-background focus:ring-ring data-[state=open]:bg-accent data-[state=open]:text-muted-foreground absolute top-4 right-4 rounded-xs opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4">
-          <X />
-          <span className='sr-only'>Close</span>
-        </DialogPrimitive.Close>
+        {!hideCloseButton && (
+          <DialogPrimitive.Close className='absolute top-3 right-3 h-4 w-4 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 text-black shadow-lg transition-all hover:from-orange-500 hover:to-orange-700 hover:shadow-xl hover:scale-110 focus:ring-2 focus:ring-orange-500 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none flex items-center justify-center'>
+            <X className='h-2 w-2' />
+            <span className='sr-only'>Close</span>
+          </DialogPrimitive.Close>
+        )}
       </DialogPrimitive.Content>
     </DialogPortal>
   );
