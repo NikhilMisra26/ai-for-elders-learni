@@ -123,6 +123,9 @@ export function ModulePage({ courseType: propCourseType }: ModulePageProps): Rea
   );
   const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set());
 
+  // Check for reduced motion preference
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
   // Audio system
 
   const audioPlaylist = getAudioPlaylist(moduleId ?? '', partId ?? undefined);
@@ -152,6 +155,33 @@ export function ModulePage({ courseType: propCourseType }: ModulePageProps): Rea
       setExpandedModules(new Set([moduleId]));
     }
   }, [moduleId]);
+
+  // Scroll to top when navigating to a new module or part
+  useEffect(() => {
+    // Small delay to ensure DOM is updated before scrolling
+    const scrollTimer = setTimeout(() => {
+      // Try to scroll to main content first
+      const mainContent = document.getElementById('main-content');
+      if (mainContent) {
+        // Scroll to a position slightly above the main content to show breadcrumbs
+        const yOffset = -20; // Small offset to ensure breadcrumbs are visible
+        const y = mainContent.getBoundingClientRect().top + window.pageYOffset + yOffset;
+
+        window.scrollTo({
+          top: y,
+          behavior: prefersReducedMotion ? 'instant' : 'smooth',
+        });
+      } else {
+        // Fallback to top of page if main content not found
+        window.scrollTo({
+          top: 0,
+          behavior: prefersReducedMotion ? 'instant' : 'smooth',
+        });
+      }
+    }, 100); // Small delay to ensure React has rendered the new content
+
+    return (): void => clearTimeout(scrollTimer);
+  }, [moduleId, partId, prefersReducedMotion]);
 
   // Stop audio when component unmounts or when navigating away
   useEffect(() => {
@@ -556,18 +586,51 @@ export function ModulePage({ courseType: propCourseType }: ModulePageProps): Rea
               </CardContent>
             </Card>
 
-            {/* Audio Controls */}
+            {/* Audio Controls - Enhanced */}
             {audioState.hasAudio && (
-              <Card className='border-2 border-gray-900 shadow-md'>
-                <CardHeader>
+              <Card className='relative overflow-hidden border-0 shadow-xl bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50'>
+                {/* Animated Background Elements */}
+                <div className='absolute inset-0 opacity-30 pointer-events-none'>
+                  <div className='absolute top-4 left-4 w-24 h-24 bg-gradient-to-br from-purple-300 to-pink-300 rounded-full blur-2xl animate-pulse' />
+                  <div className='absolute bottom-4 right-4 w-28 h-28 bg-gradient-to-br from-orange-300 to-yellow-300 rounded-full blur-2xl animate-pulse delay-1000' />
+                  {audioState.isPlaying && (
+                    <div className='absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-gradient-to-br from-pink-300 to-purple-300 rounded-full blur-3xl animate-pulse' />
+                  )}
+                </div>
+                {!prefersReducedMotion && (
+                  <div className='absolute inset-0 opacity-30 pointer-events-none'>
+                    <div className='absolute top-4 left-4 w-24 h-24 bg-gradient-to-br from-purple-300 to-pink-300 rounded-full blur-2xl animate-pulse' />
+                    <div className='absolute bottom-4 right-4 w-28 h-28 bg-gradient-to-br from-orange-300 to-yellow-300 rounded-full blur-2xl animate-pulse delay-1000' />
+                    {audioState.isPlaying && (
+                      <div className='absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-gradient-to-br from-pink-300 to-purple-300 rounded-full blur-3xl animate-pulse' />
+                    )}
+                  </div>
+                )}
+                {/* Optionally, you could add a static fallback for reduced motion users */}
+                <CardHeader className='relative'>
                   <div className='flex items-center justify-between'>
-                    <CardTitle className='flex items-center gap-2'>
-                      <SpeakerHigh className='w-5 h-5' />
-                      Audio Narration
+                    <CardTitle className='flex items-center gap-3'>
+                      <div className='relative'>
+                        <div className='absolute inset-0 bg-gradient-to-r from-purple-400 to-pink-400 rounded-lg blur-lg opacity-60' />
+                        <div className='relative bg-white/90 backdrop-blur-sm p-2 rounded-lg shadow-md'>
+                          <SpeakerHigh className='w-6 h-6 text-purple-600' weight='duotone' />
+                        </div>
+                      </div>
+                      <span className='text-2xl font-bold bg-gradient-to-r from-purple-600 to-pink-600 bg-clip-text text-transparent'>
+                        Audio Narration
+                      </span>
+                      {audioState.isPlaying && (
+                        <div className='flex items-center gap-1'>
+                          <div className='w-1 h-3 bg-purple-500 rounded-full animate-pulse' />
+                          <div className='w-1 h-5 bg-pink-500 rounded-full animate-pulse delay-75' />
+                          <div className='w-1 h-4 bg-orange-500 rounded-full animate-pulse delay-150' />
+                          <div className='w-1 h-6 bg-purple-500 rounded-full animate-pulse delay-200' />
+                          <div className='w-1 h-3 bg-pink-500 rounded-full animate-pulse delay-300' />
+                        </div>
+                      )}
                     </CardTitle>
                     <div className='flex items-center gap-2'>
                       <Button
-                        variant='outline'
                         size='sm'
                         onClick={() => {
                           if (audioState.isPlaying) {
@@ -578,11 +641,12 @@ export function ModulePage({ courseType: propCourseType }: ModulePageProps): Rea
                         }}
                         aria-label={audioState.isPlaying ? 'Pause narration' : 'Play narration'}
                         disabled={audioState.isLoading}
+                        className='bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 border-0'
                       >
                         {audioState.isPlaying ? (
-                          <Pause className='w-4 h-4' />
+                          <Pause className='w-4 h-4 mr-2' weight='fill' />
                         ) : (
-                          <Play className='w-4 h-4' />
+                          <Play className='w-4 h-4 mr-2' weight='fill' />
                         )}
                         {audioState.isLoading
                           ? 'Loading...'
@@ -593,24 +657,34 @@ export function ModulePage({ courseType: propCourseType }: ModulePageProps): Rea
                               : 'Play'}
                       </Button>
                       {(audioState.isPlaying || audioState.isPaused) && (
-                        <Button variant='outline' size='sm' onClick={audioControls.stop}>
-                          <Stop className='w-4 h-4' />
+                        <Button
+                          size='sm'
+                          onClick={audioControls.stop}
+                          className='bg-gradient-to-r from-red-500 to-orange-500 hover:from-red-600 hover:to-orange-600 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200 border-0'
+                        >
+                          <Stop className='w-4 h-4' weight='fill' />
                         </Button>
                       )}
                     </div>
                   </div>
                   {audioState.currentFile && (
-                    <p className='text-sm text-muted-foreground'>
-                      Playing: {audioState.currentFile.title}
-                      {audioPlaylist && audioPlaylist.files.length > 1 && (
-                        <span className='ml-2'>
-                          ({audioState.currentFileIndex + 1} of {audioPlaylist.files.length})
+                    <div className='mt-3 p-3 bg-white/60 backdrop-blur-sm rounded-lg'>
+                      <p className='text-sm font-medium text-purple-700 flex items-center gap-2'>
+                        <Sparkle className='w-4 h-4 text-purple-500' weight='duotone' />
+                        Now Playing:{' '}
+                        <span className='font-bold'>
+                          {audioState.currentFile.title.replace(/ - Part \d+$/, '')}
                         </span>
-                      )}
-                    </p>
+                      </p>
+                    </div>
                   )}
                   {audioState.error && (
-                    <p className='text-sm text-red-600'>Audio Error: {audioState.error}</p>
+                    <div className='mt-3 p-3 bg-red-50 border border-red-200 rounded-lg'>
+                      <p className='text-sm font-medium text-red-700 flex items-center gap-2'>
+                        <Warning className='w-4 h-4' />
+                        Audio Error: {audioState.error}
+                      </p>
+                    </div>
                   )}
                 </CardHeader>
               </Card>

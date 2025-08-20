@@ -197,7 +197,7 @@ function AppContent(): ReactElement {
               <Route
                 path='/courses/basic'
                 element={
-                  <ProtectedRoute>
+                  <ProtectedRoute onAuthRequired={handleAuthClick}>
                     <ErrorBoundary FallbackComponent={ErrorFallback}>
                       <ModulePage courseType='basic' />
                     </ErrorBoundary>
@@ -207,7 +207,7 @@ function AppContent(): ReactElement {
               <Route
                 path='/courses/advanced'
                 element={
-                  <ProtectedRoute requiredRole='advanced'>
+                  <ProtectedRoute requiredRole='advanced' onAuthRequired={handleAuthClick}>
                     <ErrorBoundary FallbackComponent={ErrorFallback}>
                       <ModulePage courseType='advanced' />
                     </ErrorBoundary>
@@ -217,7 +217,7 @@ function AppContent(): ReactElement {
               <Route
                 path='/courses/expert'
                 element={
-                  <ProtectedRoute requiredRole='expert'>
+                  <ProtectedRoute requiredRole='expert' onAuthRequired={handleAuthClick}>
                     <ErrorBoundary FallbackComponent={ErrorFallback}>
                       <ModulePage courseType='expert' />
                     </ErrorBoundary>
@@ -229,7 +229,7 @@ function AppContent(): ReactElement {
               <Route
                 path='/courses/:courseType/module/:moduleId'
                 element={
-                  <ProtectedRoute>
+                  <ProtectedRoute onAuthRequired={handleAuthClick}>
                     <ErrorBoundary FallbackComponent={ErrorFallback}>
                       <ModulePage />
                     </ErrorBoundary>
@@ -241,7 +241,7 @@ function AppContent(): ReactElement {
               <Route
                 path='/courses/:courseType/module/:moduleId/part/:partId'
                 element={
-                  <ProtectedRoute>
+                  <ProtectedRoute onAuthRequired={handleAuthClick}>
                     <ErrorBoundary FallbackComponent={ErrorFallback}>
                       <ModulePage />
                     </ErrorBoundary>
@@ -253,7 +253,7 @@ function AppContent(): ReactElement {
               <Route
                 path='/dashboard'
                 element={
-                  <ProtectedRoute>
+                  <ProtectedRoute onAuthRequired={handleAuthClick}>
                     <ErrorBoundary FallbackComponent={ErrorFallback}>
                       <DashboardPage />
                     </ErrorBoundary>
@@ -266,7 +266,7 @@ function AppContent(): ReactElement {
               <Route
                 path='/account'
                 element={
-                  <ProtectedRoute>
+                  <ProtectedRoute onAuthRequired={handleAuthClick}>
                     <AccountPage />
                   </ProtectedRoute>
                 }
@@ -275,7 +275,7 @@ function AppContent(): ReactElement {
               <Route
                 path='/settings'
                 element={
-                  <ProtectedRoute>
+                  <ProtectedRoute onAuthRequired={handleAuthClick}>
                     <AccountPage />
                   </ProtectedRoute>
                 }
@@ -285,7 +285,7 @@ function AppContent(): ReactElement {
               <Route
                 path='/reviews'
                 element={
-                  <ProtectedRoute>
+                  <ProtectedRoute onAuthRequired={handleAuthClick}>
                     <ReviewForm />
                   </ProtectedRoute>
                 }
@@ -305,7 +305,7 @@ function AppContent(): ReactElement {
           if (!open) handleAuthClose();
         }}
       >
-        <DialogContent className='sm:max-w-md'>
+        <DialogContent className='sm:max-w-md' hideCloseButton>
           <VisuallyHidden>
             <DialogTitle>Authentication</DialogTitle>
             <DialogDescription>Sign in or create an account to continue</DialogDescription>

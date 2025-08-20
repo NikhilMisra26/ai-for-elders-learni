@@ -44,9 +44,9 @@ export function EmailAlreadyExistsDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className='sm:max-w-[475px] text-orange-600' onKeyDown={handleKeyDown}>
+      <DialogContent className='sm:max-w-[475px]' onKeyDown={handleKeyDown}>
         <DialogHeader>
-          <DialogTitle className='flex items-center gap-2'>
+          <DialogTitle className='flex items-center gap-2 text-black'>
             <UserCircle className='w-5 h-5 text-orange-600' weight='duotone' />
             Account May Already Exist
           </DialogTitle>
@@ -58,7 +58,7 @@ export function EmailAlreadyExistsDialog({
 
         <div className='py-6 space-y-4'>
           <div className='bg-muted/50 rounded-lg p-4 space-y-3'>
-            <h3 className='font-medium text-sm'>What would you like to do?</h3>
+            <h3 className='font-medium text-sm text-orange-600'>What would you like to do?</h3>
 
             <div className='space-y-2 text-sm text-muted-foreground'>
               <p className='flex items-start gap-2'>

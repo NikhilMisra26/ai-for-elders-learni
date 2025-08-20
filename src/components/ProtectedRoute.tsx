@@ -63,10 +63,6 @@ export function ProtectedRoute({
 
   // Show auth prompt if not authenticated
   if (!user) {
-    if (onAuthRequired) {
-      onAuthRequired();
-    }
-
     return (
       <div className='max-w-2xl mx-auto p-6'>
         <Card>
