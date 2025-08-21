@@ -185,7 +185,7 @@ class ErrorHandlerService {
       context: this.redactSensitiveInContext(context),
       userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'unknown',
       url: typeof window !== 'undefined' ? window.location.href : 'unknown',
-      stackTrace: sanitizedError?.stack,
+      stackTrace: !this.isProduction ? sanitizedError?.stack : undefined,
     };
 
     // Notify all handlers

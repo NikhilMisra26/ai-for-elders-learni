@@ -58,7 +58,7 @@ export function HomePage({ onNavigate, onAuthClick }: HomePageProps): ReactEleme
   const features = [
     {
       icon: <Brain className='w-8 h-8 text-primary' />,
-      title: 'Senior-Friendly Design',
+      title: 'Age-Adapted Design',
       description:
         'Large fonts, clear navigation, and audio narration make learning AI accessible and enjoyable for everyone.',
     },

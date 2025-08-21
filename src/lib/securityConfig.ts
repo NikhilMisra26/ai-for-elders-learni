@@ -6,6 +6,21 @@
 import { logWarning } from '@/lib/errorHandler';
 
 /**
+ * Generate a cryptographically secure nonce for CSP
+ * This nonce should be generated server-side in production
+ */
+export function generateCSPNonce(): string {
+  if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+    const array = new Uint8Array(16);
+    crypto.getRandomValues(array);
+    return btoa(String.fromCharCode(...array));
+  }
+  // Fallback for environments without crypto API
+  // In production, this should throw an error instead
+  return 'static-nonce-' + Date.now();
+}
+
+/**
  * Content Security Policy directives
  * Helps prevent XSS attacks by specifying allowed content sources
  */
@@ -13,12 +28,16 @@ export const CSP_DIRECTIVES = {
   'default-src': ["'self'"],
   'script-src': [
     "'self'",
-    ...(process.env.NODE_ENV !== 'production' ? ["'unsafe-inline'"] : []), // Only in development
+    // In development, allow unsafe-inline for hot reload
+    // In production, use nonce-based approach (nonce added dynamically)
+    ...(process.env.NODE_ENV !== 'production' ? ["'unsafe-inline'"] : []),
     'https://cdn.jsdelivr.net', // For third-party libraries if needed
   ],
   'style-src': [
     "'self'",
-    ...(process.env.NODE_ENV !== 'production' ? ["'unsafe-inline'"] : []), // Only in development
+    // In development, allow unsafe-inline for hot reload
+    // In production, use nonce-based approach (nonce added dynamically)
+    ...(process.env.NODE_ENV !== 'production' ? ["'unsafe-inline'"] : []),
   ],
   'img-src': [
     "'self'",

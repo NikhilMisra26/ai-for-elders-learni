@@ -10,7 +10,7 @@ import {
 } from 'react-router-dom';
 import { ErrorBoundary } from 'react-error-boundary';
 
-import { AuthProvider } from './contexts/AuthContext';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { AccessibilityProvider } from './contexts/AccessibilityContext';
 import { Header } from './components/Header';
 import { errorHandler } from './lib/errorHandler';
@@ -95,6 +95,7 @@ function AppContent(): ReactElement {
   const location = useLocation();
   const navigate = useNavigate();
   const [showSecurityDashboard, setShowSecurityDashboard] = useState(false);
+  const { user } = useAuth();
 
   // Check for auth query param
   const showAuthDialog = searchParams.get('auth') === 'true';
@@ -113,10 +114,20 @@ function AppContent(): ReactElement {
     setSearchParams(newParams);
   };
 
-  // Security dashboard access (for demo purposes - in production, this would be admin-only)
+  // Security dashboard access - restricted to authenticated admin users
   const handleKeyPress = (e: KeyboardEvent): void => {
     if (e.ctrlKey && e.shiftKey && e.key === 'S') {
-      setShowSecurityDashboard(true);
+      e.preventDefault();
+      // Check if user is authenticated and is admin
+      // Since User interface doesn't have role field, check for specific admin email
+      // In production, this should check against a proper role/permission system
+      const adminEmails = ['admin@discover50ai.com', 'security@discover50ai.com'];
+      if (user && adminEmails.includes(user.email.toLowerCase())) {
+        setShowSecurityDashboard(true);
+      } else {
+        // Silently ignore for non-admin users (no error message to avoid revealing feature existence)
+        console.warn('Unauthorized access attempt to security dashboard');
+      }
     }
   };
 

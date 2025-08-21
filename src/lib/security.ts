@@ -192,12 +192,21 @@ export class RateLimiter {
 /**
  * Input sanitization to prevent XSS and injection attacks
  * Use for form inputs and user-generated content
+ * Uses DOMPurify for comprehensive sanitization while preserving safe content
  */
 export function sanitizeInput(input: string): string {
-  return input
-    .trim()
-    .replace(/[<>"']/g, '') // Remove potentially dangerous characters
-    .slice(0, 1000); // Limit length
+  // Use DOMPurify for comprehensive sanitization
+  // Strip all HTML tags but keep the text content
+  const cleaned = DOMPurify.sanitize(input, {
+    ALLOWED_TAGS: [], // No HTML tags allowed
+    ALLOWED_ATTR: [], // No attributes allowed
+    KEEP_CONTENT: true, // Keep text content
+    RETURN_DOM: false,
+    RETURN_DOM_FRAGMENT: false,
+  });
+  
+  // Additional safety: trim and limit length
+  return cleaned.trim().slice(0, 1000);
 }
 
 /**
