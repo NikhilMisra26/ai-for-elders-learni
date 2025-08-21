@@ -349,34 +349,7 @@ export async function simulatePaymentFlow(_planId: string): Promise<{
   paymentMethod?: PaymentMethod;
   error?: string;
 }> {
-  /*
-  return new Promise((resolve) => {
-    // Simulate payment processing delay
-    setTimeout((): void => {
-      // Use planId for consistent simulation based on plan
-      // Simulate 95% success rate
-      const success = Math.random() > 0.05;
-
-      if (success) {
-        const paymentMethod: PaymentMethod = {
-          id: `pm_${Date.now()}`,
-          type: 'card',
-          last4: Math.floor(Math.random() * 9000 + 1000).toString(),
-          brand: ['visa', 'mastercard', 'amex'][Math.floor(Math.random() * 3)],
-          expiry: '12/28',
-          isDefault: true,
-        };
-        resolve({ success: true, paymentMethod });
-      } else {
-        resolve({
-          success: false,
-          error:
-            'Payment failed. Please check your card details and try again.',
-        });
-      }
-    }, 2000); // 2 second delay to simulate processing
-  });
-  */
+  // Payment processing is handled by Stripe integration
   // Added for subscription removal: return failure immediately
   return Promise.resolve({
     success: false,

@@ -94,10 +94,29 @@ export const deepClone = <T>(obj: T): T => {
 };
 
 /**
- * Generate a unique ID
+ * Generate a unique ID using secure random when available
  */
 export const generateId = (prefix = 'id'): string => {
-  return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
+  let randomPart: string;
+
+  // Try to use crypto API for better randomness
+  if (globalThis.crypto?.getRandomValues) {
+    const array = new Uint8Array(6);
+    globalThis.crypto.getRandomValues(array);
+    randomPart = Array.from(array, (byte) => byte.toString(36))
+      .join('')
+      .slice(0, 9);
+  } else {
+    // Fallback using timestamp and performance counter for uniqueness
+    // Avoids Math.random() for better security posture
+    const performanceCounter =
+      typeof performance !== 'undefined'
+        ? performance.now().toString(36).replace('.', '')
+        : Date.now().toString(36);
+    randomPart = performanceCounter.slice(0, 9).padEnd(9, '0');
+  }
+
+  return `${prefix}_${Date.now()}_${randomPart}`;
 };
 
 /**

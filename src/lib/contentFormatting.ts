@@ -1,6 +1,7 @@
 import type { ReactElement } from 'react';
 import { createElement } from 'react';
 import { CheckCircle, Warning, Lightbulb, Pencil, Star } from '@phosphor-icons/react';
+import DOMPurify from 'dompurify';
 
 // Types
 export interface ContentSection {
@@ -222,16 +223,25 @@ export const renderSectionWithStyle = (section: ContentSection): ReactElement =>
 };
 
 // Format special content blocks (warnings, tips, exercises)
+// SECURITY: Sanitizes HTML output to prevent XSS attacks
 export const formatSpecialBlocks = (content: string): string => {
-  let formattedContent = content;
+  // First, escape any HTML in the original content to prevent XSS
+  const escapedContent = content
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
 
-  // Handle bullet points
+  let formattedContent = escapedContent;
+
+  // Handle bullet points (safe because content is already escaped)
   formattedContent = formattedContent.replace(
     /^- (.+)$/gm,
     '<li class="ml-4 mb-2 list-disc list-inside">$1</li>',
   );
 
-  // Handle numbered lists
+  // Handle numbered lists (safe because content is already escaped)
   formattedContent = formattedContent.replace(
     /^(\d+)\.\s(.+)$/gm,
     '<li class="ml-4 mb-2 list-decimal list-inside"><span class="font-medium">$1.</span> $2</li>',
@@ -248,16 +258,16 @@ export const formatSpecialBlocks = (content: string): string => {
     '<ol class="mb-4">$&</ol>',
   );
 
-  // Handle bold text
+  // Handle bold text (safe because content is already escaped)
   formattedContent = formattedContent.replace(
     /\*\*([^*]+)\*\*/g,
     '<strong class="font-semibold">$1</strong>',
   );
 
-  // Handle italic text
+  // Handle italic text (safe because content is already escaped)
   formattedContent = formattedContent.replace(/\*([^*]+)\*/g, '<em class="italic">$1</em>');
 
-  // Handle inline code
+  // Handle inline code (safe because content is already escaped)
   formattedContent = formattedContent.replace(
     /`([^`]+)`/g,
     '<code class="bg-gray-100 px-2 py-1 rounded font-mono text-sm">$1</code>',
@@ -286,7 +296,32 @@ export const formatSpecialBlocks = (content: string): string => {
     .filter(Boolean)
     .join('\n');
 
-  return formattedContent;
+  // Sanitize the final HTML with DOMPurify to ensure safety
+  // This allows only safe HTML tags and attributes
+  const sanitized = DOMPurify.sanitize(formattedContent, {
+    ALLOWED_TAGS: [
+      'p',
+      'br',
+      'strong',
+      'em',
+      'code',
+      'ul',
+      'ol',
+      'li',
+      'span',
+      'h1',
+      'h2',
+      'h3',
+      'h4',
+      'h5',
+      'h6',
+      'div',
+    ],
+    ALLOWED_ATTR: ['class'],
+    KEEP_CONTENT: true,
+  });
+
+  return sanitized;
 };
 
 // Utility function to extract content sections from course module content

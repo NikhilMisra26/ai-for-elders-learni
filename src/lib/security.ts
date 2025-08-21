@@ -204,7 +204,7 @@ export function sanitizeInput(input: string): string {
     RETURN_DOM: false,
     RETURN_DOM_FRAGMENT: false,
   });
-  
+
   // Additional safety: trim and limit length
   return cleaned.trim().slice(0, 1000);
 }
@@ -296,71 +296,90 @@ export function generateSessionToken(): string {
   return Array.from(array, (byte) => byte.toString(16).padStart(2, '0')).join('');
 }
 
+// SessionManager class has been removed - use Supabase Auth for all session management
+// Sessions are managed securely by Supabase with httpOnly cookies
+// Use supabase.auth.getSession(), supabase.auth.signOut(), etc.
+
 /**
- * Session management utilities
- * IMPORTANT: This class is deprecated - use Supabase Auth for session management
- * Keeping interface for backward compatibility but delegating to Supabase
+ * Validate file magic numbers (file signatures) for security
+ * Checks the actual file content, not just the MIME type which can be spoofed
  */
-export class SessionManager {
-  /**
-   * @deprecated Use Supabase Auth instead
-   * Sessions should be managed by Supabase with secure httpOnly cookies
-   */
-  static createSession(_userId: string): string {
-    // Return a dummy token - actual session is managed by Supabase
-    return 'supabase-managed-session';
+async function validateFileMagicNumber(file: File): Promise<boolean> {
+  const buffer = await file.slice(0, 12).arrayBuffer();
+  const bytes = new Uint8Array(buffer);
+
+  // Define magic numbers for allowed file types
+  const signatures: Record<string, number[][]> = {
+    'image/jpeg': [
+      [0xff, 0xd8, 0xff], // JPEG/JFIF
+    ],
+    'image/png': [
+      [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a], // PNG
+    ],
+    'image/gif': [
+      [0x47, 0x49, 0x46, 0x38, 0x37, 0x61], // GIF87a
+      [0x47, 0x49, 0x46, 0x38, 0x39, 0x61], // GIF89a
+    ],
+    'image/webp': [
+      // RIFF....WEBP
+      [0x52, 0x49, 0x46, 0x46],
+    ],
+  };
+
+  // Special handling for WebP (checks RIFF header and WEBP at offset 8)
+  if (file.type === 'image/webp') {
+    const riffHeader = Array.from(bytes.slice(0, 4));
+    const webpSignature = Array.from(bytes.slice(8, 12));
+    return (
+      riffHeader.every((byte, i) => byte === signatures['image/webp'][0][i]) &&
+      webpSignature.every((byte, i) => byte === [0x57, 0x45, 0x42, 0x50][i])
+    );
   }
 
-  /**
-   * @deprecated Use supabase.auth.getSession() instead
-   */
-  static getSession(): {
-    userId: string;
-    token: string;
-    createdAt: number;
-  } | null {
-    return null;
-  }
-
-  /**
-   * @deprecated Use supabase.auth.signOut() instead
-   */
-  static clearSession(): void {
-    // Deprecated - use supabase.auth.signOut() instead
-  }
-
-  /**
-   * @deprecated Use supabase.auth.getSession() instead
-   */
-  static isSessionValid(): boolean {
+  // Check if file matches any valid signature for its type
+  const validSignatures = signatures[file.type];
+  if (!validSignatures) {
     return false;
   }
 
-  /**
-   * @deprecated Session extension is handled automatically by Supabase
-   */
-  static extendSession(): void {
-    // Deprecated - Supabase automatically handles session refresh
-  }
+  return validSignatures.some((signature) =>
+    signature.every((byte, index) => bytes[index] === byte),
+  );
 }
 
 /**
  * Content Security Policy helpers
  */
-export function validateFileUpload(file: File): {
+export async function validateFileUpload(file: File): Promise<{
   isValid: boolean;
   errors: string[];
-} {
+}> {
   const errors: string[] = [];
   const allowedTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
   const maxSize = 5 * 1024 * 1024; // 5MB
 
+  // Check MIME type
   if (!allowedTypes.includes(file.type)) {
     errors.push('Only image files (JPEG, PNG, GIF, WebP) are allowed');
   }
 
   if (file.size > maxSize) {
     errors.push('File size must be less than 5MB');
+  }
+
+  // Validate magic numbers (file signature) for security
+  // This prevents malicious files with spoofed MIME types
+  if (errors.length === 0) {
+    try {
+      const isValidMagicNumber = await validateFileMagicNumber(file);
+      if (!isValidMagicNumber) {
+        errors.push(
+          'File content does not match its type. The file may be corrupted or misidentified.',
+        );
+      }
+    } catch {
+      errors.push('Unable to validate file content');
+    }
   }
 
   return {

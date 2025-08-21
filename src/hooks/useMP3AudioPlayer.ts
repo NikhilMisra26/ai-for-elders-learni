@@ -63,7 +63,7 @@ export function useMP3AudioPlayer(
   const hookId = useRef(
     typeof crypto !== 'undefined' && crypto.randomUUID
       ? crypto.randomUUID()
-      : Math.random().toString(36).substr(2, 9),
+      : `hook_${Date.now()}_${performance.now().toString(36).replace('.', '')}`,
   );
 
   // Memoize the current audio path to prevent unnecessary recalculations
@@ -580,4 +580,103 @@ export function useMP3AudioPlayer(
       getPlaylist,
     },
   ];
+}
+
+/**
+ * Safely initialize the Web Speech API with proper error handling
+ * Returns null if the API is not supported or fails to initialize
+ */
+export function initSpeechSynthesis(): SpeechSynthesis | null {
+  // Check if the API is available
+  if (!('speechSynthesis' in window)) {
+    // eslint-disable-next-line no-console
+    console.warn('Speech synthesis not supported in this browser');
+    return null;
+  }
+
+  try {
+    // Attempt to access the API
+    const synthesis = window.speechSynthesis;
+
+    // Verify the API is functional
+    if (typeof synthesis.speak !== 'function' || typeof synthesis.cancel !== 'function') {
+      // eslint-disable-next-line no-console
+      console.warn('Speech synthesis API is incomplete');
+      return null;
+    }
+
+    return synthesis;
+  } catch (error) {
+    // Log error but don't throw - gracefully degrade
+    // eslint-disable-next-line no-console
+    console.error('Failed to initialize speech synthesis:', error);
+    errorHandler.logError(
+      'Web Speech API initialization failed',
+      error instanceof Error ? error : new Error(String(error)),
+      {
+        component: 'speechSynthesis',
+        action: 'init',
+      },
+    );
+    return null;
+  }
+}
+
+/**
+ * Safely create a speech utterance with error handling
+ * Returns null if creation fails
+ */
+export function createSpeechUtterance(text: string): SpeechSynthesisUtterance | null {
+  try {
+    if (!text || typeof text !== 'string') {
+      // eslint-disable-next-line no-console
+      console.warn('Invalid text provided for speech utterance');
+      return null;
+    }
+
+    const utterance = new SpeechSynthesisUtterance(text);
+
+    // Set up error handling for the utterance
+    utterance.onerror = (event): void => {
+      // eslint-disable-next-line no-console
+      console.error('Speech synthesis error:', event.error);
+      errorHandler.logError(`Speech synthesis failed: ${event.error}`, new Error(event.error), {
+        component: 'speechSynthesis',
+        action: 'speak',
+        metadata: {
+          charIndex: event.charIndex,
+          elapsedTime: event.elapsedTime,
+        },
+      });
+    };
+
+    return utterance;
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error('Failed to create speech utterance:', error);
+    errorHandler.logError(
+      'SpeechSynthesisUtterance creation failed',
+      error instanceof Error ? error : new Error(String(error)),
+      {
+        component: 'speechSynthesis',
+        action: 'createUtterance',
+      },
+    );
+    return null;
+  }
+}
+
+/**
+ * Check if Web Speech API is available and functional
+ */
+export function isSpeechSynthesisAvailable(): boolean {
+  try {
+    return (
+      'speechSynthesis' in window &&
+      typeof window.speechSynthesis.speak === 'function' &&
+      typeof window.speechSynthesis.cancel === 'function'
+    );
+  } catch {
+    return false;
+  }
 }

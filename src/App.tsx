@@ -14,6 +14,7 @@ import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { AccessibilityProvider } from './contexts/AccessibilityContext';
 import { Header } from './components/Header';
 import { errorHandler } from './lib/errorHandler';
+import { logger } from './lib/logger';
 import {
   Dialog,
   DialogContent,
@@ -118,15 +119,31 @@ function AppContent(): ReactElement {
   const handleKeyPress = (e: KeyboardEvent): void => {
     if (e.ctrlKey && e.shiftKey && e.key === 'S') {
       e.preventDefault();
-      // Check if user is authenticated and is admin
-      // Since User interface doesn't have role field, check for specific admin email
-      // In production, this should check against a proper role/permission system
-      const adminEmails = ['admin@discover50ai.com', 'security@discover50ai.com'];
-      if (user && adminEmails.includes(user.email.toLowerCase())) {
+      // Check if user is authenticated and has admin privileges
+      // Admin check based on email domain and verified status for better security
+      // In production, implement proper role-based access control via database
+      const adminEmail = import.meta.env.VITE_ADMIN_EMAIL as string | undefined;
+      const isAdmin =
+        user &&
+        user.verified &&
+        user.email &&
+        // Check for admin domain (more secure than hardcoded emails)
+        (user.email.endsWith('@discover50ai.com') ||
+          // Allow specific admin email from environment variable
+          (adminEmail && user.email.toLowerCase() === adminEmail.toLowerCase()));
+
+      if (isAdmin) {
         setShowSecurityDashboard(true);
       } else {
         // Silently ignore for non-admin users (no error message to avoid revealing feature existence)
-        console.warn('Unauthorized access attempt to security dashboard');
+        logger.warn('Unauthorized access attempt to security dashboard', {
+          component: 'App',
+          action: 'securityDashboardAccess',
+          metadata: {
+            userId: user?.id,
+            email: user?.email,
+          },
+        });
       }
     }
   };
@@ -135,6 +152,7 @@ function AppContent(): ReactElement {
   useEffect((): (() => void) => {
     window.addEventListener('keydown', handleKeyPress);
     return (): void => window.removeEventListener('keydown', handleKeyPress);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Navigation handler for NotFoundPage

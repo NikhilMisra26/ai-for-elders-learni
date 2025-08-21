@@ -9,7 +9,12 @@ export default defineConfig((({ mode }): UserConfig => {
   // Load env files in development for Vercel Blob
   if (mode === 'development') {
     const env = loadEnv(mode, process.cwd(), '');
-    dotenvExpand.expand({ parsed: env });
+    // Whitelist only necessary environment variables for security
+    const allowedEnvVars = ['VITE_SUPABASE_URL', 'VITE_SUPABASE_ANON_KEY'];
+    const filteredEnv = Object.keys(env)
+      .filter(key => allowedEnvVars.includes(key))
+      .reduce((obj, key) => ({ ...obj, [key]: env[key] }), {});
+    dotenvExpand.expand({ parsed: filteredEnv });
   }
 
   return {

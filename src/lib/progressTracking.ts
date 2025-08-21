@@ -610,7 +610,7 @@ export function useProgress(): UseProgressReturn {
   const addActivity = (activity: Omit<UserActivity, 'id' | 'timestamp'>): void => {
     const newActivity: UserActivity = {
       ...activity,
-      id: `activity_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      id: `activity_${Date.now()}_${performance.now().toString(36).replace('.', '').substr(0, 9)}`,
       timestamp: new Date().toISOString(),
     };
 

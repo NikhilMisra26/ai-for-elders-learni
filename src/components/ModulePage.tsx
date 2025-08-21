@@ -378,35 +378,105 @@ export function ModulePage({ courseType: propCourseType }: ModulePageProps): Rea
         estimatedTimeToPrint = module.estimatedTime;
       }
 
-      printWindow.document.write(`
-        <html>
-          <head>
-            <title>${titleToPrint} - ${course.title}</title>
-            <style>
-              body { font-family: 'Inter', sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
-              h1 { color: #2c3e50; }
-              h2 { color: #34495e; margin-top: 30px; }
-              p { line-height: 1.6; margin-bottom: 15px; }
-              .metadata { background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
-              .highlight { background: #fff3cd; padding: 10px; border-left: 4px solid #ffc107; margin: 15px 0; }
-              .part-divider { border-top: 2px solid #e0e0e0; margin: 30px 0; padding-top: 20px; }
-            </style>
-          </head>
-          <body>
-            <div class="metadata">
-              <strong>Course:</strong> ${course.title}<br>
-              <strong>Module:</strong> ${titleToPrint}<br>
-              <strong>Estimated Time:</strong> ${estimatedTimeToPrint} minutes<br>
-              <strong>Printed:</strong> ${new Date().toLocaleDateString()}
-            </div>
-            <h1>${titleToPrint}</h1>
-            <p><em>${descriptionToPrint}</em></p>
-            <div class="part-divider"></div>
-            ${contentToPrint.replace(/\n/g, '<br>').replace(/#{1,6}\s+(.+)/g, '<h2>$1</h2>')}
-          </body>
-        </html>
-      `);
-      printWindow.document.close();
+      // Create safe HTML using DOM manipulation instead of string concatenation
+      const doc = printWindow.document;
+
+      // Set up the HTML structure safely
+      doc.open();
+      doc.write('<!DOCTYPE html><html><head></head><body></body></html>');
+      doc.close();
+
+      // Add title safely using DOM methods
+      const titleElement = doc.createElement('title');
+      titleElement.textContent = `${titleToPrint} - ${course.title}`;
+      doc.head.appendChild(titleElement);
+
+      // Add styles
+      const styleElement = doc.createElement('style');
+      styleElement.textContent = `
+        body { font-family: 'Inter', sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; }
+        h1 { color: #2c3e50; }
+        h2 { color: #34495e; margin-top: 30px; }
+        p { line-height: 1.6; margin-bottom: 15px; }
+        .metadata { background: #f8f9fa; padding: 15px; border-radius: 8px; margin-bottom: 20px; }
+        .highlight { background: #fff3cd; padding: 10px; border-left: 4px solid #ffc107; margin: 15px 0; }
+        .part-divider { border-top: 2px solid #e0e0e0; margin: 30px 0; padding-top: 20px; }
+      `;
+      doc.head.appendChild(styleElement);
+
+      // Create metadata div safely using DOM methods
+      const metadataDiv = doc.createElement('div');
+      metadataDiv.className = 'metadata';
+
+      const courseLabel = doc.createElement('strong');
+      courseLabel.textContent = 'Course:';
+      metadataDiv.appendChild(courseLabel);
+      metadataDiv.appendChild(doc.createTextNode(' ' + course.title));
+      metadataDiv.appendChild(doc.createElement('br'));
+
+      const moduleLabel = doc.createElement('strong');
+      moduleLabel.textContent = 'Module:';
+      metadataDiv.appendChild(moduleLabel);
+      metadataDiv.appendChild(doc.createTextNode(' ' + titleToPrint));
+      metadataDiv.appendChild(doc.createElement('br'));
+
+      const timeLabel = doc.createElement('strong');
+      timeLabel.textContent = 'Estimated Time:';
+      metadataDiv.appendChild(timeLabel);
+      metadataDiv.appendChild(doc.createTextNode(' ' + estimatedTimeToPrint + ' minutes'));
+      metadataDiv.appendChild(doc.createElement('br'));
+
+      const printedLabel = doc.createElement('strong');
+      printedLabel.textContent = 'Printed:';
+      metadataDiv.appendChild(printedLabel);
+      metadataDiv.appendChild(doc.createTextNode(' ' + new Date().toLocaleDateString()));
+
+      doc.body.appendChild(metadataDiv);
+
+      // Add main title safely
+      const h1 = doc.createElement('h1');
+      h1.textContent = titleToPrint;
+      doc.body.appendChild(h1);
+
+      // Add description if exists
+      if (descriptionToPrint) {
+        const p = doc.createElement('p');
+        const em = doc.createElement('em');
+        em.textContent = descriptionToPrint;
+        p.appendChild(em);
+        doc.body.appendChild(p);
+      }
+
+      // Add divider
+      const divider = doc.createElement('div');
+      divider.className = 'part-divider';
+      doc.body.appendChild(divider);
+
+      // Process content safely - convert markdown to HTML elements
+      const contentDiv = doc.createElement('div');
+      const lines = contentToPrint.split('\n');
+
+      lines.forEach((line) => {
+        const trimmedLine = line.trim();
+
+        // Check for headers
+        const headerMatch = trimmedLine.match(/^(#{1,6})\s+(.+)$/);
+        if (headerMatch) {
+          const level = Math.min(headerMatch[1].length, 6);
+          const headerElement = doc.createElement(`h${level}`);
+          headerElement.textContent = headerMatch[2];
+          contentDiv.appendChild(headerElement);
+        } else if (trimmedLine) {
+          // Regular paragraph - safely add text content
+          const p = doc.createElement('p');
+          p.textContent = trimmedLine;
+          contentDiv.appendChild(p);
+        }
+      });
+
+      doc.body.appendChild(contentDiv);
+
+      // Trigger print
       printWindow.print();
     }
   };

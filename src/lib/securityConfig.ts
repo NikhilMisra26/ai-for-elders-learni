@@ -30,14 +30,14 @@ export const CSP_DIRECTIVES = {
     "'self'",
     // In development, allow unsafe-inline for hot reload
     // In production, use nonce-based approach (nonce added dynamically)
-    ...(process.env.NODE_ENV !== 'production' ? ["'unsafe-inline'"] : []),
+    ...(import.meta.env.DEV ? ["'unsafe-inline'"] : []),
     'https://cdn.jsdelivr.net', // For third-party libraries if needed
   ],
   'style-src': [
     "'self'",
     // In development, allow unsafe-inline for hot reload
     // In production, use nonce-based approach (nonce added dynamically)
-    ...(process.env.NODE_ENV !== 'production' ? ["'unsafe-inline'"] : []),
+    ...(import.meta.env.DEV ? ["'unsafe-inline'"] : []),
   ],
   'img-src': [
     "'self'",

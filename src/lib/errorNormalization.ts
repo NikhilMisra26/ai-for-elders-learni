@@ -328,7 +328,17 @@ export function normalizeError(
  */
 function generateRequestId(): string {
   const timestamp = Date.now().toString(36);
-  const random = Math.random().toString(36).substring(2, 9);
+  // Use crypto API if available, otherwise use performance timing
+  let random: string;
+  if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+    const bytes = new Uint8Array(4);
+    crypto.getRandomValues(bytes);
+    random = Array.from(bytes, (b) => b.toString(36))
+      .join('')
+      .substring(0, 9);
+  } else {
+    random = performance.now().toString(36).replace('.', '').substring(0, 9);
+  }
   return `${timestamp}-${random}`;
 }
 
