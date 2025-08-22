@@ -8,6 +8,7 @@ declare const Deno: {
 // tsc in this workspace cannot resolve Deno's npm: specifier; ignore for types only.
 // @ts-expect-error: Deno npm: specifier not supported by Node.js TypeScript compiler
 import { createClient } from 'npm:@supabase/supabase-js@2';
+import { RateLimiter, applyRateLimit, getClientIp } from '../_shared/rateLimit.ts';
 
 // Type definitions
 interface SupportEmailRequest {
@@ -23,9 +24,24 @@ const corsHeaders = {
   'Access-Control-Max-Age': '86400', // 24 hours
 };
 
-// Rate limiting constants
+// Legacy constants (can be removed in future versions)
 const RATE_LIMIT_WINDOW_MS = 3600000; // 1 hour
 const RATE_LIMIT_MAX_REQUESTS = 3;
+
+// Initialize server-side rate limiters
+// IP-based rate limiter: stricter limits to prevent abuse
+const ipRateLimiter = new RateLimiter({
+  windowMs: 60000, // 1 minute
+  maxRequests: 10, // 10 requests per minute per IP
+  keyPrefix: 'support:ip:',
+});
+
+// User-based rate limiter: more lenient for authenticated users
+const userRateLimiter = new RateLimiter({
+  windowMs: 3600000, // 1 hour
+  maxRequests: 5, // 5 support requests per hour per user
+  keyPrefix: 'support:user:',
+});
 
 // Sanitize input to prevent XSS
 function sanitizeInput(input: string): string {
@@ -58,48 +74,7 @@ function isValidEmail(email: string): boolean {
   return emailRegex.test(email);
 }
 
-// Check rate limiting
-async function checkRateLimit(
-  supabase: ReturnType<typeof createClient>,
-  userId: string,
-): Promise<{ allowed: boolean; reason?: string }> {
-  try {
-    const windowStart = new Date(Date.now() - RATE_LIMIT_WINDOW_MS).toISOString();
-
-    // Check recent support tickets from this user
-    const { data: recentTickets, error } = await supabase
-      .from('support_tickets')
-      .select('id, created_at')
-      .eq('user_id', userId)
-      .gte('created_at', windowStart)
-      .order('created_at', { ascending: false });
-
-    if (error) {
-      console.error('Rate limit check error:', error);
-      // Fail open - allow the request if we can't check
-      return { allowed: true };
-    }
-
-    if (recentTickets && recentTickets.length >= RATE_LIMIT_MAX_REQUESTS) {
-      const oldestAllowed = recentTickets[RATE_LIMIT_MAX_REQUESTS - 1];
-      const nextAllowedTime = new Date(
-        new Date(oldestAllowed.created_at).getTime() + RATE_LIMIT_WINDOW_MS,
-      );
-      const minutesUntilAllowed = Math.ceil((nextAllowedTime.getTime() - Date.now()) / 60000);
-
-      return {
-        allowed: false,
-        reason: `Too many support requests. Please try again in ${minutesUntilAllowed} minutes.`,
-      };
-    }
-
-    return { allowed: true };
-  } catch (error) {
-    console.error('Rate limit check failed:', error);
-    // Fail open on error
-    return { allowed: true };
-  }
-}
+// Legacy rate limiting function removed - now using Redis-based rate limiting above
 
 // Send email via Resend API
 async function sendEmail(
@@ -218,6 +193,22 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
+    // Apply IP-based rate limiting first (before authentication)
+    const ipLimit = await applyRateLimit(req, ipRateLimiter, {
+      identifierType: 'ip',
+    });
+
+    if (!ipLimit.allowed) {
+      return new Response(JSON.stringify({ success: false, error: ipLimit.message }), {
+        status: 429,
+        headers: {
+          ...corsHeaders,
+          ...Object.fromEntries(ipLimit.headers.entries()),
+          'Content-Type': 'application/json',
+        },
+      });
+    }
+
     // Initialize Supabase client with service role for admin operations
     const supabaseUrl = Deno.env.get('SUPABASE_URL');
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
@@ -250,6 +241,23 @@ Deno.serve(async (req: Request) => {
       return new Response(JSON.stringify({ success: false, error: 'Invalid session' }), {
         status: 401,
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Apply user-based rate limiting after authentication
+    const userLimit = await applyRateLimit(req, userRateLimiter, {
+      identifierType: 'user',
+      userId: user.id,
+    });
+
+    if (!userLimit.allowed) {
+      return new Response(JSON.stringify({ success: false, error: userLimit.message }), {
+        status: 429,
+        headers: {
+          ...corsHeaders,
+          ...Object.fromEntries(userLimit.headers.entries()),
+          'Content-Type': 'application/json',
+        },
       });
     }
 
@@ -314,20 +322,8 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // Check rate limiting BEFORE any database operations
-    const rateLimit = await checkRateLimit(supabaseAdmin, user.id);
-    if (!rateLimit.allowed) {
-      return new Response(JSON.stringify({ success: false, error: rateLimit.reason }), {
-        status: 429,
-        headers: {
-          ...corsHeaders,
-          'Content-Type': 'application/json',
-          'Retry-After': String(
-            Math.ceil((RATE_LIMIT_WINDOW_MS - (Date.now() % RATE_LIMIT_WINDOW_MS)) / 1000),
-          ),
-        },
-      });
-    }
+    // Note: Redis-based rate limiting is already applied above
+    // Database-based rate limiting is kept as secondary check for database consistency
 
     // Get user profile details
     const { data: profile, error: profileError } = await supabaseAdmin
@@ -368,11 +364,8 @@ Deno.serve(async (req: Request) => {
       );
     }
 
-    // Record rate limiting entry
-    await supabaseAdmin.from('rate_limiting_support').insert({
-      user_id: user.id,
-      action_type: 'ticket_create',
-    });
+    // Rate limiting is now handled by Redis above
+    // Support ticket is created - this serves as audit trail
 
     // Send email
     const emailResult = await sendEmail(

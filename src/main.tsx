@@ -1,19 +1,29 @@
-import React, { StrictMode } from 'react';
+import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { ErrorBoundary } from 'react-error-boundary';
 
 import App from './App.tsx';
 import { ErrorFallback } from './ErrorFallback.tsx';
 import { logError } from './lib/errorHandler.ts';
+import { applyCSPWithNonce } from './lib/contentSecurityPolicy.ts';
 
 import './main.css';
 import './styles/theme.css';
 import './index.css';
 
-// Ensure React is available globally for compatibility
+// Apply Content Security Policy for XSS protection with nonce support
 if (typeof window !== 'undefined') {
-  window.React = React;
+  try {
+    applyCSPWithNonce();
+  } catch (error) {
+    logError('Failed to apply CSP', error instanceof Error ? error : new Error(String(error)), {
+      component: 'main',
+      action: 'applyCSP',
+    });
+  }
 }
+
+// Note: Global React exposure removed for security - modern React doesn't require it
 
 // Initialize app with error handling
 const initApp = (): void => {

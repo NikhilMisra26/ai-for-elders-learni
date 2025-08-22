@@ -159,6 +159,20 @@ export const getIconForSectionType = (type: SectionType): ReactElement => {
   }
 };
 
+// Parse formatted content into React elements safely
+const parseFormattedContent = (content: string): ReactElement => {
+  // Get sanitized HTML from formatSpecialBlocks
+  const sanitizedHtml = formatSpecialBlocks(content);
+
+  // Create a wrapper div with the sanitized content
+  // Note: We still use dangerouslySetInnerHTML here, but only after
+  // multiple layers of sanitization in formatSpecialBlocks
+  return createElement('div', {
+    className: 'prose prose-sm max-w-none',
+    dangerouslySetInnerHTML: { __html: sanitizedHtml },
+  });
+};
+
 // Render a section with appropriate visual styling
 export const renderSectionWithStyle = (section: ContentSection): ReactElement => {
   const baseClasses = 'mb-6 p-4 rounded-lg border-l-4';
@@ -215,16 +229,19 @@ export const renderSectionWithStyle = (section: ContentSection): ReactElement =>
         section.title,
       ),
     ),
-    createElement('div', {
-      className: 'prose prose-sm max-w-none',
-      dangerouslySetInnerHTML: { __html: formatSpecialBlocks(section.content) },
-    }),
+    // Use the safer parseFormattedContent function
+    parseFormattedContent(section.content),
   );
 };
 
 // Format special content blocks (warnings, tips, exercises)
-// SECURITY: Sanitizes HTML output to prevent XSS attacks
+// SECURITY: Enhanced with immediate sanitization before any transformations
 export const formatSpecialBlocks = (content: string): string => {
+  // Validate input type for security
+  if (typeof content !== 'string') {
+    throw new Error('Content must be a string');
+  }
+
   // First, escape any HTML in the original content to prevent XSS
   const escapedContent = content
     .replace(/&/g, '&amp;')
@@ -233,15 +250,23 @@ export const formatSpecialBlocks = (content: string): string => {
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#039;');
 
-  let formattedContent = escapedContent;
+  // Apply strict DOMPurify sanitization IMMEDIATELY after escaping
+  // This ensures no malicious content can survive the transformation process
+  const preSanitized = DOMPurify.sanitize(escapedContent, {
+    ALLOWED_TAGS: [], // No tags allowed in the initial pass
+    ALLOWED_ATTR: [],
+    KEEP_CONTENT: true, // Keep text content only
+  });
 
-  // Handle bullet points (safe because content is already escaped)
+  let formattedContent = preSanitized;
+
+  // Handle bullet points (safe because content is already sanitized)
   formattedContent = formattedContent.replace(
     /^- (.+)$/gm,
     '<li class="ml-4 mb-2 list-disc list-inside">$1</li>',
   );
 
-  // Handle numbered lists (safe because content is already escaped)
+  // Handle numbered lists (safe because content is already sanitized)
   formattedContent = formattedContent.replace(
     /^(\d+)\.\s(.+)$/gm,
     '<li class="ml-4 mb-2 list-decimal list-inside"><span class="font-medium">$1.</span> $2</li>',
@@ -258,16 +283,16 @@ export const formatSpecialBlocks = (content: string): string => {
     '<ol class="mb-4">$&</ol>',
   );
 
-  // Handle bold text (safe because content is already escaped)
+  // Handle bold text (safe because content is already sanitized)
   formattedContent = formattedContent.replace(
     /\*\*([^*]+)\*\*/g,
     '<strong class="font-semibold">$1</strong>',
   );
 
-  // Handle italic text (safe because content is already escaped)
+  // Handle italic text (safe because content is already sanitized)
   formattedContent = formattedContent.replace(/\*([^*]+)\*/g, '<em class="italic">$1</em>');
 
-  // Handle inline code (safe because content is already escaped)
+  // Handle inline code (safe because content is already sanitized)
   formattedContent = formattedContent.replace(
     /`([^`]+)`/g,
     '<code class="bg-gray-100 px-2 py-1 rounded font-mono text-sm">$1</code>',
@@ -296,28 +321,13 @@ export const formatSpecialBlocks = (content: string): string => {
     .filter(Boolean)
     .join('\n');
 
-  // Sanitize the final HTML with DOMPurify to ensure safety
-  // This allows only safe HTML tags and attributes
+  // Final sanitization with stricter configuration for production security
+  // Only allow essential tags and the class attribute
   const sanitized = DOMPurify.sanitize(formattedContent, {
-    ALLOWED_TAGS: [
-      'p',
-      'br',
-      'strong',
-      'em',
-      'code',
-      'ul',
-      'ol',
-      'li',
-      'span',
-      'h1',
-      'h2',
-      'h3',
-      'h4',
-      'h5',
-      'h6',
-      'div',
-    ],
+    ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'code', 'ul', 'ol', 'li', 'span'],
     ALLOWED_ATTR: ['class'],
+    ALLOW_DATA_ATTR: false,
+    FORBID_ATTR: ['id', 'style', 'onclick', 'onload', 'onerror'],
     KEEP_CONTENT: true,
   });
 

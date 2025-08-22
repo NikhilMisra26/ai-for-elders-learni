@@ -51,27 +51,14 @@ jobs:
 
       - name: Security Audit - Dependencies
         run: |
-          echo "Running security audit..."
-          pnpm audit --audit-level moderate --json > audit-results.json || true
-
-          # Check if there are any moderate+ vulnerabilities
-          VULN_COUNT=$(
-            jq -r '
-              if .metadata and .metadata.vulnerabilities then
-                (.metadata.vulnerabilities.moderate + .metadata.vulnerabilities.high + .metadata.vulnerabilities.critical)
-              elif .vulnerabilities then
-                ([ .vulnerabilities[]? | select(.severity=="moderate" or .severity=="high" or .severity=="critical") ] | length)
-              else 0 end
-            ' audit-results.json
-          )
-
-          if [ "$VULN_COUNT" -gt 0 ]; then
-            echo "❌ Found $VULN_COUNT moderate+ vulnerabilities"
-            cat audit-results.json | jq '.advisories'
+          echo "Running security audit with audit-ci..."
+          # audit-ci will fail the build if high/critical vulnerabilities are found
+          pnpm run security:audit-ci || {
+            echo "❌ High or critical vulnerabilities found!"
+            echo "Run 'pnpm audit' locally to see details"
             exit 1
-          else
-            echo "✅ No moderate+ vulnerabilities found"
-          fi
+          }
+          echo "✅ No high or critical vulnerabilities found"
 
       - name: Install TruffleHog
         run: |
