@@ -15,9 +15,11 @@ export function generateCSPNonce(): string {
     crypto.getRandomValues(array);
     return btoa(String.fromCharCode(...array));
   }
-  // Fallback for environments without crypto API
-  // In production, this should throw an error instead
-  return 'static-nonce-' + Date.now();
+  // No fallback - CSP nonces must be cryptographically secure
+  // In production environments without crypto API, this is a critical security failure
+  throw new Error(
+    'Cryptographically secure random number generator is not available. Cannot generate secure CSP nonce.',
+  );
 }
 
 /**

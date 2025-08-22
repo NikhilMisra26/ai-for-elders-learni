@@ -95,8 +95,9 @@ export const deepClone = <T>(obj: T): T => {
 
 /**
  * Generate a unique ID using secure random when available
+ * For security-critical operations, this will throw an error if crypto API is unavailable
  */
-export const generateId = (prefix = 'id'): string => {
+export const generateId = (prefix = 'id', requireSecure = false): string => {
   let randomPart: string;
 
   // Try to use crypto API for better randomness
@@ -106,9 +107,14 @@ export const generateId = (prefix = 'id'): string => {
     randomPart = Array.from(array, (byte) => byte.toString(36))
       .join('')
       .slice(0, 9);
+  } else if (requireSecure) {
+    // Secure random API is unavailable; cannot generate a secure ID
+    throw new Error(
+      'Secure random number generator is not available. Cannot generate a secure ID.',
+    );
   } else {
     // Fallback using timestamp and performance counter for uniqueness
-    // Avoids Math.random() for better security posture
+    // Only used for non-security-critical operations
     const performanceCounter =
       typeof performance !== 'undefined'
         ? performance.now().toString(36).replace('.', '')

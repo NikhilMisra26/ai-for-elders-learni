@@ -11,5 +11,6 @@
   "show-found": true,
   "package-manager": "pnpm",
   "pass-enoaudit": true,
-  "skip-dev": false
+  "skip-dev": false,
+  "ignore": []
 }
