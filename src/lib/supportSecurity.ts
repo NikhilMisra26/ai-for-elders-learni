@@ -2,6 +2,11 @@
  * Security utilities for email support system
  * Provides rate limiting, input validation, spam detection, and audit logging
  * Following PASSWORD_SECURITY.md patterns and existing security.ts architecture
+ *
+ * IMPORTANT: Rate limiting in this module is CLIENT-SIDE ONLY for UX optimization.
+ * This provides immediate feedback to users but should NOT be relied upon for security.
+ * Server-side rate limiting must be implemented via Supabase Edge Functions or API middleware
+ * to prevent bypassing of these client-side checks.
  */
 
 import createDOMPurify from 'dompurify';
@@ -471,13 +476,32 @@ export class SupportSessionValidator {
 
       // CSRF Token validation (if provided)
       if (csrfToken) {
-        // Simple CSRF validation - in production, validate against server-stored token
-        const isValidCsrf = /^[a-zA-Z0-9]{32,}$/.test(csrfToken);
-        if (!isValidCsrf) {
-          SecurityLogger.log('csrf_validation_failed', { userId: session.user.id }, 'warning');
+        // Validate CSRF token format and check against stored tokens
+        const isValidFormat = /^[a-zA-Z0-9+/]{32,}={0,2}$/.test(csrfToken);
+
+        // Check if token exists in session storage and hasn't expired
+        const storedToken =
+          typeof window !== 'undefined' ? window.sessionStorage.getItem('csrf_token') : null;
+        const tokenExpiry =
+          typeof window !== 'undefined' ? window.sessionStorage.getItem('csrf_token_expiry') : null;
+
+        const isExpired = tokenExpiry && new Date().getTime() > parseInt(tokenExpiry, 10);
+        const isValidToken = storedToken === csrfToken && !isExpired;
+
+        if (!isValidFormat || !isValidToken) {
+          SecurityLogger.log(
+            'csrf_validation_failed',
+            {
+              userId: session.user.id,
+              validFormat: isValidFormat,
+              tokenMatch: storedToken === csrfToken,
+              expired: isExpired,
+            },
+            'warning',
+          );
           return {
             isValid: false,
-            error: 'Invalid request token. Please refresh the page and try again.',
+            error: 'Invalid or expired request token. Please refresh the page and try again.',
           };
         }
       }

@@ -94,10 +94,35 @@ export const deepClone = <T>(obj: T): T => {
 };
 
 /**
- * Generate a unique ID
+ * Generate a unique ID using secure random when available
+ * For security-critical operations, this will throw an error if crypto API is unavailable
  */
-export const generateId = (prefix = 'id'): string => {
-  return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
+export const generateId = (prefix = 'id', requireSecure = false): string => {
+  let randomPart: string;
+
+  // Try to use crypto API for better randomness
+  if (globalThis.crypto?.getRandomValues) {
+    const array = new Uint8Array(6);
+    globalThis.crypto.getRandomValues(array);
+    randomPart = Array.from(array, (byte) => byte.toString(36))
+      .join('')
+      .slice(0, 9);
+  } else if (requireSecure) {
+    // Secure random API is unavailable; cannot generate a secure ID
+    throw new Error(
+      'Secure random number generator is not available. Cannot generate a secure ID.',
+    );
+  } else {
+    // Fallback using timestamp and performance counter for uniqueness
+    // Only used for non-security-critical operations
+    const performanceCounter =
+      typeof performance !== 'undefined'
+        ? performance.now().toString(36).replace('.', '')
+        : Date.now().toString(36);
+    randomPart = performanceCounter.slice(0, 9).padEnd(9, '0');
+  }
+
+  return `${prefix}_${Date.now()}_${randomPart}`;
 };
 
 /**

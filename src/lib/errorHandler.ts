@@ -26,6 +26,7 @@ export type ErrorHandler = (error: ErrorReport) => void;
 class ErrorHandlerService {
   private readonly handlers: ErrorHandler[] = [];
   private readonly isProduction = import.meta.env.MODE === 'production';
+  private errorIdCounter = 0;
 
   constructor() {
     // Add default console handler for development
@@ -53,8 +54,9 @@ class ErrorHandlerService {
       const hex = Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
       return `err_${hex}`;
     }
-    // Last-resort fallback (non-crypto environments)
-    return `err_${Date.now()}_${Math.random().toString(36).slice(2, 11)}`;
+    // Use timestamp with counter for non-crypto environments (no Math.random)
+    // This provides uniqueness without cryptographic randomness
+    return `err_${Date.now()}_${(this.errorIdCounter = (this.errorIdCounter || 0) + 1)}`;
   }
 
   private sanitizeError(error: Error): { message: string; stack?: string } {
@@ -113,14 +115,23 @@ class ErrorHandlerService {
       };
 
       if (report.level === 'error') {
-        // eslint-disable-next-line no-console
-        console.error(message, data);
+        // Use console directly to avoid circular dependency with logger
+        if (import.meta.env.DEV) {
+          // eslint-disable-next-line no-console
+          console.error(message, data);
+        }
       } else if (report.level === 'warning') {
-        // eslint-disable-next-line no-console
-        console.warn(message, data);
+        // Use console directly to avoid circular dependency with logger
+        if (import.meta.env.DEV) {
+          // eslint-disable-next-line no-console
+          console.warn(message, data);
+        }
       } else {
-        // eslint-disable-next-line no-console
-        console.info(message, data);
+        // Use console directly to avoid circular dependency with logger
+        if (import.meta.env.DEV) {
+          // eslint-disable-next-line no-console
+          console.info(message, data);
+        }
       }
     }
   };
@@ -185,7 +196,7 @@ class ErrorHandlerService {
       context: this.redactSensitiveInContext(context),
       userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : 'unknown',
       url: typeof window !== 'undefined' ? window.location.href : 'unknown',
-      stackTrace: sanitizedError?.stack,
+      stackTrace: !this.isProduction ? sanitizedError?.stack : undefined,
     };
 
     // Notify all handlers
@@ -195,8 +206,11 @@ class ErrorHandlerService {
       } catch (handlerError) {
         // Prevent infinite loops - log handler errors in development only
         if (!this.isProduction) {
-          // eslint-disable-next-line no-console
-          console.error('Error handler failed:', handlerError);
+          // Use console directly to avoid circular dependency with logger
+          if (import.meta.env.DEV) {
+            // eslint-disable-next-line no-console
+            console.error('Error handler failed:', handlerError);
+          }
         }
       }
     });
@@ -287,7 +301,10 @@ class ErrorHandlerService {
       "We're having trouble connecting right now. Please check your internet connection.",
     ];
 
-    return fallback ?? genericMessages[Math.floor(Math.random() * genericMessages.length)];
+    // Use deterministic message selection based on current time
+    // This avoids Math.random() while still providing variety
+    const index = Math.floor(Date.now() / 1000) % genericMessages.length;
+    return fallback ?? genericMessages[index];
   }
 
   // Check if we're in a development environment

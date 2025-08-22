@@ -1,6 +1,7 @@
 import type { ReactElement } from 'react';
 import { createElement } from 'react';
 import { CheckCircle, Warning, Lightbulb, Pencil, Star } from '@phosphor-icons/react';
+import DOMPurify from 'dompurify';
 
 // Types
 export interface ContentSection {
@@ -158,6 +159,20 @@ export const getIconForSectionType = (type: SectionType): ReactElement => {
   }
 };
 
+// Parse formatted content into React elements safely
+const parseFormattedContent = (content: string): ReactElement => {
+  // Get sanitized HTML from formatSpecialBlocks
+  const sanitizedHtml = formatSpecialBlocks(content);
+
+  // Create a wrapper div with the sanitized content
+  // Note: We still use dangerouslySetInnerHTML here, but only after
+  // multiple layers of sanitization in formatSpecialBlocks
+  return createElement('div', {
+    className: 'prose prose-sm max-w-none',
+    dangerouslySetInnerHTML: { __html: sanitizedHtml },
+  });
+};
+
 // Render a section with appropriate visual styling
 export const renderSectionWithStyle = (section: ContentSection): ReactElement => {
   const baseClasses = 'mb-6 p-4 rounded-lg border-l-4';
@@ -214,24 +229,44 @@ export const renderSectionWithStyle = (section: ContentSection): ReactElement =>
         section.title,
       ),
     ),
-    createElement('div', {
-      className: 'prose prose-sm max-w-none',
-      dangerouslySetInnerHTML: { __html: formatSpecialBlocks(section.content) },
-    }),
+    // Use the safer parseFormattedContent function
+    parseFormattedContent(section.content),
   );
 };
 
 // Format special content blocks (warnings, tips, exercises)
+// SECURITY: Enhanced with immediate sanitization before any transformations
 export const formatSpecialBlocks = (content: string): string => {
-  let formattedContent = content;
+  // Validate input type for security
+  if (typeof content !== 'string') {
+    throw new Error('Content must be a string');
+  }
 
-  // Handle bullet points
+  // First, escape any HTML in the original content to prevent XSS
+  const escapedContent = content
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+
+  // Apply strict DOMPurify sanitization IMMEDIATELY after escaping
+  // This ensures no malicious content can survive the transformation process
+  const preSanitized = DOMPurify.sanitize(escapedContent, {
+    ALLOWED_TAGS: [], // No tags allowed in the initial pass
+    ALLOWED_ATTR: [],
+    KEEP_CONTENT: true, // Keep text content only
+  });
+
+  let formattedContent = preSanitized;
+
+  // Handle bullet points (safe because content is already sanitized)
   formattedContent = formattedContent.replace(
     /^- (.+)$/gm,
     '<li class="ml-4 mb-2 list-disc list-inside">$1</li>',
   );
 
-  // Handle numbered lists
+  // Handle numbered lists (safe because content is already sanitized)
   formattedContent = formattedContent.replace(
     /^(\d+)\.\s(.+)$/gm,
     '<li class="ml-4 mb-2 list-decimal list-inside"><span class="font-medium">$1.</span> $2</li>',
@@ -248,16 +283,16 @@ export const formatSpecialBlocks = (content: string): string => {
     '<ol class="mb-4">$&</ol>',
   );
 
-  // Handle bold text
+  // Handle bold text (safe because content is already sanitized)
   formattedContent = formattedContent.replace(
     /\*\*([^*]+)\*\*/g,
     '<strong class="font-semibold">$1</strong>',
   );
 
-  // Handle italic text
+  // Handle italic text (safe because content is already sanitized)
   formattedContent = formattedContent.replace(/\*([^*]+)\*/g, '<em class="italic">$1</em>');
 
-  // Handle inline code
+  // Handle inline code (safe because content is already sanitized)
   formattedContent = formattedContent.replace(
     /`([^`]+)`/g,
     '<code class="bg-gray-100 px-2 py-1 rounded font-mono text-sm">$1</code>',
@@ -286,7 +321,17 @@ export const formatSpecialBlocks = (content: string): string => {
     .filter(Boolean)
     .join('\n');
 
-  return formattedContent;
+  // Final sanitization with stricter configuration for production security
+  // Only allow essential tags and the class attribute
+  const sanitized = DOMPurify.sanitize(formattedContent, {
+    ALLOWED_TAGS: ['p', 'br', 'strong', 'em', 'code', 'ul', 'ol', 'li', 'span'],
+    ALLOWED_ATTR: ['class'],
+    ALLOW_DATA_ATTR: false,
+    FORBID_ATTR: ['id', 'style', 'onclick', 'onload', 'onerror'],
+    KEEP_CONTENT: true,
+  });
+
+  return sanitized;
 };
 
 // Utility function to extract content sections from course module content

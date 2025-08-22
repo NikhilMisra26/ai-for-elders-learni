@@ -15,7 +15,9 @@
     "format": "pnpm exec prettier --write \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "format:check": "pnpm exec prettier --check \"**/*.{ts,tsx,js,jsx,json,md}\"",
     "security:audit": "pnpm audit --audit-level moderate",
+    "security:audit-ci": "audit-ci --config .audit-ci.json",
     "security:check": "pnpm run typecheck && pnpm run lint && pnpm run security:audit",
+    "security:check-ci": "pnpm run typecheck && pnpm run lint && pnpm run security:audit-ci",
     "security:full": "pnpm run security:check && pnpm run format:check",
     "supabase:link": "supabase link",
     "supabase:dev": "supabase start",
@@ -60,7 +62,6 @@
     "@tailwindcss/container-queries": "^0.1.1",
     "@tailwindcss/vite": "^4.1.11",
     "@tanstack/react-query": "^5.83.1",
-    "@vercel/blob": "^1.1.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
@@ -94,8 +95,10 @@
     "@types/react-dom": "^19.0.4",
     "@typescript-eslint/eslint-plugin": "^8.38.0",
     "@typescript-eslint/parser": "^8.38.0",
+    "@vercel/blob": "^1.1.1",
     "@vitejs/plugin-react": "^4.3.4",
     "@vitejs/plugin-react-swc": "^3.10.1",
+    "audit-ci": "^7.1.0",
     "cross-env": "^10.0.0",
     "dotenv": "^17.2.1",
     "dotenv-expand": "^12.0.2",
@@ -123,6 +126,15 @@
   "workspaces": {
     "packages": [
       "packages/*"
+    ]
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix --max-warnings 0",
+      "prettier --write"
+    ],
+    "*.{js,jsx,json,md}": [
+      "prettier --write"
     ]
   }
 }

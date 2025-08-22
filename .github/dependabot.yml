@@ -1,11 +1,83 @@
+# GitHub Dependabot configuration for automated dependency updates
+# Scans for vulnerabilities and outdated packages
+
 version: 2
 updates:
+  # JavaScript/TypeScript dependencies
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
-      interval: "daily"
+      interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "UTC"
+    # Automatically open PRs for security updates
+    open-pull-requests-limit: 10
+    # Group updates for easier review
+    groups:
+      production-dependencies:
+        patterns:
+          - "*"
+        exclude-patterns:
+          - "@types/*"
+          - "eslint*"
+          - "prettier*"
+        dependency-type: "production"
+      development-dependencies:
+        patterns:
+          - "@types/*"
+          - "eslint*"
+          - "prettier*"
+          - "*"
+        dependency-type: "development"
+    # Prioritize security updates
+    priority: 1
+    # Add labels to PRs for easier tracking
+    labels:
+      - "dependencies"
+      - "security"
+    # Assign reviewers automatically
+    reviewers:
+      - "@NikhilMisra26"
+    # Commit message configuration
+    commit-message:
+      prefix: "deps"
+      prefix-development: "deps-dev"
+      include: "scope"
+    # Ignore specific updates if needed
+    ignore:
+      # Example: Ignore major version updates for critical packages
+      # - dependency-name: "react"
+      #   versions: ["19.x", "20.x"]
+    # Allow specific updates
+    allow:
+      # Only allow direct dependencies (not sub-dependencies)
+      - dependency-type: "direct"
 
-  - package-ecosystem: "devcontainers"
+  # GitHub Actions dependencies
+  - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
+      day: "monday"
+      time: "04:00"
+      timezone: "UTC"
+    open-pull-requests-limit: 5
+    labels:
+      - "github-actions"
+      - "dependencies"
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+
+  # Dev container dependencies
+  - package-ecosystem: "devcontainers"
+    directory: "/"
+    schedule:
+      interval: "monthly"
+    labels:
+      - "devcontainer"
+      - "dependencies"
+    commit-message:
+      prefix: "dev"
+      include: "scope"

@@ -6,6 +6,23 @@
 import { logWarning } from '@/lib/errorHandler';
 
 /**
+ * Generate a cryptographically secure nonce for CSP
+ * This nonce should be generated server-side in production
+ */
+export function generateCSPNonce(): string {
+  if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+    const array = new Uint8Array(16);
+    crypto.getRandomValues(array);
+    return btoa(String.fromCharCode(...array));
+  }
+  // No fallback - CSP nonces must be cryptographically secure
+  // In production environments without crypto API, this is a critical security failure
+  throw new Error(
+    'Cryptographically secure random number generator is not available. Cannot generate secure CSP nonce.',
+  );
+}
+
+/**
  * Content Security Policy directives
  * Helps prevent XSS attacks by specifying allowed content sources
  */
@@ -13,12 +30,16 @@ export const CSP_DIRECTIVES = {
   'default-src': ["'self'"],
   'script-src': [
     "'self'",
-    ...(process.env.NODE_ENV !== 'production' ? ["'unsafe-inline'"] : []), // Only in development
+    // In development, allow unsafe-inline for hot reload
+    // In production, use nonce-based approach (nonce added dynamically)
+    ...(import.meta.env.DEV ? ["'unsafe-inline'"] : []),
     'https://cdn.jsdelivr.net', // For third-party libraries if needed
   ],
   'style-src': [
     "'self'",
-    ...(process.env.NODE_ENV !== 'production' ? ["'unsafe-inline'"] : []), // Only in development
+    // In development, allow unsafe-inline for hot reload
+    // In production, use nonce-based approach (nonce added dynamically)
+    ...(import.meta.env.DEV ? ["'unsafe-inline'"] : []),
   ],
   'img-src': [
     "'self'",
