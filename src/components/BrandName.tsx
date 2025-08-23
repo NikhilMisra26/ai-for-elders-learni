@@ -120,6 +120,3 @@ export function BrandName({ variant, size = 'md', className }: BrandNameProps): 
     </span>
   );
 }
-
-// Memoized version for performance optimization
-export const MemoizedBrandName = React.memo(BrandName);

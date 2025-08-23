@@ -5,6 +5,8 @@
 
 import DOMPurify from 'dompurify';
 
+import { sanitizeLogData } from '@/lib/utils/logSanitizer';
+
 export interface SecurityConfig {
   maxLoginAttempts: number;
   lockoutDuration: number; // in minutes
@@ -422,12 +424,7 @@ export class SecurityLogger {
   }
 
   private static sanitizeLogData(data: Record<string, unknown>): Record<string, unknown> {
-    const sanitized = { ...data };
-    // Remove sensitive fields
-    delete (sanitized as { password?: unknown }).password;
-    delete (sanitized as { token?: unknown }).token;
-    delete (sanitized as { sessionId?: unknown }).sessionId;
-    return sanitized;
+    return sanitizeLogData(data);
   }
 
   static getLogs(severity?: 'info' | 'warning' | 'error'): Array<{

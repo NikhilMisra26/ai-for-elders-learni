@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 
 import { errorHandler } from '@/lib/errorHandler';
+import { logger } from '@/lib/logger';
 import type { AudioPlaylist, AudioFile } from '@/lib/audioMapping';
 import { getAudioFilePath } from '@/lib/audioMapping';
 
@@ -176,12 +177,24 @@ export function useMP3AudioPlayer(
       isPaused: false,
     }));
 
+    // Store timeout reference for cleanup
+    // eslint-disable-next-line prefer-const
+    let loadTimeout: ReturnType<typeof setTimeout> | undefined;
+
     // Event handlers
     const handleLoadStart = (): void => {
       setState((prev) => ({ ...prev, isLoading: true, error: null }));
     };
 
     const handleCanPlay = (): void => {
+      if (import.meta.env.DEV) {
+        logger.debug('Audio can play', {
+          component: 'useMP3AudioPlayer',
+          action: 'canplay',
+          metadata: { filename: state.currentFile?.filename },
+        });
+      }
+      if (loadTimeout) clearTimeout(loadTimeout); // Clear the timeout since loading succeeded
       setState((prev) => ({ ...prev, isLoading: false }));
 
       // Auto-play the next track if this load was triggered by auto-advance
@@ -299,6 +312,8 @@ export function useMP3AudioPlayer(
         );
       }
 
+      if (loadTimeout) clearTimeout(loadTimeout); // Clear timeout on error
+
       setState((prev) => ({
         ...prev,
         isPlaying: false,
@@ -327,8 +342,36 @@ export function useMP3AudioPlayer(
     audio.volume = state.volume;
     audio.playbackRate = state.playbackRate;
 
+    // Debug log for development
+    if (import.meta.env.DEV) {
+      logger.debug(`Loading audio: ${currentAudioPath}`, {
+        component: 'useMP3AudioPlayer',
+        action: 'load',
+        metadata: { filename: state.currentFile?.filename },
+      });
+    }
+
     // Explicitly call load() to start loading the audio
     audio.load();
+
+    // Add a timeout to handle stuck loading states
+    loadTimeout = setTimeout(() => {
+      if (state.isLoading) {
+        logger.warn('Audio loading timeout', {
+          component: 'useMP3AudioPlayer',
+          action: 'timeout',
+          metadata: {
+            filename: state.currentFile?.filename,
+            url: currentAudioPath,
+          },
+        });
+        setState((prev) => ({
+          ...prev,
+          isLoading: false,
+          error: 'Audio loading timed out. The audio file may not be available.',
+        }));
+      }
+    }, 10000); // 10 second timeout
 
     // Attach new listeners
     audio.addEventListener('loadstart', handleLoadStart);
@@ -341,6 +384,7 @@ export function useMP3AudioPlayer(
 
     // Cleanup function
     return (): void => {
+      if (loadTimeout) clearTimeout(loadTimeout);
       audio.removeEventListener('loadstart', handleLoadStart);
       audio.removeEventListener('canplay', handleCanPlay);
       audio.removeEventListener('loadedmetadata', handleLoadedMetadata);
@@ -589,8 +633,10 @@ export function useMP3AudioPlayer(
 export function initSpeechSynthesis(): SpeechSynthesis | null {
   // Check if the API is available
   if (!('speechSynthesis' in window)) {
-    // eslint-disable-next-line no-console
-    console.warn('Speech synthesis not supported in this browser');
+    logger.warn('Speech synthesis not supported in this browser', {
+      component: 'speechSynthesis',
+      action: 'init',
+    });
     return null;
   }
 
@@ -600,16 +646,20 @@ export function initSpeechSynthesis(): SpeechSynthesis | null {
 
     // Verify the API is functional
     if (typeof synthesis.speak !== 'function' || typeof synthesis.cancel !== 'function') {
-      // eslint-disable-next-line no-console
-      console.warn('Speech synthesis API is incomplete');
+      logger.warn('Speech synthesis API is incomplete', {
+        component: 'speechSynthesis',
+        action: 'init',
+      });
       return null;
     }
 
     return synthesis;
   } catch (error) {
     // Log error but don't throw - gracefully degrade
-    // eslint-disable-next-line no-console
-    console.error('Failed to initialize speech synthesis:', error);
+    logger.error('Failed to initialize speech synthesis', error, {
+      component: 'speechSynthesis',
+      action: 'init',
+    });
     errorHandler.logError(
       'Web Speech API initialization failed',
       error instanceof Error ? error : new Error(String(error)),
@@ -629,8 +679,11 @@ export function initSpeechSynthesis(): SpeechSynthesis | null {
 export function createSpeechUtterance(text: string): SpeechSynthesisUtterance | null {
   try {
     if (!text || typeof text !== 'string') {
-      // eslint-disable-next-line no-console
-      console.warn('Invalid text provided for speech utterance');
+      logger.warn('Invalid text provided for speech utterance', {
+        component: 'speechSynthesis',
+        action: 'createUtterance',
+        metadata: { textType: typeof text },
+      });
       return null;
     }
 
@@ -638,8 +691,14 @@ export function createSpeechUtterance(text: string): SpeechSynthesisUtterance | 
 
     // Set up error handling for the utterance
     utterance.onerror = (event): void => {
-      // eslint-disable-next-line no-console
-      console.error('Speech synthesis error:', event.error);
+      logger.error('Speech synthesis error', new Error(event.error), {
+        component: 'speechSynthesis',
+        action: 'speak',
+        metadata: {
+          charIndex: event.charIndex,
+          elapsedTime: event.elapsedTime,
+        },
+      });
       errorHandler.logError(`Speech synthesis failed: ${event.error}`, new Error(event.error), {
         component: 'speechSynthesis',
         action: 'speak',
@@ -652,8 +711,10 @@ export function createSpeechUtterance(text: string): SpeechSynthesisUtterance | 
 
     return utterance;
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error('Failed to create speech utterance:', error);
+    logger.error('Failed to create speech utterance', error, {
+      component: 'speechSynthesis',
+      action: 'createUtterance',
+    });
     errorHandler.logError(
       'SpeechSynthesisUtterance creation failed',
       error instanceof Error ? error : new Error(String(error)),

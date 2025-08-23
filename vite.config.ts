@@ -52,8 +52,10 @@ export default defineConfig((({ mode }): UserConfig => {
         'X-Content-Type-Options': 'nosniff',
         'Referrer-Policy': 'strict-origin-when-cross-origin',
         'Permissions-Policy':
-          'camera=(), microphone=(), geolocation=(), payment=(self https://checkout.stripe.com)',
-        // Note: CSP is handled by platform deployment configs in production (vercel.json/netlify.toml)
+          'camera=(), microphone=(), geolocation=(), payment=(self "https://checkout.stripe.com")',
+        // Development CSP that allows Vercel Blob storage for audio files
+        'Content-Security-Policy':
+          "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https: blob:; media-src 'self' https://*.public.blob.vercel-storage.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co ws://localhost:* http://localhost:*; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none';",
       },
     },
     preview: {
@@ -63,8 +65,10 @@ export default defineConfig((({ mode }): UserConfig => {
         'X-Content-Type-Options': 'nosniff',
         'Referrer-Policy': 'strict-origin-when-cross-origin',
         'Permissions-Policy':
-          'camera=(), microphone=(), geolocation=(), payment=(self https://checkout.stripe.com)',
-        // Note: CSP is handled by platform deployment configs in production (vercel.json/netlify.toml)
+          'camera=(), microphone=(), geolocation=(), payment=(self "https://checkout.stripe.com")',
+        // Preview CSP that allows Vercel Blob storage for audio files
+        'Content-Security-Policy':
+          "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https: blob:; media-src 'self' https://*.public.blob.vercel-storage.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none';",
       },
     },
     build: {

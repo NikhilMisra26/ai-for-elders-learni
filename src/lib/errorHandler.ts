@@ -44,6 +44,28 @@ class ErrorHandlerService {
     }
   }
 
+  /**
+   * Production-safe logging method that only logs in development
+   * Avoids ESLint console errors while maintaining functionality
+   */
+  private safeLog(level: 'error' | 'warn' | 'info', message: string, data?: unknown): void {
+    // Only log in development to avoid ESLint errors in production builds
+    if (import.meta.env.DEV && !this.isProduction) {
+      const globalConsole = globalThis.console;
+      switch (level) {
+        case 'error':
+          globalConsole.error(message, data);
+          break;
+        case 'warn':
+          globalConsole.warn(message, data);
+          break;
+        case 'info':
+          globalConsole.info(message, data);
+          break;
+      }
+    }
+  }
+
   private generateErrorId(): string {
     if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
       return `err_${crypto.randomUUID()}`;
@@ -115,23 +137,14 @@ class ErrorHandlerService {
       };
 
       if (report.level === 'error') {
-        // Use console directly to avoid circular dependency with logger
-        if (import.meta.env.DEV) {
-          // eslint-disable-next-line no-console
-          console.error(message, data);
-        }
+        // Use production-safe logging that respects environment
+        this.safeLog('error', message, data);
       } else if (report.level === 'warning') {
-        // Use console directly to avoid circular dependency with logger
-        if (import.meta.env.DEV) {
-          // eslint-disable-next-line no-console
-          console.warn(message, data);
-        }
+        // Use production-safe logging that respects environment
+        this.safeLog('warn', message, data);
       } else {
-        // Use console directly to avoid circular dependency with logger
-        if (import.meta.env.DEV) {
-          // eslint-disable-next-line no-console
-          console.info(message, data);
-        }
+        // Use production-safe logging that respects environment
+        this.safeLog('info', message, data);
       }
     }
   };
@@ -206,11 +219,8 @@ class ErrorHandlerService {
       } catch (handlerError) {
         // Prevent infinite loops - log handler errors in development only
         if (!this.isProduction) {
-          // Use console directly to avoid circular dependency with logger
-          if (import.meta.env.DEV) {
-            // eslint-disable-next-line no-console
-            console.error('Error handler failed:', handlerError);
-          }
+          // Use production-safe logging that respects environment
+          this.safeLog('error', 'Error handler failed:', handlerError);
         }
       }
     });

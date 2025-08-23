@@ -3,6 +3,10 @@ import { useEffect, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabaseClient';
 
+// Session management constants
+const SESSION_ACTIVITY_THROTTLE_MS = 30000; // Extend session at most once per 30 seconds
+const SESSION_CHECK_INTERVAL_MS = 5 * 60 * 1000; // Check session validity every 5 minutes
+
 /**
  * Hook for automatic session management
  * Handles session extension on user activity and logout on expiration
@@ -62,7 +66,7 @@ export function useSessionManager(): {
       activityTimeout = window.setTimeout(() => {
         handleUserActivity();
         activityTimeout = null;
-      }, 30000); // Extend session at most once per 30 seconds
+      }, SESSION_ACTIVITY_THROTTLE_MS);
     };
 
     // Add activity listeners
@@ -70,8 +74,8 @@ export function useSessionManager(): {
       document.addEventListener(event, throttledActivity, { passive: true });
     });
 
-    // Check session validity every 5 minutes
-    const sessionCheckInterval = window.setInterval(checkSession, 5 * 60 * 1000);
+    // Check session validity periodically
+    const sessionCheckInterval = window.setInterval(checkSession, SESSION_CHECK_INTERVAL_MS);
 
     // Cleanup
     return (): void => {
