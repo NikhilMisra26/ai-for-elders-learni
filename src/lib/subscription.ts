@@ -73,7 +73,7 @@ export const subscriptionPlans: SubscriptionPlan[] = [
     popular: true,
     // Removed for subscription removal: original features array, restored for better UX
     features: [
-      'Everything in Basic course',
+      'Everything in Free course',
       '"AI as Your Personal Assistant" course',
       'Advanced prompting techniques',
       'AI tools and apps guidance',
