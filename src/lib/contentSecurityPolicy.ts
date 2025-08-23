@@ -37,15 +37,17 @@ export const productionCSP: CSPConfig = {
     ],
     'style-src': [
       "'self'",
-      // Note: Hashes for CSS will be added by build process
+      "'unsafe-inline'", // Required for inline styles
+      'https://fonts.googleapis.com', // For Google Fonts
     ],
     'img-src': ["'self'", 'data:', 'https:'],
-    'font-src': ["'self'", 'data:'],
+    'font-src': ["'self'", 'data:', 'https://fonts.gstatic.com'],
+    'media-src': ["'self'", 'https://*.public.blob.vercel-storage.com'],
     'connect-src': [
       "'self'",
       // Will be dynamically set to specific Supabase project URL via environment
     ],
-    'frame-ancestors': ["'none'"],
+    // Note: frame-ancestors removed as it cannot be set via meta tag
     'base-uri': ["'self'"],
     'form-action': ["'self'"],
     'object-src': ["'none'"],
@@ -67,16 +69,17 @@ export const developmentCSP: CSPConfig = {
       'https://cdn.jsdelivr.net',
       'http://localhost:*',
     ],
-    'style-src': ["'self'", "'unsafe-inline'"], // Needed for Vite development
+    'style-src': ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'], // Added Google Fonts
     'img-src': ["'self'", 'data:', 'https:', 'http:'],
-    'font-src': ["'self'", 'data:'],
+    'font-src': ["'self'", 'data:', 'https://fonts.gstatic.com'], // Added Google Fonts
+    'media-src': ["'self'", 'https://*.public.blob.vercel-storage.com'], // Added for audio
     'connect-src': [
       "'self'",
       // Will be dynamically set to specific Supabase project URL via environment
       'ws://localhost:*', // Vite HMR WebSocket
       'http://localhost:*',
     ],
-    'frame-ancestors': ["'none'"],
+    // Note: frame-ancestors removed as it cannot be set via meta tag
     'base-uri': ["'self'"],
     'form-action': ["'self'"],
     'object-src': ["'none'"],
