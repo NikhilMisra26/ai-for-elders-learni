@@ -115,12 +115,18 @@ export class RateLimiter {
 
     // Initialize Redis if credentials are available
     // Check for Deno environment with proper type safety
-    const redisUrl = 'Deno' in globalThis 
-      ? (globalThis as typeof globalThis & { Deno: typeof Deno }).Deno.env.get('UPSTASH_REDIS_URL')
-      : undefined;
-    const redisToken = 'Deno' in globalThis 
-      ? (globalThis as typeof globalThis & { Deno: typeof Deno }).Deno.env.get('UPSTASH_REDIS_TOKEN')
-      : undefined;
+    const redisUrl =
+      'Deno' in globalThis
+        ? (globalThis as typeof globalThis & { Deno: typeof Deno }).Deno.env.get(
+            'UPSTASH_REDIS_URL',
+          )
+        : undefined;
+    const redisToken =
+      'Deno' in globalThis
+        ? (globalThis as typeof globalThis & { Deno: typeof Deno }).Deno.env.get(
+            'UPSTASH_REDIS_TOKEN',
+          )
+        : undefined;
 
     if (redisUrl && redisToken) {
       this.redis = new UpstashRedis({ url: redisUrl, token: redisToken });

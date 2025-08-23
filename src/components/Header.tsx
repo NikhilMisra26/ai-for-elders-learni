@@ -1,4 +1,4 @@
-import React, { useState, type ReactElement } from 'react';
+import { useState, type ReactElement } from 'react';
 import { TextAa, User, SignOut, List } from '@phosphor-icons/react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -237,6 +237,3 @@ export function Header({ onAuthClick }: HeaderProps): ReactElement {
     </header>
   );
 }
-
-// Memoized version for performance optimization
-export const MemoizedHeader = React.memo(Header);

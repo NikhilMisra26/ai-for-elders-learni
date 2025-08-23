@@ -69,23 +69,16 @@ export const CSP_DIRECTIVES = {
 };
 
 /**
- * Generate CSP header string from directives
- */
-export function generateCSPHeader(): string {
-  return Object.entries(CSP_DIRECTIVES)
-    .map(([directive, sources]) => {
-      if (sources.length === 0) return directive;
-      return `${directive} ${sources.join(' ')}`;
-    })
-    .join('; ');
-}
-
-/**
  * Security headers configuration
  * These should be set by the server or deployment platform
  */
 export const SECURITY_HEADERS = {
-  'Content-Security-Policy': generateCSPHeader(),
+  'Content-Security-Policy': Object.entries(CSP_DIRECTIVES)
+    .map(([directive, sources]) => {
+      if (sources.length === 0) return directive;
+      return `${directive} ${sources.join(' ')}`;
+    })
+    .join('; '),
   'X-Content-Type-Options': 'nosniff',
   'X-Frame-Options': 'DENY',
   'X-XSS-Protection': '1; mode=block',
@@ -374,25 +367,6 @@ export function validateCSRFToken(token: string, storedToken: string): boolean {
 }
 
 /**
- * Sanitize HTML content to prevent XSS
- * @deprecated Use escapeHtml or sanitizeHtml from @/lib/security instead
- */
-export function sanitizeHTML(html: string): string {
-  // This function now escapes HTML entities for safety
-  // Use escapeHtml from @/lib/security for new code
-  const map: Record<string, string> = {
-    '&': '&amp;',
-    '<': '&lt;',
-    '>': '&gt;',
-    '"': '&quot;',
-    "'": '&#x27;',
-    '/': '&#x2F;',
-  };
-
-  return html.replace(/[&<>"'/]/g, (char) => map[char] ?? char);
-}
-
-/**
  * Check for common SQL injection patterns
  */
 export function hasSQLInjectionPattern(input: string): boolean {
@@ -426,7 +400,12 @@ export function initializeSecurity(): void {
     if (!existingCSP) {
       const meta = document.createElement('meta');
       meta.httpEquiv = 'Content-Security-Policy';
-      meta.content = generateCSPHeader();
+      meta.content = Object.entries(CSP_DIRECTIVES)
+        .map(([directive, sources]) => {
+          if (sources.length === 0) return directive;
+          return `${directive} ${sources.join(' ')}`;
+        })
+        .join('; ');
       document.head.appendChild(meta);
     }
   }

@@ -14,6 +14,8 @@ import type { SupabaseClient } from '@supabase/supabase-js';
 
 import { SecurityLogger } from './security';
 
+import { sanitizeLogData } from '@/lib/utils/logSanitizer';
+
 // Create a DOMPurify instance only in browser environments
 const DOMPurifyInstance = typeof window !== 'undefined' ? createDOMPurify(window) : null;
 // Type definitions for support security
@@ -624,51 +626,7 @@ export function normalizeSupportError(error: unknown): SupportSecurityError {
   };
 }
 
-/**
- * Sanitize sensitive data from log details
- */
-function sanitizeLogData(data: Record<string, unknown>): Record<string, unknown> {
-  const sanitized: Record<string, unknown> = {};
-  const sensitiveKeys = [
-    'password',
-    'token',
-    'secret',
-    'key',
-    'authorization',
-    'cookie',
-    'session',
-  ];
-
-  for (const [key, value] of Object.entries(data)) {
-    const lowerKey = key.toLowerCase();
-
-    // Check if key contains sensitive words
-    if (sensitiveKeys.some((sensitive) => lowerKey.includes(sensitive))) {
-      sanitized[key] = '[REDACTED]';
-    }
-    // Sanitize email addresses (keep domain for debugging)
-    else if (typeof value === 'string' && value.includes('@')) {
-      const parts = value.split('@');
-      if (parts.length === 2) {
-        sanitized[key] = `***@${parts[1]}`;
-      } else {
-        sanitized[key] = '[EMAIL]';
-      }
-    }
-    // Truncate long strings that might contain message content
-    else if (typeof value === 'string' && value.length > 100) {
-      sanitized[key] = value.substring(0, 100) + '...[truncated]';
-    }
-    // Recursively sanitize nested objects
-    else if (value && typeof value === 'object' && !Array.isArray(value)) {
-      sanitized[key] = sanitizeLogData(value as Record<string, unknown>);
-    } else {
-      sanitized[key] = value;
-    }
-  }
-
-  return sanitized;
-}
+// sanitizeLogData function removed - now using shared utility from @/lib/utils/logSanitizer
 
 /**
  * Audit logging for support operations with data sanitization

@@ -650,4 +650,3 @@ function HomePageComponent({ onAuthClick }: HomePageProps): ReactElement {
 
 // Memoized export for performance optimization
 export const HomePage = React.memo(HomePageComponent);
-export const MemoizedHomePage = HomePage; // Backward compatibility

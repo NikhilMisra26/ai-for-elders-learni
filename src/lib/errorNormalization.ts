@@ -5,6 +5,8 @@
 
 import { SecurityLogger } from './security';
 
+import { sanitizeErrorDetails } from '@/lib/utils/logSanitizer';
+
 /**
  * Error codes for consistent error handling
  */
@@ -200,48 +202,7 @@ function extractErrorCode(message: string): ErrorCode {
   return ErrorCode.GENERIC_ERROR;
 }
 
-/**
- * Sanitize string values by truncating long content
- */
-function sanitizeStringValue(value: string): string {
-  return value.substring(0, 200);
-}
-
-/**
- * Sanitize error details to remove sensitive information
- */
-function sanitizeErrorDetails(error: unknown): Record<string, unknown> {
-  const sanitized: Record<string, unknown> = {};
-
-  if (error instanceof Error) {
-    // Only include safe properties
-    sanitized.name = error.name;
-    sanitized.message = error.message;
-
-    // Remove sensitive stack trace in production
-    if (import.meta.env.DEV) {
-      sanitized.stack = error.stack;
-    }
-  } else if (typeof error === 'object' && error !== null) {
-    // Sanitize object properties
-    const errorObj = error as Record<string, unknown>;
-    const sensitiveKeys = ['password', 'token', 'key', 'secret', 'credential', 'auth'];
-
-    for (const [key, value] of Object.entries(errorObj)) {
-      const lowerKey = key.toLowerCase();
-      const isSensitive = sensitiveKeys.some((sensitive) => lowerKey.includes(sensitive));
-
-      if (!isSensitive) {
-        sanitized[key] = typeof value === 'string' ? value.substring(0, 200) : value;
-      }
-    }
-  } else {
-    sanitized.type = typeof error;
-    sanitized.value = sanitizeStringValue(String(error));
-  }
-
-  return sanitized;
-}
+// sanitizeErrorDetails function removed - now using shared utility from @/lib/utils/logSanitizer
 
 /**
  * Normalized error response

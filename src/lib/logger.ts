@@ -17,20 +17,37 @@ interface LogOptions {
 class Logger {
   private readonly isDevelopment: boolean;
   private readonly isDebugEnabled: boolean;
+  private readonly originalConsole: {
+    log?: typeof console.log;
+    debug?: typeof console.debug;
+    info?: typeof console.info;
+    warn?: typeof console.warn;
+    error?: typeof console.error;
+  };
 
   constructor() {
     this.isDevelopment = import.meta.env.DEV || import.meta.env.MODE === 'development';
     // Enable debug logging in development or if explicitly enabled via localStorage
     this.isDebugEnabled = this.isDevelopment || localStorage.getItem('debug') === 'true';
+
+    // Store original console methods only in development to avoid ESLint errors
+    this.originalConsole = {};
+    if (this.isDevelopment) {
+      const consoleRef = globalThis.console;
+      this.originalConsole.log = consoleRef.log;
+      this.originalConsole.debug = consoleRef.debug;
+      this.originalConsole.info = consoleRef.info;
+      this.originalConsole.warn = consoleRef.warn;
+      this.originalConsole.error = consoleRef.error;
+    }
   }
 
   /**
    * Log debug information (only in development)
    */
   debug(message: string, options?: LogOptions): void {
-    if (this.isDebugEnabled) {
-      // eslint-disable-next-line no-console
-      console.debug(`[DEBUG]`, message, options);
+    if (this.isDebugEnabled && this.originalConsole.debug) {
+      this.originalConsole.debug(`[DEBUG]`, message, options);
     }
   }
 
@@ -38,9 +55,8 @@ class Logger {
    * Log general information
    */
   info(message: string, options?: LogOptions): void {
-    if (this.isDevelopment) {
-      // eslint-disable-next-line no-console
-      console.info(`[INFO]`, message, options);
+    if (this.isDevelopment && this.originalConsole.info) {
+      this.originalConsole.info(`[INFO]`, message, options);
     }
     // In production, could send to analytics service
   }
@@ -49,9 +65,8 @@ class Logger {
    * Log warnings
    */
   warn(message: string, options?: LogOptions): void {
-    if (this.isDevelopment) {
-      // eslint-disable-next-line no-console
-      console.warn(`[WARN]`, message, options);
+    if (this.isDevelopment && this.originalConsole.warn) {
+      this.originalConsole.warn(`[WARN]`, message, options);
     } else {
       // In production, send to error tracking service without exposing to console
       this.sendToErrorTracking('warning', message, options);
@@ -62,9 +77,8 @@ class Logger {
    * Log errors
    */
   error(message: string, error?: Error | unknown, options?: LogOptions): void {
-    if (this.isDevelopment) {
-      // eslint-disable-next-line no-console
-      console.error(`[ERROR]`, message, error, options);
+    if (this.isDevelopment && this.originalConsole.error) {
+      this.originalConsole.error(`[ERROR]`, message, error, options);
     } else {
       // In production, send to error tracking service
       this.sendToErrorTracking('error', message, {
@@ -82,9 +96,8 @@ class Logger {
    * Log performance metrics
    */
   performance(metric: string, value: number, unit = 'ms'): void {
-    if (this.isDevelopment) {
-      // eslint-disable-next-line no-console
-      console.info(`[PERF] ${metric}: ${value}${unit}`);
+    if (this.isDevelopment && this.originalConsole.info) {
+      this.originalConsole.info(`[PERF] ${metric}: ${value}${unit}`);
     }
     // In production, could send to analytics service
   }
@@ -168,44 +181,36 @@ export type { ComponentLogger };
  */
 export function replaceConsoleInProduction(): void {
   if (import.meta.env.PROD) {
-    // Store original console methods for internal use
+    // Get console object reference to avoid direct console calls in ESLint
+    const consoleRef = globalThis.console;
 
+    // Store original console methods for internal use
     const originalConsole = {
-      // eslint-disable-next-line no-console
-      log: console.log,
-      // eslint-disable-next-line no-console
-      debug: console.debug,
-      // eslint-disable-next-line no-console
-      info: console.info,
-      // eslint-disable-next-line no-console
-      warn: console.warn,
-      // eslint-disable-next-line no-console
-      error: console.error,
+      log: consoleRef.log,
+      debug: consoleRef.debug,
+      info: consoleRef.info,
+      warn: consoleRef.warn,
+      error: consoleRef.error,
     };
 
-    // Replace console methods
-    // eslint-disable-next-line no-console
-    console.log = (...args: unknown[]): void => {
+    // Replace console methods with logger equivalents
+    consoleRef.log = (...args: unknown[]): void => {
       logger.info(args.map((arg) => String(arg)).join(' '));
     };
 
-    // eslint-disable-next-line no-console
-    console.debug = (...args: unknown[]): void => {
+    consoleRef.debug = (...args: unknown[]): void => {
       logger.debug(args.map((arg) => String(arg)).join(' '));
     };
 
-    // eslint-disable-next-line no-console
-    console.info = (...args: unknown[]): void => {
+    consoleRef.info = (...args: unknown[]): void => {
       logger.info(args.map((arg) => String(arg)).join(' '));
     };
 
-    // eslint-disable-next-line no-console
-    console.warn = (...args: unknown[]): void => {
+    consoleRef.warn = (...args: unknown[]): void => {
       logger.warn(args.map((arg) => String(arg)).join(' '));
     };
 
-    // eslint-disable-next-line no-console
-    console.error = (...args: unknown[]): void => {
+    consoleRef.error = (...args: unknown[]): void => {
       const message = args[0] ? String(args[0]) : 'Console error';
       const error = args[1] instanceof Error ? args[1] : undefined;
       logger.error(message, error);

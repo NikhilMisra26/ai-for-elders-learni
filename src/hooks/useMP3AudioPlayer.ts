@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 
 import { errorHandler } from '@/lib/errorHandler';
+import { logger } from '@/lib/logger';
 import type { AudioPlaylist, AudioFile } from '@/lib/audioMapping';
 import { getAudioFilePath } from '@/lib/audioMapping';
 
@@ -589,8 +590,10 @@ export function useMP3AudioPlayer(
 export function initSpeechSynthesis(): SpeechSynthesis | null {
   // Check if the API is available
   if (!('speechSynthesis' in window)) {
-    // eslint-disable-next-line no-console
-    console.warn('Speech synthesis not supported in this browser');
+    logger.warn('Speech synthesis not supported in this browser', {
+      component: 'speechSynthesis',
+      action: 'init',
+    });
     return null;
   }
 
@@ -600,16 +603,20 @@ export function initSpeechSynthesis(): SpeechSynthesis | null {
 
     // Verify the API is functional
     if (typeof synthesis.speak !== 'function' || typeof synthesis.cancel !== 'function') {
-      // eslint-disable-next-line no-console
-      console.warn('Speech synthesis API is incomplete');
+      logger.warn('Speech synthesis API is incomplete', {
+        component: 'speechSynthesis',
+        action: 'init',
+      });
       return null;
     }
 
     return synthesis;
   } catch (error) {
     // Log error but don't throw - gracefully degrade
-    // eslint-disable-next-line no-console
-    console.error('Failed to initialize speech synthesis:', error);
+    logger.error('Failed to initialize speech synthesis', error, {
+      component: 'speechSynthesis',
+      action: 'init',
+    });
     errorHandler.logError(
       'Web Speech API initialization failed',
       error instanceof Error ? error : new Error(String(error)),
@@ -629,8 +636,11 @@ export function initSpeechSynthesis(): SpeechSynthesis | null {
 export function createSpeechUtterance(text: string): SpeechSynthesisUtterance | null {
   try {
     if (!text || typeof text !== 'string') {
-      // eslint-disable-next-line no-console
-      console.warn('Invalid text provided for speech utterance');
+      logger.warn('Invalid text provided for speech utterance', {
+        component: 'speechSynthesis',
+        action: 'createUtterance',
+        metadata: { textType: typeof text },
+      });
       return null;
     }
 
@@ -638,8 +648,14 @@ export function createSpeechUtterance(text: string): SpeechSynthesisUtterance | 
 
     // Set up error handling for the utterance
     utterance.onerror = (event): void => {
-      // eslint-disable-next-line no-console
-      console.error('Speech synthesis error:', event.error);
+      logger.error('Speech synthesis error', new Error(event.error), {
+        component: 'speechSynthesis',
+        action: 'speak',
+        metadata: {
+          charIndex: event.charIndex,
+          elapsedTime: event.elapsedTime,
+        },
+      });
       errorHandler.logError(`Speech synthesis failed: ${event.error}`, new Error(event.error), {
         component: 'speechSynthesis',
         action: 'speak',
@@ -652,8 +668,10 @@ export function createSpeechUtterance(text: string): SpeechSynthesisUtterance | 
 
     return utterance;
   } catch (error) {
-    // eslint-disable-next-line no-console
-    console.error('Failed to create speech utterance:', error);
+    logger.error('Failed to create speech utterance', error, {
+      component: 'speechSynthesis',
+      action: 'createUtterance',
+    });
     errorHandler.logError(
       'SpeechSynthesisUtterance creation failed',
       error instanceof Error ? error : new Error(String(error)),
