@@ -18,11 +18,11 @@ class Logger {
   private readonly isDevelopment: boolean;
   private readonly isDebugEnabled: boolean;
   private readonly originalConsole: {
-    log?: typeof console.log;
-    debug?: typeof console.debug;
-    info?: typeof console.info;
-    warn?: typeof console.warn;
-    error?: typeof console.error;
+    log: typeof console.log;
+    debug: typeof console.debug;
+    info: typeof console.info;
+    warn: typeof console.warn;
+    error: typeof console.error;
   };
 
   constructor() {
@@ -30,23 +30,22 @@ class Logger {
     // Enable debug logging in development or if explicitly enabled via localStorage
     this.isDebugEnabled = this.isDevelopment || localStorage.getItem('debug') === 'true';
 
-    // Store original console methods only in development to avoid ESLint errors
-    this.originalConsole = {};
-    if (this.isDevelopment) {
-      const consoleRef = globalThis.console;
-      this.originalConsole.log = consoleRef.log;
-      this.originalConsole.debug = consoleRef.debug;
-      this.originalConsole.info = consoleRef.info;
-      this.originalConsole.warn = consoleRef.warn;
-      this.originalConsole.error = consoleRef.error;
-    }
+    // Store original console methods with proper binding
+    const consoleRef = globalThis.console;
+    this.originalConsole = {
+      log: consoleRef.log.bind(consoleRef),
+      debug: consoleRef.debug.bind(consoleRef),
+      info: consoleRef.info.bind(consoleRef),
+      warn: consoleRef.warn.bind(consoleRef),
+      error: consoleRef.error.bind(consoleRef),
+    };
   }
 
   /**
    * Log debug information (only in development)
    */
   debug(message: string, options?: LogOptions): void {
-    if (this.isDebugEnabled && this.originalConsole.debug) {
+    if (this.isDebugEnabled) {
       this.originalConsole.debug(`[DEBUG]`, message, options);
     }
   }
@@ -55,7 +54,7 @@ class Logger {
    * Log general information
    */
   info(message: string, options?: LogOptions): void {
-    if (this.isDevelopment && this.originalConsole.info) {
+    if (this.isDevelopment) {
       this.originalConsole.info(`[INFO]`, message, options);
     }
     // In production, could send to analytics service
@@ -65,7 +64,7 @@ class Logger {
    * Log warnings
    */
   warn(message: string, options?: LogOptions): void {
-    if (this.isDevelopment && this.originalConsole.warn) {
+    if (this.isDevelopment) {
       this.originalConsole.warn(`[WARN]`, message, options);
     } else {
       // In production, send to error tracking service without exposing to console
@@ -77,7 +76,7 @@ class Logger {
    * Log errors
    */
   error(message: string, error?: Error | unknown, options?: LogOptions): void {
-    if (this.isDevelopment && this.originalConsole.error) {
+    if (this.isDevelopment) {
       this.originalConsole.error(`[ERROR]`, message, error, options);
     } else {
       // In production, send to error tracking service
@@ -96,7 +95,7 @@ class Logger {
    * Log performance metrics
    */
   performance(metric: string, value: number, unit = 'ms'): void {
-    if (this.isDevelopment && this.originalConsole.info) {
+    if (this.isDevelopment) {
       this.originalConsole.info(`[PERF] ${metric}: ${value}${unit}`);
     }
     // In production, could send to analytics service

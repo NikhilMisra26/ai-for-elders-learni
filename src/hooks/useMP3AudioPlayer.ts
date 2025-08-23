@@ -177,12 +177,24 @@ export function useMP3AudioPlayer(
       isPaused: false,
     }));
 
+    // Store timeout reference for cleanup
+    // eslint-disable-next-line prefer-const
+    let loadTimeout: ReturnType<typeof setTimeout> | undefined;
+
     // Event handlers
     const handleLoadStart = (): void => {
       setState((prev) => ({ ...prev, isLoading: true, error: null }));
     };
 
     const handleCanPlay = (): void => {
+      if (import.meta.env.DEV) {
+        logger.debug('Audio can play', {
+          component: 'useMP3AudioPlayer',
+          action: 'canplay',
+          metadata: { filename: state.currentFile?.filename },
+        });
+      }
+      if (loadTimeout) clearTimeout(loadTimeout); // Clear the timeout since loading succeeded
       setState((prev) => ({ ...prev, isLoading: false }));
 
       // Auto-play the next track if this load was triggered by auto-advance
@@ -300,6 +312,8 @@ export function useMP3AudioPlayer(
         );
       }
 
+      if (loadTimeout) clearTimeout(loadTimeout); // Clear timeout on error
+
       setState((prev) => ({
         ...prev,
         isPlaying: false,
@@ -328,8 +342,36 @@ export function useMP3AudioPlayer(
     audio.volume = state.volume;
     audio.playbackRate = state.playbackRate;
 
+    // Debug log for development
+    if (import.meta.env.DEV) {
+      logger.debug(`Loading audio: ${currentAudioPath}`, {
+        component: 'useMP3AudioPlayer',
+        action: 'load',
+        metadata: { filename: state.currentFile?.filename },
+      });
+    }
+
     // Explicitly call load() to start loading the audio
     audio.load();
+
+    // Add a timeout to handle stuck loading states
+    loadTimeout = setTimeout(() => {
+      if (state.isLoading) {
+        logger.warn('Audio loading timeout', {
+          component: 'useMP3AudioPlayer',
+          action: 'timeout',
+          metadata: {
+            filename: state.currentFile?.filename,
+            url: currentAudioPath,
+          },
+        });
+        setState((prev) => ({
+          ...prev,
+          isLoading: false,
+          error: 'Audio loading timed out. The audio file may not be available.',
+        }));
+      }
+    }, 10000); // 10 second timeout
 
     // Attach new listeners
     audio.addEventListener('loadstart', handleLoadStart);
@@ -342,6 +384,7 @@ export function useMP3AudioPlayer(
 
     // Cleanup function
     return (): void => {
+      if (loadTimeout) clearTimeout(loadTimeout);
       audio.removeEventListener('loadstart', handleLoadStart);
       audio.removeEventListener('canplay', handleCanPlay);
       audio.removeEventListener('loadedmetadata', handleLoadedMetadata);

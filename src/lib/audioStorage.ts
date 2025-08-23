@@ -209,19 +209,13 @@ export function getAudioUrl(filename: string): string {
     return AUDIO_BLOB_URLS[filename];
   }
 
-  // Fallback to local files during migration
-  if (import.meta.env.DEV) {
-    return `/audio/${filename}`;
-  }
+  // Always use Blob storage URLs since local audio files don't exist
+  // Use errorHandler to log if file not found in mapping
+  errorHandler.logWarning(`Audio file ${filename} not found in Blob storage mapping`, {
+    component: 'audioStorage',
+    action: 'getAudioUrl',
+    metadata: { filename },
+  });
 
-  // In production, all files should be in Blob storage
-  // Use errorHandler instead of console.warn for production
-  if (!import.meta.env.DEV) {
-    errorHandler.logWarning(`Audio file ${filename} not found in Blob storage mapping`, {
-      component: 'audioStorage',
-      action: 'getAudioUrl',
-      metadata: { filename },
-    });
-  }
   return getAudioUrlSync(filename);
 }
