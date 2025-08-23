@@ -124,7 +124,6 @@ function CoursesPageComponent({ onAuthClick }: CoursesPageProps): ReactElement {
     };
   };
 
-
   const getContinueCourse = (): Course | undefined => {
     // Find a course that's in progress
     const inProgress = Object.values(courseData).find((course) => {
@@ -266,8 +265,6 @@ function CoursesPageComponent({ onAuthClick }: CoursesPageProps): ReactElement {
                 </CardContent>
               </Card>
             )}
-
-            
           </div>
         )}
 
