@@ -13,7 +13,6 @@ import {
   Users,
   Medal,
   MagnifyingGlass,
-  BookmarkSimple,
   ChartBar,
   Trophy,
   Sparkle,
@@ -123,15 +122,6 @@ function CoursesPageComponent({ onAuthClick }: CoursesPageProps): ReactElement {
       isStarted: progress !== null,
       isCompleted: percentage >= 100,
     };
-  };
-
-  const getRecommendedCourse = (): Course | undefined => {
-    // Find a course the user hasn't started yet
-    const unstarted = Object.values(courseData).find((course) => {
-      const progress = getCourseProgress(course.id);
-      return !progress && canAccessTier(course.tier);
-    });
-    return unstarted;
   };
 
   const getContinueCourse = (): Course | undefined => {
@@ -268,52 +258,6 @@ function CoursesPageComponent({ onAuthClick }: CoursesPageProps): ReactElement {
                         >
                           Continue Course
                           <ArrowRight className='w-4 h-4 ml-2' />
-                        </Button>
-                      </>
-                    );
-                  })()}
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Recommended Course */}
-            {getRecommendedCourse() && (
-              <Card
-                className='bg-gradient-to-br from-amber-50 via-yellow-50 to-orange-50 border-2 border-amber-200 shadow-lg hover:shadow-xl transition-all duration-300 ring-2 ring-amber-100/50'
-                role='article'
-                aria-label='Recommended course for you'
-              >
-                <CardHeader>
-                  <CardTitle className='flex items-center gap-2 text-amber-900'>
-                    <BookmarkSimple className='w-5 h-5 text-amber-600' />
-                    <span className='bg-gradient-to-r from-amber-600 to-orange-600 bg-clip-text text-transparent font-bold'>
-                      Recommended for You
-                    </span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  {((): ReactElement | null => {
-                    const course = getRecommendedCourse();
-                    if (!course) return null;
-                    return (
-                      <>
-                        <h3 className='font-semibold mb-2'>{course.title}</h3>
-                        <p className='text-sm text-muted-foreground mb-4'>{course.description}</p>
-                        <div className='flex items-center justify-between mb-4'>
-                          <Badge variant={course.tier === 'free' ? 'secondary' : 'default'}>
-                            {course.tier.toUpperCase()}
-                          </Badge>
-                          <span className='text-sm text-muted-foreground'>
-                            {course.totalModules} modules
-                          </span>
-                        </div>
-                        <Button
-                          onClick={() => handleStartCourse(course.id, course)}
-                          variant='default'
-                          className='w-full shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 text-white font-semibold'
-                        >
-                          Start Course
-                          <Play className='w-4 h-4 ml-2' />
                         </Button>
                       </>
                     );
