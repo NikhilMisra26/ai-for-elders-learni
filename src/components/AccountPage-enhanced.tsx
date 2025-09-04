@@ -1,22 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
   User,
   EnvelopeSimple,
   Star,
   Download,
-  Upload,
-  Trash,
-  Shield,
   ChartBar,
   Trophy,
   Fire,
   Clock,
-  Lock,
   Lightning,
   Medal,
   Brain,
-  Sparkle,
   Heart,
 } from '@phosphor-icons/react';
 import type { ReactElement } from 'react';
@@ -29,15 +25,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
-import { Separator } from '@/components/ui/separator';
-import { useAuth } from '@/contexts/AuthContext';
 import { useSubscription, formatPrice, useInvoiceHistory } from '@/lib/subscription';
 import { useProgress } from '@/lib/progressTracking';
-import { getOrCreateGuestId, clearGuestId } from '@/lib/guestId';
-import { exportGuestProgress, importGuestProgress, resetGuestProgress } from '@/lib/guestProgress';
+// Guest progress functions - kept imports for future use
+// import { getOrCreateGuestId, clearGuestId } from '@/lib/guestId';
+// import { exportGuestProgress, importGuestProgress, resetGuestProgress } from '@/lib/guestProgress';
 
 function AccountPageComponent(): ReactElement {
-  const { user } = useAuth();
   const { subscription, getCurrentPlan, cancelSubscription, reactivateSubscription } =
     useSubscription();
   const { learningStats } = useProgress();
@@ -55,7 +49,8 @@ function AccountPageComponent(): ReactElement {
   // Password change dialog state
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
 
-  // Guest mode backup/restore handlers
+  // Guest mode backup/restore handlers - kept for future use
+  /*
   const handleExportProgress = (): void => {
     try {
       const guestId = getOrCreateGuestId();
@@ -121,6 +116,7 @@ function AccountPageComponent(): ReactElement {
       setTimeout(() => window.location.reload(), 1000);
     }
   };
+  */
 
   // @ts-expect-error - Plan data may be used for display in the future
   const _currentPlan = getCurrentPlan();
@@ -152,10 +148,34 @@ function AccountPageComponent(): ReactElement {
     });
   };
 
+  const navigate = useNavigate();
+
+  // Track member since date
+  useEffect(() => {
+    const MEMBER_SINCE_KEY = 'member_since_date';
+    if (!localStorage.getItem(MEMBER_SINCE_KEY)) {
+      localStorage.setItem(MEMBER_SINCE_KEY, new Date().toISOString());
+    }
+  }, []);
+
+  const getMemberSinceDate = (): string => {
+    const stored = localStorage.getItem('member_since_date');
+    if (stored) {
+      return new Date(stored).toLocaleDateString('en-US', {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric'
+      });
+    }
+    return new Date().toLocaleDateString('en-US', {
+      month: 'long',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  };
+
   const handleNavigation = (page: string): void => {
-    // In a real app, this would use proper routing
-    // For now, we'll use window.location or emit a navigation event
-    window.location.hash = `#/${page}`;
+    navigate(`/${page}`);
   };
 
   // Get personalized greeting
@@ -180,7 +200,7 @@ function AccountPageComponent(): ReactElement {
         <div className='relative max-w-7xl mx-auto'>
           <div className='text-center'>
             <h1 className='text-5xl font-bold mb-4 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 bg-clip-text text-transparent'>
-              {getGreeting()}, {user?.name ?? 'there'}!
+              {getGreeting()}!
             </h1>
             <p className='text-2xl text-gray-700 font-medium mb-2'>
               Manage Your <BrandName variant='short' /> Account
@@ -207,32 +227,11 @@ function AccountPageComponent(): ReactElement {
                 <CardDescription>Your personal account details</CardDescription>
               </CardHeader>
               <CardContent className='space-y-6 pt-6'>
-                <div className='grid grid-cols-2 gap-6'>
-                  <div className='p-4 bg-white/80 backdrop-blur-sm rounded-lg shadow-md'>
-                    <Label className='text-sm font-semibold text-gray-600'>Full Name</Label>
-                    <p className='text-lg font-medium text-gray-800 mt-1'>{user?.name ?? ''}</p>
-                  </div>
-                  <div className='p-4 bg-white/80 backdrop-blur-sm rounded-lg shadow-md'>
-                    <Label className='text-sm font-semibold text-gray-600'>Email Address</Label>
-                    <p className='text-lg font-medium text-gray-800 mt-1'>{user?.email ?? ''}</p>
-                  </div>
-                </div>
-
-                <Separator className='bg-indigo-100' />
-
-                <div className='grid grid-cols-2 gap-6'>
-                  <div className='p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg'>
-                    <Label className='text-sm font-semibold text-gray-600'>Member Since</Label>
-                    <p className='text-lg font-medium text-gray-800 mt-1'>
-                      {user?.joinDate ? new Date(user.joinDate).toLocaleDateString() : ''}
-                    </p>
-                  </div>
-                  <div className='p-4 bg-gradient-to-r from-green-50 to-teal-50 rounded-lg'>
-                    <Label className='text-sm font-semibold text-gray-600'>Account Status</Label>
-                    <Badge className='mt-1 bg-gradient-to-r from-green-500 to-teal-500 text-white'>
-                      ✓ Active
-                    </Badge>
-                  </div>
+                <div className='p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg'>
+                  <Label className='text-sm font-semibold text-gray-600'>Member Since</Label>
+                  <p className='text-lg font-medium text-gray-800 mt-1'>
+                    {getMemberSinceDate()}
+                  </p>
                 </div>
               </CardContent>
             </Card>
@@ -405,126 +404,54 @@ function AccountPageComponent(): ReactElement {
               </CardHeader>
               <CardContent className='space-y-4'>
                 <div className='p-4 bg-white/80 backdrop-blur-sm rounded-lg'>
-                  <p className='text-sm text-gray-700 leading-relaxed'>
-                    Our friendly support team is here to help you succeed in your AI learning
-                    journey!
+                  <p className='text-sm text-gray-700 mb-3'>
+                    Need assistance? Enter your email and our support team will reach out to help you.
                   </p>
-                </div>
-                <Button
-                  variant='default'
-                  className='w-full bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200'
-                  onClick={() => setShowEmailSupportDialog(true)}
-                >
-                  <EnvelopeSimple className='w-4 h-4 mr-2' />
-                  Contact Support
-                </Button>
-              </CardContent>
-            </Card>
-
-            {/* Backup & Restore Progress - Guest Mode */}
-            {!user && (
-              <Card className='border-0 shadow-xl bg-gradient-to-br from-blue-50 to-indigo-50'>
-                <CardHeader>
-                  <CardTitle className='flex items-center gap-2'>
-                    <Download className='w-5 h-5 text-blue-600' />
-                    Backup & Restore Progress
-                  </CardTitle>
-                  <CardDescription>
-                    Save your learning progress or transfer it to another device
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className='space-y-4'>
-                  <div className='flex flex-col gap-3'>
+                  <div className='space-y-2 mt-4'>
+                    <Label htmlFor='support-email' className='text-sm font-semibold text-gray-700'>
+                      Your Email
+                    </Label>
+                    <input
+                      id='support-email'
+                      type='email'
+                      placeholder='your@email.com'
+                      className='w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500'
+                      onKeyDown={(e): void => {
+                        if (e.key === 'Enter') {
+                          const email = (e.target as HTMLInputElement).value;
+                          if (email && email.includes('@') && email.includes('.')) {
+                            toast.success('Support request sent! We\'ll contact you at ' + email);
+                            (e.target as HTMLInputElement).value = '';
+                          } else {
+                            toast.error('Please enter a valid email address');
+                          }
+                        }
+                      }}
+                    />
                     <Button
-                      onClick={handleExportProgress}
-                      variant='outline'
-                      className='w-full justify-start'
+                      variant='default'
+                      onClick={(): void => {
+                        const input = document.getElementById('support-email') as HTMLInputElement;
+                        if (input) {
+                          const email = input.value;
+                          if (email && email.includes('@') && email.includes('.')) {
+                            toast.success('Support request sent! We\'ll contact you at ' + email);
+                            input.value = '';
+                          } else {
+                            toast.error('Please enter a valid email address');
+                          }
+                        }
+                      }}
+                      className='w-full mt-3 justify-center bg-gradient-to-r from-teal-600 to-cyan-600 hover:from-teal-700 hover:to-cyan-700 text-white'
                     >
-                      <Download className='mr-2 h-4 w-4' />
-                      Export Progress
+                      <EnvelopeSimple className='w-4 h-4 mr-2' />
+                      Send Support Request
                     </Button>
-                    <Button
-                      onClick={handleImportProgress}
-                      variant='outline'
-                      className='w-full justify-start'
-                    >
-                      <Upload className='mr-2 h-4 w-4' />
-                      Import Progress
-                    </Button>
-                    <Button
-                      onClick={handleResetProgress}
-                      variant='outline'
-                      className='w-full justify-start text-destructive'
-                    >
-                      <Trash className='mr-2 h-4 w-4' />
-                      Reset Device Progress
-                    </Button>
-                  </div>
-                  <p className='text-xs text-muted-foreground'>
-                    Your progress is saved locally on this device. Use export/import to backup or
-                    transfer your progress.
-                  </p>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Account Security - Enhanced */}
-            <Card className='border-0 shadow-xl bg-gradient-to-br from-red-50 to-orange-50'>
-              <CardHeader>
-                <CardTitle className='flex items-center gap-2'>
-                  <Shield className='w-5 h-5 text-red-600' />
-                  Account Security
-                </CardTitle>
-              </CardHeader>
-              <CardContent className='space-y-4'>
-                <div className='p-4 bg-white/80 backdrop-blur-sm rounded-lg'>
-                  <div className='flex items-center justify-between mb-3'>
-                    <span className='text-sm font-semibold text-gray-700 flex items-center gap-2'>
-                      <Lock className='w-4 h-4 text-red-500' />
-                      Password Protection
-                    </span>
-                    <Badge className='bg-green-100 text-green-800'>Secure</Badge>
-                  </div>
-                  <Button
-                    variant='outline'
-                    size='sm'
-                    className='w-full hover:bg-orange-50 border-orange-200'
-                    onClick={(): void => setShowPasswordDialog(true)}
-                  >
-                    Change Password
-                  </Button>
-                </div>
-
-                <Separator className='bg-orange-100' />
-
-                <div className='p-4 bg-white/80 backdrop-blur-sm rounded-lg'>
-                  <div className='text-sm font-semibold text-gray-700 mb-1'>Last Login</div>
-                  <div className='text-sm text-gray-600'>
-                    {new Date().toLocaleDateString()} at {new Date().toLocaleTimeString()}
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Learning Tips - Enhanced */}
-            <Card className='border-0 shadow-xl bg-gradient-to-br from-yellow-50 to-orange-50'>
-              <CardHeader>
-                <CardTitle className='flex items-center gap-2'>
-                  <Sparkle className='w-5 h-5 text-yellow-600' />
-                  Account Tips
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className='p-4 bg-white/80 backdrop-blur-sm rounded-lg'>
-                  <p className='text-sm text-gray-700 leading-relaxed'>
-                    <span className='text-2xl mr-2'>💡</span>
-                    <strong className='text-yellow-700'>Pro tip:</strong> Keep your profile updated
-                    and check back regularly for new features and courses tailored to your learning
-                    style!
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
           </div>
         </div>
 
