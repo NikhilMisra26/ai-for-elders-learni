@@ -67,6 +67,18 @@ function DashboardPageComponent(): ReactElement {
 
   return (
     <div className='min-h-screen'>
+      {/* Guest mode indicator */}
+      {!user && (
+        <div className='bg-blue-50 border-b border-blue-200'>
+          <div className='max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3'>
+            <div className='flex items-center gap-2 text-sm text-blue-800'>
+              <BookmarkSimple className='w-4 h-4' />
+              <span>Progress saved on this device only - Sign in to save across devices</span>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Hero Section with Gradient */}
       <section className='relative overflow-hidden bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50 py-16 px-4 sm:px-6 lg:px-8'>
         {/* Animated Background Elements - optimized for performance */}

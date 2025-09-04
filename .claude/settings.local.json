@@ -30,7 +30,11 @@
       "mcp__playwright__browser_console_messages",
       "mcp__playwright__browser_resize",
       "Bash(git remote get-url:*)",
-      "Bash(gh auth:*)"
+      "Bash(gh auth:*)",
+
+      "mcp__Ref__ref_search_documentation",
+      "mcp__Ref__ref_read_url",
+      "Bash(codex:*)"
     ],
     "deny": []
   }

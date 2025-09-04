@@ -5,6 +5,8 @@ import {
   EnvelopeSimple,
   Star,
   Download,
+  Upload,
+  Trash,
   Shield,
   ChartBar,
   Trophy,
@@ -31,6 +33,8 @@ import { Separator } from '@/components/ui/separator';
 import { useAuth } from '@/contexts/AuthContext';
 import { useSubscription, formatPrice, useInvoiceHistory } from '@/lib/subscription';
 import { useProgress } from '@/lib/progressTracking';
+import { getOrCreateGuestId, clearGuestId } from '@/lib/guestId';
+import { exportGuestProgress, importGuestProgress, resetGuestProgress } from '@/lib/guestProgress';
 
 function AccountPageComponent(): ReactElement {
   const { user } = useAuth();
@@ -50,6 +54,73 @@ function AccountPageComponent(): ReactElement {
 
   // Password change dialog state
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
+
+  // Guest mode backup/restore handlers
+  const handleExportProgress = (): void => {
+    try {
+      const guestId = getOrCreateGuestId();
+      const exportData = exportGuestProgress(guestId);
+
+      // Copy to clipboard
+      navigator.clipboard
+        .writeText(exportData)
+        .then(() => {
+          toast.success('Progress data copied to clipboard!');
+        })
+        .catch(() => {
+          // Fallback: download as file
+          const blob = new Blob([exportData], { type: 'text/plain' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = 'progress-backup.txt';
+          a.click();
+          URL.revokeObjectURL(url);
+          toast.success('Progress data downloaded!');
+        });
+    } catch {
+      toast.error('Failed to export progress');
+    }
+  };
+
+  const handleImportProgress = (): void => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.txt';
+    input.onchange = (e): void => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = (event): void => {
+        try {
+          const base64Data = event.target?.result as string;
+          const guestId = getOrCreateGuestId();
+          importGuestProgress(guestId, base64Data);
+          toast.success('Progress imported successfully! Refreshing...');
+          setTimeout(() => window.location.reload(), 1000);
+        } catch {
+          toast.error('Failed to import progress: Invalid file format');
+        }
+      };
+      reader.readAsText(file);
+    };
+    input.click();
+  };
+
+  const handleResetProgress = (): void => {
+    if (
+      window.confirm(
+        'Are you sure you want to reset all progress on this device? This cannot be undone.',
+      )
+    ) {
+      const guestId = getOrCreateGuestId();
+      resetGuestProgress(guestId);
+      clearGuestId();
+      toast.success('Progress reset! Refreshing...');
+      setTimeout(() => window.location.reload(), 1000);
+    }
+  };
 
   // @ts-expect-error - Plan data may be used for display in the future
   const _currentPlan = getCurrentPlan();
@@ -349,6 +420,53 @@ function AccountPageComponent(): ReactElement {
                 </Button>
               </CardContent>
             </Card>
+
+            {/* Backup & Restore Progress - Guest Mode */}
+            {!user && (
+              <Card className='border-0 shadow-xl bg-gradient-to-br from-blue-50 to-indigo-50'>
+                <CardHeader>
+                  <CardTitle className='flex items-center gap-2'>
+                    <Download className='w-5 h-5 text-blue-600' />
+                    Backup & Restore Progress
+                  </CardTitle>
+                  <CardDescription>
+                    Save your learning progress or transfer it to another device
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className='space-y-4'>
+                  <div className='flex flex-col gap-3'>
+                    <Button
+                      onClick={handleExportProgress}
+                      variant='outline'
+                      className='w-full justify-start'
+                    >
+                      <Download className='mr-2 h-4 w-4' />
+                      Export Progress
+                    </Button>
+                    <Button
+                      onClick={handleImportProgress}
+                      variant='outline'
+                      className='w-full justify-start'
+                    >
+                      <Upload className='mr-2 h-4 w-4' />
+                      Import Progress
+                    </Button>
+                    <Button
+                      onClick={handleResetProgress}
+                      variant='outline'
+                      className='w-full justify-start text-destructive'
+                    >
+                      <Trash className='mr-2 h-4 w-4' />
+                      Reset Device Progress
+                    </Button>
+                  </div>
+                  <p className='text-xs text-muted-foreground'>
+                    Your progress is saved locally on this device. Use export/import to backup or
+                    transfer your progress.
+                  </p>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Account Security - Enhanced */}
             <Card className='border-0 shadow-xl bg-gradient-to-br from-red-50 to-orange-50'>

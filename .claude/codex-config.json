@@ -1,0 +1,49 @@
+{
+  "tested_commands": {
+    "high_reasoning": "codex exec -c model_reasoning_effort=\"high\" --full-auto",
+    "medium_reasoning": "codex exec -c model_reasoning_effort=\"medium\" --full-auto",
+    "low_reasoning": "codex exec -c model_reasoning_effort=\"low\" --full-auto"
+  },
+  "execution_settings": {
+    "use_background_terminals": true,
+    "wait_for_completion": true,
+    "no_progress_polling": true,
+    "collect_outputs_once": true
+  },
+  "common_flags": {
+    "full_auto": "--full-auto",
+    "search": "--search",
+    "no_approval": "--ask-for-approval never"
+  },
+  "validation_commands": {
+    "typecheck": "${PM} run typecheck",
+    "lint": "${PM} run lint",
+    "test": "${PM} run test",
+    "format": "${PM} run format"
+  },
+  "package_manager_detection": "if command -v pnpm >/dev/null 2>&1; then PM=pnpm; elif command -v yarn >/dev/null 2>&1; then PM=yarn; else PM=npm; fi",
+  "important_notes": [
+    "Never use pkill -f as it can kill unrelated processes",
+    "Use KillBash tool for specific shell cleanup",
+    "Run validation AFTER all subagents complete",
+    "Create independent analysis while codex runs",
+    "These commands verified working on 2024-08-31"
+  ],
+  "workflow": {
+    "codex_plan": [
+      "Launch 3 codex instances with different reasoning levels",
+      "Create your own independent analysis immediately",
+      "Wait for shell completion notifications",
+      "Collect outputs once at the end",
+      "Synthesize all 4 analyses"
+    ],
+    "codex_create": [
+      "Decompose task into subtasks",
+      "Assign reasoning levels by complexity",
+      "Launch all subagents simultaneously",
+      "Wait for completion notifications",
+      "Review and coordinate changes",
+      "Run validation suite once"
+    ]
+  }
+}

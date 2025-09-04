@@ -1,4 +1,4 @@
-import { useCallback, useState, useEffect } from 'react';
+import { useCallback, useState, useEffect, useRef } from 'react';
 
 import {
   upsertCourseProgress,
@@ -11,6 +11,8 @@ import {
 import type { Course, Module } from './courseData';
 import { courseData } from './courseData';
 import { errorHandler } from './errorHandler';
+import { getOrCreateGuestId } from './guestId';
+import { loadGuestProgress, saveGuestProgress, type GuestProgressSnapshot } from './guestProgress';
 
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -125,9 +127,52 @@ export function useProgress(): UseProgressReturn {
     weeklyProgress: 0,
   });
 
-  // Hydrate progress data from Supabase when user is logged in
+  // Guest mode support
+  const guestIdRef = useRef<string | null>(null);
+  const saveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Function to create snapshot from current state
+  const createSnapshot = useCallback((): GuestProgressSnapshot => {
+    return {
+      version: 1,
+      moduleProgress,
+      courseProgress,
+      userActivity,
+      learningStats,
+      lastUpdated: new Date().toISOString(),
+    };
+  }, [moduleProgress, courseProgress, userActivity, learningStats]);
+
+  // Debounced save for guest progress
+  const debouncedSaveGuestProgress = useCallback(() => {
+    if (saveTimeoutRef.current) {
+      clearTimeout(saveTimeoutRef.current);
+    }
+
+    saveTimeoutRef.current = setTimeout(() => {
+      if (guestIdRef.current && !user) {
+        const snapshot = createSnapshot();
+        saveGuestProgress(guestIdRef.current, snapshot);
+      }
+    }, 1000); // Save after 1 second of inactivity
+  }, [createSnapshot, user]);
+
+  // Hydrate progress data from Supabase when user is logged in, or from localStorage in guest mode
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      // Guest mode: load from localStorage
+      const guestId = getOrCreateGuestId();
+      guestIdRef.current = guestId;
+
+      const snapshot = loadGuestProgress(guestId);
+      setModuleProgress(snapshot.moduleProgress);
+      setCourseProgress(snapshot.courseProgress);
+      setUserActivity(snapshot.userActivity);
+      setLearningStats(snapshot.learningStats);
+      return;
+    }
+
+    // Original Supabase hydration code continues here...
     void (async (): Promise<void> => {
       try {
         // Fetch all progress data in parallel
@@ -280,6 +325,27 @@ export function useProgress(): UseProgressReturn {
     })();
   }, [user]);
 
+  // Auto-save guest progress when state changes
+  useEffect(() => {
+    if (!user && guestIdRef.current) {
+      debouncedSaveGuestProgress();
+    }
+
+    // Cleanup on unmount
+    return (): void => {
+      if (saveTimeoutRef.current) {
+        clearTimeout(saveTimeoutRef.current);
+      }
+    };
+  }, [
+    moduleProgress,
+    courseProgress,
+    userActivity,
+    learningStats,
+    user,
+    debouncedSaveGuestProgress,
+  ]);
+
   // Get progress for a specific course
   const getCourseProgress = (courseId: string): CourseProgress | null => {
     return courseProgress.find((cp) => cp.courseId === courseId) ?? null;
@@ -339,7 +405,7 @@ export function useProgress(): UseProgressReturn {
       }
     });
 
-    // Persist module progress
+    // Persist module progress (only if user is authenticated)
     if (user) {
       const existingProgress = moduleProgress.find(
         (mp) => mp.courseId === courseId && mp.moduleId === moduleId,
@@ -397,7 +463,7 @@ export function useProgress(): UseProgressReturn {
               }
             : cp,
         );
-        // Persist
+        // Persist (only if user is authenticated)
         if (user) {
           const row = nextState.find((c) => c.courseId === courseId);
           if (row) {
@@ -441,6 +507,7 @@ export function useProgress(): UseProgressReturn {
           completedAt: isCompleted ? new Date().toISOString() : undefined,
         };
         const next = [...current, newCourseProgress];
+        // Persist (only if user is authenticated)
         if (user) {
           upsertCourseProgress({
             user_id: user.id,
@@ -480,6 +547,7 @@ export function useProgress(): UseProgressReturn {
       moduleId,
       metadata: { timeSpent, rating },
     });
+    // Persist activity (only if user is authenticated)
     if (user) {
       dbAddActivity({
         user_id: user.id,
@@ -526,6 +594,7 @@ export function useProgress(): UseProgressReturn {
         description: `Finished all ${course.totalModules} modules`,
         courseId,
       });
+      // Persist activity (only if user is authenticated)
       if (user) {
         dbAddActivity({
           user_id: user.id,
