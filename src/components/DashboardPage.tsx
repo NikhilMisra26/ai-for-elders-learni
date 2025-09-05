@@ -1,4 +1,4 @@
-import React, { useState, type ReactElement } from 'react';
+import React, { type ReactElement } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   BookOpen,
@@ -9,9 +9,6 @@ import {
   ChartBar,
   Trophy,
   Fire,
-  Target,
-  Users,
-  Gear,
   BookmarkSimple,
   Play,
   Sparkle,
@@ -26,19 +23,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { useAuth } from '@/contexts/AuthContext';
 import { useProgress } from '@/lib/progressTracking';
 import { useSubscription } from '@/lib/subscription';
 import { courseData } from '@/lib/courseData';
 
 function DashboardPageComponent(): ReactElement {
   const navigate = useNavigate();
-  const { user } = useAuth();
   const { subscription } = useSubscription();
-  const { getDashboardSummary, getLearningRecommendations, learningStats, setWeeklyGoal } =
-    useProgress();
-
-  const [showGoalSetting, setShowGoalSetting] = useState(false);
+  const { getDashboardSummary, getLearningRecommendations, learningStats } = useProgress();
 
   const dashboardSummary = getDashboardSummary();
   const recommendations = getLearningRecommendations();
@@ -50,12 +42,6 @@ function DashboardPageComponent(): ReactElement {
     if (hour < 17) return 'Good afternoon';
     return 'Good evening';
   };
-
-  // Calculate weekly progress percentage
-  const weeklyProgressPercentage =
-    learningStats.weeklyGoal > 0
-      ? Math.min((learningStats.weeklyProgress / learningStats.weeklyGoal) * 100, 100)
-      : 0;
 
   const handleStartLearning = (): void => {
     if (recommendations.continueModule) {
@@ -79,7 +65,7 @@ function DashboardPageComponent(): ReactElement {
         <div className='relative max-w-7xl mx-auto'>
           <div className='text-center'>
             <h1 className='text-5xl font-bold mb-4 bg-gradient-to-r from-purple-600 via-pink-600 to-orange-600 bg-clip-text text-transparent'>
-              {getGreeting()}, {user?.name ?? 'there'}!
+              {getGreeting()}!
             </h1>
             <p className='text-2xl text-gray-700 font-medium'>
               Your AI Learning Journey with <BrandName variant='short' />
@@ -236,77 +222,6 @@ function DashboardPageComponent(): ReactElement {
               </Card>
             )}
 
-            {/* Weekly Goal Progress - Enhanced */}
-            <Card className='border-0 shadow-xl bg-gradient-to-br from-orange-50 to-yellow-50'>
-              <CardHeader>
-                <CardTitle className='flex items-center gap-2 text-xl'>
-                  <Target className='w-6 h-6 text-orange-600' />
-                  Weekly Learning Goal
-                </CardTitle>
-                <CardDescription>Track your weekly learning momentum</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className='space-y-4'>
-                  <div className='flex items-center justify-between'>
-                    <span className='text-base font-semibold text-gray-700'>
-                      {Math.round(learningStats.weeklyProgress)} / {learningStats.weeklyGoal}{' '}
-                      minutes
-                    </span>
-                    <span className='text-base font-bold text-orange-600'>
-                      {Math.round(weeklyProgressPercentage)}%
-                    </span>
-                  </div>
-                  <div className='relative'>
-                    <Progress value={weeklyProgressPercentage} className='h-4 bg-orange-100' />
-                    <div
-                      className='absolute top-0 left-0 h-full bg-gradient-to-r from-orange-400 to-yellow-400 rounded-full transition-all duration-500'
-                      style={{ width: `${weeklyProgressPercentage}%` }}
-                    />
-                  </div>
-                  <div className='flex justify-between items-center'>
-                    <p className='text-sm font-medium text-gray-600'>
-                      {weeklyProgressPercentage >= 100
-                        ? '🎉 Goal achieved! You are amazing!'
-                        : `${Math.round((learningStats.weeklyGoal - learningStats.weeklyProgress) / 60)} hours to go - you can do it!`}
-                    </p>
-                    <Button
-                      variant='ghost'
-                      size='sm'
-                      onClick={() => setShowGoalSetting(!showGoalSetting)}
-                      className='hover:bg-orange-100'
-                    >
-                      <Gear className='w-4 h-4' />
-                    </Button>
-                  </div>
-
-                  {showGoalSetting && (
-                    <div className='pt-4 border-t border-orange-200'>
-                      <label className='text-sm font-semibold text-gray-700'>
-                        Set Weekly Goal (minutes)
-                      </label>
-                      <div className='flex gap-2 mt-3'>
-                        {[60, 120, 180, 240].map((minutes) => (
-                          <Button
-                            key={minutes}
-                            variant={learningStats.weeklyGoal === minutes ? 'default' : 'outline'}
-                            size='sm'
-                            onClick={() => setWeeklyGoal(minutes)}
-                            className={
-                              learningStats.weeklyGoal === minutes
-                                ? 'bg-gradient-to-r from-orange-500 to-yellow-500 text-white'
-                                : 'hover:bg-orange-100'
-                            }
-                          >
-                            {minutes / 60}h
-                          </Button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-
             {/* Course Progress Overview - Enhanced */}
             <Card className='border-0 shadow-xl'>
               <CardHeader className='bg-gradient-to-r from-purple-50 to-pink-50'>
@@ -427,42 +342,6 @@ function DashboardPageComponent(): ReactElement {
 
           {/* Sidebar - Enhanced */}
           <div className='space-y-6'>
-            {/* Account Summary - Enhanced */}
-            <Card className='border-0 shadow-xl bg-gradient-to-br from-indigo-50 to-purple-50'>
-              <CardHeader>
-                <CardTitle className='flex items-center gap-2'>
-                  <Users className='w-5 h-5 text-indigo-600' />
-                  Account Summary
-                </CardTitle>
-              </CardHeader>
-              <CardContent className='space-y-4'>
-                <div className='p-4 bg-white/80 backdrop-blur-sm rounded-lg'>
-                  <div className='text-sm font-semibold text-gray-600 mb-1'>Current Plan</div>
-                  <Badge className='bg-gradient-to-r from-indigo-500 to-purple-500 text-white'>
-                    {subscription.planId.toUpperCase()}
-                  </Badge>
-                </div>
-
-                <Separator className='bg-indigo-100' />
-
-                <div className='p-4 bg-white/80 backdrop-blur-sm rounded-lg'>
-                  <div className='text-sm font-semibold text-gray-600 mb-1'>Member Since</div>
-                  <div className='text-base font-medium text-gray-800'>
-                    {user?.joinDate ? new Date(user.joinDate).toLocaleDateString() : ''}
-                  </div>
-                </div>
-
-                <Button
-                  variant='default'
-                  className='w-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transform hover:scale-105 transition-all duration-200'
-                  onClick={() => void navigate('/account')}
-                >
-                  Manage Account
-                  <Gear className='w-4 h-4 ml-2' />
-                </Button>
-              </CardContent>
-            </Card>
-
             {/* Learning Stats - Enhanced */}
             <Card className='border-0 shadow-xl bg-gradient-to-br from-yellow-50 to-orange-50'>
               <CardHeader>

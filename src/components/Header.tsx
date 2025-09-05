@@ -129,9 +129,8 @@ export function Header({ onAuthClick }: HeaderProps): ReactElement {
                   <SignOut weight='regular' />
                 </Button>
               </div>
-            ) : (
-              <Button onClick={onAuthClick}>Sign In</Button>
-            )}
+            ) : // Sign In button temporarily hidden - login not required
+            null}
           </div>
 
           {/* Mobile Menu Button */}

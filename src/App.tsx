@@ -24,7 +24,6 @@ import {
 } from './components/ui/dialog';
 import { Toaster } from './components/ui/sonner';
 import { useSessionManager } from './hooks/useSessionManager';
-import { ProtectedRoute } from './components/ProtectedRoute';
 import { ErrorFallback } from './ErrorFallback';
 
 // Lazy load page components for code splitting
@@ -226,31 +225,25 @@ function AppContent(): ReactElement {
               <Route
                 path='/courses/basic'
                 element={
-                  <ProtectedRoute onAuthRequired={handleAuthClick}>
-                    <ErrorBoundary FallbackComponent={ErrorFallback}>
-                      <ModulePage courseType='basic' />
-                    </ErrorBoundary>
-                  </ProtectedRoute>
+                  <ErrorBoundary FallbackComponent={ErrorFallback}>
+                    <ModulePage courseType='basic' />
+                  </ErrorBoundary>
                 }
               />
               <Route
                 path='/courses/advanced'
                 element={
-                  <ProtectedRoute requiredRole='advanced' onAuthRequired={handleAuthClick}>
-                    <ErrorBoundary FallbackComponent={ErrorFallback}>
-                      <ModulePage courseType='advanced' />
-                    </ErrorBoundary>
-                  </ProtectedRoute>
+                  <ErrorBoundary FallbackComponent={ErrorFallback}>
+                    <ModulePage courseType='advanced' />
+                  </ErrorBoundary>
                 }
               />
               <Route
                 path='/courses/expert'
                 element={
-                  <ProtectedRoute requiredRole='expert' onAuthRequired={handleAuthClick}>
-                    <ErrorBoundary FallbackComponent={ErrorFallback}>
-                      <ModulePage courseType='expert' />
-                    </ErrorBoundary>
-                  </ProtectedRoute>
+                  <ErrorBoundary FallbackComponent={ErrorFallback}>
+                    <ModulePage courseType='expert' />
+                  </ErrorBoundary>
                 }
               />
 
@@ -258,11 +251,9 @@ function AppContent(): ReactElement {
               <Route
                 path='/courses/:courseType/module/:moduleId'
                 element={
-                  <ProtectedRoute onAuthRequired={handleAuthClick}>
-                    <ErrorBoundary FallbackComponent={ErrorFallback}>
-                      <ModulePage />
-                    </ErrorBoundary>
-                  </ProtectedRoute>
+                  <ErrorBoundary FallbackComponent={ErrorFallback}>
+                    <ModulePage />
+                  </ErrorBoundary>
                 }
               />
 
@@ -270,11 +261,9 @@ function AppContent(): ReactElement {
               <Route
                 path='/courses/:courseType/module/:moduleId/part/:partId'
                 element={
-                  <ProtectedRoute onAuthRequired={handleAuthClick}>
-                    <ErrorBoundary FallbackComponent={ErrorFallback}>
-                      <ModulePage />
-                    </ErrorBoundary>
-                  </ProtectedRoute>
+                  <ErrorBoundary FallbackComponent={ErrorFallback}>
+                    <ModulePage />
+                  </ErrorBoundary>
                 }
               />
 
@@ -282,43 +271,20 @@ function AppContent(): ReactElement {
               <Route
                 path='/dashboard'
                 element={
-                  <ProtectedRoute onAuthRequired={handleAuthClick}>
-                    <ErrorBoundary FallbackComponent={ErrorFallback}>
-                      <DashboardPage />
-                    </ErrorBoundary>
-                  </ProtectedRoute>
+                  <ErrorBoundary FallbackComponent={ErrorFallback}>
+                    <DashboardPage />
+                  </ErrorBoundary>
                 }
               />
               <Route path='/progress' element={<Navigate to='/dashboard' replace />} />
 
               {/* Account section */}
-              <Route
-                path='/account'
-                element={
-                  <ProtectedRoute onAuthRequired={handleAuthClick}>
-                    <AccountPage />
-                  </ProtectedRoute>
-                }
-              />
+              <Route path='/account' element={<AccountPage />} />
               <Route path='/profile' element={<Navigate to='/account' replace />} />
-              <Route
-                path='/settings'
-                element={
-                  <ProtectedRoute onAuthRequired={handleAuthClick}>
-                    <AccountPage />
-                  </ProtectedRoute>
-                }
-              />
+              <Route path='/settings' element={<AccountPage />} />
 
               {/* Reviews */}
-              <Route
-                path='/reviews'
-                element={
-                  <ProtectedRoute onAuthRequired={handleAuthClick}>
-                    <ReviewForm />
-                  </ProtectedRoute>
-                }
-              />
+              <Route path='/reviews' element={<ReviewForm />} />
 
               {/* 404 - Not Found */}
               <Route path='*' element={<NotFoundPage onNavigate={handleNotFoundNavigate} />} />

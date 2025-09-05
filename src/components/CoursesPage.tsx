@@ -66,11 +66,7 @@ function CoursesPageComponent({ onAuthClick }: CoursesPageProps): ReactElement {
 
   const handleStartCourse = useCallback(
     (courseId: string, course: Course): void => {
-      if (!user) {
-        onAuthClick();
-        return;
-      }
-
+      // Remove the user check - allow everyone to start courses
       if (!canAccessTier(course.tier)) {
         toast.error('Subscription required', {
           description: `This course requires a ${course.tier} subscription.`,
@@ -98,7 +94,7 @@ function CoursesPageComponent({ onAuthClick }: CoursesPageProps): ReactElement {
 
       void navigate(routePath);
     },
-    [user, onAuthClick, canAccessTier, startCourse, navigate],
+    [canAccessTier, startCourse, navigate],
   );
 
   const getCourseCompletionData = (
