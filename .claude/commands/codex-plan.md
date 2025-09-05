@@ -24,6 +24,7 @@ When invoked with a task description, execute the following:
 Create three variants of the prompt for different reasoning levels:
 
 **High Reasoning Prompt:**
+
 ```
 You are a senior architect creating a comprehensive implementation plan. Task: [USER_TASK]
 
@@ -45,6 +46,7 @@ Output a structured plan with:
 ```
 
 **Medium Reasoning Prompt:**
+
 ```
 Create a practical implementation plan for: [USER_TASK]
 
@@ -59,6 +61,7 @@ Provide a clear, actionable plan with reasonable complexity.
 ```
 
 **Low Reasoning Prompt:**
+
 ```
 Create a simple, straightforward plan for: [USER_TASK]
 
@@ -76,6 +79,7 @@ Output a concise plan that gets the job done efficiently.
 **IMPORTANT**: Use these EXACT commands that have been tested and verified to work:
 
 For Claude Code execution:
+
 1. Use the Bash tool with `run_in_background: true` for each command
 2. Do NOT check progress - wait for completion notifications
 3. Collect outputs only after all instances complete
@@ -94,6 +98,7 @@ codex exec -c model_reasoning_effort="low" --full-auto "[LOW_PROMPT]"
 ```
 
 **Execution Pattern:**
+
 1. Launch all three commands above using `run_in_background: true`
 2. IMMEDIATELY create your own independent analysis (don't wait or check outputs)
 3. Wait for shell completion notifications (automatic)
@@ -142,6 +147,7 @@ Format the output as:
 # Master Implementation Plan: [USER_TASK]
 
 ## Synthesis Summary
+
 - Combined insights from 3 reasoning levels
 - Key simplifications identified
 - Critical considerations included
@@ -149,27 +155,34 @@ Format the output as:
 ## Recommended Approach
 
 ### Phase 1: Foundation
+
 [Synthesized steps combining best of all approaches]
 
-### Phase 2: Core Implementation  
+### Phase 2: Core Implementation
+
 [Balanced complexity with practical focus]
 
 ### Phase 3: Enhancement & Validation
+
 [Testing, security, and optimization considerations]
 
 ## Alternative Approaches
+
 - **Minimal (from low reasoning)**: [When speed matters most]
 - **Comprehensive (from high reasoning)**: [When robustness is critical]
 
 ## Key Decisions
+
 [Important choices where approaches differed]
 
 ## Risk Mitigation
+
 [Combined risk assessments from all levels]
 
 ## Time Estimates
+
 - Fast track (minimal): X days
-- Balanced approach: Y days  
+- Balanced approach: Y days
 - Comprehensive: Z days
 ```
 
@@ -195,6 +208,7 @@ Format the output as:
 ## Troubleshooting
 
 If commands fail:
+
 1. Verify codex CLI is installed: `codex --version`
 2. Check the exact syntax matches what's documented above
 3. Ensure you're using `--full-auto` flag to avoid approval prompts

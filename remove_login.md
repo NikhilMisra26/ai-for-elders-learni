@@ -36,18 +36,19 @@
 ### Step 1: Create Guest Identity & Storage System
 
 **Create new file `src/lib/guestId.ts`:**
+
 ```typescript
 // Manages guest identity for local progress tracking
 export function getOrCreateGuestId(): string {
   const STORAGE_KEY = 'guest_id';
   let guestId = localStorage.getItem(STORAGE_KEY);
-  
+
   if (!guestId) {
     // Generate cryptographically secure UUID v4
     guestId = crypto.randomUUID();
     localStorage.setItem(STORAGE_KEY, guestId);
   }
-  
+
   return guestId;
 }
 
@@ -61,11 +62,12 @@ export function clearGuestId(): void {
       keysToRemove.push(key);
     }
   }
-  keysToRemove.forEach(key => localStorage.removeItem(key));
+  keysToRemove.forEach((key) => localStorage.removeItem(key));
 }
 ```
 
 **Create new file `src/lib/guestStorage.ts`:**
+
 ```typescript
 // Safe localStorage wrapper with JSON handling
 export function getGuestStorageKey(guestId: string, key: string): string {
@@ -107,8 +109,14 @@ export function removeFromGuestStorage(guestId: string, key: string): void {
 ```
 
 **Create new file `src/lib/guestProgress.ts`:**
+
 ```typescript
-import type { ModuleProgress, CourseProgress, UserActivity, LearningStats } from './progressTracking';
+import type {
+  ModuleProgress,
+  CourseProgress,
+  UserActivity,
+  LearningStats,
+} from './progressTracking';
 import { getFromGuestStorage, setToGuestStorage, removeFromGuestStorage } from './guestStorage';
 
 export interface GuestProgressSnapshot {
@@ -152,15 +160,15 @@ export function loadGuestProgress(guestId: string): GuestProgressSnapshot {
   const snapshot = getFromGuestStorage<GuestProgressSnapshot>(
     guestId,
     PROGRESS_KEY,
-    getDefaultSnapshot()
+    getDefaultSnapshot(),
   );
-  
+
   // Handle version migration if needed
   if (snapshot.version !== CURRENT_VERSION) {
     // Future migration logic here
     snapshot.version = CURRENT_VERSION;
   }
-  
+
   return snapshot;
 }
 
@@ -180,12 +188,12 @@ export function importGuestProgress(guestId: string, base64Json: string): void {
   try {
     const json = atob(base64Json); // Base64 decode
     const snapshot = JSON.parse(json) as GuestProgressSnapshot;
-    
+
     // Validate structure
     if (!snapshot.version || !Array.isArray(snapshot.moduleProgress)) {
       throw new Error('Invalid progress data structure');
     }
-    
+
     saveGuestProgress(guestId, snapshot);
   } catch (error) {
     throw new Error('Failed to import progress: Invalid data format');
@@ -202,6 +210,7 @@ export function resetGuestProgress(guestId: string): void {
 **Edit `src/lib/progressTracking.ts`:**
 
 At the top of the file, add these imports:
+
 ```typescript
 import { getOrCreateGuestId } from './guestId';
 import { loadGuestProgress, saveGuestProgress, type GuestProgressSnapshot } from './guestProgress';
@@ -231,7 +240,7 @@ const debouncedSaveGuestProgress = useCallback(() => {
   if (saveTimeoutRef.current) {
     clearTimeout(saveTimeoutRef.current);
   }
-  
+
   saveTimeoutRef.current = setTimeout(() => {
     if (guestIdRef.current && !user) {
       const snapshot = createSnapshot();
@@ -242,6 +251,7 @@ const debouncedSaveGuestProgress = useCallback(() => {
 ```
 
 Modify the existing `useEffect` that hydrates from Supabase (around line 129):
+
 ```typescript
 // Hydrate progress data from Supabase when user is logged in, or from localStorage in guest mode
 useEffect(() => {
@@ -249,7 +259,7 @@ useEffect(() => {
     // Guest mode: load from localStorage
     const guestId = getOrCreateGuestId();
     guestIdRef.current = guestId;
-    
+
     const snapshot = loadGuestProgress(guestId);
     setModuleProgress(snapshot.moduleProgress);
     setCourseProgress(snapshot.courseProgress);
@@ -257,7 +267,7 @@ useEffect(() => {
     setLearningStats(snapshot.learningStats);
     return;
   }
-  
+
   // Original Supabase hydration code continues here...
   void (async (): Promise<void> => {
     // ... existing Supabase code ...
@@ -266,13 +276,14 @@ useEffect(() => {
 ```
 
 Add a new `useEffect` to save guest progress when state changes:
+
 ```typescript
 // Auto-save guest progress when state changes
 useEffect(() => {
   if (!user && guestIdRef.current) {
     debouncedSaveGuestProgress();
   }
-  
+
   // Cleanup on unmount
   return () => {
     if (saveTimeoutRef.current) {
@@ -300,6 +311,7 @@ Do the same for all other Supabase database calls throughout the file - wrap the
 Find all routes that use `<ProtectedRoute>` and replace them with direct component rendering. Here are the specific changes:
 
 1. **Replace protected course routes** (around lines 227-255):
+
 ```typescript
 // OLD:
 <Route
@@ -327,6 +339,7 @@ Find all routes that use `<ProtectedRoute>` and replace them with direct compone
 Do the same for `/courses/advanced` and `/courses/expert` routes.
 
 2. **Replace module routes** (around lines 258-279):
+
 ```typescript
 // OLD:
 <Route
@@ -352,6 +365,7 @@ Do the same for `/courses/advanced` and `/courses/expert` routes.
 ```
 
 3. **Replace dashboard route** (around lines 282-291):
+
 ```typescript
 // OLD:
 <Route
@@ -387,6 +401,7 @@ Do the same for `/courses/advanced` and `/courses/expert` routes.
 **Edit `src/components/CoursesPage.tsx`:**
 
 Find the `handleStartCourse` function and modify it:
+
 ```typescript
 // OLD:
 const handleStartCourse = (courseId: string): void => {
@@ -395,19 +410,20 @@ const handleStartCourse = (courseId: string): void => {
     return;
   }
   // ... rest of function
-}
+};
 
 // NEW:
 const handleStartCourse = (courseId: string): void => {
   // Remove the user check - allow everyone to start courses
   startCourse(courseId);
   navigate(`/courses/${courseId}/module/${firstModule.id}`);
-}
+};
 ```
 
 Keep the "Coming Soon" UI for advanced/expert tiers as is - no changes needed there.
 
 **Verify `src/components/ModulePage.tsx`:**
+
 - The module completion should work automatically since it uses `useProgress` which now supports guest mode
 - No changes should be needed if it's using the `completeModule` function from `useProgress`
 
@@ -416,6 +432,7 @@ Keep the "Coming Soon" UI for advanced/expert tiers as is - no changes needed th
 **Edit `src/components/DashboardPage.tsx`:**
 
 Add a guest mode indicator near the top of the component's return statement:
+
 ```typescript
 {!user && (
   <div className="text-sm text-muted-foreground mb-4">
@@ -430,6 +447,7 @@ Add a guest mode indicator near the top of the component's return statement:
 **Edit `src/components/AccountPage-enhanced.tsx` or `AccountPage.tsx`:**
 
 Add a new Backup/Restore section. Add this as a new card in the component:
+
 ```typescript
 import { getOrCreateGuestId, clearGuestId } from '@/lib/guestId';
 import { exportGuestProgress, importGuestProgress, resetGuestProgress } from '@/lib/guestProgress';
@@ -440,7 +458,7 @@ const handleExportProgress = (): void => {
   try {
     const guestId = getOrCreateGuestId();
     const exportData = exportGuestProgress(guestId);
-    
+
     // Copy to clipboard
     navigator.clipboard.writeText(exportData).then(() => {
       toast.success('Progress data copied to clipboard!');
@@ -467,7 +485,7 @@ const handleImportProgress = (): void => {
   input.onchange = (e): void => {
     const file = (e.target as HTMLInputElement).files?.[0];
     if (!file) return;
-    
+
     const reader = new FileReader();
     reader.onload = (event): void => {
       try {
@@ -530,6 +548,7 @@ const handleResetProgress = (): void => {
 **Edit `src/components/Header.tsx`:**
 
 Find the authentication-related UI and modify it:
+
 ```typescript
 // Look for any "Sign In" button and conditionally hide it:
 {false && ( // Temporarily disable sign-in button
@@ -553,6 +572,7 @@ Find the authentication-related UI and modify it:
    - Add icon imports (`Download`, `Upload`, `Trash`) to AccountPage
 
 2. **Run validation commands**:
+
    ```bash
    pnpm run typecheck
    pnpm run lint:fix
@@ -586,24 +606,29 @@ Find the authentication-related UI and modify it:
 ### Troubleshooting Common Issues
 
 **Issue: TypeScript errors about missing user**
+
 - Solution: Wrap Supabase calls in `if (user) { }` blocks
 
 **Issue: Progress not persisting**
+
 - Check browser console for localStorage errors
 - Verify guest ID is being created and stored
 - Check that debounced save is being called
 
 **Issue: Import/Export not working**
+
 - Ensure base64 encoding/decoding is working correctly
 - Check browser console for any errors during file operations
 
 **Issue: Routes still showing login prompts**
+
 - Ensure all ProtectedRoute wrappers are removed from non-admin routes
 - Check that onAuthClick is not being called anywhere automatically
 
 ### Summary
 
 This implementation:
+
 - ✅ Removes login requirements for all learning pages
 - ✅ Preserves all authentication infrastructure for future use
 - ✅ Stores progress locally using localStorage with a guest ID
@@ -611,5 +636,3 @@ This implementation:
 - ✅ Maintains security - no database writes without authentication
 - ✅ Keeps admin features protected
 - ✅ Is senior-friendly with no passwords required
-
-

@@ -164,18 +164,18 @@ function AccountPageComponent(): ReactElement {
       return new Date(stored).toLocaleDateString('en-US', {
         month: 'long',
         day: 'numeric',
-        year: 'numeric'
+        year: 'numeric',
       });
     }
     return new Date().toLocaleDateString('en-US', {
       month: 'long',
       day: 'numeric',
-      year: 'numeric'
+      year: 'numeric',
     });
   };
 
   const handleNavigation = (page: string): void => {
-    navigate(`/${page}`);
+    void navigate(`/${page}`);
   };
 
   // Get personalized greeting
@@ -229,9 +229,7 @@ function AccountPageComponent(): ReactElement {
               <CardContent className='space-y-6 pt-6'>
                 <div className='p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg'>
                   <Label className='text-sm font-semibold text-gray-600'>Member Since</Label>
-                  <p className='text-lg font-medium text-gray-800 mt-1'>
-                    {getMemberSinceDate()}
-                  </p>
+                  <p className='text-lg font-medium text-gray-800 mt-1'>{getMemberSinceDate()}</p>
                 </div>
               </CardContent>
             </Card>
@@ -405,7 +403,8 @@ function AccountPageComponent(): ReactElement {
               <CardContent className='space-y-4'>
                 <div className='p-4 bg-white/80 backdrop-blur-sm rounded-lg'>
                   <p className='text-sm text-gray-700 mb-3'>
-                    Need assistance? Enter your email and our support team will reach out to help you.
+                    Need assistance? Enter your email and our support team will reach out to help
+                    you.
                   </p>
                   <div className='space-y-2 mt-4'>
                     <Label htmlFor='support-email' className='text-sm font-semibold text-gray-700'>
@@ -420,7 +419,7 @@ function AccountPageComponent(): ReactElement {
                         if (e.key === 'Enter') {
                           const email = (e.target as HTMLInputElement).value;
                           if (email && email.includes('@') && email.includes('.')) {
-                            toast.success('Support request sent! We\'ll contact you at ' + email);
+                            toast.success("Support request sent! We'll contact you at " + email);
                             (e.target as HTMLInputElement).value = '';
                           } else {
                             toast.error('Please enter a valid email address');
@@ -435,7 +434,7 @@ function AccountPageComponent(): ReactElement {
                         if (input) {
                           const email = input.value;
                           if (email && email.includes('@') && email.includes('.')) {
-                            toast.success('Support request sent! We\'ll contact you at ' + email);
+                            toast.success("Support request sent! We'll contact you at " + email);
                             input.value = '';
                           } else {
                             toast.error('Please enter a valid email address');
@@ -451,7 +450,6 @@ function AccountPageComponent(): ReactElement {
                 </div>
               </CardContent>
             </Card>
-
           </div>
         </div>
 

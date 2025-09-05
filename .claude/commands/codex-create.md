@@ -22,6 +22,7 @@ When invoked with a task description, execute the following:
 ### Step 1: Task Analysis and Decomposition
 
 Analyze the task to determine:
+
 1. Complexity level (simple, moderate, complex)
 2. Subtasks that can be parallelized
 3. Dependencies between subtasks
@@ -32,6 +33,7 @@ Analyze the task to determine:
 Create detailed, specific prompts based on the `.claude/agents/` template patterns:
 
 **Template Structure for Each Subagent:**
+
 ```
 # Context
 You are working on: [PROJECT_DESCRIPTION]
@@ -66,9 +68,10 @@ After completion, verify:
 ### Step 3: Task-Specific Subagent Assignments
 
 **For "fix linter errors":**
+
 ```bash
 # Subagent 1: TypeScript errors (high reasoning)
-PROMPT_TS="You are a TypeScript specialist. 
+PROMPT_TS="You are a TypeScript specialist.
 Current project: $PROJECT_PATH
 Task: Fix all TypeScript compilation errors systematically.
 
@@ -92,7 +95,7 @@ Deliverables:
 
 # Subagent 2: ESLint errors (medium reasoning)
 PROMPT_LINT="You are an ESLint specialist.
-Current project: $PROJECT_PATH  
+Current project: $PROJECT_PATH
 Task: Fix all ESLint warnings and errors.
 
 Instructions:
@@ -119,6 +122,7 @@ Quick and straightforward cleanup task."
 ```
 
 **For "implement new feature":**
+
 ```bash
 # Subagent 1: UI Component (high reasoning)
 PROMPT_UI="You are a React component architect.
@@ -146,7 +150,7 @@ Tasks:
 
 Use existing patterns in src/lib/api/"
 
-# Subagent 3: Tests (medium reasoning)  
+# Subagent 3: Tests (medium reasoning)
 PROMPT_TEST="Write comprehensive tests for [FEATURE].
 
 Cover:
@@ -162,6 +166,7 @@ Cover:
 **IMPORTANT**: Use these EXACT commands that have been tested and verified to work:
 
 For Claude Code execution:
+
 1. Use the Bash tool with `run_in_background: true` for each command
 2. Launch all subagents simultaneously
 3. Do NOT poll for progress - wait for completion notifications
@@ -195,6 +200,7 @@ codex exec -c model_reasoning_effort="medium" --full-auto "Write comprehensive t
 ```
 
 **Execution Pattern:**
+
 1. Launch all subagents with commands above
 2. Wait for shell completion notifications (automatic)
 3. Use BashOutput tool ONCE per instance to collect results
@@ -233,13 +239,14 @@ $PM run test       # Run tests if they exist
 # Task Completion Report
 
 ## Original Task
+
 [USER_TASK]
 
 ## Subagents Deployed
+
 1. **[AGENT_1]** (high reasoning): [SUBTASK_1]
    - Status: [COMPLETED/FAILED]
    - Changes: [FILE_COUNT] files modified
-   
 2. **[AGENT_2]** (medium reasoning): [SUBTASK_2]
    - Status: [COMPLETED/FAILED]
    - Changes: [FILE_COUNT] files modified
@@ -249,14 +256,17 @@ $PM run test       # Run tests if they exist
    - Changes: [FILE_COUNT] files modified
 
 ## Validation Results
+
 - TypeScript: [PASS/FAIL]
 - ESLint: [PASS/FAIL]
 - Tests: [PASS/FAIL/SKIPPED]
 
 ## Files Modified
+
 [List of changed files]
 
 ## Next Steps
+
 [Any remaining tasks or recommendations]
 ```
 
@@ -273,26 +283,31 @@ $PM run test       # Run tests if they exist
 ## Subagent Strategies by Task Type
 
 ### Linting/Formatting Tasks
+
 - **High**: TypeScript errors, complex type issues
 - **Medium**: ESLint errors, code quality
 - **Low**: Formatting, import organization
 
 ### Feature Implementation
+
 - **High**: Core business logic, complex algorithms
 - **Medium**: UI components, API endpoints
 - **Low**: Simple utilities, config files
 
 ### Refactoring Tasks
+
 - **High**: Architecture changes, pattern migrations
 - **Medium**: Component extraction, consolidation
 - **Low**: Variable renaming, simple moves
 
 ### Testing Tasks
+
 - **High**: Integration tests, E2E tests
 - **Medium**: Unit tests, component tests
 - **Low**: Snapshot updates, simple assertions
 
 ### Bug Fixes
+
 - **High**: Complex logic errors, race conditions
 - **Medium**: UI bugs, API issues
 - **Low**: Typos, simple fixes
@@ -310,6 +325,7 @@ $PM run test       # Run tests if they exist
 ## Troubleshooting
 
 If commands fail:
+
 1. Verify codex CLI is installed: `codex --version`
 2. Check the exact syntax matches what's documented above
 3. Ensure you're using `--full-auto` flag to avoid approval prompts

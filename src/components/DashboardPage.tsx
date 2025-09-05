@@ -30,8 +30,7 @@ import { courseData } from '@/lib/courseData';
 function DashboardPageComponent(): ReactElement {
   const navigate = useNavigate();
   const { subscription } = useSubscription();
-  const { getDashboardSummary, getLearningRecommendations, learningStats } =
-    useProgress();
+  const { getDashboardSummary, getLearningRecommendations, learningStats } = useProgress();
 
   const dashboardSummary = getDashboardSummary();
   const recommendations = getLearningRecommendations();
@@ -44,7 +43,6 @@ function DashboardPageComponent(): ReactElement {
     return 'Good evening';
   };
 
-
   const handleStartLearning = (): void => {
     if (recommendations.continueModule) {
       void navigate('/courses');
@@ -55,7 +53,6 @@ function DashboardPageComponent(): ReactElement {
 
   return (
     <div className='min-h-screen'>
-
       {/* Hero Section with Gradient */}
       <section className='relative overflow-hidden bg-gradient-to-br from-purple-50 via-pink-50 to-orange-50 py-16 px-4 sm:px-6 lg:px-8'>
         {/* Animated Background Elements - optimized for performance */}
@@ -225,7 +222,6 @@ function DashboardPageComponent(): ReactElement {
               </Card>
             )}
 
-
             {/* Course Progress Overview - Enhanced */}
             <Card className='border-0 shadow-xl'>
               <CardHeader className='bg-gradient-to-r from-purple-50 to-pink-50'>
@@ -346,7 +342,6 @@ function DashboardPageComponent(): ReactElement {
 
           {/* Sidebar - Enhanced */}
           <div className='space-y-6'>
-
             {/* Learning Stats - Enhanced */}
             <Card className='border-0 shadow-xl bg-gradient-to-br from-yellow-50 to-orange-50'>
               <CardHeader>
