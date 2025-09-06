@@ -21,7 +21,6 @@ import {
   Certificate,
 } from '@phosphor-icons/react';
 
-import { BrandName } from '@/components/BrandName';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -35,11 +34,7 @@ import { useSubscription } from '@/lib/subscription';
 import type { Course } from '@/lib/courseData';
 import { courseData } from '@/lib/courseData';
 
-interface CoursesPageProps {
-  onAuthClick: () => void;
-}
-
-function CoursesPageComponent({ onAuthClick }: CoursesPageProps): ReactElement {
+function CoursesPageComponent(): ReactElement {
   const { user } = useAuth();
   const { subscription, canAccessTier } = useSubscription();
   const { getCourseProgress, startCourse, getDashboardSummary } = useProgress();
@@ -612,47 +607,7 @@ function CoursesPageComponent({ onAuthClick }: CoursesPageProps): ReactElement {
           })}
         </div>
 
-        {/* Call to Action for Non-Users */}
-        {!user && (
-          <Card className='mt-12 bg-gradient-to-br from-indigo-100 via-purple-50 to-pink-50 border-2 border-indigo-200 shadow-xl hover:shadow-2xl transition-all duration-300 ring-2 ring-indigo-100/50 relative overflow-hidden'>
-            <div className='absolute inset-0 bg-gradient-to-br from-indigo-200/20 via-transparent to-pink-200/20 pointer-events-none' />
-            <div className='absolute -top-24 -right-24 w-64 h-64 bg-gradient-to-br from-indigo-300/20 to-transparent rounded-full blur-3xl pointer-events-none' />
-            <CardContent className='p-8 text-center relative z-10'>
-              <div className='max-w-2xl mx-auto'>
-                <h3 className='text-3xl font-bold mb-4 bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent'>
-                  Ready to Start Your AI Learning Journey?
-                </h3>
-                <p className='text-lg text-muted-foreground mb-6'>
-                  Join thousands of adults 50+ who are already mastering AI technology with{' '}
-                  <BrandName variant='short' />. Start with our basic course and upgrade anytime to
-                  access advanced content.
-                </p>
-                <div className='flex items-center justify-center gap-4 mb-6'>
-                  <div className='flex items-center gap-2'>
-                    <CheckCircle className='text-green-500' />
-                    <span>No credit card required</span>
-                  </div>
-                  <div className='flex items-center gap-2'>
-                    <CheckCircle className='text-green-500' />
-                    <span>Senior-friendly design</span>
-                  </div>
-                  <div className='flex items-center gap-2'>
-                    <CheckCircle className='text-green-500' />
-                    <span>Learn at your pace</span>
-                  </div>
-                </div>
-                <Button
-                  onClick={onAuthClick}
-                  size='lg'
-                  className='px-8 shadow-xl hover:shadow-2xl transition-all duration-300 hover:scale-105 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold text-lg'
-                >
-                  <Shield className='h-4 w-4 mr-2' />
-                  Get Started Free
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        )}
+        {/* Call to Action section removed - no login required */}
 
         {filteredCourses.length === 0 && (
           <Card className='text-center p-8'>

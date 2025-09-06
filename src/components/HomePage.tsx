@@ -32,11 +32,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { subscriptionPlans } from '@/lib/subscription';
 import { useMetrics } from '@/hooks/useMetrics';
 
-interface HomePageProps {
-  onAuthClick: () => void;
-}
-
-function HomePageComponent({ onAuthClick }: HomePageProps): ReactElement {
+function HomePageComponent(): ReactElement {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { stats, testimonials, isLoading } = useMetrics();
@@ -200,7 +196,7 @@ function HomePageComponent({ onAuthClick }: HomePageProps): ReactElement {
                   <>
                     <Button
                       size='lg'
-                      onClick={onAuthClick}
+                      onClick={() => void navigate('/courses/basic')}
                       className='text-lg px-8 py-6 h-auto bg-[#0B1E3D] hover:bg-[#0A1A33] text-white border-0 shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105'
                     >
                       Start Basic Course
@@ -395,13 +391,7 @@ function HomePageComponent({ onAuthClick }: HomePageProps): ReactElement {
                     className='w-full'
                     variant={plan.id === 'free' ? 'default' : 'secondary'}
                     disabled={plan.id !== 'free'}
-                    onClick={
-                      plan.id === 'free'
-                        ? user
-                          ? (): void => void navigate('/account')
-                          : onAuthClick
-                        : undefined
-                    }
+                    onClick={plan.id === 'free' ? (): void => void navigate('/courses') : undefined}
                   >
                     {plan.ctaText}
                   </Button>
@@ -536,7 +526,7 @@ function HomePageComponent({ onAuthClick }: HomePageProps): ReactElement {
                     <p className='text-muted-foreground mb-4'>
                       Start your learning journey to share your experience
                     </p>
-                    <Button size='lg' onClick={onAuthClick}>
+                    <Button size='lg' onClick={() => void navigate('/courses/basic')}>
                       <Play className='mr-2' />
                       Start Basic Course
                     </Button>
@@ -607,7 +597,7 @@ function HomePageComponent({ onAuthClick }: HomePageProps): ReactElement {
               <>
                 <Button
                   size='lg'
-                  onClick={onAuthClick}
+                  onClick={() => void navigate('/courses')}
                   className='text-lg px-8 py-6 h-auto bg-[#0B1E3D] hover:bg-[#0A1A33] text-white border-0 shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105'
                 >
                   Start Learning Free

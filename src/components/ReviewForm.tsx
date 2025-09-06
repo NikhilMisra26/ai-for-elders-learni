@@ -93,12 +93,14 @@ export function ReviewForm({ onSuccess, onCancel }: ReviewFormProps): ReactEleme
     }
   };
 
-  if (!user) {
+  // Temporarily disable reviews for all users - no login required
+  // eslint-disable-next-line no-constant-condition
+  if (true) {
     return (
       <Card>
         <CardHeader>
           <CardTitle>Share Your Experience</CardTitle>
-          <CardDescription>Please log in to submit a review</CardDescription>
+          <CardDescription>Reviews feature coming soon!</CardDescription>
         </CardHeader>
       </Card>
     );

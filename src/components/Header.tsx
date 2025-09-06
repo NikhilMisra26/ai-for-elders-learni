@@ -7,11 +7,7 @@ import { BrandName } from '@/components/BrandName';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAccessibility } from '@/contexts/AccessibilityContext';
 
-interface HeaderProps {
-  onAuthClick: () => void;
-}
-
-export function Header({ onAuthClick }: HeaderProps): ReactElement {
+export function Header(): ReactElement {
   const { user, logout } = useAuth();
   const { fontSize, increaseFontSize, decreaseFontSize } = useAccessibility();
   const [showMobileMenu, setShowMobileMenu] = useState(false);
@@ -217,17 +213,7 @@ export function Header({ onAuthClick }: HeaderProps): ReactElement {
                       </Button>
                     </div>
                   </div>
-                ) : (
-                  <Button
-                    onClick={() => {
-                      onAuthClick();
-                      setShowMobileMenu(false);
-                    }}
-                    className='w-full'
-                  >
-                    Sign In
-                  </Button>
-                )}
+                ) : null}
               </div>
             </div>
           </div>
