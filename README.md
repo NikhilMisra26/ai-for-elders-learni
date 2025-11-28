@@ -104,6 +104,7 @@ Each module includes real-world examples, success stories from seniors, practica
 - **Database**: Supabase (PostgreSQL)
 - **State**: React Context API
 - **Authentication**: Supabase Auth
+- **Analytics**: Vercel Web Analytics for page views and user metrics
 - **Icons**: Phosphor Icons
 
 ## 🚀 Quick Start
@@ -168,6 +169,7 @@ Each module includes real-world examples, success stories from seniors, practica
 
 - Node.js 18+
 - pnpm (recommended) or npm
+- Vercel account (for analytics and deployment)
 
 ### Development Commands
 
