@@ -35,7 +35,6 @@ export function BrandName({ variant, size = 'md', className }: BrandNameProps): 
     xl: 'text-4xl',
   };
 
-
   // Rainbow gradient text style for "OVER 50"
   const rainbowTextStyle: React.CSSProperties = {
     background: 'linear-gradient(90deg, #FF9A9E, #FBC2EB, #A18CD1, #FBC2EB)',

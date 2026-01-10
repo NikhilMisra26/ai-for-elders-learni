@@ -37,9 +37,7 @@ export default defineConfig((({ mode }): UserConfig => {
     server: {
       // Strict CORS configuration for development server
       cors: {
-        origin: [
-          'http://localhost:5173',
-        ],
+        origin: ['http://localhost:5173'],
         credentials: true,
         methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
         allowedHeaders: ['Content-Type', 'Authorization'],
@@ -49,8 +47,7 @@ export default defineConfig((({ mode }): UserConfig => {
         'X-Frame-Options': 'DENY',
         'X-Content-Type-Options': 'nosniff',
         'Referrer-Policy': 'strict-origin-when-cross-origin',
-        'Permissions-Policy':
-          'camera=(), microphone=(), geolocation=(), payment=()',
+        'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=()',
         // Development CSP that allows Vercel Blob storage for audio files
         'Content-Security-Policy':
           "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https: blob:; media-src 'self' https://*.public.blob.vercel-storage.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co ws://localhost:* http://localhost:*; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none';",
@@ -62,8 +59,7 @@ export default defineConfig((({ mode }): UserConfig => {
         'X-Frame-Options': 'DENY',
         'X-Content-Type-Options': 'nosniff',
         'Referrer-Policy': 'strict-origin-when-cross-origin',
-        'Permissions-Policy':
-          'camera=(), microphone=(), geolocation=(), payment=()',
+        'Permissions-Policy': 'camera=(), microphone=(), geolocation=(), payment=()',
         // Preview CSP that allows Vercel Blob storage for audio files
         'Content-Security-Policy':
           "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https: blob:; media-src 'self' https://*.public.blob.vercel-storage.com; connect-src 'self' https://*.supabase.co wss://*.supabase.co; frame-ancestors 'none'; base-uri 'self'; form-action 'self'; object-src 'none';",
