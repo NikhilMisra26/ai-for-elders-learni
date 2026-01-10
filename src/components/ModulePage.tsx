@@ -41,7 +41,6 @@ import { Separator } from '@/components/ui/separator';
 import { Callout, CalloutTitle, CalloutDescription } from '@/components/ui/callout';
 import { ProgressRing } from '@/components/ui/progress-ring';
 import { TierBadge } from '@/components/ui/tier-badge';
-import { useAuth } from '@/contexts/AuthContext';
 import { useProgress } from '@/lib/progressTracking';
 import { useSubscription } from '@/lib/subscription';
 import {
@@ -73,12 +72,7 @@ export function ModulePage({ courseType: propCourseType }: ModulePageProps): Rea
   const navigate = useNavigate();
 
   // Call ALL hooks at the top, before any conditional logic
-  const { user } = useAuth();
-  const { subscription, canAccessTier } = useSubscription();
-
-  // Suppress unused variable warnings for required hook calls
-  void user;
-  void subscription;
+  const { canAccessTier } = useSubscription();
   const {
     completeModule,
     isModuleCompleted,

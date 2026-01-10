@@ -1,4 +1,4 @@
--- Testimonials + public metrics with enhanced security
+﻿-- Testimonials + public metrics with enhanced security
 -- Run THIRD after main schema & migration
 -- Last updated: 2025-08-14
 -- Enhanced with enterprise-grade security patterns

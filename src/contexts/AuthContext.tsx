@@ -45,8 +45,6 @@ interface AuthContextType {
   resendSignupOtp: (email: string) => Promise<{ success: boolean; error?: string }>;
   logout: () => Promise<void>;
   isLoading: boolean;
-  // Removed for subscription removal: updateTier: (tier: 'free' | 'advanced' | 'expert') => void;
-  updateTier: (tier: 'free' | 'advanced' | 'expert') => void; // Added for subscription removal: kept for compatibility
   securityState: SecurityState;
   extendSession: () => void;
 }
@@ -520,60 +518,6 @@ export function AuthProvider({ children }: { children: ReactNode }): ReactElemen
     }));
   };
 
-  // Start of removed/added code for subscription removal
-  // Removed for subscription removal: updateTier function implementation
-  const updateTier = (tier: 'free' | 'advanced' | 'expert'): void => {
-    /*
-    if (user) {
-      const updatedUser = { ...user, tier };
-      setUser(updatedUser);
-      // Persist to profile
-      updateProfile(user.id, { tier }).catch((error) => {
-        SecurityLogger.log(
-          'update_profile_error',
-          {
-            userId: user.id,
-            attemptedTier: tier,
-            error: error instanceof Error ? error.message : String(error),
-          },
-          'error',
-        );
-      });
-      SecurityLogger.log('tier_updated', {
-        userId: user.id,
-        oldTier: user.tier,
-        newTier: tier,
-      });
-    }
-    */
-    // Added for subscription removal: only allow free tier
-    if (user && tier === 'free') {
-      const updatedUser: User = { ...user, tier: 'free' as const };
-      setUser(updatedUser);
-      // Persist to profile
-      updateProfile(user.id, { tier: 'free' }).catch((error) => {
-        SecurityLogger.log(
-          'update_profile_error',
-          {
-            userId: user.id,
-            attemptedTier: 'free',
-            error: error instanceof Error ? error.message : String(error),
-          },
-          'error',
-        );
-      });
-      SecurityLogger.log('tier_updated', {
-        userId: user.id,
-        oldTier: user.tier,
-        newTier: 'free',
-      });
-    } else if (user && tier !== 'free') {
-      // Log attempt to set non-free tier
-      SecurityLogger.log('tier_change_attempt', { userId: user.id, attemptedTier: tier }, 'info');
-    }
-  };
-  // End of removed/added code for subscription removal
-
   const extendSession = (): void => {
     // Session extension is handled automatically by Supabase with autoRefreshToken: true
     if (user) {
@@ -600,7 +544,6 @@ export function AuthProvider({ children }: { children: ReactNode }): ReactElemen
         resendSignupOtp,
         logout,
         isLoading,
-        updateTier,
         securityState,
         extendSession,
       }}

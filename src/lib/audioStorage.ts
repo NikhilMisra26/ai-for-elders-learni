@@ -1,14 +1,9 @@
 /**
  * Audio Storage Module for Vercel Blob
- * Handles all audio file operations with Vercel Blob Storage
+ * Provides deterministic URLs for audio assets stored in Vercel Blob
  */
 
-import { put, del, list, head } from '@vercel/blob';
-
 import { errorHandler } from './errorHandler';
-
-// Use compile-time environment variable
-const BLOB_TOKEN = import.meta.env.BLOB_READ_WRITE_TOKEN as string;
 
 /**
  * Get the public URL for an audio file
@@ -20,119 +15,6 @@ export function getAudioUrlSync(filename: string): string {
   // Since we need synchronous access, we'll construct the URL
   // Note: In production, you should store the blob URLs after upload
   return `https://store_VWi2DhqIB5x7LguH.public.blob.vercel-storage.com/${encodeURIComponent(filename)}`;
-}
-
-/**
- * Upload an audio file to Vercel Blob
- */
-export async function uploadAudioFile(
-  filename: string,
-  file: File | Buffer | ReadableStream | ArrayBuffer,
-  options?: {
-    onProgress?: (event: { loaded: number; total: number; percentage: number }) => void;
-  },
-): Promise<{ url: string; downloadUrl: string; pathname: string }> {
-  try {
-    const blob = await put(filename, file, {
-      access: 'public',
-      token: BLOB_TOKEN,
-      addRandomSuffix: false, // Keep original filename
-      contentType: 'audio/mpeg',
-      cacheControlMaxAge: 31536000, // 1 year cache
-      onUploadProgress: options?.onProgress,
-    });
-
-    return {
-      url: blob.url,
-      downloadUrl: blob.downloadUrl,
-      pathname: blob.pathname,
-    };
-  } catch (error) {
-    errorHandler.logError(
-      'Failed to upload audio file to Vercel Blob',
-      error instanceof Error ? error : new Error(String(error)),
-      {
-        component: 'audioStorage',
-        action: 'upload',
-        metadata: { filename },
-      },
-    );
-    throw error;
-  }
-}
-
-/**
- * Check if an audio file exists in Vercel Blob
- */
-export async function audioFileExists(filename: string): Promise<boolean> {
-  try {
-    const result = await head(filename, {
-      token: BLOB_TOKEN,
-    });
-    return !!result;
-  } catch {
-    // File doesn't exist or other error
-    return false;
-  }
-}
-
-/**
- * Delete an audio file from Vercel Blob
- */
-export async function deleteAudioFile(filename: string): Promise<void> {
-  try {
-    await del(filename, {
-      token: BLOB_TOKEN,
-    });
-  } catch (error) {
-    errorHandler.logError(
-      'Failed to delete audio file from Vercel Blob',
-      error instanceof Error ? error : new Error(String(error)),
-      {
-        component: 'audioStorage',
-        action: 'delete',
-        metadata: { filename },
-      },
-    );
-    throw error;
-  }
-}
-
-/**
- * List all audio files in Vercel Blob
- */
-export async function listAudioFiles(): Promise<
-  Array<{
-    pathname: string;
-    url: string;
-    size: number;
-    uploadedAt: Date;
-  }>
-> {
-  try {
-    const { blobs } = await list({
-      token: BLOB_TOKEN,
-    });
-
-    return blobs
-      .filter((blob) => blob.pathname.endsWith('.mp3'))
-      .map((blob) => ({
-        pathname: blob.pathname,
-        url: blob.url,
-        size: blob.size,
-        uploadedAt: new Date(blob.uploadedAt),
-      }));
-  } catch (error) {
-    errorHandler.logError(
-      'Failed to list audio files from Vercel Blob',
-      error instanceof Error ? error : new Error(String(error)),
-      {
-        component: 'audioStorage',
-        action: 'list',
-      },
-    );
-    return [];
-  }
 }
 
 /**

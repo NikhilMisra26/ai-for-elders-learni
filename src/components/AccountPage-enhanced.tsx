@@ -27,126 +27,17 @@ import { Badge } from '@/components/ui/badge';
 import { Label } from '@/components/ui/label';
 import { useSubscription, formatPrice, useInvoiceHistory } from '@/lib/subscription';
 import { useProgress } from '@/lib/progressTracking';
-// Guest progress functions - kept imports for future use
-// import { getOrCreateGuestId, clearGuestId } from '@/lib/guestId';
-// import { exportGuestProgress, importGuestProgress, resetGuestProgress } from '@/lib/guestProgress';
 
 function AccountPageComponent(): ReactElement {
-  const { subscription, getCurrentPlan, cancelSubscription, reactivateSubscription } =
-    useSubscription();
+  useSubscription();
   const { learningStats } = useProgress();
   const { invoices } = useInvoiceHistory();
-
-  // Added for subscription removal - keeping state variables but unused
-  const [_showUpgradeDialog] = useState(false);
-  const [_selectedPlan] = useState<'advanced' | 'expert'>('advanced');
-  const [_isProcessingPayment] = useState(false);
-  const [_showCancelDialog, setShowCancelDialog] = useState(false);
 
   // Email support dialog state
   const [showEmailSupportDialog, setShowEmailSupportDialog] = useState(false);
 
   // Password change dialog state
   const [showPasswordDialog, setShowPasswordDialog] = useState(false);
-
-  // Guest mode backup/restore handlers - kept for future use
-  /*
-  const handleExportProgress = (): void => {
-    try {
-      const guestId = getOrCreateGuestId();
-      const exportData = exportGuestProgress(guestId);
-
-      // Copy to clipboard
-      navigator.clipboard
-        .writeText(exportData)
-        .then(() => {
-          toast.success('Progress data copied to clipboard!');
-        })
-        .catch(() => {
-          // Fallback: download as file
-          const blob = new Blob([exportData], { type: 'text/plain' });
-          const url = URL.createObjectURL(blob);
-          const a = document.createElement('a');
-          a.href = url;
-          a.download = 'progress-backup.txt';
-          a.click();
-          URL.revokeObjectURL(url);
-          toast.success('Progress data downloaded!');
-        });
-    } catch {
-      toast.error('Failed to export progress');
-    }
-  };
-
-  const handleImportProgress = (): void => {
-    const input = document.createElement('input');
-    input.type = 'file';
-    input.accept = '.txt';
-    input.onchange = (e): void => {
-      const file = (e.target as HTMLInputElement).files?.[0];
-      if (!file) return;
-
-      const reader = new FileReader();
-      reader.onload = (event): void => {
-        try {
-          const base64Data = event.target?.result as string;
-          const guestId = getOrCreateGuestId();
-          importGuestProgress(guestId, base64Data);
-          toast.success('Progress imported successfully! Refreshing...');
-          setTimeout(() => window.location.reload(), 1000);
-        } catch {
-          toast.error('Failed to import progress: Invalid file format');
-        }
-      };
-      reader.readAsText(file);
-    };
-    input.click();
-  };
-
-  const handleResetProgress = (): void => {
-    if (
-      window.confirm(
-        'Are you sure you want to reset all progress on this device? This cannot be undone.',
-      )
-    ) {
-      const guestId = getOrCreateGuestId();
-      resetGuestProgress(guestId);
-      clearGuestId();
-      toast.success('Progress reset! Refreshing...');
-      setTimeout(() => window.location.reload(), 1000);
-    }
-  };
-  */
-
-  // @ts-expect-error - Plan data may be used for display in the future
-  const _currentPlan = getCurrentPlan();
-
-  // Added for subscription removal - placeholder function
-  // @ts-expect-error - Handlers may be used when subscriptions are re-enabled
-  const _handleUpgrade = async (_planId: 'advanced' | 'expert'): Promise<void> => {
-    toast.info('Coming Soon', {
-      description: 'Premium subscriptions will be available in the future',
-    });
-  };
-
-  // @ts-expect-error - Handlers may be used when subscriptions are re-enabled
-  const _handleCancelSubscription = (): void => {
-    if (subscription.planId === 'free') return;
-
-    cancelSubscription();
-    toast.success('Subscription cancelled', {
-      description: 'You will retain access until your current billing period ends',
-    });
-    setShowCancelDialog(false);
-  };
-
-  // @ts-expect-error - Handlers may be used when subscriptions are re-enabled
-  const _handleReactivate = (): void => {
-    reactivateSubscription();
-    toast.success('Subscription reactivated!', {
-      description: 'Your subscription will continue as normal',
-    });
-  };
 
   const navigate = useNavigate();
 

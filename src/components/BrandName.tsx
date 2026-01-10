@@ -35,7 +35,6 @@ export function BrandName({ variant, size = 'md', className }: BrandNameProps): 
     xl: 'text-4xl',
   };
 
-  // Removed unused boxPaddingClasses - now using text gradient instead of box
 
   // Rainbow gradient text style for "OVER 50"
   const rainbowTextStyle: React.CSSProperties = {
