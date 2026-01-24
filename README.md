@@ -1,28 +1,28 @@
-# DISCOVER 50 AI 🧠✨
+# Discover 50 AI
 
-**DISCOVER 50 AI** is a React-based educational platform designed to teach people over 50 how to effectively and safely use artificial intelligence. The platform features a multi-tier subscription system, user authentication, progress tracking, and accessibility features optimized for learners over 50.
+Discover 50 AI is a React-based learning platform that teaches people over 50 how to use AI safely and confidently. The app includes structured courses, progress tracking, audio narration, testimonials, and a secure support workflow.
 
-## 🌟 Key Features
+## Features
 
-### 📊 **Dynamic Metrics System**
+- Multi-module AI basics course with audio narration
+- Progress tracking and dashboard
+- Testimonials and reviews
+- Support email workflow via Supabase Edge Function
+- Accessibility-first UI and security hardening
 
-- **Smart Thresholds**: Metrics only display when impressive enough
-  - User count: Shows only when ≥ 1000 users
-  - Course completion: Shows only when ≥ 85%
-  - Average rating: Shows only when ≥ 4.0 stars with testimonials
-  - Countries: Shows only when ≥ 5 countries
-- **Real-time Data**: Fetches actual statistics from Supabase database
-- **Responsive Layout**: Automatically adjusts grid to maintain symmetry
-- **Performance Optimized**: 5-minute caching for fast load times
+## Tech Stack
 
-### 🎯 **Testimonials & Reviews**
+- React + TypeScript + Vite
+- Tailwind CSS + shadcn/ui
+- Supabase (auth, database, edge functions)
+- Vercel Blob (audio storage)
 
-- **Real User Reviews**: Displays approved testimonials from actual users
-- **Review Submission**: Authenticated users can submit reviews via dialog
-- **Admin Approval Workflow**: Reviews require approval before display
-- **Fallback CTA**: Shows "Be the First to Review" when no testimonials exist
-- **Duplicate Prevention**: Users can only submit one review
+## Local Development
 
+Prerequisites:
+
+- Node.js 18+
+- pnpm
 ### 🎨 **Senior-Friendly Design**
 
 - Large fonts and high contrast design for people over 50
@@ -107,69 +107,6 @@ Each module includes real-world examples, success stories from seniors, practica
 - **Analytics**: Vercel Web Analytics for page views and user metrics
 - **Icons**: Phosphor Icons
 
-## 🚀 Quick Start
-
-### **For Email Support Feature Setup:**
-
-1. **Database Setup** (Required):
-
-   ```sql
-   -- Copy this into Supabase SQL Editor and run:
-   CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
-
-   CREATE TABLE IF NOT EXISTS public.support_tickets (
-       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-       user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-      message TEXT NOT NULL CHECK (char_length(message) BETWEEN 10 AND 5000),
-       status TEXT NOT NULL DEFAULT 'pending',
-       user_email TEXT NOT NULL,
-       user_name TEXT,
-       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-   );
-   CREATE TABLE IF NOT EXISTS public.rate_limiting_support (
-       id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-       user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-       action_type TEXT NOT NULL DEFAULT 'ticket_create',
-       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-   );
-
-   CREATE INDEX IF NOT EXISTS idx_support_tickets_user_id ON public.support_tickets(user_id);
-   CREATE INDEX IF NOT EXISTS idx_support_tickets_status ON public.support_tickets(status);
-   CREATE INDEX IF NOT EXISTS idx_support_tickets_created_at ON public.support_tickets(created_at DESC);
-   CREATE INDEX IF NOT EXISTS idx_rate_limiting_user_time ON public.rate_limiting_support(user_id, created_at DESC);
-
-   ALTER TABLE public.support_tickets ENABLE ROW LEVEL SECURITY;
-   ALTER TABLE public.rate_limiting_support ENABLE ROW LEVEL SECURITY;
-
-   CREATE POLICY "Users can create their own tickets" ON public.support_tickets
-       FOR INSERT WITH CHECK (auth.uid() = user_id);
-   CREATE POLICY "Users can view their own tickets" ON public.support_tickets
-       FOR SELECT USING (auth.uid() = user_id);
-   CREATE POLICY "Users can track their rate limits" ON public.rate_limiting_support
-       FOR ALL USING (auth.uid() = user_id);
-   ```
-
-2. **Test the Feature**:
-   - Run `pnpm run dev`
-   - Go to Account page
-   - Click "Email Support" button
-   - Submit a test message
-
-3. **Optional Email Setup** (for actual email sending):
-   - Sign up at [resend.com](https://resend.com)
-   - Get API key
-   - Add to Supabase → Edge Functions → Secrets:
-     - `RESEND_API_KEY`: your key
-     - `ALLOWED_ORIGIN`: `http://localhost:5173`
-   - Deploy: `supabase functions deploy send-support-email`
-
-### **For Full Project Setup:**
-
-### Prerequisites
-
-- Node.js 18+
-- pnpm (recommended) or npm
-- Vercel account (for analytics and deployment)
 
 ### Development Commands
 
@@ -186,49 +123,6 @@ pnpm run security:check  # Full security check (typecheck + lint + audit)
 pnpm run security:full   # Complete check including format validation
 ```
 
-## 🗄️ Database Setup
-
-### 1. Create Supabase Project
-
-- Create a new project at [supabase.com](https://supabase.com)
-- Get your project URL and anon key
-
-### 2. Run Database Migrations
-
-Execute these SQL files in your Supabase SQL Editor in order:
-
-1. **Main Schema** (`supabase.schema.sql`):
-
-   ```sql
-   -- Creates profiles, subscriptions, progress, and activity tables
-   -- Includes Row Level Security policies
-   ```
-
-2. **Testimonials System** (`supabase-testimonials.sql`):
-   ```sql
-   -- Creates testimonials table for user reviews
-   -- Adds get_platform_stats() function for dynamic metrics
-   -- Includes admin approval workflow
-   ```
-
-### 3. Environment Configuration
-
-Copy `.env.example` to `.env.local` and add:
-
-```env
-VITE_SUPABASE_URL=your_supabase_project_url
-VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
-```
-
-## 🎵 Audio Infrastructure
-
-The platform utilizes **Vercel Blob Storage** for efficient audio file delivery:
-
-- **28 MP3 files** (28.8MB total) hosted on Vercel's global CDN
-- **100GB/month bandwidth** on free tier (50x more than alternatives)
-- **Edge caching** for ~50ms global latency
-- **Streaming support** for progressive audio loading
-- **Migration Guide**: See [AUDIO_MIGRATION.md](./AUDIO_MIGRATION.md) for implementation details
 
 ## ⚡ Performance Optimization
 
@@ -329,35 +223,6 @@ A comprehensive security audit was performed with the following fixes applied:
 - **Bundle Splitting**: Optimized chunks for React, Supabase, UI libraries
 - **Environment Variables**: Secured with proper .gitignore patterns
 
-#### Testing Requirements
-
-After deployment, verify:
-
-- Sign-in/sign-out flows work correctly
-- Session refresh and token expiration behave properly
-- CORS and cookies work in production environment
-- Error boundaries catch and display user-friendly messages
-
-### Deployment Security Headers
-
-For **Vercel** deployments, `vercel.json` includes:
-
-```json
-{
-  "headers": [
-    {
-      "source": "/(.*)",
-      "headers": [
-        { "key": "X-Frame-Options", "value": "DENY" },
-        { "key": "X-Content-Type-Options", "value": "nosniff" },
-        { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
-      ]
-    }
-  ]
-}
-```
-
-For **Netlify** deployments, `_headers` file is configured with equivalent security headers.
 
 ## 🏗️ Architecture Notes
 
@@ -444,35 +309,15 @@ The platform includes a comprehensive content parsing and visual formatting syst
 
 ### CI/CD Security Gates
 
-The project now includes comprehensive security automation via GitHub Actions:
 
-#### **Security Workflow** (`.github/workflows/security.yml`)
 
-- **Dependency Auditing**: Automated vulnerability scanning with `pnpm audit`
-- **Type Safety**: TypeScript type checking on every commit
-- **Code Quality**: ESLint and Prettier validation
-- **Secret Scanning**: TruffleHog integration for credential detection
-- **Bundle Size Monitoring**: 5MB limit enforcement with detailed analysis
-- **License Compliance**: Automated license checking for legal compliance
-- **Environment Variable Security**: Detection of hardcoded secrets in code
+## Scripts
 
-#### **Automated Triggers**
-
-- ✅ Every push to main branch
-- ✅ All pull requests
-- ✅ Weekly scheduled dependency audits
-- ✅ Manual workflow dispatch for on-demand checks
-
-#### **Security Thresholds**
-
-- **Vulnerabilities**: Zero tolerance for moderate+ severity issues
-- **Bundle Size**: Maximum 5MB production bundle
-- **Secrets**: No hardcoded credentials or API keys allowed
-- **Type Safety**: Strict TypeScript checking required
-
-### Production-Ready Console Statements
-
-- **Console Statement Optimization**: Conditionally disabled all console.log/warn/error statements in production builds using `import.meta.env.DEV` checks
-- **Error Handler Integration**: Replaced production console statements with proper errorHandler service calls for centralized logging
-- **Vite Environment Variables**: Fixed `process.env` usage to use `import.meta.env` for proper Vite compatibility
-- **Package Naming**: Updated package.json name from "spark-template" to "discover-50-ai" for proper project identification
+- `pnpm dev`
+- `pnpm build`
+- `pnpm preview`
+- `pnpm typecheck`
+- `pnpm lint`
+- `pnpm lint:fix`
+- `pnpm format`
+- `pnpm security:check`

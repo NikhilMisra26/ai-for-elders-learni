@@ -360,25 +360,12 @@ function HomePageComponent(): ReactElement {
                 )}
                 <CardHeader className='text-center'>
                   <CardTitle className='text-2xl'>{plan.name}</CardTitle>
-                  {/* Start of removed code for subscription removal */}
-                  {/* <div className='text-4xl font-bold text-primary'>
-                    {formatPrice(plan.price)}
-                    {plan.price > 0 && (
-                      <span className='text-lg text-muted-foreground'>
-                        /month
-                      </span>
-                    )}
-                  </div> */}
-                  {/* End of removed code for subscription removal */}
-                  {/* Start of added code for subscription removal */}
                   <div className='text-4xl font-bold text-primary'>
                     {plan.id === 'free' ? 'Free' : 'Coming Soon'}
                   </div>
-                  {/* End of added code for subscription removal */}
                   <CardDescription className='text-base'>{plan.description}</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  {/* Start of removed/added code for subscription removal */}
                   <ul className='space-y-3 mb-6'>
                     {plan.features.map((feature) => (
                       <li key={feature} className='flex items-start gap-3'>
@@ -395,26 +382,6 @@ function HomePageComponent(): ReactElement {
                   >
                     {plan.ctaText}
                   </Button>
-                  {/* End of removed/added code for subscription removal */}
-                  {/* Removed for subscription removal - original features list and button
-                  <ul className='space-y-3 mb-6'>
-                    {plan.features.map((feature) => (
-                      <li key={feature} className='flex items-start gap-3'>
-                        <CheckCircle className='w-5 h-5 text-green-500 flex-shrink-0 mt-0.5' />
-                        <span className='text-sm'>{feature}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  <Button
-                    className='w-full'
-                    variant={plan.popular ? 'default' : 'outline'}
-                    onClick={
-                      user ? (): void => void navigate('/account') : onAuthClick
-                    }
-                  >
-                    {plan.ctaText}
-                  </Button>
-                  */}
                 </CardContent>
               </Card>
             ))}

@@ -14,7 +14,6 @@ import {
   Sparkle,
   Brain,
   Lightning,
-  //  Medal, // Subscription feature - temporarily disabled, will be re-enabled later
 } from '@phosphor-icons/react';
 
 import { BrandName } from '@/components/BrandName';
@@ -111,19 +110,6 @@ function DashboardPageComponent(): ReactElement {
                   </CardContent>
                 </Card>
               </div>
-              {/* start of removed codd for subscription removal
-              <div className='relative group'>
-                <div className='absolute inset-0 bg-gradient-to-r from-purple-400 to-pink-400 rounded-xl blur-lg group-hover:blur-xl transition-all duration-300 opacity-75' />
-                <Card className='relative bg-white/90 backdrop-blur-sm border-0 shadow-xl transform hover:scale-105 transition-all duration-300'>
-                  <CardContent className='p-6'>
-                    <Medal className='w-12 h-12 mx-auto mb-3 text-purple-600' />
-                    <div className='text-3xl font-bold text-gray-800 capitalize'>
-                      {subscription.planId}
-                    </div>
-                    <div className='text-sm font-medium text-gray-600'>Your Plan</div>
-                  </CardContent>
-                </Card>
-              </div> {/* end of removed code for subscription removal */}
             </div>
           </div>
         </div>

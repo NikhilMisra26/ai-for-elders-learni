@@ -392,7 +392,7 @@ export async function validateFileUpload(file: File): Promise<{
 
 /**
  * Audit logging for security events
- * Used by multiple security modules including supportSecurity
+ * Used by security-related modules
  */
 export class SecurityLogger {
   private static logs: Array<{

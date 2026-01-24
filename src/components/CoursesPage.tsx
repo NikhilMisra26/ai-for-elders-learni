@@ -44,7 +44,6 @@ function CoursesPageComponent(): ReactElement {
   const [filterTier, setFilterTier] = useState<'all' | 'free' | 'advanced' | 'expert'>('all');
 
   const dashboardSummary = getDashboardSummary();
-  // const availableCourses = getAvailableCourses(subscription.planId);
 
   // Filter courses based on search and filter
   const filteredCourses = useMemo(
@@ -343,13 +342,6 @@ function CoursesPageComponent(): ReactElement {
                           {course.title}
                         </CardTitle>
                         <TierBadge tier={course.tier} showIcon={true} />
-                        {/* Start of removed code for subscription removal */}
-                        {/* {course.price > 0 && (
-                          <Badge variant='outline' className='text-sm'>
-                            ${course.price.toFixed(2)}/month
-                          </Badge>
-                        )} */}
-                        {/* End of removed code for subscription removal */}
                         {isRecommended && (
                           <Badge
                             variant='outline'
@@ -464,7 +456,6 @@ function CoursesPageComponent(): ReactElement {
                       )}
                     </div>
                   ) : (
-                    /* Start of removed/added code for subscription removal */
                     <div className='mb-6 p-4 bg-muted/30 rounded-lg'>
                       <div className='flex items-center justify-between'>
                         <div>
@@ -480,31 +471,6 @@ function CoursesPageComponent(): ReactElement {
                         </Button>
                       </div>
                     </div>
-                    /* End of removed/added code for subscription removal */
-                    /* Removed for subscription removal - original subscription required section
-                    <div className='mb-6 p-4 bg-muted/30 rounded-lg'>
-                      <div className='flex items-center justify-between'>
-                        <div>
-                          <p className='font-medium mb-1'>
-                            {course.tier === 'advanced' ? 'Advanced' : 'Expert'}{' '}
-                            Subscription Required
-                          </p>
-                          <p className='text-sm text-muted-foreground'>
-                            ${course.price.toFixed(2)}/month to access all
-                            modules
-                          </p>
-                        </div>
-                        <Button
-                          onClick={onAuthClick}
-                          className='flex items-center gap-2'
-                        >
-                          <Shield className='h-4 w-4' />
-                          {user ? 'Upgrade' : 'Sign Up'}
-                          <ArrowRight />
-                        </Button>
-                      </div>
-                    </div>
-                    */
                   )}
 
                   {/* Module List */}

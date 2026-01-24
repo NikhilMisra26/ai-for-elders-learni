@@ -5,7 +5,6 @@ import {
   Route,
   Navigate,
   useSearchParams,
-  // useLocation, // Preserved for future re-enablement
   useNavigate,
 } from 'react-router-dom';
 import { ErrorBoundary } from 'react-error-boundary';
@@ -92,7 +91,6 @@ function PageLoader(): ReactElement {
 
 function AppContent(): ReactElement {
   const [searchParams, setSearchParams] = useSearchParams();
-  // const location = useLocation(); // Preserved for future re-enablement
   const navigate = useNavigate();
   const [showSecurityDashboard, setShowSecurityDashboard] = useState(false);
   const { user } = useAuth();
@@ -102,11 +100,6 @@ function AppContent(): ReactElement {
 
   // Initialize session management
   useSessionManager();
-
-  // Auth click handler - preserved for future re-enablement
-  // const handleAuthClick = (): void => {
-  //   setSearchParams({ auth: 'true', redirect: location.pathname });
-  // };
 
   const handleAuthClose = (): void => {
     const newParams = new URLSearchParams(searchParams);

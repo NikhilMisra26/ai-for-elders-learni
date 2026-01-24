@@ -34,15 +34,6 @@ export interface UserSubscription {
   autoRenew: boolean;
 }
 
-export interface PaymentMethod {
-  id: string;
-  type: 'card';
-  last4: string;
-  brand: string;
-  expiry: string;
-  isDefault: boolean;
-}
-
 export const subscriptionPlans: SubscriptionPlan[] = [
   {
     id: 'free',
@@ -61,17 +52,14 @@ export const subscriptionPlans: SubscriptionPlan[] = [
       'Email support',
     ],
   },
-  // Start of removed/added code for subscription removal
   {
     id: 'advanced',
     name: 'Advanced Learning',
     price: 1.99,
     billingPeriod: 'month',
     description: 'Take your AI skills to the next level',
-    // Removed for subscription removal: ctaText: 'Upgrade to Advanced',
-    ctaText: 'Coming Soon', // Added for subscription removal
+    ctaText: 'Coming Soon',
     popular: true,
-    // Removed for subscription removal: original features array, restored for better UX
     features: [
       'Everything in Free course',
       '"AI as Your Personal Assistant" course',
@@ -80,20 +68,15 @@ export const subscriptionPlans: SubscriptionPlan[] = [
       'Health & finance applications',
       'Monthly AI updates',
       'Priority email support',
-    ], // Added for subscription removal
+    ],
   },
-  // End of removed/added code for subscription removal
-  // Start of removed/added code for subscription removal
   {
     id: 'expert',
     name: 'Expert Mastery',
     price: 4.99,
     billingPeriod: 'month',
-    // Removed for subscription removal: description: 'Master cutting-edge AI technologies',
-    description: 'Master cutting-edge AI technologies', // Added for subscription removal
-    // Removed for subscription removal: ctaText: 'Become an Expert',
-    ctaText: 'Coming Soon', // Added for subscription removal
-    // Removed for subscription removal: original features array, restored for better UX
+    description: 'Master cutting-edge AI technologies',
+    ctaText: 'Coming Soon',
     features: [
       'Everything in Advanced plan',
       '"Advanced AI for Active Seniors" course',
@@ -102,9 +85,8 @@ export const subscriptionPlans: SubscriptionPlan[] = [
       'Model Context Protocol (MCP)',
       'Cutting-edge updates',
       'Live expert Q&A sessions',
-    ], // Added for subscription removal
+    ],
   },
-  // End of removed/added code for subscription removal
 ];
 
 // Subscription management hooks and utilities
@@ -116,8 +98,6 @@ export function useSubscription(): {
   isTrialActive: () => boolean;
   isInGracePeriod: () => boolean;
   getDaysUntilExpiry: () => number | null;
-  startTrial: (planId: 'advanced' | 'expert') => void;
-  upgradeToPaid: (planId: 'advanced' | 'expert', paymentMethod?: PaymentMethod) => void;
   cancelSubscription: (immediate?: boolean) => void;
   reactivateSubscription: () => void;
 } {
@@ -217,20 +197,7 @@ export function useSubscription(): {
   };
 
   const canAccessTier = (tier: 'free' | 'advanced' | 'expert'): boolean => {
-    // Start of removed/added code for subscription removal
-    // Removed for subscription removal: original tier access logic
-    /*
-    if (subscription.status === 'expired') return tier === 'free';
-
-    const tierOrder = { free: 1, advanced: 2, expert: 3 };
-    const currentLevel = tierOrder[subscription.planId];
-    const requestedLevel = tierOrder[tier];
-
-    return currentLevel >= requestedLevel;
-    */
-    // Added for subscription removal: only allow free tier access
     return tier === 'free';
-    // End of removed/added code for subscription removal
   };
 
   const isTrialActive = (): boolean => {
@@ -250,55 +217,6 @@ export function useSubscription(): {
     const diffTime = expiry.getTime() - now.getTime();
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   };
-
-  // Start of removed/added code for subscription removal
-  // Removed for subscription removal: startTrial function implementation
-  const startTrial = (_planId: 'advanced' | 'expert'): void => {
-    /*
-    const trialDays = planId === 'advanced' ? 7 : 14;
-    const trialEndDate = new Date();
-    trialEndDate.setDate(trialEndDate.getDate() + trialDays);
-
-    updateSubscription({
-      planId,
-      status: 'trial',
-      trialEndDate: trialEndDate.toISOString(),
-      startDate: new Date().toISOString(),
-    });
-    */
-    // Added for subscription removal: no-op function
-    // Trial functionality temporarily disabled
-    return;
-  };
-  // End of removed/added code for subscription removal
-
-  // Start of removed/added code for subscription removal
-  // Removed for subscription removal: upgradeToPaid function implementation
-  const upgradeToPaid = (_planId: 'advanced' | 'expert', _paymentMethod?: PaymentMethod): void => {
-    /*
-    const nextBillingDate = new Date();
-    nextBillingDate.setMonth(nextBillingDate.getMonth() + 1);
-
-    updateSubscription({
-      planId,
-      status: 'active',
-      nextBillingDate: nextBillingDate.toISOString(),
-      paymentMethod: paymentMethod
-        ? {
-            type: paymentMethod.type,
-            last4: paymentMethod.last4,
-            brand: paymentMethod.brand,
-          }
-        : undefined,
-      trialEndDate: undefined,
-      autoRenew: true,
-    });
-    */
-    // Added for subscription removal: no-op function
-    // Upgrade functionality temporarily disabled
-    return;
-  };
-  // End of removed/added code for subscription removal
 
   const cancelSubscription = (immediate = false): void => {
     if (immediate) {
@@ -334,49 +252,13 @@ export function useSubscription(): {
     isTrialActive,
     isInGracePeriod,
     getDaysUntilExpiry,
-    startTrial,
-    upgradeToPaid,
     cancelSubscription,
     reactivateSubscription,
   };
 }
 
-// Payment simulation utilities
-// Start of removed/added code for subscription removal
-// Removed for subscription removal: simulatePaymentFlow function implementation
-export async function simulatePaymentFlow(_planId: string): Promise<{
-  success: boolean;
-  paymentMethod?: PaymentMethod;
-  error?: string;
-}> {
-  // Payment processing is handled by Stripe integration
-  // Added for subscription removal: return failure immediately
-  return Promise.resolve({
-    success: false,
-    error: 'Payment functionality is currently disabled. Only free tier is available.',
-  });
-}
-// End of removed/added code for subscription removal
-
 export function formatPrice(price: number): string {
   return price === 0 ? 'Free' : `$${price.toFixed(2)}`;
-}
-
-export function formatBillingPeriod(period: 'month' | 'year'): string {
-  return period === 'month' ? '/month' : '/year';
-}
-
-export function getPlanFeatures(planId: 'free' | 'advanced' | 'expert'): string[] {
-  const plan = subscriptionPlans.find((p) => p.id === planId);
-  return plan?.features ?? [];
-}
-
-export function getUpgradeRecommendation(
-  currentPlan: 'free' | 'advanced' | 'expert',
-): SubscriptionPlan | null {
-  if (currentPlan === 'free') return subscriptionPlans.find((p) => p.id === 'advanced') ?? null;
-  if (currentPlan === 'advanced') return subscriptionPlans.find((p) => p.id === 'expert') ?? null;
-  return null;
 }
 
 // Billing and invoice utilities

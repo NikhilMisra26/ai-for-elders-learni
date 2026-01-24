@@ -39,11 +39,6 @@ This creates:
 
 Run the comprehensive test to verify all schemas work together:
 
-```sql
--- Run the test migration to verify everything
--- File: supabase/test_all_migrations.sql
-```
-
 This will test:
 
 - Base schema (profiles, subscriptions, etc.)
@@ -244,7 +239,6 @@ This is by design - the system creates a ticket even if email fails. Check:
 ## Production Checklist
 
 - [ ] Run `support_tickets.sql` migration
-- [ ] Test with `test_all_migrations.sql`
 - [ ] Deploy edge function
 - [ ] Set RESEND_API_KEY environment variable
 - [ ] Set ALLOWED_ORIGIN to production domain
@@ -258,6 +252,5 @@ This is by design - the system creates a ticket even if email fails. Check:
 
 - `index.ts` - Edge Function with modern Deno/npm imports
 - `supabase/migrations/support_tickets.sql` - Production-ready database schema
-- `supabase/test_all_migrations.sql` - Comprehensive test for all schemas
 - `src/components/EmailSupportDialog.tsx` - React dialog component
-- `src/lib/supportSecurity.ts` - Client-side security utilities
+- `src/lib/supportEmail.ts` - Client-side support API helper
