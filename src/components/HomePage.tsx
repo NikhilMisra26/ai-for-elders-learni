@@ -389,8 +389,11 @@ function HomePageComponent(): ReactElement {
         </div>
       </section>
 
-      {/* Testimonials Section - Show reviews or call to action */}
-      <section className='py-20 px-4 sm:px-6 lg:px-8'>
+      {/* Testimonials Section */}
+      <section
+        hidden={!isLoading && testimonials.length === 0}
+        className='py-20 px-4 sm:px-6 lg:px-8'
+      >
         <div className='max-w-6xl mx-auto'>
           {isLoading ? (
             // Loading skeleton
@@ -473,35 +476,7 @@ function HomePageComponent(): ReactElement {
                 </div>
               )}
             </>
-          ) : (
-            // No testimonials yet - show call to action
-            <div className='text-center'>
-              <div className='max-w-2xl mx-auto'>
-                <h2 className='text-4xl font-bold mb-4'>Be the First to Review</h2>
-                <p className='text-xl text-muted-foreground mb-8'>
-                  We&apos;re just getting started! Be among the first to share your learning
-                  experience and help others discover the benefits of AI education.
-                </p>
-
-                {user ? (
-                  <Button size='lg' onClick={() => setShowReviewForm(true)}>
-                    <Star className='mr-2' />
-                    Write the First Review
-                  </Button>
-                ) : (
-                  <div>
-                    <p className='text-muted-foreground mb-4'>
-                      Start your learning journey to share your experience
-                    </p>
-                    <Button size='lg' onClick={() => void navigate('/courses/basic')}>
-                      <Play className='mr-2' />
-                      Start Basic Course
-                    </Button>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
+          ) : null}
         </div>
       </section>
 
